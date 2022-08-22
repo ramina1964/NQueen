@@ -1,0 +1,25 @@
+﻿global using CommunityToolkit.Mvvm.ComponentModel;
+global using CommunityToolkit.Mvvm.Input;
+global using FluentValidation;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Hosting;
+global using NQueen.GUI.ViewModels;
+global using NQueen.GUI.Views;
+global using NQueen.Kernel;
+global using NQueen.Shared;
+global using NQueen.Shared.Enums;
+global using NQueen.Shared.Interfaces;
+global using System;
+global using System.Collections.Generic;
+global using System.Collections.ObjectModel;
+global using System.ComponentModel;
+global using System.Globalization;
+global using System.Linq;
+global using System.Threading.Tasks;
+global using System.Windows;
+global using System.Windows.Controls;
+global using System.Windows.Data;
+global using System.Windows.Markup;
+global using System.Windows.Media;
+global using System.Windows.Threading;
+
