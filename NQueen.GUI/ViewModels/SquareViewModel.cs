@@ -1,20 +1,10 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public class SquareViewModel : ObservableObject
+public class SquareViewModel(Position pos, Brush color) : ObservableObject
 {
-    #region Constructor
-    public SquareViewModel(Position pos, Brush color)
-    {
-        Color = color;
-        Position = pos;
-    }
-    #endregion Constructor
+    public Brush Color { get; set; } = color;
 
-    #region PublicProperties
-
-    public Brush Color { get; set; }
-
-    public Position Position { get; set; }
+    public Position Position { get; set; } = pos;
 
     public double Width
     {
@@ -35,11 +25,8 @@ public class SquareViewModel : ObservableObject
     }
 
     public override string ToString() => $"{Position.RowNo}, {Position.ColumnNo}";
-    #endregion PublicProperties
 
-    #region PrivateFields
     private double _width;
     private double _height;
     private string _imagePath;
-    #endregion PrivateFields
 }
