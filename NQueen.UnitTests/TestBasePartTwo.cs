@@ -3,13 +3,13 @@
 public partial class TestBase
 {
     #region PrivateAttributes
-    private static List<sbyte[]> GetExpectedSingleSolution(sbyte boardSize) => ExpectedSingleSolutions[boardSize];
+    private static List<sbyte[]> GetExpectedSingleSolution(sbyte boardSize) => _expectedSingleSolutions[boardSize];
 
-    private static List<sbyte[]> GetExpectedUniqueSolutions(sbyte boardSize) => ExpectedUniqueSolutions[boardSize];
+    private static List<sbyte[]> GetExpectedUniqueSolutions(sbyte boardSize) => _expectedUniqueSolutions[boardSize];
 
-    private static List<sbyte[]> GetExpectedAllSolutions(sbyte boardSize) => ExpectedAllSolutions[boardSize];
+    private static List<sbyte[]> GetExpectedAllSolutions(sbyte boardSize) => _expectedAllSolutions[boardSize];
 
-    private static readonly Dictionary<sbyte, List<sbyte[]>> ExpectedSingleSolutions = new()
+    private static readonly Dictionary<sbyte, List<sbyte[]>> _expectedSingleSolutions = new()
     {
         { 1, new List<sbyte[]> { new sbyte[] { 0 } } },
         { 2, new List<sbyte[]> { } },
@@ -72,7 +72,7 @@ public partial class TestBase
         }
     };
 
-    private static readonly Dictionary<sbyte, List<sbyte[]>> ExpectedUniqueSolutions = new()
+    private static readonly Dictionary<sbyte, List<sbyte[]>> _expectedUniqueSolutions = new()
     {
         { 1, new List<sbyte[]> { new sbyte[] { 0 } } },
         { 2, new List<sbyte[]> { } },
@@ -175,7 +175,7 @@ public partial class TestBase
         },
     };
 
-    private static readonly Dictionary<sbyte, List<sbyte[]>> ExpectedAllSolutions = new()
+    private static readonly Dictionary<sbyte, List<sbyte[]>> _expectedAllSolutions = new()
     {
         { 1, new List<sbyte[]> { new sbyte[] { 0 } } },
         { 2, new List<sbyte[]> { } },

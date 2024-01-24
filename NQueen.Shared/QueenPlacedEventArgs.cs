@@ -1,8 +1,6 @@
 ﻿namespace NQueen.Shared;
 
-public class QueenPlacedEventArgs : EventArgs
+public class QueenPlacedEventArgs(sbyte[] solution) : EventArgs
 {
-    public QueenPlacedEventArgs(sbyte[] solution) => Solution = solution;
-
-    public sbyte[] Solution { get; }
+    public sbyte[] Solution { get; } = solution;
 }

@@ -10,6 +10,7 @@ public static class Utility
     public const int MaxNoOfSolutionsInOutput = 50;
     public const sbyte RelativeFactor = 8;
     public const sbyte MinBoardSize = 1;
+    
     public const sbyte MaxBoardSizeForSingleSolution = 37;
     public const sbyte MaxBoardSizeForUniqueSolutions = 17;
     public const sbyte MaxBoardSizeForAllSolutions = 17;

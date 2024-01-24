@@ -2,13 +2,11 @@
 
 public class BackTracking : ISolver
 {
-    #region Constructor
     public BackTracking(ISolutionDev solutionDev, sbyte boardSize = Utility.DefaultBoardSize)
     {
         Initialize(boardSize);
         SolutionDev = solutionDev;
     }
-    #endregion Constructor
 
     #region ISolverBackEnd
 

@@ -4,23 +4,23 @@ public partial class TestBase
 {
     public ISolverBackEnd? Sut { get; set; }
 
-    public List<sbyte[]> ExpectedSolutions { get; set; } = new List<sbyte[]>();
+    public List<sbyte[]> ExpectedSolutions { get; set; } = [];
 
-    public List<sbyte[]> ActualSolutions { get; set; } = new List<sbyte[]>();
+    public List<sbyte[]> ActualSolutions { get; set; } = [];
 
     public static List<sbyte[]> GetExpectedSolutions(sbyte boardSize, SolutionMode solutionMode)
     {
         return solutionMode == SolutionMode.Single
-               ? GetExpectedSingleSolution(boardSize).ToList()
+               ? [.. GetExpectedSingleSolution(boardSize)]
                : solutionMode == SolutionMode.Unique
-               ? GetExpectedUniqueSolutions(boardSize).ToList()
-               : GetExpectedAllSolutions(boardSize).ToList();
+               ? [.. GetExpectedUniqueSolutions(boardSize)]
+               : [.. GetExpectedAllSolutions(boardSize)];
     }
 
     public List<sbyte[]> GetActualSolutions(sbyte boardSize, SolutionMode solutionMode)
     {
         return Sut
-               .GetResultsAsync(boardSize, solutionMode)
+               !.GetResultsAsync(boardSize, solutionMode)
                .Result
                .Solutions
                .Select(sol => sol.QueenList)
