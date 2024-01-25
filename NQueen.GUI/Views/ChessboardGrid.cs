@@ -1,14 +1,12 @@
 ﻿namespace NQueen.GUI.Views;
 
-public class ChessboardGrid : Grid
+public class ChessboardGrid(sbyte size) : Grid
 {
-    public ChessboardGrid(sbyte size) => Size = size;
-
     public static int WindowHeight => 500;
 
     public static int WindowWidth => 500;
 
-    public sbyte Size { get; set; }
+    public sbyte Size { get; set; } = size;
 
     public sbyte Column { get; set; }
 

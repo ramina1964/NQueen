@@ -19,7 +19,7 @@ public class BackTracking : ISolver
         SolutionMode = solutionMode;
         DisplayMode = displayMode;
 
-        var ret = Task.Factory.StartNew(async () => await GetResultsAsync());
+        var ret = Task.Factory.StartNew(GetResultsAsync);
         
         return await (await ret);
     }
@@ -226,7 +226,7 @@ public class BackTracking : ISolver
                 BoardSize = BoardSize,
                 SolutionMode = SolutionMode,
                 Solutions = Solutions,
-                QueenList = solution.ToArray()
+                QueenList = [.. solution]
             };
 
             SolutionDev.UpdateSolutions(updateDTO);

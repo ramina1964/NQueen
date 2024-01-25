@@ -10,15 +10,23 @@ public static class Utility
     public const int MaxNoOfSolutionsInOutput = 50;
     public const sbyte RelativeFactor = 8;
     public const sbyte MinBoardSize = 1;
-    
+
+    public const int SmallBoardSizeForUniqueSolutions = 10;
+    public const int MediumBoardSizeForUniqueSolutions = 15;
+
     public const sbyte MaxBoardSizeForSingleSolution = 37;
-    public const sbyte MaxBoardSizeForUniqueSolutions = 17;
-    public const sbyte MaxBoardSizeForAllSolutions = 17;
+
+    // Todo: Set back these constants to 17, if unsuccessful.
+    public const sbyte MaxBoardSizeForUniqueSolutions = 18;
+    public const sbyte MaxBoardSizeForAllSolutions = 18;
 
     // This property indicates who often we update the progreebar value as a function of the board size.
+    // Todo: Use constants here.
     public static int SolutionCountPerUpdate(sbyte boardSize) =>
-        (boardSize <= 10) ? 5 :
-        (boardSize <= 15) ? 1_000 :
+        (boardSize <= SmallBoardSizeForUniqueSolutions)
+        ? 5
+        : (boardSize <= MediumBoardSizeForUniqueSolutions)
+        ? 1_000 :
         100_000;
 
     public static string InvalidSByteError => $"Board size must be a valid integer.";

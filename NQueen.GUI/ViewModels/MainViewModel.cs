@@ -1,6 +1,6 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public sealed class MainViewModel : ObservableObject, IDataErrorInfo
+public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposable
 {
     public MainViewModel(ISolver solver)
     {
@@ -9,6 +9,9 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo
         Solver.SolutionFound += OnSolutionFound;
         Solver.ProgressValueChanged += OnProgressValueChanged;
     }
+
+    // Dispose of any resources held by MainViewModel here, for example unsubscribe from events.
+    public void Dispose() => UnsubscribeFromSimulationEvents();
 
     #region IDataErrorInfo
     public string this[string columnName]
@@ -337,7 +340,7 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo
         IsInInputMode = true;
         IsSimulating = false;
         IsOutputReady = false;
-        ObservableSolutions = new ObservableCollection<Solution>();
+        ObservableSolutions = [];
         NoOfSolutions = $"{ObservableSolutions.Count,0:N0}";
 
         DelayInMilliseconds = Utility.DefaultDelayInMilliseconds;
@@ -368,6 +371,8 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo
         switch (simulationStatus)
         {
             case SimulationStatus.Started:
+                SubscribeToSimulationEvents();
+
                 IsIdle = false;
                 IsInInputMode = false;
                 IsSimulating = true;
@@ -389,8 +394,24 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo
                 break;
 
             case SimulationStatus.Finished:
+                UnsubscribeFromSimulationEvents();
+
                 break;
         }
+    }
+
+    private void SubscribeToSimulationEvents()
+    {
+        Solver.QueenPlaced += OnQueenPlaced;
+        Solver.SolutionFound += OnSolutionFound;
+        Solver.ProgressValueChanged += OnProgressValueChanged;
+    }
+
+    private void UnsubscribeFromSimulationEvents()
+    {
+        Solver.QueenPlaced -= OnQueenPlaced;
+        Solver.SolutionFound -= OnSolutionFound;
+        Solver.ProgressValueChanged -= OnProgressValueChanged;
     }
 
     private void UpdateButtonFunctionality()
@@ -400,14 +421,15 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo
         SaveCommand.NotifyCanExecuteChanged();
     }
 
-    private void OnProgressValueChanged(object sender, ProgressValueChangedEventArgs e) => ProgressValue = e.Value;
+    private void OnProgressValueChanged(object sender, ProgressValueChangedEventArgs e) =>
+        ProgressValue = e.Value;
 
     private void OnQueenPlaced(object sender, QueenPlacedEventArgs e)
     {
         var sol = new Solution(e.Solution.ToArray(), 1);
         var positions = sol
-                        .QueenList.Where(q => q > -1)
-                        .Select((item, index) => new Position((sbyte)index, item)).ToList();
+            .QueenList.Where(q => q > -1)
+            .Select((item, index) => new Position((sbyte)index, item)).ToList();
 
         Chessboard.PlaceQueens(positions);
     }
