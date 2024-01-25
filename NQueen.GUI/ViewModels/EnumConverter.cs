@@ -10,10 +10,8 @@ public class EnumConverter : IValueConverter
         return GetDescription((Enum)value);
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-        return Enum.ToObject(targetType, value);
-    }
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        Enum.ToObject(targetType, value);
 
     public static string GetDescription(Enum en)
     {
@@ -27,6 +25,7 @@ public class EnumConverter : IValueConverter
                 return ((DescriptionAttribute)attrs[0]).Description;
             }
         }
+
         return en.ToString();
     }
 }

@@ -26,15 +26,15 @@ public class NegativeConverter : MarkupExtension, IValueConverter
         };
 
         @switch[value.GetType()]();
-        return result ?? throw new NotImplementedException();
+        
+        return
+            result
+            ?? throw new NotImplementedException();
     }
 
     public override object ProvideValue(IServiceProvider serviceProvider)
     {
-        if (_converter == null)
-        {
-            _converter = new NegativeConverter();
-        }
+        _converter ??= new NegativeConverter();
 
         return _converter;
     }

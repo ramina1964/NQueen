@@ -16,9 +16,9 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo
         get
         {
             var validationFailure = InputViewModel
-                                    .Validate(this)
-                                    .Errors
-                                    .FirstOrDefault(item => item.PropertyName == columnName);
+                .Validate(this)
+                .Errors
+                .FirstOrDefault(item => item.PropertyName == columnName);
 
             return validationFailure == null
                    ? string.Empty
@@ -34,9 +34,10 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo
             if (results == null || !results.Errors.Any())
             { return string.Empty; }
 
-            var errors = string.Join(Environment.NewLine, results.Errors
-                        .Select(x => x.ErrorMessage)
-                        .ToArray());
+            var errors = string
+                .Join(Environment.NewLine, results.Errors
+                .Select(x => x.ErrorMessage)
+                .ToArray());
 
             return errors;
         }

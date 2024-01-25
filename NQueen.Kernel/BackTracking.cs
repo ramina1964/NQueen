@@ -20,6 +20,7 @@ public class BackTracking : ISolver
         DisplayMode = displayMode;
 
         var ret = Task.Factory.StartNew(async () => await GetResultsAsync());
+        
         return await (await ret);
     }
 
@@ -36,7 +37,8 @@ public class BackTracking : ISolver
     public event EventHandler<ProgressValueChangedEventArgs> ProgressValueChanged;
     #endregion ISolverUI
 
-    public void OnProgressChanged(object sender, ProgressValueChangedEventArgs e) => ProgressValueChanged?.Invoke(this, e);
+    public void OnProgressChanged(object sender, ProgressValueChangedEventArgs e) =>
+        ProgressValueChanged?.Invoke(this, e);
 
     public SolutionMode SolutionMode { get; set; }
 
@@ -73,11 +75,13 @@ public class BackTracking : ISolver
 
     public sbyte[] QueenList { get; set; }
 
-    public int SolutionCountPerUpdate => Utility.SolutionCountPerUpdate(BoardSize);
+    public int SolutionCountPerUpdate =>
+        Utility.SolutionCountPerUpdate(BoardSize);
 
     #endregion PublicProperties
 
-    protected void OnQueenPlaced(object sender, QueenPlacedEventArgs e) => QueenPlaced?.Invoke(this, e);
+    protected void OnQueenPlaced(object sender, QueenPlacedEventArgs e) =>
+        QueenPlaced?.Invoke(this, e);
 
     #region PrivateMethods
     private void Initialize(sbyte boardSize = Utility.DefaultBoardSize)

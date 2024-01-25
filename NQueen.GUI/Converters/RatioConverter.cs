@@ -8,7 +8,10 @@ public class RatioConverter : MarkupExtension, IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         // Do not let the culture default to local to prevent variable outcome to decimal syntax
-        double size = System.Convert.ToDouble(value) * System.Convert.ToDouble(parameter, CultureInfo.InvariantCulture);
+        var size =
+            System.Convert.ToDouble(value) * System.Convert
+            .ToDouble(parameter, CultureInfo.InvariantCulture);
+        
         return size.ToString("G0", CultureInfo.InvariantCulture);
     }
 
@@ -18,10 +21,8 @@ public class RatioConverter : MarkupExtension, IValueConverter
         throw new NotImplementedException();
     }
 
-    public override object ProvideValue(IServiceProvider serviceProvider)
-    {
-        return _instance ?? (_instance = new RatioConverter());
-    }
+    public override object ProvideValue(IServiceProvider serviceProvider) =>
+        _instance ??= new RatioConverter();
 
     private static RatioConverter _instance;
 }

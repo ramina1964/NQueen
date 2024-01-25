@@ -4,7 +4,7 @@ public class Chessboard : ObservableObject
 {
     public Chessboard()
     {
-        Squares = new ObservableCollection<SquareViewModel>();
+        Squares = [];
         QueenImagePath = @"..\..\Images\WhiteQueen.png";
     }
 
@@ -64,7 +64,10 @@ public class Chessboard : ObservableObject
 
     private static Brush FindColor(Position pos)
     {
-        var col = (pos.RowNo + pos.ColumnNo) % 2 == 1 ? Colors.Wheat : Colors.Brown;
+        var col = (pos.RowNo + pos.ColumnNo) % 2 == 1
+            ? Colors.Wheat
+            : Colors.Brown;
+
         return new SolidColorBrush(col);
     }
 }

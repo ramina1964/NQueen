@@ -74,6 +74,7 @@ public static class DispatchCommands
         var message = "\tIMPORTANT - You need to set default fonts (in this console window) to SimSun-ExtB in order to show unicode characters.\n";
         ConsoleUtils.WriteLineColored(ConsoleColor.Gray, message);
         Console.WriteLine(board);
+        
         return true;
     }
 
