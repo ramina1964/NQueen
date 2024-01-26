@@ -9,6 +9,7 @@ global using NQueen.Kernel;
 global using NQueen.Shared;
 global using NQueen.Shared.Enums;
 global using NQueen.Shared.Interfaces;
+global using NQueen.Shared.SimulationEvents;
 global using System;
 global using System.Collections.Generic;
 global using System.Collections.ObjectModel;
@@ -22,4 +23,3 @@ global using System.Windows.Data;
 global using System.Windows.Markup;
 global using System.Windows.Media;
 global using System.Windows.Threading;
-
