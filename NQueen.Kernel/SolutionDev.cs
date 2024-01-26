@@ -15,6 +15,7 @@ public class SolutionDev : ISolutionDev
         if (dto.SolutionMode == SolutionMode.Single)
         {
             dto.Solutions.Add(queenList);
+
             return;
         }
 
@@ -24,13 +25,13 @@ public class SolutionDev : ISolutionDev
         // For SolutionMode.All, add this solution and all its symmetrical counterparts to Solutions.
         if (dto.SolutionMode == SolutionMode.All)
         {
-            dto.Solutions.Add(queenList);
-            symmetricalSolutions.ForEach(s => dto.Solutions.Add(s));
+            dto.Solutions.UnionWith(symmetricalSolutions);
             return;
         }
 
         // For SolutionMode.Unique: Add this solution to Solutions only if no overlaps between Solutions and symmetricalSolutions are found.
-        if (dto.Solutions.Overlaps(symmetricalSolutions) == false) dto.Solutions.Add(queenList);
+        if (dto.Solutions.Overlaps(symmetricalSolutions) == false)
+            dto.Solutions.Add(queenList);
     }
 
     public SolutionUpdateDTO UpdateDTO { get; }

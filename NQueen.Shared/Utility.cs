@@ -46,34 +46,35 @@ public static class Utility
     public static List<sbyte[]> GetSymmetricalSolutions(sbyte[] solution)
     {
         sbyte boardSize = (sbyte)solution.Length;
-        var symmToMidHorizontal = new sbyte[boardSize];
-        var symmToMidVertical = new sbyte[boardSize];
-        var symmToMainDiag = new sbyte[boardSize];
-        var symmToBiDiag = new sbyte[boardSize];
-        var rotCounter90 = new sbyte[boardSize];
-        var rotCounter180 = new sbyte[boardSize];
-        var rotCounter270 = new sbyte[boardSize];
+
+        sbyte[] symmetricalToMidHorizontal = new sbyte[boardSize];
+        var symmetricalToMidVertical = new sbyte[boardSize];
+        var symmetricalToMainDiag = new sbyte[boardSize];
+        var symmetricalToBiDiag = new sbyte[boardSize];
+        var rotatedCounter90 = new sbyte[boardSize];
+        var rotatedCounter180 = new sbyte[boardSize];
+        var rotatedCounter270 = new sbyte[boardSize];
 
         for (sbyte j = 0; j < boardSize; j++)
         {
             sbyte index1 = (sbyte)(boardSize - j - 1);
             sbyte index2 = (sbyte)(boardSize - solution[j] - 1);
 
-            symmToMidHorizontal[index1] = solution[j];
-            rotCounter90[index2] = symmToMainDiag[solution[j]] = j;
-            rotCounter180[index1] = symmToMidVertical[j] = index2;
-            rotCounter270[solution[j]] = symmToBiDiag[index2] = index1;
+            symmetricalToMidHorizontal[index1] = solution[j];
+            rotatedCounter90[index2] = symmetricalToMainDiag[solution[j]] = j;
+            rotatedCounter180[index1] = symmetricalToMidVertical[j] = index2;
+            rotatedCounter270[solution[j]] = symmetricalToBiDiag[index2] = index1;
         }
 
         return new HashSet<sbyte[]>(new SequenceEquality<sbyte>())
             {
-                symmToMidVertical,
-                symmToMidHorizontal,
-                symmToMainDiag,
-                symmToBiDiag,
-                rotCounter90,
-                rotCounter180,
-                rotCounter270,
+                symmetricalToMidVertical,
+                symmetricalToMidHorizontal,
+                symmetricalToMainDiag,
+                symmetricalToBiDiag,
+                rotatedCounter90,
+                rotatedCounter180,
+                rotatedCounter270,
             }.ToList();
     }
 
