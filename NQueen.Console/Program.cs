@@ -116,7 +116,7 @@ public class Program
     const string BannerString =
                 @"
                         |====================================================|
-                        | NQueen.ConsoleApp - A .NET 6.0 Console Application |
+                        | NQueen.ConsoleApp - A .NET 8.0 Console Application |
                         |                                                    |
                         | (c) 2022 - Ramin Anvar and Lars Erik Pedersen      |
                         |                                                    |

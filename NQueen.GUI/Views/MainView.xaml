@@ -13,7 +13,7 @@
 				Converter={converter:RatioConverter}, ConverterParameter='0.90'}"
             MinHeight="{Binding Source={x:Static SystemParameters.PrimaryScreenHeight},
 				Converter={converter:RatioConverter}, ConverterParameter='0.96'}"
-            Title="Solutions of NQueen-Problem with Backtracking - .Net 6.0"
+            Title="Solutions of NQueen Problem with Backtracking - .Net 8.0"
             WindowStartupLocation="CenterScreen" ResizeMode="CanResize" WindowState="Normal" >
 
     <!-- Start of Outer Grid -->

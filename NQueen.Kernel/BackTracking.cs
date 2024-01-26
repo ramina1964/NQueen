@@ -117,8 +117,7 @@ public class BackTracking : ISolver
         }
 
         return Solutions
-               .Select((s, index) => new Solution(s, index + 1))
-               .ToList();
+               .Select((s, index) => new Solution(s, index + 1));
     }
 
     private async Task SolveSingle(sbyte colNo)

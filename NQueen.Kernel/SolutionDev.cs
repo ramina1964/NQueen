@@ -30,6 +30,7 @@ public class SolutionDev : ISolutionDev
         }
 
         // For SolutionMode.Unique: Add this solution to Solutions only if no overlaps between Solutions and symmetricalSolutions are found.
+        // Note that it is more efficient to have the larger collection as the outer variable and the smaller as the argument of Overlap().
         if (dto.Solutions.Overlaps(symmetricalSolutions) == false)
             dto.Solutions.Add(queenList);
     }

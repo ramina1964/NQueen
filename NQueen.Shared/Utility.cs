@@ -43,7 +43,7 @@ public static class Utility
 
     public static string SizeTooLargeForAllSolutionsMsg => $"Board size for all solutions must not exceed {MaxBoardSizeForAllSolutions}.";
 
-    public static List<sbyte[]> GetSymmetricalSolutions(sbyte[] solution)
+    public static HashSet<sbyte[]> GetSymmetricalSolutions(sbyte[] solution)
     {
         sbyte boardSize = (sbyte)solution.Length;
 
@@ -67,15 +67,15 @@ public static class Utility
         }
 
         return new HashSet<sbyte[]>(new SequenceEquality<sbyte>())
-            {
-                symmetricalToMidVertical,
-                symmetricalToMidHorizontal,
-                symmetricalToMainDiag,
-                symmetricalToBiDiag,
-                rotatedCounter90,
-                rotatedCounter180,
-                rotatedCounter270,
-            }.ToList();
+        {
+            symmetricalToMidVertical,
+            symmetricalToMidHorizontal,
+            symmetricalToMainDiag,
+            symmetricalToBiDiag,
+            rotatedCounter90,
+            rotatedCounter180,
+            rotatedCounter270,
+        };
     }
 
     public static int FindSolutionSize(sbyte boardSize, SolutionMode solutionMode) =>

@@ -5,9 +5,7 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
     public MainViewModel(ISolver solver)
     {
         Initialize(solver);
-        Solver.QueenPlaced += OnQueenPlaced;
-        Solver.SolutionFound += OnSolutionFound;
-        Solver.ProgressValueChanged += OnProgressValueChanged;
+        SubscribeToSimulationEvents();
     }
 
     // Dispose of any resources held by MainViewModel here, for example unsubscribe from events.
