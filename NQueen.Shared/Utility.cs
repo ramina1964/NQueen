@@ -43,6 +43,8 @@ public static class Utility
 
     public static string SizeTooLargeForAllSolutionsMsg => $"Board size for all solutions must not exceed {MaxBoardSizeForAllSolutions}.";
 
+    public static double StartProgressValue { get; set; } = 0;
+
     public static HashSet<sbyte[]> GetSymmetricalSolutions(sbyte[] solution)
     {
         sbyte boardSize = (sbyte)solution.Length;

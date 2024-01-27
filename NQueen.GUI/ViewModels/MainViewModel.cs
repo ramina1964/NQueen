@@ -356,7 +356,7 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
         Chessboard?.CreateSquares(BoardSize, new List<SquareViewModel>());
     }
 
-    private void UpdateProgressIndicator(SimulationStatus simulationStatus)
+    private void ReleaseResources(SimulationStatus simulationStatus)
     {
         IsIdle = true;
         IsInInputMode = true;
@@ -387,7 +387,7 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
                 {
                     IsSingleRunning = false;
                     ProgressLabelVisibility = Visibility.Visible;
-                    ProgressValue = 0;
+                    ProgressValue = Utility.StartProgressValue;
                 }
                 break;
 
@@ -400,9 +400,9 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
 
     private void SubscribeToSimulationEvents()
     {
+        Solver.ProgressValueChanged += OnProgressValueChanged;
         Solver.QueenPlaced += OnQueenPlaced;
         Solver.SolutionFound += OnSolutionFound;
-        Solver.ProgressValueChanged += OnProgressValueChanged;
     }
 
     private void UnsubscribeFromSimulationEvents()
@@ -464,7 +464,7 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
 
     private async Task SimulateAsync()
     {
-        UpdateProgressIndicator(SimulationStatus.Started);
+        ReleaseResources(SimulationStatus.Started);
 
         UpdateGui();
         SimulationResults = await Solver.GetResultsAsync(BoardSize, SolutionMode, DisplayMode);
@@ -473,7 +473,7 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
         NoOfSolutions = $"{SimulationResults.NoOfSolutions,0:N0}";
         ElapsedTimeInSec = $"{SimulationResults.ElapsedTimeInSec,0:N1}";
         SelectedSolution = ObservableSolutions.FirstOrDefault();
-        UpdateProgressIndicator(SimulationStatus.Finished);
+        ReleaseResources(SimulationStatus.Finished);
     }
 
     private bool CanSimulate() => IsValid && IsIdle;

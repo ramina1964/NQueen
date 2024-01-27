@@ -9,11 +9,12 @@ public partial class MainView : Window, IDisposable
         MainViewModel = mainViewModel;
     }
 
-    public MainViewModel MainViewModel { get; set; }
+    public MainViewModel MainViewModel { get; }
 
     public void Dispose()
     {
-
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 
     protected override void OnClosing(CancelEventArgs e)
@@ -24,7 +25,6 @@ public partial class MainView : Window, IDisposable
         {
             Dispose(true);
             _disposed = true;
-            GC.SuppressFinalize(this);
         }
     }
 
@@ -36,7 +36,13 @@ public partial class MainView : Window, IDisposable
         if (disposing)
         {
             // Dispose of any managed resources
-            MainViewModel?.Dispose();
+            if (MainViewModel != null)
+            {
+                MainViewModel.Dispose();
+
+                // Unsubscribe from the Loaded event
+                Loaded -= MainView_Loaded;
+            }
         }
 
         // Clean up any unmanaged resources here
