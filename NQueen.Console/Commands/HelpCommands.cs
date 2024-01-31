@@ -43,7 +43,7 @@ public class HelpCommands
     }
 
     public const string NQUEEN_HELP_SOLUTIONMODE =
-    @"  SOLUTIONMODE - Values one of the following: 0 - 'Single', 1 - 'Unique', 2 - 'All'";
+    @"  SOLUTIONMODE - Values: 0 - 'Single', 1 - 'Unique', 2 - 'All'";
 
     public static readonly string NQUEEN_HELP_BOARDSIZE =
     @$"  BOARDSIZE   - Whole Numbers in the Range:

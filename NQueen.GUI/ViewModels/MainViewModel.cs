@@ -4,7 +4,8 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
 {
     public MainViewModel(ISolver solver)
     {
-        Initialize(solver);
+        Solver = solver;
+        Initialize();
     }
 
     // Dispose of any resources held by MainViewModel here, for example unsubscribe from events.
@@ -320,7 +321,7 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
 
     private InputViewModel InputViewModel { get; set; }
 
-    private void Initialize(ISolver solver, sbyte boardSize = Utility.DefaultBoardSize,
+    private void Initialize(sbyte boardSize = Utility.DefaultBoardSize,
         SolutionMode solutionMode = Utility.DefaultSolutionMode,
         DisplayMode displayMode = Utility.DefaultDisplayMode)
     {
@@ -329,7 +330,6 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
         CancelCommand = new RelayCommand(Cancel, CanCancel);
         SaveCommand = new RelayCommand(Save, CanSave);
 
-        Solver = solver;
         SubscribeToSimulationEvents();
 
         BoardSize = boardSize;

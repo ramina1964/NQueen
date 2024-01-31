@@ -194,8 +194,8 @@ public class Program
         {
             services
                 .AddTransient<SolutionUpdateDTO>()
-                .AddTransient<ISolutionDev, SolutionDev>()
-                .AddTransient<ISolver, BackTracking>()
+                .AddSingleton<ISolutionDev, SolutionDev>()
+                .AddSingleton<ISolver, BackTracking>()
                 .AddTransient<App>();
         });
 }

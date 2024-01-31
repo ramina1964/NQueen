@@ -1,5 +1,7 @@
 ﻿namespace NQueen.Kernel;
 
+#pragma warning disable
+
 public class BackTracking : ISolver
 {
     public BackTracking(ISolutionDev solutionDev, sbyte boardSize = Utility.DefaultBoardSize)
