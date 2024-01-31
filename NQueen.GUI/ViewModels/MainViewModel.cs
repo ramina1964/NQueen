@@ -5,11 +5,11 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
     public MainViewModel(ISolver solver)
     {
         Initialize(solver);
-        SubscribeToSimulationEvents();
     }
 
     // Dispose of any resources held by MainViewModel here, for example unsubscribe from events.
-    public void Dispose() => UnsubscribeFromSimulationEvents();
+    public void Dispose() =>
+        UnsubscribeFromSimulationEvents();
 
     #region IDataErrorInfo
     public string this[string columnName]
@@ -330,6 +330,8 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
         SaveCommand = new RelayCommand(Save, CanSave);
 
         Solver = solver;
+        SubscribeToSimulationEvents();
+
         BoardSize = boardSize;
         SolutionMode = solutionMode;
         DisplayMode = displayMode;
@@ -400,16 +402,16 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
 
     private void SubscribeToSimulationEvents()
     {
-        Solver.ProgressValueChanged += OnProgressValueChanged;
-        Solver.QueenPlaced += OnQueenPlaced;
-        Solver.SolutionFound += OnSolutionFound;
+        Solver.QueenPlaced += OnQueenPlacement;
+        Solver.SolutionFound += OnSolutionDiscovery;
+        Solver.ProgressValueChanged += OnProgressChanged;
     }
 
     private void UnsubscribeFromSimulationEvents()
     {
-        Solver.QueenPlaced -= OnQueenPlaced;
-        Solver.SolutionFound -= OnSolutionFound;
-        Solver.ProgressValueChanged -= OnProgressValueChanged;
+        Solver.QueenPlaced -= OnQueenPlacement;
+        Solver.SolutionFound -= OnSolutionDiscovery;
+        Solver.ProgressValueChanged -= OnProgressChanged;
     }
 
     private void UpdateButtonFunctionality()
@@ -419,10 +421,7 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
         SaveCommand.NotifyCanExecuteChanged();
     }
 
-    private void OnProgressValueChanged(object sender, ProgressValueChangedEventArgs e) =>
-        ProgressValue = e.Value;
-
-    private void OnQueenPlaced(object sender, QueenPlacedEventArgs e)
+    private void OnQueenPlacement(object sender, QueenPlacedEventArgs e)
     {
         var sol = new Solution(e.Solution.ToArray(), 1);
         var positions = sol
@@ -432,7 +431,7 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
         Chessboard.PlaceQueens(positions);
     }
 
-    private void OnSolutionFound(object sender, SolutionFoundEventArgs e)
+    private void OnSolutionDiscovery(object sender, SolutionFoundEventArgs e)
     {
         var id = ObservableSolutions.Count + 1;
         var sol = new Solution(e.Solution.ToArray(), id);
@@ -443,6 +442,11 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
             .BeginInvoke(DispatcherPriority.Send, new Action(() => ObservableSolutions.Add(sol)));
 
         SelectedSolution = sol;
+    }
+
+    private void OnProgressChanged(object sender, ProgressValueChangedEventArgs e)
+    {
+        ProgressValue = e.Value;
     }
 
     private void ExtractCorrectNoOfSols()

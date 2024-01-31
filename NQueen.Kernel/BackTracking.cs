@@ -37,8 +37,23 @@ public class BackTracking : ISolver
     public event EventHandler<ProgressValueChangedEventArgs> ProgressValueChanged;
     #endregion ISolverUI
 
-    public void OnProgressChanged(object sender, ProgressValueChangedEventArgs e) =>
-        ProgressValueChanged?.Invoke(this, e);
+    public event EventHandler<QueenPlacedEventArgs> OnQueenPlaced
+    {
+        add { _queenPlaced.Add(value); }
+        remove { _queenPlaced.Remove(value); }
+    }
+
+    public event EventHandler<SolutionFoundEventArgs> OnSolutionFound
+    {
+        add { _solutionFound.Add(value); }
+        remove { _solutionFound.Remove(value); }
+    }
+
+    public event EventHandler<ProgressValueChangedEventArgs> OnProgressValueChanged
+    {
+        add { _progressValueChanged.Add(value); }
+        remove { _progressValueChanged.Remove(value); }
+    }
 
     public SolutionMode SolutionMode { get; set; }
 
@@ -79,9 +94,6 @@ public class BackTracking : ISolver
         Utility.SolutionCountPerUpdate(BoardSize);
 
     #endregion PublicProperties
-
-    protected void OnQueenPlaced(object sender, QueenPlacedEventArgs e) =>
-        QueenPlaced?.Invoke(this, e);
 
     #region PrivateMethods
     private void Initialize(sbyte boardSize = Utility.DefaultBoardSize)
@@ -158,7 +170,7 @@ public class BackTracking : ISolver
             // A new queen is placed.
             if (DisplayMode == DisplayMode.Visualize)
             {
-                OnQueenPlaced(this, new QueenPlacedEventArgs(QueenList));
+                _queenPlaced.Raise(this, new QueenPlacedEventArgs(QueenList));
                 await Task.Delay(DelayInMilliseconds);
             }
 
@@ -204,7 +216,7 @@ public class BackTracking : ISolver
             // A new queen is placed.
             if (DisplayMode == DisplayMode.Visualize)
             {
-                OnQueenPlaced(this, new QueenPlacedEventArgs(QueenList));
+                _queenPlaced.Raise(this, new QueenPlacedEventArgs(QueenList));
                 await Task.Delay(DelayInMilliseconds);
             }
 
@@ -237,7 +249,8 @@ public class BackTracking : ISolver
         if (NoOfSolutions % SolutionCountPerUpdate == 0) UpdateProgressBar();
 
         // Activate this code in case of IsVisulaized == true.
-        if (DisplayMode == DisplayMode.Visualize) SolutionFound(this, new SolutionFoundEventArgs(QueenList));
+        if (DisplayMode == DisplayMode.Visualize)
+            _solutionFound.Raise(this, new SolutionFoundEventArgs(QueenList));
     }
 
     // Return the first available row for the queen in column "colNo", -1 if impossible.
@@ -266,13 +279,18 @@ public class BackTracking : ISolver
     private void UpdateProgressBar()
     {
         ProgressValue = Math.Round(100.0 * QueenList[0] / HalfSize, 1);
-        OnProgressChanged(this, new ProgressValueChangedEventArgs(ProgressValue));
+        _progressValueChanged.Raise(this, new ProgressValueChangedEventArgs(ProgressValue));
     }
 
     public sbyte GetHalfSize() =>
         (sbyte)(BoardSize % 2 == 0
         ? BoardSize / 2
         : BoardSize / 2 + 1);
+
+    // WeakEvent instances
+    private readonly WeakEvent<QueenPlacedEventArgs> _queenPlaced = new WeakEvent<QueenPlacedEventArgs>();
+    private readonly WeakEvent<SolutionFoundEventArgs> _solutionFound = new WeakEvent<SolutionFoundEventArgs>();
+    private readonly WeakEvent<ProgressValueChangedEventArgs> _progressValueChanged = new WeakEvent<ProgressValueChangedEventArgs>();
 
     #endregion PrivateMethods
 }
