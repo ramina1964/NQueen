@@ -1,12 +1,43 @@
 ﻿namespace NQueen.Kernel;
 
-public class BackTracking : ISolver
+public class BackTracking : ISolver, IDisposable
 {
-    public BackTracking(ISolutionDev solutionDev, sbyte boardSize = Utility.DefaultBoardSize)
+    public BackTracking(
+        ISolutionDev solutionDev,
+        sbyte boardSize = Utility.DefaultBoardSize)
     {
         Initialize(boardSize);
         SolutionDev = solutionDev;
     }
+
+    #region IDisposable Implementation
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                // Unsubscribe event handlers
+                QueenPlaced = null;
+                SolutionFound = null;
+                ProgressValueChanged = null;
+
+                // Clear collections
+                Solutions?.Clear();
+            }
+
+            _disposed = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    #endregion IDisposable Implementation
 
     #region ISolverBackEnd
 
@@ -36,6 +67,11 @@ public class BackTracking : ISolver
     public event EventHandler<SolutionFoundEventArgs> SolutionFound;
     public event EventHandler<ProgressValueChangedEventArgs> ProgressValueChanged;
     #endregion ISolverUI
+
+    public sbyte GetHalfSize() =>
+        (sbyte)(BoardSize % 2 == 0
+        ? BoardSize / 2
+        : BoardSize / 2 + 1);
 
     public void OnProgressChanged(object sender, ProgressValueChangedEventArgs e) =>
         ProgressValueChanged?.Invoke(this, e);
@@ -269,10 +305,7 @@ public class BackTracking : ISolver
         OnProgressChanged(this, new ProgressValueChangedEventArgs(ProgressValue));
     }
 
-    public sbyte GetHalfSize() =>
-        (sbyte)(BoardSize % 2 == 0
-        ? BoardSize / 2
-        : BoardSize / 2 + 1);
+    private bool _disposed = false;
 
     #endregion PrivateMethods
 }
