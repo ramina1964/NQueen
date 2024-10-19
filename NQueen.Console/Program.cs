@@ -1,4 +1,6 @@
-﻿namespace NQueen.ConsoleApp;
+﻿using System;
+
+namespace NQueen.ConsoleApp;
 
 // In order to enable dotnet-counters you need to install dotnet-counters tool with the following command (use cmd)
 // dotnet tool install --global dotnet-counters
