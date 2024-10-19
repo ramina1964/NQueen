@@ -1,15 +1,15 @@
 ﻿namespace NQueen.ConsoleApp;
 
-// In order to enable dotnet-counters you need to install dotnet-counters tool with the following command (use cmd)
-// dotnet tool install --global dotnet-counters
+// In order to enable dotnet-counters you need to install dotnet-counters tool with the
+// following command (use cmd) dotnet tool install --global dotnet-counters
 // link: https://docs.microsoft.com/en-us/dotnet/core/diagnostics/dotnet-counters#:~:text=dotnet-counters%20is%20a%20performance%20monitoring%20tool%20for%20ad-hoc,values%20that%20are%20published%20via%20the%20EventCounter%20API.
 
 public class Program
 {
     public static void Main(string[] args)
     {
-        // The using statements at the beginning of the following two lines ensure that host and scope
-        // are properly disposed of, which helps prevent memory leaks.
+        // The "using" statements at the beginning of the following two lines ensure that "host" and
+        // "scope" variables are properly disposed of, preventing memory leaks.
         using IHost host = CreateHostBuilder(args).Build();
         using var scope = host.Services.CreateScope();
 
