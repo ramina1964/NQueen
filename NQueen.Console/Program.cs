@@ -1,4 +1,6 @@
-﻿namespace NQueen.ConsoleApp;
+﻿using System;
+
+namespace NQueen.ConsoleApp;
 
 // In order to enable dotnet-counters you need to install dotnet-counters tool with the following command (use cmd)
 // dotnet tool install --global dotnet-counters
@@ -6,8 +8,10 @@
 
 public class Program
 {
-    static void Main(string[] args)
+    public static void Main(string[] args)
     {
+        // The using statements at the beginning of the following two lines ensure that host and scope
+        // are properly disposed of, which helps prevent memory leaks.
         using IHost host = CreateHostBuilder(args).Build();
         using var scope = host.Services.CreateScope();
 
@@ -19,7 +23,7 @@ public class Program
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"An error has occured: { ex.Message }");
+            Console.WriteLine($"An error has occurred: {ex.Message}");
             Console.ReadLine();
         }
 
@@ -30,90 +34,110 @@ public class Program
         OutputBanner();
         LaunchConsoleMonitor();
 
-        // If console app is started without args:
         if (args.Length == 0)
-        {
-            while (!Commands.All(e => e.Value))
-            {
-                var required = GetRequiredCommand();
-                if (required == "RUN")
-                {
-                    ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, $"\nSolver is running ...");
-                    DispatchCommands.ProcessCommand("RUN", "ok");
-                    var runAgain = true;
-                    while (runAgain)
-                    {
-                        Console.WriteLine("\nRun again to debug memory usage?");
-                        Console.WriteLine("\tYes or No\n");
-                        var runAgainAnswer = Console.ReadLine().Trim().ToLower();
-                        if (runAgainAnswer.Equals("yes") || runAgainAnswer.Equals("y"))
-                        {
-                            Console.WriteLine();
-                            DispatchCommands.ProcessCommand("RUN", "ok");
-                        }
-                        else
-                        { runAgain = false; }
-                    }
-                    break;
-                }
-
-                ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, $"Enter a {required} ");
-                Console.WriteLine($"\t{AvailableCommands[required]}");
-                var userInput = Console.ReadLine().Trim().ToLower();
-                if (userInput.Equals("help") || userInput.Equals("-h"))
-                { HelpCommands.ProcessHelpCommand(userInput); }
-                else
-                {
-                    var ok = DispatchCommands.ProcessCommand(required, userInput);
-                    if (ok)
-                    {
-                        Commands[required] = true;
-                        if (required.Trim().ToUpper() == "BOARDSIZE")
-                        { BoardSize = Convert.ToSByte(userInput); }
-                    }
-                }
-            }
-        }
-
-        // Console app is started with custom args:
+            ProcessCommandsInteractively();
         else
+            ProcessCommandsFromArgs(args);
+    }
+
+    public static Dictionary<string, bool> Commands { get; set; }
+
+    public static Dictionary<string, string> AvailableCommands { get; set; }
+
+    private static void ProcessCommandsInteractively()
+    {
+        while (Commands.All(e => e.Value) == false)
         {
-            for (var i = 0; i < args.Length; i++)
+            var required = GetRequiredCommand();
+            if (required == "RUN")
             {
-                (string key, string value) = ParseInput(args[i]);
-                var ok = DispatchCommands.ProcessCommand(key, value);
+                RunSolver();
+                break;
+            }
+
+            ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, $"Enter a {required} ");
+            Console.WriteLine($"\t{AvailableCommands[required]}");
+            var userInput = Console.ReadLine().Trim().ToLower();
+            if (userInput.Equals("help") || userInput.Equals("-h"))
+            {
+                HelpCommands.ProcessHelpCommand(userInput);
+            }
+            else
+            {
+                var ok = DispatchCommands.ProcessCommand(required, userInput);
                 if (ok)
                 {
-                    Commands[key.ToUpper()] = true;
-                    if (key.Equals("BOARDSIZE"))
+                    Commands[required] = true;
+                    if (required.Trim().ToUpper() == "BOARDSIZE")
                     {
-                        BoardSize = Convert.ToSByte(value);
+                        BoardSize = Convert.ToSByte(userInput);
                     }
                 }
-            }
-
-            if (GetRequiredCommand() == "RUN")
-            {
-                ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, "Solver is running:\n");
-                DispatchCommands.ProcessCommand("RUN", "ok");
             }
         }
     }
 
-    static (string feature, string value) ParseInput(string msg)
+    private static void ProcessCommandsFromArgs(string[] args)
+    {
+        for (var i = 0; i < args.Length; i++)
+        {
+            (string key, string value) = ParseInput(args[i]);
+            var ok = DispatchCommands.ProcessCommand(key, value);
+            if (ok)
+            {
+                Commands[key.ToUpper()] = true;
+                if (key.Equals("BOARDSIZE"))
+                {
+                    BoardSize = Convert.ToSByte(value);
+                }
+            }
+        }
+
+        if (GetRequiredCommand() == "RUN")
+        {
+            ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, "Solver is running:\n");
+            DispatchCommands.ProcessCommand("RUN", "ok");
+        }
+    }
+
+    // This method encapsulates the logic for running the solver and asking the user if they want
+    // to run it again.This avoids code duplication and makes the code more maintainable.
+    private static void RunSolver()
+    {
+        ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, $"\nSolver is running ...");
+        DispatchCommands.ProcessCommand("RUN", "ok");
+        var runAgain = true;
+        while (runAgain)
+        {
+            Console.WriteLine("\nRun again to debug memory usage?");
+            Console.WriteLine("\tYes or No\n");
+            var runAgainAnswer = Console.ReadLine().Trim().ToLower();
+            if (runAgainAnswer.Equals("yes") || runAgainAnswer.Equals("y"))
+            {
+                Console.WriteLine();
+                DispatchCommands.ProcessCommand("RUN", "ok");
+            }
+            else
+            {
+                runAgain = false;
+            }
+        }
+    }
+
+    private static (string feature, string value) ParseInput(string msg)
     {
         var option = msg.ToCharArray().TakeWhile(e => e != '=').ToArray();
         var n = msg[(option.Length + 1)..];
         return (new string(option), n);
     }
 
-    static string GetRequiredCommand()
+    private static string GetRequiredCommand()
     {
         var cmd = Commands.Where(e => !e.Value).Select(e => e.Key).FirstOrDefault();
         return cmd ?? "";
     }
 
-    const string BannerString =
+    private const string _bannerString =
                 @"
                         |====================================================|
                         | NQueen.ConsoleApp - A .NET 8.0 Console Application |
@@ -128,11 +152,7 @@ public class Program
                         |====================================================|
                     ";
 
-    public static Dictionary<string, bool> Commands { get; set; }
-
-    public static Dictionary<string, string> AvailableCommands { get; set; }
-
-    static void InitCommands()
+    private static void InitCommands()
     {
         Commands = new Dictionary<string, bool>
         {
@@ -147,9 +167,9 @@ public class Program
         };
     }
 
-    static void OutputBanner()
+    private static void OutputBanner()
     {
-        string[] bannerLines = BannerString.Split("\r\n");
+        string[] bannerLines = _bannerString.Split("\r\n");
         foreach (string line in bannerLines)
         {
             if (line.StartsWith("| NQueen"))
@@ -168,7 +188,7 @@ public class Program
         }
     }
 
-    static void LaunchConsoleMonitor(string extraSourceNames = "")
+    private static void LaunchConsoleMonitor(string extraSourceNames = "")
     {
         if (DOTNETCOUNTERSENABLED)
         {
@@ -188,7 +208,7 @@ public class Program
 
     private static sbyte BoardSize { get; set; }
 
-    static IHostBuilder CreateHostBuilder(string[] args) =>
+    private static IHostBuilder CreateHostBuilder(string[] args) =>
         Host.CreateDefaultBuilder(args)
         .ConfigureServices((_, services) =>
         {
