@@ -62,7 +62,8 @@ public static class DispatchCommands
                 if (ok)
                 {
                     Commands[required] = true;
-                    if (required.Trim().ToUpper() == CommandConstants.BoardSize)
+                    if (required.Trim().Equals(CommandConstants.BoardSize,
+                        StringComparison.CurrentCultureIgnoreCase))
                     {
                         BoardSize = Convert.ToSByte(userInput);
                     }
@@ -330,7 +331,7 @@ public static class DispatchCommands
     private static string GetRequiredCommand()
     {
         var cmd = Commands.Where(e => !e.Value).Select(e => e.Key).FirstOrDefault();
-        return cmd ?? "";
+        return cmd ?? string.Empty;
     }
 
     private const string _bannerString =
@@ -348,5 +349,4 @@ public static class DispatchCommands
                         |====================================================|
                     ";
     #endregion PrivateMethods
-
 }
