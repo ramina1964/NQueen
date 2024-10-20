@@ -14,13 +14,12 @@ public static class DispatchCommands
 
     public static bool IsSolutionModeAll => SolutionMode == SolutionMode.All;
 
-    public static Dictionary<string, bool> Commands { get; set; }
+    public static Dictionary<string, bool> Commands { get; set; } = [];
 
-    public static Dictionary<string, string> AvailableCommands { get; set; }
+    public static Dictionary<string, string> AvailableCommands { get; set; } = [];
 
     public static bool ProcessCommand(string key, string value)
     {
-        var returnValue = false;
         key = key.Replace("  ", " ").TrimEnd().ToUpper();
 
         if (string.IsNullOrEmpty(key))
@@ -34,7 +33,7 @@ public static class DispatchCommands
             CommandConstants.Run => RunApp().Result,
             CommandConstants.SolutionMode => CheckSolutionMode(value),
             CommandConstants.BoardSize => CheckBoardSize(value),
-            _ => returnValue,
+            _ => false
         };
     }
 
@@ -58,12 +57,11 @@ public static class DispatchCommands
             }
             else
             {
-                var ok = ProcessCommand(required, userInput);
-                if (ok)
+                if (ProcessCommand(required, userInput))
                 {
                     Commands[required] = true;
-                    if (required.Trim().Equals(CommandConstants.BoardSize,
-                        StringComparison.CurrentCultureIgnoreCase))
+                    if (required.Equals(
+                        CommandConstants.BoardSize, StringComparison.CurrentCultureIgnoreCase))
                     {
                         BoardSize = Convert.ToSByte(userInput);
                     }
@@ -74,11 +72,10 @@ public static class DispatchCommands
 
     public static void ProcessCommandsFromArgs(string[] args)
     {
-        for (var i = 0; i < args.Length; i++)
+        foreach (var arg in args)
         {
-            (string key, string value) = ParseInput(args[i]);
-            var ok = ProcessCommand(key, value);
-            if (ok)
+            (string key, string value) = ParseInput(arg);
+            if (ProcessCommand(key, value))
             {
                 Commands[key.ToUpper()] = true;
                 if (key.Equals(CommandConstants.BoardSize))
@@ -97,7 +94,7 @@ public static class DispatchCommands
 
     public static void ShowExitError(string errorString)
     {
-        ConsoleColor priorColor = Console.ForegroundColor;
+        var priorColor = Console.ForegroundColor;
         Console.ForegroundColor = ConsoleColor.Red;
         Console.Write("ERROR: ");
         Console.ForegroundColor = priorColor;
@@ -123,12 +120,12 @@ public static class DispatchCommands
 
     public static void OutputBanner()
     {
-        string[] bannerLines = _bannerString.Split("\r\n");
-        foreach (string line in bannerLines)
+        var bannerLines = _bannerString.Split("\r\n");
+        foreach (var line in bannerLines)
         {
             if (line.StartsWith("| NQueen"))
             {
-                ConsoleColor defaultColor = Console.ForegroundColor;
+                var defaultColor = Console.ForegroundColor;
                 Console.Write("|");
                 Console.ForegroundColor = ConsoleColor.Magenta;
                 Console.Write(line[1..^1]);
@@ -146,11 +143,12 @@ public static class DispatchCommands
     {
         if (HelpCommands.DotNetCountersEnabled)
         {
-            int processID = Environment.ProcessId;
-            ProcessStartInfo ps = new()
+            var processID = Environment.ProcessId;
+            var ps = new ProcessStartInfo()
             {
                 FileName = "dotnet-counters",
-                Arguments = $"monitor --process-id {processID} NQueen.ConsoleApp System.Runtime " + extraSourceNames,
+                Arguments = $"monitor --process-id {processID} NQueen.ConsoleApp System.Runtime " +
+                    extraSourceNames,
                 UseShellExecute = true
             };
             Process.Start(ps);
@@ -159,8 +157,8 @@ public static class DispatchCommands
 
     public static void RunSolver()
     {
-        ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, $"\nSolver is running ...");
-        DispatchCommands.ProcessCommand(CommandConstants.Run, "ok");
+        ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, "\nSolver is running ...");
+        ProcessCommand(CommandConstants.Run, "ok");
         var runAgain = true;
         while (runAgain)
         {
@@ -170,7 +168,7 @@ public static class DispatchCommands
             if (runAgainAnswer.Equals("yes") || runAgainAnswer.Equals("y"))
             {
                 Console.WriteLine();
-                DispatchCommands.ProcessCommand(CommandConstants.Run, "ok");
+                ProcessCommand(CommandConstants.Run, "ok");
             }
             else
             {
@@ -181,7 +179,7 @@ public static class DispatchCommands
 
     public static (string feature, string value) ParseInput(string msg)
     {
-        var option = msg.ToCharArray().TakeWhile(e => e != '=').ToArray();
+        var option = msg.TakeWhile(e => e != '=').ToArray();
         var n = msg[(option.Length + 1)..];
         return (new string(option), n);
     }
@@ -189,7 +187,7 @@ public static class DispatchCommands
     #region PrivateMethods
     private static async Task<bool> RunApp()
     {
-        ISolutionDev solutionDev = new SolutionDev();
+        var solutionDev = new SolutionDev();
         var solver = new BackTracking(solutionDev);
 
         var simulationResult = await solver
@@ -204,7 +202,7 @@ public static class DispatchCommands
         }
 
         var simTitle = $"Summary of the Results for BoardSize =" +
-            $"{ BoardSize } and DisplayMode = { SolutionMode }";
+            $"{BoardSize} and DisplayMode = {SolutionMode}";
 
         ConsoleUtils.WriteLineColored(ConsoleColor.Blue, $"\n{simTitle}:");
 
@@ -223,13 +221,13 @@ public static class DispatchCommands
         var message = "\tIMPORTANT - You need to set default fonts (in this console window) to SimSun-ExtB in order to show unicode characters.\n";
         ConsoleUtils.WriteLineColored(ConsoleColor.Gray, message);
         Console.WriteLine(board);
-        
+
         return true;
     }
 
     private static bool CheckSolutionMode(string value)
     {
-        if (!int.TryParse(value, out int userChoice))
+        if (!int.TryParse(value, out var userChoice))
         {
             ShowExitError("Invalid Integer. Try again.");
             return false;
@@ -249,20 +247,42 @@ public static class DispatchCommands
 
     private static bool CheckBoardSize(string value)
     {
-        if (sbyte.TryParse(value, out sbyte size) == false)
+        if (TryParseBoardSize(value, out sbyte size) == false)
+            return false;
+
+        if (IsValidBoardSize(size) == false)
+
+            return false;
+
+        BoardSize = size;
+        if (IsBoardSizeWithinLimits() == false)
+            return false;
+
+        return true;
+    }
+
+    private static bool TryParseBoardSize(string value, out sbyte size)
+    {
+        if (sbyte.TryParse(value, out size) == false == false)
         {
             ShowExitError("Invalid number. Try again.");
             return false;
         }
+        return true;
+    }
 
+    private static bool IsValidBoardSize(sbyte size)
+    {
         if (size < 1)
         {
             ShowExitError("BoardSize must be a positive number.");
             return false;
         }
+        return true;
+    }
 
-        BoardSize = size;
-
+    private static bool IsBoardSizeWithinLimits()
+    {
         if (IsSolutionModeSingle && BoardSize > Utility.MaxBoardSizeForSingleSolution)
         {
             ShowExitError(Utility.SizeTooLargeForSingleSolutionMsg);
