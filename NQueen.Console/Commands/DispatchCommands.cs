@@ -22,24 +22,28 @@ public static class DispatchCommands
     {
         var returnValue = false;
         key = key.Replace("  ", " ").TrimEnd().ToUpper();
-        if (key == string.Empty)
-        { Environment.Exit(0); }
+
+        if (string.IsNullOrEmpty(key))
+        {
+            ShowExitError("Command key cannot be empty.");
+            return false;
+        }
 
         return key switch
         {
-            "RUN" => RunApp().Result,
-            "SOLUTIONMODE" => CheckSolutionMode(value),
-            "BOARDSIZE" => CheckBoardSize(value),
+            CommandConstants.Run => RunApp().Result,
+            CommandConstants.SolutionMode => CheckSolutionMode(value),
+            CommandConstants.BoardSize => CheckBoardSize(value),
             _ => returnValue,
         };
     }
 
     public static void ProcessCommandsInteractively()
     {
-        while (Commands.All(e => e.Value) == false)
+        while (Commands.Any(e => !e.Value))
         {
             var required = GetRequiredCommand();
-            if (required == "RUN")
+            if (required == CommandConstants.Run)
             {
                 RunSolver();
                 break;
@@ -54,11 +58,11 @@ public static class DispatchCommands
             }
             else
             {
-                var ok = DispatchCommands.ProcessCommand(required, userInput);
+                var ok = ProcessCommand(required, userInput);
                 if (ok)
                 {
                     Commands[required] = true;
-                    if (required.Trim().ToUpper() == "BOARDSIZE")
+                    if (required.Trim().ToUpper() == CommandConstants.BoardSize)
                     {
                         BoardSize = Convert.ToSByte(userInput);
                     }
@@ -72,25 +76,25 @@ public static class DispatchCommands
         for (var i = 0; i < args.Length; i++)
         {
             (string key, string value) = ParseInput(args[i]);
-            var ok = DispatchCommands.ProcessCommand(key, value);
+            var ok = ProcessCommand(key, value);
             if (ok)
             {
                 Commands[key.ToUpper()] = true;
-                if (key.Equals("BOARDSIZE"))
+                if (key.Equals(CommandConstants.BoardSize))
                 {
                     BoardSize = Convert.ToSByte(value);
                 }
             }
         }
 
-        if (GetRequiredCommand() == "RUN")
+        if (GetRequiredCommand() == CommandConstants.Run)
         {
             ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, "Solver is running:\n");
-            DispatchCommands.ProcessCommand("RUN", "ok");
+            ProcessCommand(CommandConstants.Run, "ok");
         }
     }
 
-    public static void ShowErrorExit(string errorString)
+    public static void ShowExitError(string errorString)
     {
         ConsoleColor priorColor = Console.ForegroundColor;
         Console.ForegroundColor = ConsoleColor.Red;
@@ -101,39 +105,18 @@ public static class DispatchCommands
         Environment.Exit(-1);
     }
 
-    private static string GetRequiredCommand()
-    {
-        var cmd = Commands.Where(e => !e.Value).Select(e => e.Key).FirstOrDefault();
-        return cmd ?? "";
-    }
-
-    private const string _bannerString =
-                @"
-                        |====================================================|
-                        | NQueen.ConsoleApp - A .NET 8.0 Console Application |
-                        |                                                    |
-                        | (c) 2022 - Ramin Anvar and Lars Erik Pedersen      |
-                        |                                                    |
-                        | App Developed for Solving N-Queen Problem          |
-                        | Using the Iterative Backtracking Algorithm         |
-                        |                                                    |
-                        | Version 0.60. Use help to list available commands. |
-                        |                                                    |
-                        |====================================================|
-                    ";
-
     public static void InitCommands()
     {
         Commands = new Dictionary<string, bool>
         {
-            ["SOLUTIONMODE"] = false,
-            ["BOARDSIZE"] = false,
-            ["RUN"] = false
+            [CommandConstants.SolutionMode] = false,
+            [CommandConstants.BoardSize] = false,
+            [CommandConstants.Run] = false
         };
         AvailableCommands = new Dictionary<string, string>
         {
-            ["SOLUTIONMODE"] = HelpCommands.NQUEEN_SOLUTIONMODE,
-            ["BOARDSIZE"] = HelpCommands.NQUEEN_BOARDSIZE,
+            [CommandConstants.SolutionMode] = HelpCommands.NQUEEN_SOLUTIONMODE,
+            [CommandConstants.BoardSize] = HelpCommands.NQUEEN_BOARDSIZE,
         };
     }
 
@@ -176,7 +159,7 @@ public static class DispatchCommands
     public static void RunSolver()
     {
         ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, $"\nSolver is running ...");
-        DispatchCommands.ProcessCommand("RUN", "ok");
+        DispatchCommands.ProcessCommand(CommandConstants.Run, "ok");
         var runAgain = true;
         while (runAgain)
         {
@@ -186,7 +169,7 @@ public static class DispatchCommands
             if (runAgainAnswer.Equals("yes") || runAgainAnswer.Equals("y"))
             {
                 Console.WriteLine();
-                DispatchCommands.ProcessCommand("RUN", "ok");
+                DispatchCommands.ProcessCommand(CommandConstants.Run, "ok");
             }
             else
             {
@@ -211,7 +194,9 @@ public static class DispatchCommands
         ISolutionDev solutionDev = new SolutionDev();
         var solver = new BackTracking(solutionDev);
 
-        var simulationResult = await solver.GetResultsAsync(BoardSize, SolutionMode, DisplayMode.Hide);
+        var simulationResult = await solver
+            .GetResultsAsync(BoardSize, SolutionMode, DisplayMode.Hide);
+
         var noOfSolutions = simulationResult.NoOfSolutions;
         var elapsedTime = simulationResult.ElapsedTimeInSec;
         if (noOfSolutions == 0)
@@ -220,7 +205,9 @@ public static class DispatchCommands
             return true;
         }
 
-        var simTitle = $"Summary of the Results for BoardSize = { BoardSize } and DisplayMode = { DispatchCommands.SolutionMode }";
+        var simTitle = $"Summary of the Results for BoardSize =" +
+            $"{ BoardSize } and DisplayMode = { SolutionMode }";
+
         ConsoleUtils.WriteLineColored(ConsoleColor.Blue, $"\n{simTitle}:");
 
         ConsoleUtils.WriteLineColored(ConsoleColor.Gray, $"Number of solutions found: {noOfSolutions,10}");
@@ -244,64 +231,55 @@ public static class DispatchCommands
 
     private static bool CheckSolutionMode(string value)
     {
-        var isValid = int.TryParse(value, out int userChoice);
-        if (!isValid)
+        if (!int.TryParse(value, out int userChoice))
         {
-            Console.WriteLine("Invalid Integer. Try again.\n");
+            ShowExitError("Invalid Integer. Try again.");
             return false;
         }
 
-        switch (userChoice)
+        SolutionMode = userChoice switch
         {
-            case 0:
-                SolutionMode = SolutionMode.Single;
-                return true;
+            0 => SolutionMode.Single,
+            1 => SolutionMode.Unique,
+            2 => SolutionMode.All,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(value), "Invalid Option: Try 0, 1, or 2.")
+        };
 
-            case 1:
-                SolutionMode = SolutionMode.Unique;
-                return true;
-
-            case 2:
-                SolutionMode = SolutionMode.All;
-                return true;
-
-            default:
-                Console.WriteLine("Invalid Option: Try 0, 1, or 2.");
-                return false;
-        }
+        return true;
     }
 
     private static bool CheckBoardSize(string value)
     {
-        var isValidNo = sbyte.TryParse(value, out sbyte size);
-        if (!isValidNo)
+        if (sbyte.TryParse(value, out sbyte size) == false)
         {
-            Console.WriteLine("Invalid number. Try again.");
+            ShowExitError("Invalid number. Try again.");
             return false;
         }
 
-        BoardSize = Convert.ToSByte(size);
-        if (BoardSize < 1)
+        if (size < 1)
         {
-            Console.WriteLine("BoardSize must be a positive number.");
+            ShowExitError("BoardSize must be a positive number.");
             return false;
         }
+
+        BoardSize = size;
 
         if (IsSolutionModeSingle && BoardSize > Utility.MaxBoardSizeForSingleSolution)
         {
-            Console.WriteLine(Utility.SizeTooLargeForSingleSolutionMsg);
+            ShowExitError(Utility.SizeTooLargeForSingleSolutionMsg);
             return false;
         }
 
         if (IsSolutionModeUnique && BoardSize > Utility.MaxBoardSizeForUniqueSolutions)
         {
-            Console.WriteLine(Utility.SizeTooLargeForUniqueSolutionsMsg);
+            ShowExitError(Utility.SizeTooLargeForUniqueSolutionsMsg);
             return false;
         }
 
         if (IsSolutionModeAll && BoardSize > Utility.MaxBoardSizeForAllSolutions)
         {
-            Console.WriteLine(Utility.SizeTooLargeForAllSolutionsMsg);
+            ShowExitError(Utility.SizeTooLargeForAllSolutionsMsg);
             return false;
         }
 
@@ -349,6 +327,26 @@ public static class DispatchCommands
         return board;
     }
 
+    private static string GetRequiredCommand()
+    {
+        var cmd = Commands.Where(e => !e.Value).Select(e => e.Key).FirstOrDefault();
+        return cmd ?? "";
+    }
+
+    private const string _bannerString =
+                @"
+                        |====================================================|
+                        | NQueen.ConsoleApp - A .NET 8.0 Console Application |
+                        |                                                    |
+                        | (c) 2022 - Ramin Anvar and Lars Erik Pedersen      |
+                        |                                                    |
+                        | App Developed for Solving N-Queen Problem          |
+                        | Using the Iterative Backtracking Algorithm         |
+                        |                                                    |
+                        | Version 0.60. Use help to list available commands. |
+                        |                                                    |
+                        |====================================================|
+                    ";
     #endregion PrivateMethods
 
 }
