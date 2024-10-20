@@ -71,4 +71,7 @@ public class HelpCommands
                 Console.WriteLine(line);
         }
     }
+
+    // This is used for enabling dotnet-counters performance utility when you run the application
+    public static readonly bool DotNetCountersEnabled = false;
 }

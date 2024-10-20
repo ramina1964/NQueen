@@ -62,7 +62,8 @@ public static class DispatchCommands
                 if (ok)
                 {
                     Commands[required] = true;
-                    if (required.Trim().ToUpper() == CommandConstants.BoardSize)
+                    if (required.Trim().Equals(CommandConstants.BoardSize,
+                        StringComparison.CurrentCultureIgnoreCase))
                     {
                         BoardSize = Convert.ToSByte(userInput);
                     }
@@ -143,7 +144,7 @@ public static class DispatchCommands
 
     public static void LaunchConsoleMonitor(string extraSourceNames = "")
     {
-        if (DOTNETCOUNTERSENABLED)
+        if (HelpCommands.DotNetCountersEnabled)
         {
             int processID = Environment.ProcessId;
             ProcessStartInfo ps = new()
@@ -184,9 +185,6 @@ public static class DispatchCommands
         var n = msg[(option.Length + 1)..];
         return (new string(option), n);
     }
-
-    // This is used for enabling dotnet-counters performance utility when you run the application
-    private static readonly bool DOTNETCOUNTERSENABLED = false;
 
     #region PrivateMethods
     private static async Task<bool> RunApp()
@@ -330,7 +328,7 @@ public static class DispatchCommands
     private static string GetRequiredCommand()
     {
         var cmd = Commands.Where(e => !e.Value).Select(e => e.Key).FirstOrDefault();
-        return cmd ?? "";
+        return cmd ?? string.Empty;
     }
 
     private const string _bannerString =
@@ -348,5 +346,4 @@ public static class DispatchCommands
                         |====================================================|
                     ";
     #endregion PrivateMethods
-
 }
