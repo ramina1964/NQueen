@@ -50,9 +50,7 @@ public class BackTracking : ISolver, IDisposable
         SolutionMode = solutionMode;
         DisplayMode = displayMode;
 
-        var ret = Task.Factory.StartNew(GetResultsAsync);
-        
-        return await (await ret);
+        return await GetResultsAsync();
     }
 
     #endregion ISolverBackEnd
