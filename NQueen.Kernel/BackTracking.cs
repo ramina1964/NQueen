@@ -78,7 +78,8 @@ public class BackTracking : ISolver, IDisposable
 
     public DisplayMode DisplayMode { get; set; }
 
-    public HashSet<sbyte[]> Solutions { get; set; }
+    public HashSet<sbyte[]> Solutions { get; set; } =
+        new HashSet<sbyte[]>(new SequenceEquality<sbyte>());
 
     public async Task<SimulationResults> GetResultsAsync()
     {
@@ -107,7 +108,7 @@ public class BackTracking : ISolver, IDisposable
 
     public sbyte HalfBoardSize { get; set; }
 
-    public sbyte[] QueenList { get; set; }
+    public sbyte[] QueenPositions { get; set; } = [];
 
     public int SolutionCountPerUpdate =>
         Utility.SolutionCountPerUpdate(BoardSize);
@@ -124,8 +125,7 @@ public class BackTracking : ISolver, IDisposable
         IsSolverCanceled = false;
         HalfBoardSize = GetHalfSize();
 
-        QueenList = Enumerable.Repeat((sbyte)-1, BoardSize).ToArray();
-        Solutions = new HashSet<sbyte[]>(new SequenceEquality<sbyte>());
+        QueenPositions = Enumerable.Repeat((sbyte)-1, BoardSize).ToArray();
     }
 
     private async Task<IEnumerable<Solution>> SolveNQueenProblem()
@@ -167,7 +167,7 @@ public class BackTracking : ISolver, IDisposable
                 return;
 
             // All solutions are found and registered.
-            if (QueenList[0] == HalfBoardSize)
+            if (QueenPositions[0] == HalfBoardSize)
                 return;
 
             // A new solution is found.
@@ -178,7 +178,7 @@ public class BackTracking : ISolver, IDisposable
                     BoardSize = BoardSize,
                     SolutionMode = SolutionMode,
                     Solutions = Solutions,
-                    QueenPositions = [.. QueenList]
+                    QueenPositions = [.. QueenPositions]
                 };
                 NotifySolutionFound();
                 SolutionDeveloper.UpdateSolutions(updateDTO);
@@ -190,10 +190,10 @@ public class BackTracking : ISolver, IDisposable
                 continue;
             }
 
-            QueenList[colNo] = FindQueenPosition(colNo);
+            QueenPositions[colNo] = FindQueenPosition(colNo);
 
             // The queen can not be placed in this column. Go one column back and try to place it upward in the next iteration.
-            if (QueenList[colNo] == -1)
+            if (QueenPositions[colNo] == -1)
             {
                 colNo--;
                 continue;
@@ -202,7 +202,7 @@ public class BackTracking : ISolver, IDisposable
             // A new queen is placed.
             if (DisplayMode == DisplayMode.Visualize)
             {
-                OnQueenPlaced(this, new QueenPlacedEventArgs(QueenList));
+                OnQueenPlaced(this, new QueenPlacedEventArgs(QueenPositions));
                 await Task.Delay(DelayInMilliseconds);
             }
 
@@ -236,19 +236,19 @@ public class BackTracking : ISolver, IDisposable
             NotifyProgressChanged();
 
         // Activate this code in case of IsVisulaized == true.
-        if (DisplayMode == DisplayMode.Visualize) SolutionFound(this, new SolutionFoundEventArgs(QueenList));
+        if (DisplayMode == DisplayMode.Visualize) SolutionFound(this, new SolutionFoundEventArgs(QueenPositions));
     }
 
     // Return the first available row for the queen in column "colNo", -1 if impossible.
     private sbyte FindQueenPosition(sbyte colNo)
     {
         colNo = (sbyte)Math.Min(colNo, BoardSize - 1);
-        for (sbyte pos = (sbyte)(QueenList[colNo] + 1); pos < BoardSize; pos++)
+        for (sbyte pos = (sbyte)(QueenPositions[colNo] + 1); pos < BoardSize; pos++)
         {
             var isValid = true;
             for (int j = 0; j < colNo; j++)
             {
-                int lhs = Math.Abs(pos - QueenList[j]);
+                int lhs = Math.Abs(pos - QueenPositions[j]);
                 int rhs = Math.Abs(colNo - j);
                 if (0 != lhs && lhs != rhs) continue;
 
@@ -264,7 +264,7 @@ public class BackTracking : ISolver, IDisposable
 
     private void NotifyProgressChanged()
     {
-        ProgressValue = Math.Round(100.0 * QueenList[0] / HalfBoardSize, 1);
+        ProgressValue = Math.Round(100.0 * QueenPositions[0] / HalfBoardSize, 1);
         OnProgressChanged(this, new ProgressValueChangedEventArgs(ProgressValue));
     }
 
