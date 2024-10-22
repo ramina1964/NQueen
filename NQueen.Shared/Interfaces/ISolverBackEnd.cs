@@ -2,7 +2,7 @@
 
 public interface ISolverBackEnd
 {
-    bool CancelSolver { get; set; }
+    bool IsSolverCanceled { get; set; }
 
     Task<SimulationResults> GetResultsAsync(sbyte boardSize, SolutionMode solutionMode,
         DisplayMode displayMode = DisplayMode.Hide);

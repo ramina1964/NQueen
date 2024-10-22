@@ -1,6 +1,6 @@
 ﻿namespace NQueen.Shared.Interfaces;
 
-public interface ISolutionDev
+public interface ISolutionDeveloper
 {
     void UpdateSolutions(SolutionUpdateDTO solutionUpdateDTO);
 }

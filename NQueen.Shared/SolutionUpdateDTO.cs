@@ -6,7 +6,7 @@ public class SolutionUpdateDTO
 
     public SolutionMode SolutionMode { get; set; }
 
-    public sbyte[] QueenList { get; set; }
+    public sbyte[] QueenPositions { get; set; }
 
     public HashSet<sbyte[]> Solutions { get; set; }
 

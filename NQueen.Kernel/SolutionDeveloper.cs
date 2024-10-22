@@ -1,15 +1,15 @@
 ﻿namespace NQueen.Kernel;
 
-public class SolutionDev : ISolutionDev
+public class SolutionDeveloper : ISolutionDeveloper
 {
-    public SolutionDev() { } 
+    public SolutionDeveloper() { } 
 
     // This is used in unit testing to send in board size and solution mode.
-    public SolutionDev(SolutionUpdateDTO dto) => UpdateDTO = dto;
+    public SolutionDeveloper(SolutionUpdateDTO dto) => UpdateDTO = dto;
 
     public void UpdateSolutions(SolutionUpdateDTO dto)
     {
-        var queenList = dto.QueenList;
+        var queenList = dto.QueenPositions;
 
         // For SolutionMode.Single:
         if (dto.SolutionMode == SolutionMode.Single)

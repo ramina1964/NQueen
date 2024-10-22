@@ -478,7 +478,7 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
 
     private bool CanSimulate() => IsValid && IsIdle;
 
-    private void Cancel() => Solver.CancelSolver = true;
+    private void Cancel() => Solver.IsSolverCanceled = true;
 
     private bool CanCancel() => IsSimulating;
 
