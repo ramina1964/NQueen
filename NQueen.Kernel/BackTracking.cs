@@ -11,32 +11,32 @@ public class BackTracking : ISolver, IDisposable
     }
 
     #region IDisposable Implementation
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposed)
-        {
-            if (disposing)
-            {
-                // Unsubscribe event handlers
-                QueenPlaced = null;
-                SolutionFound = null;
-                ProgressValueChanged = null;
-
-                // Clear collections
-                Solutions?.Clear();
-            }
-
-            _disposed = true;
-        }
-    }
-
     public void Dispose()
     {
         Dispose(true);
         GC.SuppressFinalize(this);
     }
 
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed == false)
+        {
+            _disposed = true;
+            if (disposing)
+                CleanupResources();
+        }
+    }
+
+    private void CleanupResources()
+    {
+        // Unsubscribe event handlers
+        QueenPlaced = null;
+        SolutionFound = null;
+        ProgressValueChanged = null;
+
+        // Clear collections
+        Solutions?.Clear();
+    }
     #endregion IDisposable Implementation
 
     #region ISolverBackEnd
