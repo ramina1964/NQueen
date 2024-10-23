@@ -268,7 +268,6 @@ public class BackTracking : ISolver, IDisposable
         OnProgressChanged(this, new ProgressValueChangedEventArgs(ProgressValue));
     }
 
-    private bool _disposed = false;
-
+    private bool _disposed;
     #endregion PrivateMethods
 }
