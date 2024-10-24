@@ -341,7 +341,6 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
             { UpdateButtonFunctionality(); }
         }
     }
-
     #endregion PublicProperties
 
     #region PrivateMethods
