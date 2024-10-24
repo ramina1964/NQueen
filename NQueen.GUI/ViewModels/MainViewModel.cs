@@ -1,6 +1,6 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposable
+public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
     public MainViewModel(ISolver solver)
     {
@@ -17,40 +17,6 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
         // Clear collections
         ObservableSolutions?.Clear();
     }
-
-    #region IDataErrorInfo
-    public string this[string columnName]
-    {
-        get
-        {
-            var validationFailure = InputViewModel
-                .Validate(this)
-                .Errors
-                .FirstOrDefault(item => item.PropertyName == columnName);
-
-            return validationFailure == null
-                   ? string.Empty
-                   : validationFailure.ErrorMessage;
-        }
-    }
-
-    public string Error
-    {
-        get
-        {
-            var results = InputViewModel.Validate(this);
-            if (results == null || results.Errors.Count == 0)
-            { return string.Empty; }
-
-            var errors = string
-                .Join(Environment.NewLine, results.Errors
-                .Select(x => x.ErrorMessage)
-                .ToArray());
-
-            return errors;
-        }
-    }
-    #endregion IDataErrorInfo
 
     #region PublicProperties
     public IAsyncRelayCommand SimulateCommand { get; set; }
