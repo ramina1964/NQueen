@@ -9,7 +9,14 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
     }
 
     // Dispose of any resources held by MainViewModel here, for example unsubscribe from events.
-    public void Dispose() => UnsubscribeFromSimulationEvents();
+    public void Dispose()
+    {
+        // Unsubscribe from events
+        UnsubscribeFromSimulationEvents();
+
+        // Clear collections
+        ObservableSolutions?.Clear();
+    }
 
     #region IDataErrorInfo
     public string this[string columnName]
