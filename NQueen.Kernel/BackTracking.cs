@@ -174,7 +174,7 @@ public class BackTracking : ISolver, IDisposable
                     BoardSize = BoardSize,
                     SolutionMode = SolutionMode,
                     Solutions = Solutions,
-                    QueenPositions = QueenList.ToArray()
+                    QueenPositions = [.. QueenList]
                 };
                 SolutionDeveloper.UpdateSolutions(updateDTO);
                 NotifySolutionFound();
@@ -219,7 +219,7 @@ public class BackTracking : ISolver, IDisposable
                     BoardSize = BoardSize,
                     SolutionMode = SolutionMode,
                     Solutions = Solutions,
-                    QueenPositions = QueenList.ToArray()
+                    QueenPositions = [.. QueenList]
                 };
                 NotifySolutionFound();
                 SolutionDeveloper.UpdateSolutions(updateDTO);

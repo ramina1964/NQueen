@@ -15,8 +15,7 @@ public class Program
         var services = scope.ServiceProvider;
         try
         {
-            // Example of instantiating an object of type BackTracking
-            scope.ServiceProvider.GetService<App>().Run();
+            services.GetService<App>()?.Run();
         }
         catch (Exception ex)
         {
