@@ -62,7 +62,7 @@ public class Chessboard : ObservableObject
             .ToList()
             .ForEach(sq => sq.ImagePath = null);
 
-    private static Brush FindColor(Position pos)
+    private static SolidColorBrush FindColor(Position pos)
     {
         var col = (pos.RowNo + pos.ColumnNo) % 2 == 1
             ? Colors.Wheat
