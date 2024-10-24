@@ -8,8 +8,15 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
         SubscribeToSimulationEvents();
     }
 
-    // Dispose of any resources held by MainViewModel here, for example unsubscribe from events.
-    public void Dispose() => UnsubscribeFromSimulationEvents();
+    // Dispose of resources held by MainViewModel, e.g. unsubscribing from events, clearing collections.
+    public void Dispose()
+    {
+        // Unsubscribe from events
+        UnsubscribeFromSimulationEvents();
+
+        // Clear collections
+        ObservableSolutions?.Clear();
+    }
 
     #region IDataErrorInfo
     public string this[string columnName]
@@ -32,7 +39,7 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
         get
         {
             var results = InputViewModel.Validate(this);
-            if (results == null || !results.Errors.Any())
+            if (results == null || results.Errors.Count == 0)
             { return string.Empty; }
 
             var errors = string
@@ -83,8 +90,8 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
 
     public Visibility ProgressLabelVisibility
     {
-        get => _ProgressLabelVisibility;
-        set => SetProperty(ref _ProgressLabelVisibility, value);
+        get => _progressLabelVisibility;
+        set => SetProperty(ref _progressLabelVisibility, value);
     }
 
     public IEnumerable<SolutionMode> SolutionModeList
@@ -249,13 +256,34 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
         }
     }
 
+    public string MemoryUsage
+    {
+        get => _memoryUsage;
+        set => SetProperty(ref _memoryUsage, value);
+    }
+
+    // Todo: Show application's memory usage in MB/GB based on its value being under/over 1GB.
+    public void UpdateMemoryUsage()
+    {
+        const double MB = 1024.0 * 1024;
+        const double GB = MB * 1024;
+        var currentProcess = System.Diagnostics.Process.GetCurrentProcess();
+        var memoryUsageInBytes = currentProcess.WorkingSet64;
+        var memoryUsageInMB = memoryUsageInBytes / MB;
+        var memoryUsageInGB = memoryUsageInBytes / GB;
+
+        MemoryUsage = memoryUsageInGB >= 1
+            ? $"{memoryUsageInGB:F2} GB"
+            : $"{memoryUsageInMB:F2} MB";
+    }
+
     public Chessboard Chessboard { get; set; }
 
     public void SetChessboard(double boardDimension)
     {
         BoardSizeText = BoardSize.ToString();
         Chessboard = new Chessboard { WindowWidth = boardDimension, WindowHeight = boardDimension };
-        Chessboard.CreateSquares(BoardSize, new List<SquareViewModel>());
+        Chessboard.CreateSquares(BoardSize, []);
 
         IsIdle = true;
         IsSimulating = false;
@@ -313,7 +341,6 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
             { UpdateButtonFunctionality(); }
         }
     }
-
     #endregion PublicProperties
 
     #region PrivateMethods
@@ -353,7 +380,8 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
         BoardSize = sbyte.Parse(BoardSizeText);
         NoOfSolutions = "0";
         ElapsedTimeInSec = $"{0,0:N1}";
-        Chessboard?.CreateSquares(BoardSize, new List<SquareViewModel>());
+        MemoryUsage = "0";
+        Chessboard?.CreateSquares(BoardSize, []);
     }
 
     private void ReleaseResources(SimulationStatus simulationStatus)
@@ -424,7 +452,7 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
 
     private void OnQueenPlaced(object sender, QueenPlacedEventArgs e)
     {
-        var sol = new Solution(e.Solution.ToArray(), 1);
+        var sol = new Solution([.. e.Solution], 1);
         var positions = sol
             .QueenList.Where(q => q > -1)
             .Select((item, index) => new Position((sbyte)index, item)).ToList();
@@ -435,7 +463,7 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
     private void OnSolutionFound(object sender, SolutionFoundEventArgs e)
     {
         var id = ObservableSolutions.Count + 1;
-        var sol = new Solution(e.Solution.ToArray(), id);
+        var sol = new Solution([.. e.Solution], id);
 
         _ = Application
             .Current
@@ -473,6 +501,10 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
         NoOfSolutions = $"{SimulationResults.NoOfSolutions,0:N0}";
         ElapsedTimeInSec = $"{SimulationResults.ElapsedTimeInSec,0:N1}";
         SelectedSolution = ObservableSolutions.FirstOrDefault();
+
+        // Update memory usage after the simulation process completes
+        UpdateMemoryUsage();
+
         ReleaseResources(SimulationStatus.Finished);
     }
 
@@ -497,7 +529,7 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
     #region PrivateFields
     private double _progressValue;
     private string _progressLabel;
-    private Visibility _ProgressLabelVisibility;
+    private Visibility _progressLabelVisibility;
     private Visibility _progressVisibility;
     private IEnumerable<SolutionMode> _enumSolutionModes;
     private IEnumerable<DisplayMode> _enumDisplayModes;
@@ -519,5 +551,7 @@ public sealed class MainViewModel : ObservableObject, IDataErrorInfo, IDisposabl
     private ISolver _solver;
     private Solution _selectedSolution;
     private string _solutionTitle;
+    private string _memoryUsage;
+
     #endregion PrivateFields
 }

@@ -9,7 +9,7 @@ public partial class App : Application
             {
                 services
                     .AddTransient<SolutionUpdateDTO>()
-                    .AddTransient<ISolutionDeveloper, SolutionDeveloper>()
+                    .AddTransient<ISolutionManager, SolutionManager>()
                     .AddTransient<ISolver, BackTracking>()
                     .AddTransient<MainViewModel>()
                     .AddTransient<MainView>();

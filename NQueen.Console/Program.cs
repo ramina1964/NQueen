@@ -15,8 +15,7 @@ public class Program
         var services = scope.ServiceProvider;
         try
         {
-            // Example of instantiating an object of type BackTracking
-            scope.ServiceProvider.GetService<App>().Run();
+            services.GetService<App>()?.Run();
         }
         catch (Exception ex)
         {
@@ -43,7 +42,7 @@ public class Program
         {
             services
                 .AddTransient<SolutionUpdateDTO>()
-                .AddTransient<ISolutionDeveloper, SolutionDeveloper>()
+                .AddTransient<ISolutionManager, SolutionManager>()
                 .AddTransient<ISolver, BackTracking>()
                 .AddTransient<App>();
         });

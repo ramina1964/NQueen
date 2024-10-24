@@ -3,11 +3,11 @@
 public class BackTracking : ISolver, IDisposable
 {
     public BackTracking(
-        ISolutionDeveloper solutionDeveloper,
+        ISolutionManager solutionManager,
         sbyte boardSize = Utility.DefaultBoardSize)
     {
         Initialize(boardSize);
-        SolutionDeveloper = solutionDeveloper;
+        SolutionManager = solutionManager;
     }
 
     #region IDisposable Implementation
@@ -40,46 +40,55 @@ public class BackTracking : ISolver, IDisposable
     #endregion IDisposable Implementation
 
     #region ISolverBackEnd
-
     public bool IsSolverCanceled { get; set; }
 
-    public async Task<SimulationResults> GetResultsAsync(sbyte boardSize,
-        SolutionMode solutionMode, DisplayMode displayMode = DisplayMode.Hide)
+    public async Task<SimulationResults> GetResultsAsync(
+        sbyte boardSize,
+        SolutionMode solutionMode,
+        DisplayMode displayMode = DisplayMode.Hide)
     {
         Initialize(boardSize);
         SolutionMode = solutionMode;
         DisplayMode = displayMode;
 
-        return await GetResultsAsync();
+        var ret = Task.Factory.StartNew(GetResultsAsync);
+        return await (await ret);
     }
-
     #endregion ISolverBackEnd
 
     #region ISolverUI
-
     public int DelayInMilliseconds { get; set; }
 
     public double ProgressValue { get; set; }
 
     public event EventHandler<QueenPlacedEventArgs> QueenPlaced;
+
     public event EventHandler<SolutionFoundEventArgs> SolutionFound;
+
     public event EventHandler<ProgressValueChangedEventArgs> ProgressValueChanged;
     #endregion ISolverUI
 
+    #region PublicProperties
+    public ISolutionManager SolutionManager { get; }
+
+    public sbyte BoardSize { get; set; }
+
+    public int NoOfSolutions => Solutions.Count;
+
+    public sbyte HalfBoardSize { get; set; }
+
+    public sbyte[] QueenList { get; set; }
+
+    public int SolutionCountPerUpdate =>
+        Utility.SolutionCountPerUpdate(BoardSize);
+    #endregion PublicProperties
+
+    #region PublicMethods
     public sbyte GetHalfSize() =>
-        (sbyte)(BoardSize % 2 == 0
-        ? BoardSize / 2
-        : BoardSize / 2 + 1);
+        (sbyte)(BoardSize % 2 == 0 ? BoardSize / 2 : BoardSize / 2 + 1);
 
     public void OnProgressChanged(object sender, ProgressValueChangedEventArgs e) =>
         ProgressValueChanged?.Invoke(this, e);
-
-    public SolutionMode SolutionMode { get; set; }
-
-    public DisplayMode DisplayMode { get; set; }
-
-    public HashSet<sbyte[]> Solutions { get; set; } =
-        new HashSet<sbyte[]>(new SequenceEquality<sbyte>());
 
     public async Task<SimulationResults> GetResultsAsync()
     {
@@ -98,25 +107,17 @@ public class BackTracking : ISolver, IDisposable
         };
     }
 
-    #region PublicProperties
+    public SolutionMode SolutionMode { get; set; }
 
-    public ISolutionDeveloper SolutionDeveloper { get; }
+    public DisplayMode DisplayMode { get; set; }
 
-    public sbyte BoardSize { get; set; }
+    public HashSet<sbyte[]> Solutions { get; set; }
+    #endregion
 
-    public int NoOfSolutions => Solutions.Count;
-
-    public sbyte HalfBoardSize { get; set; }
-
-    public sbyte[] QueenPositions { get; set; } = [];
-
-    public int SolutionCountPerUpdate =>
-        Utility.SolutionCountPerUpdate(BoardSize);
-
-    #endregion PublicProperties
-
+    #region Protected
     protected void OnQueenPlaced(object sender, QueenPlacedEventArgs e) =>
         QueenPlaced?.Invoke(this, e);
+    #endregion Protected
 
     #region PrivateMethods
     private void Initialize(sbyte boardSize = Utility.DefaultBoardSize)
@@ -124,40 +125,29 @@ public class BackTracking : ISolver, IDisposable
         BoardSize = boardSize;
         IsSolverCanceled = false;
         HalfBoardSize = GetHalfSize();
-
-        QueenPositions = Enumerable.Repeat((sbyte)-1, BoardSize).ToArray();
+        QueenList = Enumerable.Repeat((sbyte)-1, BoardSize).ToArray();
+        Solutions = new HashSet<sbyte[]>(new SequenceEquality<sbyte>());
     }
 
     private async Task<IEnumerable<Solution>> SolveNQueenProblem()
     {
-        // Iterative call to start the simulation
         switch (SolutionMode)
         {
             case SolutionMode.Single:
-                await FindSingleSolution(0);
+                await FindSingleOrUniqueSolutions(0, SolutionMode.Single);
                 break;
-
             case SolutionMode.Unique:
-                await FindUniqueSolutions(0);
+                await FindSingleOrUniqueSolutions(0, SolutionMode.Unique);
                 break;
-
             case SolutionMode.All:
                 await FindAllSolutions(0);
                 break;
-
             default:
                 throw new NotImplementedException();
         }
 
-        return Solutions
-               .Select((s, index) => new Solution(s, index + 1));
+        return Solutions.Select((s, index) => new Solution(s, index + 1));
     }
-
-    private async Task FindSingleSolution(sbyte colNo) =>
-        await FindSingleOrUniqueSolutions(colNo, SolutionMode.Single);
-
-    private async Task FindUniqueSolutions(sbyte colNo) =>
-        await FindSingleOrUniqueSolutions(colNo, SolutionMode.Unique);
 
     private async Task FindSingleOrUniqueSolutions(sbyte colNo, SolutionMode solutionMode)
     {
@@ -166,25 +156,28 @@ public class BackTracking : ISolver, IDisposable
             if (IsSolverCanceled)
                 return;
 
-            // All solutions are found and registered.
-            if (QueenPositions[0] == HalfBoardSize)
+            if (QueenList[0] == HalfBoardSize)
                 return;
 
-            // A new solution is found.
-            if (colNo == BoardSize)
+            if (colNo == BoardSize && solutionMode == SolutionMode.Single)
             {
-                var updateDTO = new SolutionUpdateDTO
+                UpdateSolutions();
+                NotifySolutionFound();
                 {
                     BoardSize = BoardSize,
                     SolutionMode = SolutionMode,
                     Solutions = Solutions,
-                    QueenPositions = [.. QueenPositions]
+                    QueenPositions = QueenList.ToArray()
                 };
+                SolutionDeveloper.UpdateSolutions(updateDTO);
+                return;
+            }
+
+            else if (colNo == BoardSize && solutionMode == SolutionMode.Unique)
+            {
+                UpdateSolutions();
                 NotifySolutionFound();
                 SolutionDeveloper.UpdateSolutions(updateDTO);
-
-                if (solutionMode == SolutionMode.Single)
-                    return;
 
                 colNo--;
                 continue;
@@ -192,14 +185,12 @@ public class BackTracking : ISolver, IDisposable
 
             QueenPositions[colNo] = FindQueenPosition(colNo);
 
-            // The queen can not be placed in this column. Go one column back and try to place it upward in the next iteration.
-            if (QueenPositions[colNo] == -1)
+            if (QueenList[colNo] == -1)
             {
                 colNo--;
                 continue;
             }
 
-            // A new queen is placed.
             if (DisplayMode == DisplayMode.Visualize)
             {
                 OnQueenPlaced(this, new QueenPlacedEventArgs(QueenPositions));
@@ -212,10 +203,8 @@ public class BackTracking : ISolver, IDisposable
 
     private async Task FindAllSolutions(sbyte colNo)
     {
-        // First, find all unique solutions
-        await FindUniqueSolutions(colNo);
+        await FindSingleOrUniqueSolutions(colNo, SolutionMode.Unique);
 
-        // Add the current solution and all of its counterparts to Solutions.
         foreach (var solution in Solutions.ToList())
         {
             var updateDTO = new SolutionUpdateDTO
@@ -223,10 +212,10 @@ public class BackTracking : ISolver, IDisposable
                 BoardSize = BoardSize,
                 SolutionMode = SolutionMode,
                 Solutions = Solutions,
-                QueenPositions = [.. solution]
+                QueenPositions = solution
             };
 
-            SolutionDeveloper.UpdateSolutions(updateDTO);
+            SolutionManager.UpdateSolutions(updateDTO);
         }
     }
 
@@ -235,31 +224,32 @@ public class BackTracking : ISolver, IDisposable
         if (NoOfSolutions % SolutionCountPerUpdate == 0)
             NotifyProgressChanged();
 
-        // Activate this code in case of IsVisulaized == true.
-        if (DisplayMode == DisplayMode.Visualize) SolutionFound(this, new SolutionFoundEventArgs(QueenPositions));
+        if (DisplayMode == DisplayMode.Visualize)
+            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(QueenList));
     }
 
-    // Return the first available row for the queen in column "colNo", -1 if impossible.
     private sbyte FindQueenPosition(sbyte colNo)
     {
         colNo = (sbyte)Math.Min(colNo, BoardSize - 1);
         for (sbyte pos = (sbyte)(QueenPositions[colNo] + 1); pos < BoardSize; pos++)
         {
-            var isValid = true;
-            for (int j = 0; j < colNo; j++)
-            {
-                int lhs = Math.Abs(pos - QueenPositions[j]);
-                int rhs = Math.Abs(colNo - j);
-                if (0 != lhs && lhs != rhs) continue;
-
-                isValid = false;
-                break;
-            }
-
-            if (isValid) return pos;
+            if (IsValidPosition(colNo, pos))
+                return pos;
         }
 
         return -1;
+    }
+
+    private bool IsValidPosition(sbyte colNo, sbyte pos)
+    {
+        for (int j = 0; j < colNo; j++)
+        {
+            int lhs = Math.Abs(pos - QueenList[j]);
+            int rhs = Math.Abs(colNo - j);
+            if (lhs == 0 || lhs == rhs)
+                return false;
+        }
+        return true;
     }
 
     private void NotifyProgressChanged()
@@ -268,6 +258,18 @@ public class BackTracking : ISolver, IDisposable
         OnProgressChanged(this, new ProgressValueChangedEventArgs(ProgressValue));
     }
 
-    private bool _disposed;
-    #endregion PrivateMethods
+    private void UpdateSolutions()
+    {
+        var updateDTO = new SolutionUpdateDTO
+        {
+            BoardSize = BoardSize,
+            SolutionMode = SolutionMode,
+            Solutions = Solutions,
+            QueenPositions = [.. QueenList]
+        };
+        SolutionManager.UpdateSolutions(updateDTO);
+    }
+    #endregion
+
+    private bool _disposed = false;
 }

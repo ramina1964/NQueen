@@ -11,7 +11,7 @@ public class RatioConverter : MarkupExtension, IValueConverter
         var size =
             System.Convert.ToDouble(value) * System.Convert
             .ToDouble(parameter, CultureInfo.InvariantCulture);
-        
+
         return size.ToString("G0", CultureInfo.InvariantCulture);
     }
 
