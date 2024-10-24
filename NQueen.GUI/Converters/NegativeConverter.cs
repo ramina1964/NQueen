@@ -26,7 +26,7 @@ public class NegativeConverter : MarkupExtension, IValueConverter
         };
 
         @switch[value.GetType()]();
-        
+
         return
             result
             ?? throw new NotImplementedException();

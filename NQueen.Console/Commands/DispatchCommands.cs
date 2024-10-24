@@ -62,7 +62,9 @@ public static class DispatchCommands
                 if (ok)
                 {
                     Commands[required] = true;
-                    if (required.Trim().ToUpper() == CommandConstants.BoardSize)
+                    if (required.Trim().Equals(
+                        CommandConstants.BoardSize,
+                        StringComparison.CurrentCultureIgnoreCase))
                     {
                         BoardSize = Convert.ToSByte(userInput);
                     }
@@ -143,7 +145,7 @@ public static class DispatchCommands
 
     public static void LaunchConsoleMonitor(string extraSourceNames = "")
     {
-        if (DOTNETCOUNTERSENABLED)
+        if (_dotNetCountersEnabled)
         {
             int processID = Environment.ProcessId;
             ProcessStartInfo ps = new()
@@ -186,7 +188,7 @@ public static class DispatchCommands
     }
 
     // This is used for enabling dotnet-counters performance utility when you run the application
-    private static readonly bool DOTNETCOUNTERSENABLED = false;
+    private static readonly bool _dotNetCountersEnabled = false;
 
     #region PrivateMethods
     private static async Task<bool> RunApp()
