@@ -134,10 +134,10 @@ public class BackTracking : ISolver, IDisposable
         switch (SolutionMode)
         {
             case SolutionMode.Single:
-                await FindSingleSolution(0);
+                await FindSingleOrUniqueSolutions(0, SolutionMode.Single);
                 break;
             case SolutionMode.Unique:
-                await FindUniqueSolutions(0);
+                await FindSingleOrUniqueSolutions(0, SolutionMode.Unique);
                 break;
             case SolutionMode.All:
                 await FindAllSolutions(0);
@@ -148,12 +148,6 @@ public class BackTracking : ISolver, IDisposable
 
         return Solutions.Select((s, index) => new Solution(s, index + 1));
     }
-
-    private async Task FindSingleSolution(sbyte colNo) =>
-        await FindSingleOrUniqueSolutions(colNo, SolutionMode.Single);
-
-    private async Task FindUniqueSolutions(sbyte colNo) =>
-        await FindSingleOrUniqueSolutions(colNo, SolutionMode.Unique);
 
     private async Task FindSingleOrUniqueSolutions(sbyte colNo, SolutionMode solutionMode)
     {
@@ -200,7 +194,7 @@ public class BackTracking : ISolver, IDisposable
 
     private async Task FindAllSolutions(sbyte colNo)
     {
-        await FindUniqueSolutions(colNo);
+        await FindSingleOrUniqueSolutions(colNo, SolutionMode.Unique);
 
         foreach (var solution in Solutions.ToList())
         {
