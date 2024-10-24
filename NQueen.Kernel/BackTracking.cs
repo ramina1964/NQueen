@@ -149,48 +149,30 @@ public class BackTracking : ISolver, IDisposable
         return Solutions.Select((s, index) => new Solution(s, index + 1));
     }
 
-    private async Task FindSingleSolution(sbyte colNo)
+    private async Task FindSingleSolution(sbyte colNo) =>
+        await FindSingleOrUniqueSolutions(colNo, SolutionMode.Single);
+
+    private async Task FindUniqueSolutions(sbyte colNo) =>
+        await FindSingleOrUniqueSolutions(colNo, SolutionMode.Unique);
+
+    private async Task FindSingleOrUniqueSolutions(sbyte colNo, SolutionMode solutionMode)
     {
         while (colNo != -1)
         {
-            if (IsSolverCanceled) return;
+            if (IsSolverCanceled)
+                return;
 
-            if (QueenList[0] == HalfBoardSize) return;
+            if (QueenList[0] == HalfBoardSize)
+                return;
 
-            if (colNo == BoardSize)
+            if (colNo == BoardSize && solutionMode == SolutionMode.Single)
             {
                 UpdateSolutions();
                 NotifySolutionFound();
                 return;
             }
 
-            QueenList[colNo] = FindQueenPosition(colNo);
-
-            if (QueenList[colNo] == -1)
-            {
-                colNo--;
-                continue;
-            }
-
-            if (DisplayMode == DisplayMode.Visualize)
-            {
-                OnQueenPlaced(this, new QueenPlacedEventArgs(QueenList));
-                await Task.Delay(DelayInMilliseconds);
-            }
-
-            colNo++;
-        }
-    }
-
-    private async Task FindUniqueSolutions(sbyte colNo)
-    {
-        while (colNo != -1)
-        {
-            if (IsSolverCanceled) return;
-
-            if (QueenList[0] == HalfBoardSize) return;
-
-            if (colNo == BoardSize)
+            else if (colNo == BoardSize && solutionMode == SolutionMode.Unique)
             {
                 UpdateSolutions();
                 NotifySolutionFound();
