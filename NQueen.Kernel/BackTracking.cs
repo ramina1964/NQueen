@@ -3,11 +3,11 @@
 public class BackTracking : ISolver, IDisposable
 {
     public BackTracking(
-        ISolutionDeveloper solutionDeveloper,
+        ISolutionManager solutionManager,
         sbyte boardSize = Utility.DefaultBoardSize)
     {
         Initialize(boardSize);
-        SolutionDeveloper = solutionDeveloper;
+        SolutionManager = solutionManager;
     }
 
     #region IDisposable Implementation
@@ -69,7 +69,7 @@ public class BackTracking : ISolver, IDisposable
     #endregion ISolverUI
 
     #region PublicProperties
-    public ISolutionDeveloper SolutionDeveloper { get; }
+    public ISolutionManager SolutionManager { get; }
 
     public sbyte BoardSize { get; set; }
 
@@ -206,7 +206,7 @@ public class BackTracking : ISolver, IDisposable
                 QueenPositions = solution
             };
 
-            SolutionDeveloper.UpdateSolutions(updateDTO);
+            SolutionManager.UpdateSolutions(updateDTO);
         }
     }
 
@@ -258,7 +258,7 @@ public class BackTracking : ISolver, IDisposable
             Solutions = Solutions,
             QueenPositions = [.. QueenList]
         };
-        SolutionDeveloper.UpdateSolutions(updateDTO);
+        SolutionManager.UpdateSolutions(updateDTO);
     }
     #endregion
 

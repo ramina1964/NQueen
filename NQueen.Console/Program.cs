@@ -42,7 +42,7 @@ public class Program
         {
             services
                 .AddTransient<SolutionUpdateDTO>()
-                .AddTransient<ISolutionDeveloper, SolutionDeveloper>()
+                .AddTransient<ISolutionManager, SolutionManager>()
                 .AddTransient<ISolver, BackTracking>()
                 .AddTransient<App>();
         });

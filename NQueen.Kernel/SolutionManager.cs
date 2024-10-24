@@ -1,11 +1,11 @@
 ﻿namespace NQueen.Kernel;
 
-public class SolutionDeveloper : ISolutionDeveloper
+public class SolutionManager : ISolutionManager
 {
-    public SolutionDeveloper() { } 
+    public SolutionManager() { } 
 
     // This is used in unit testing to send in board size and solution mode.
-    public SolutionDeveloper(SolutionUpdateDTO dto) => UpdateDTO = dto;
+    public SolutionManager(SolutionUpdateDTO dto) => UpdateDTO = dto;
 
     public void UpdateSolutions(SolutionUpdateDTO dto)
     {

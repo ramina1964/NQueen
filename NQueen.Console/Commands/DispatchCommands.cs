@@ -193,8 +193,8 @@ public static class DispatchCommands
     #region PrivateMethods
     private static async Task<bool> RunApp()
     {
-        ISolutionDeveloper solutionDeveloper = new SolutionDeveloper();
-        var solver = new BackTracking(solutionDeveloper);
+        ISolutionManager solutionManager = new SolutionManager();
+        var solver = new BackTracking(solutionManager);
 
         var simulationResult = await solver
             .GetResultsAsync(BoardSize, SolutionMode, DisplayMode.Hide);
