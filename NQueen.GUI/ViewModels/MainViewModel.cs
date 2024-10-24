@@ -1,4 +1,6 @@
-﻿namespace NQueen.GUI.ViewModels;
+﻿using NQueen.GUI.Utils;
+
+namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
@@ -166,7 +168,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             { return; }
             IsValid = InputViewModel.Validate(this).IsValid;
 
-            if (!IsValid)
+            if (IsValid == false)
             {
                 IsIdle = false;
                 IsSimulating = false;
@@ -226,21 +228,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         get => _memoryUsage;
         set => SetProperty(ref _memoryUsage, value);
-    }
-
-    // Todo: Show application's memory usage in MB/GB based on its value being under/over 1GB.
-    public void UpdateMemoryUsage()
-    {
-        const double MB = 1024.0 * 1024;
-        const double GB = MB * 1024;
-        var currentProcess = System.Diagnostics.Process.GetCurrentProcess();
-        var memoryUsageInBytes = currentProcess.WorkingSet64;
-        var memoryUsageInMB = memoryUsageInBytes / MB;
-        var memoryUsageInGB = memoryUsageInBytes / GB;
-
-        MemoryUsage = memoryUsageInGB >= 1
-            ? $"{memoryUsageInGB:F2} GB"
-            : $"{memoryUsageInMB:F2} MB";
     }
 
     public Chessboard Chessboard { get; set; }
@@ -470,7 +457,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         SelectedSolution = ObservableSolutions.FirstOrDefault();
 
         // Update memory usage after the simulation process completes
-        UpdateMemoryUsage();
+        MemoryUsage = MemoryMonitoring.UpdateMemoryUsage();
 
         ReleaseResources(SimulationStatus.Finished);
     }
