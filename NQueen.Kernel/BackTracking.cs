@@ -163,6 +163,13 @@ public class BackTracking : ISolver, IDisposable
             {
                 UpdateSolutions();
                 NotifySolutionFound();
+                {
+                    BoardSize = BoardSize,
+                    SolutionMode = SolutionMode,
+                    Solutions = Solutions,
+                    QueenPositions = QueenList.ToArray()
+                };
+                SolutionDeveloper.UpdateSolutions(updateDTO);
                 return;
             }
 
@@ -170,11 +177,13 @@ public class BackTracking : ISolver, IDisposable
             {
                 UpdateSolutions();
                 NotifySolutionFound();
+                SolutionDeveloper.UpdateSolutions(updateDTO);
+
                 colNo--;
                 continue;
             }
 
-            QueenList[colNo] = FindQueenPosition(colNo);
+            QueenPositions[colNo] = FindQueenPosition(colNo);
 
             if (QueenList[colNo] == -1)
             {
@@ -184,7 +193,7 @@ public class BackTracking : ISolver, IDisposable
 
             if (DisplayMode == DisplayMode.Visualize)
             {
-                OnQueenPlaced(this, new QueenPlacedEventArgs(QueenList));
+                OnQueenPlaced(this, new QueenPlacedEventArgs(QueenPositions));
                 await Task.Delay(DelayInMilliseconds);
             }
 
@@ -222,7 +231,7 @@ public class BackTracking : ISolver, IDisposable
     private sbyte FindQueenPosition(sbyte colNo)
     {
         colNo = (sbyte)Math.Min(colNo, BoardSize - 1);
-        for (sbyte pos = (sbyte)(QueenList[colNo] + 1); pos < BoardSize; pos++)
+        for (sbyte pos = (sbyte)(QueenPositions[colNo] + 1); pos < BoardSize; pos++)
         {
             if (IsValidPosition(colNo, pos))
                 return pos;
@@ -245,7 +254,7 @@ public class BackTracking : ISolver, IDisposable
 
     private void NotifyProgressChanged()
     {
-        ProgressValue = Math.Round(100.0 * QueenList[0] / HalfBoardSize, 1);
+        ProgressValue = Math.Round(100.0 * QueenPositions[0] / HalfBoardSize, 1);
         OnProgressChanged(this, new ProgressValueChangedEventArgs(ProgressValue));
     }
 
