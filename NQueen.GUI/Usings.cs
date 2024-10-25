@@ -3,6 +3,7 @@ global using CommunityToolkit.Mvvm.Input;
 global using FluentValidation;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;
+global using NQueen.GUI.Utils;
 global using NQueen.GUI.ViewModels;
 global using NQueen.GUI.Views;
 global using NQueen.Kernel;
