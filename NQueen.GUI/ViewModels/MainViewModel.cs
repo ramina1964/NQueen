@@ -1,6 +1,4 @@
-﻿using NQueen.GUI.Utils;
-
-namespace NQueen.GUI.ViewModels;
+﻿namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
@@ -21,11 +19,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     }
 
     #region PublicProperties
-    public IAsyncRelayCommand SimulateCommand { get; set; }
-
-    public RelayCommand CancelCommand { get; set; }
-
-    public RelayCommand SaveCommand { get; set; }
 
     public double ProgressValue
     {
@@ -127,7 +120,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             OnPropertyChanged(nameof(SolutionTitle));
             IsValid = InputViewModel.Validate(this).IsValid;
 
-            if (!IsValid)
+            if (IsValid == false)
             {
                 IsIdle = false;
                 IsSimulating = false;
@@ -294,11 +287,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             { UpdateButtonFunctionality(); }
         }
     }
-
     #endregion PublicProperties
 
     #region PrivateMethods
-
     private InputViewModel InputViewModel { get; set; }
 
     private void Initialize(ISolver solver, sbyte boardSize = Utility.DefaultBoardSize,
@@ -338,48 +329,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         Chessboard?.CreateSquares(BoardSize, []);
     }
 
-    private void ReleaseResources(SimulationStatus simulationStatus)
-    {
-        IsIdle = true;
-        IsInInputMode = true;
-        IsSimulating = false;
-        IsSingleRunning = false;
-        IsOutputReady = true;
-        ProgressVisibility = Visibility.Hidden;
-        ProgressLabelVisibility = Visibility.Hidden;
-
-        switch (simulationStatus)
-        {
-            case SimulationStatus.Started:
-                SubscribeToSimulationEvents();
-
-                IsIdle = false;
-                IsInInputMode = false;
-                IsSimulating = true;
-                IsOutputReady = false;
-
-                ProgressVisibility = Visibility.Visible;
-                if (SolutionMode == SolutionMode.Single)
-                {
-                    IsSingleRunning = true;
-                }
-
-                // If SolutionMode.Unique || SolutionMode.All
-                else if (IsSimulating)
-                {
-                    IsSingleRunning = false;
-                    ProgressLabelVisibility = Visibility.Visible;
-                    ProgressValue = Utility.StartProgressValue;
-                }
-                break;
-
-            case SimulationStatus.Finished:
-                UnsubscribeFromSimulationEvents();
-
-                break;
-        }
-    }
-
     private void UpdateButtonFunctionality()
     {
         SimulateCommand.NotifyCanExecuteChanged();
@@ -402,41 +351,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             return;
         }
         sols.ForEach(s => ObservableSolutions.Add(s));
-    }
-
-    private async Task SimulateAsync()
-    {
-        ReleaseResources(SimulationStatus.Started);
-
-        UpdateGui();
-        SimulationResults = await Solver.GetResultsAsync(BoardSize, SolutionMode, DisplayMode);
-
-        ExtractCorrectNoOfSols();
-        NoOfSolutions = $"{SimulationResults.NoOfSolutions,0:N0}";
-        ElapsedTimeInSec = $"{SimulationResults.ElapsedTimeInSec,0:N1}";
-        SelectedSolution = ObservableSolutions.FirstOrDefault();
-
-        // Update memory usage after the simulation process completes
-        MemoryUsage = MemoryMonitoring.UpdateMemoryUsage();
-
-        ReleaseResources(SimulationStatus.Finished);
-    }
-
-    private bool CanSimulate() => IsValid && IsIdle;
-
-    private void Cancel() => Solver.IsSolverCanceled = true;
-
-    private bool CanCancel() => IsSimulating;
-
-    private bool CanSave() => IsIdle && IsOutputReady;
-
-    private void Save()
-    {
-        var results = new ResultPresentation(SimulationResults);
-        var filePath = results.Write2File(SolutionMode);
-        var msg = $"Successfully wrote results to: {filePath}";
-        MessageBox.Show(msg);
-        IsIdle = true;
     }
     #endregion PrivateMethods
 
@@ -466,6 +380,5 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private Solution _selectedSolution;
     private string _solutionTitle;
     private string _memoryUsage;
-
     #endregion PrivateFields
 }
