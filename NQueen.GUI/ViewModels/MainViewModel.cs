@@ -4,7 +4,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
     public MainViewModel(ISolver solver)
     {
-        Initialize(solver);
+        _solver = solver
+            ?? throw new ArgumentNullException(nameof(solver));
+
+        Initialize();
         SubscribeToSimulationEvents();
     }
 
@@ -20,7 +23,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     private InputViewModel InputViewModel { get; set; }
 
-    private void Initialize(ISolver solver, sbyte boardSize = Utility.DefaultBoardSize,
+    private void Initialize(sbyte boardSize = Utility.DefaultBoardSize,
         SolutionMode solutionMode = Utility.DefaultSolutionMode,
         DisplayMode displayMode = Utility.DefaultDisplayMode)
     {
@@ -29,7 +32,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         CancelCommand = new RelayCommand(Cancel, CanCancel);
         SaveCommand = new RelayCommand(Save, CanSave);
 
-        Solver = solver;
         BoardSize = boardSize;
         SolutionMode = solutionMode;
         DisplayMode = displayMode;

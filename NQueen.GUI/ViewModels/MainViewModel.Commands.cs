@@ -13,7 +13,7 @@ public sealed partial class MainViewModel
         ManageSimulationStatus(SimulationStatus.Started);
 
         UpdateGui();
-        SimulationResults = await Solver.GetResultsAsync(BoardSize, SolutionMode, DisplayMode);
+        SimulationResults = await _solver.GetResultsAsync(BoardSize, SolutionMode, DisplayMode);
 
         ExtractCorrectNoOfSols();
         NoOfSolutions = $"{SimulationResults.NoOfSolutions,0:N0}";
@@ -28,7 +28,7 @@ public sealed partial class MainViewModel
 
     private bool CanSimulate() => IsValid && IsIdle;
 
-    private void Cancel() => Solver.IsSolverCanceled = true;
+    private void Cancel() => _solver.IsSolverCanceled = true;
 
     private bool CanCancel() => IsSimulating;
 

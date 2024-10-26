@@ -29,8 +29,13 @@ public partial class TestBase
 
     protected static ISolver GenerateSut(sbyte boardSize, SolutionMode solutionMode)
     {
-        var solutionDTO = new SolutionUpdateDTO { BoardSize = boardSize, SolutionMode = solutionMode };
-        ISolutionManager solutionDeveloper = new SolutionManager(solutionDTO);
-        return new BackTrackingSolver(solutionDeveloper);
+        var solutionDTO = new SolutionUpdateDTO
+        {
+            BoardSize = boardSize,
+            SolutionMode = solutionMode
+        };
+
+        ISolutionManager solutionManager = new SolutionManager(solutionDTO);
+        return new BackTrackingSolver(solutionManager);
     }
 }

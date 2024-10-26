@@ -61,7 +61,7 @@ public sealed partial class MainViewModel
         set
         {
             SetProperty(ref _delayInMilliseconds, value);
-            Solver.DelayInMilliseconds = value;
+            _solver.DelayInMilliseconds = value;
         }
     }
 
@@ -90,7 +90,7 @@ public sealed partial class MainViewModel
         set
         {
             var isChanged = SetProperty(ref _solutionMode, value);
-            if (Solver == null || !isChanged)
+            if (_solver == null || !isChanged)
             { return; }
 
             SolutionTitle =
@@ -175,12 +175,6 @@ public sealed partial class MainViewModel
     {
         get => _isValid;
         set => SetProperty(ref _isValid, value);
-    }
-
-    public ISolver Solver
-    {
-        get => _solver;
-        set => SetProperty(ref _solver, value);
     }
 
     public string SolutionTitle
