@@ -1,7 +1,9 @@
 namespace NQueen.UnitTests;
 
-public class NQueenSolverTests : TestBase
+public class NQueenSolverTests : TestBase, IClassFixture<SolverBackEndFixture>
 {
+    public NQueenSolverTests(SolverBackEndFixture fixture) : base(fixture.Sut) { }
+
     [Theory]
     [InlineData(2, SolutionMode.Single)]
     [InlineData(3, SolutionMode.Single)]
@@ -12,7 +14,6 @@ public class NQueenSolverTests : TestBase
     public void SolverShouldNotGenerateAnySolution(sbyte boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        Sut = GenerateSut(boardSize, solutionMode);
         ExpectedSolutions = GetExpectedSolutions(boardSize, solutionMode);
 
         // Act
@@ -50,7 +51,6 @@ public class NQueenSolverTests : TestBase
     public void SolverShouldGenerateOneSingleSolution(sbyte boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        Sut = GenerateSut(boardSize, solutionMode);
         ExpectedSolutions = GetExpectedSolutions(boardSize, solutionMode);
 
         // Act
@@ -70,7 +70,6 @@ public class NQueenSolverTests : TestBase
     public void SolverShouldGenerateCorrectListOfUniqueSolutions(sbyte boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        Sut = GenerateSut(boardSize, solutionMode);
         ExpectedSolutions = GetExpectedSolutions(boardSize, solutionMode);
 
         // Act
@@ -90,7 +89,6 @@ public class NQueenSolverTests : TestBase
     public void SolverShouldGenerateCorrectListOfAllSolutions(sbyte boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        Sut = GenerateSut(boardSize, solutionMode);
         ExpectedSolutions = GetExpectedSolutions(boardSize, solutionMode);
 
         // Act

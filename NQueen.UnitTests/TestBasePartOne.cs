@@ -1,8 +1,9 @@
 ﻿namespace NQueen.UnitTests;
 
-public partial class TestBase
+public partial class TestBase(ISolverBackEnd sut)
 {
-    public ISolverBackEnd? Sut { get; set; }
+    protected readonly ISolverBackEnd Sut =
+        sut ?? throw new ArgumentNullException(nameof(sut));
 
     public List<sbyte[]> ExpectedSolutions { get; set; } = [];
 
@@ -11,16 +12,16 @@ public partial class TestBase
     public static List<sbyte[]> GetExpectedSolutions(sbyte boardSize, SolutionMode solutionMode)
     {
         return solutionMode == SolutionMode.Single
-               ? [.. GetExpectedSingleSolution(boardSize)]
+               ? new List<sbyte[]>(GetExpectedSingleSolution(boardSize))
                : solutionMode == SolutionMode.Unique
-               ? [.. GetExpectedUniqueSolutions(boardSize)]
-               : [.. GetExpectedAllSolutions(boardSize)];
+               ? new List<sbyte[]>(GetExpectedUniqueSolutions(boardSize))
+               : new List<sbyte[]>(GetExpectedAllSolutions(boardSize));
     }
 
     public List<sbyte[]> GetActualSolutions(sbyte boardSize, SolutionMode solutionMode)
     {
         return Sut
-               !.GetResultsAsync(boardSize, solutionMode)
+               .GetResultsAsync(boardSize, solutionMode)
                .Result
                .Solutions
                .Select(sol => sol.QueenList)
