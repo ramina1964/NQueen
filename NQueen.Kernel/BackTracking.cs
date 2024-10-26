@@ -77,7 +77,7 @@ public class BackTracking : ISolver, IDisposable
 
     public sbyte HalfBoardSize { get; set; }
 
-    public sbyte[] QueenList { get; set; }
+    public sbyte[] QueenPositions { get; set; }
 
     public int SolutionCountPerUpdate =>
         Utility.SolutionCountPerUpdate(BoardSize);
@@ -125,7 +125,7 @@ public class BackTracking : ISolver, IDisposable
         BoardSize = boardSize;
         IsSolverCanceled = false;
         HalfBoardSize = GetHalfSize();
-        QueenList = Enumerable.Repeat((sbyte)-1, BoardSize).ToArray();
+        QueenPositions = Enumerable.Repeat((sbyte)-1, BoardSize).ToArray();
         Solutions = new HashSet<sbyte[]>(new SequenceEquality<sbyte>());
     }
 
@@ -156,20 +156,21 @@ public class BackTracking : ISolver, IDisposable
             if (IsSolverCanceled)
                 return;
 
-            if (QueenList[0] == HalfBoardSize)
+            if (QueenPositions[0] == HalfBoardSize)
                 return;
 
             if (colNo == BoardSize && solutionMode == SolutionMode.Single)
             {
                 UpdateSolutions();
                 NotifySolutionFound();
+                var updateDTO = new SolutionUpdateDTO
                 {
                     BoardSize = BoardSize,
                     SolutionMode = SolutionMode,
                     Solutions = Solutions,
-                    QueenPositions = QueenList.ToArray()
+                    QueenPositions = [.. QueenPositions]
                 };
-                SolutionDeveloper.UpdateSolutions(updateDTO);
+                SolutionManager.UpdateSolutions(updateDTO);
                 return;
             }
 
@@ -177,7 +178,6 @@ public class BackTracking : ISolver, IDisposable
             {
                 UpdateSolutions();
                 NotifySolutionFound();
-                SolutionDeveloper.UpdateSolutions(updateDTO);
 
                 colNo--;
                 continue;
@@ -185,7 +185,7 @@ public class BackTracking : ISolver, IDisposable
 
             QueenPositions[colNo] = FindQueenPosition(colNo);
 
-            if (QueenList[colNo] == -1)
+            if (QueenPositions[colNo] == -1)
             {
                 colNo--;
                 continue;
@@ -225,7 +225,7 @@ public class BackTracking : ISolver, IDisposable
             NotifyProgressChanged();
 
         if (DisplayMode == DisplayMode.Visualize)
-            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(QueenList));
+            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(QueenPositions));
     }
 
     private sbyte FindQueenPosition(sbyte colNo)
@@ -244,7 +244,7 @@ public class BackTracking : ISolver, IDisposable
     {
         for (int j = 0; j < colNo; j++)
         {
-            int lhs = Math.Abs(pos - QueenList[j]);
+            int lhs = Math.Abs(pos - QueenPositions[j]);
             int rhs = Math.Abs(colNo - j);
             if (lhs == 0 || lhs == rhs)
                 return false;
@@ -265,7 +265,7 @@ public class BackTracking : ISolver, IDisposable
             BoardSize = BoardSize,
             SolutionMode = SolutionMode,
             Solutions = Solutions,
-            QueenPositions = [.. QueenList]
+            QueenPositions = [.. QueenPositions]
         };
         SolutionManager.UpdateSolutions(updateDTO);
     }
