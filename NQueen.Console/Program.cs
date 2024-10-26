@@ -43,7 +43,7 @@ public class Program
             services
                 .AddTransient<SolutionUpdateDTO>()
                 .AddTransient<ISolutionManager, SolutionManager>()
-                .AddTransient<ISolver, BackTracking>()
+                .AddTransient<ISolver, BackTrackingSolver>()
                 .AddTransient<App>();
         });
 }

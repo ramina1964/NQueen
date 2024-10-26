@@ -31,6 +31,6 @@ public partial class TestBase
     {
         var solutionDTO = new SolutionUpdateDTO { BoardSize = boardSize, SolutionMode = solutionMode };
         ISolutionManager solutionDeveloper = new SolutionManager(solutionDTO);
-        return new BackTracking(solutionDeveloper);
+        return new BackTrackingSolver(solutionDeveloper);
     }
 }

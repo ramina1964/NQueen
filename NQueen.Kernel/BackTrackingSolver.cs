@@ -1,8 +1,8 @@
 ﻿namespace NQueen.Kernel;
 
-public class BackTracking : ISolver, IDisposable
+public class BackTrackingSolver : ISolver, IDisposable
 {
-    public BackTracking(
+    public BackTrackingSolver(
         ISolutionManager solutionManager,
         sbyte boardSize = Utility.DefaultBoardSize)
     {

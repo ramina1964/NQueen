@@ -24,9 +24,8 @@ public class Chessboard : ObservableObject
         // Place queens
         positions
             .ToList()
-            .ForEach(pos =>
-                Squares.First(sq => pos.RowNo == sq.Position.RowNo && pos.ColumnNo == sq.Position.ColumnNo)
-                .ImagePath = QueenImagePath);
+            .ForEach(pos => Squares.First(sq => pos.RowNo == sq.Position.RowNo &&
+                     pos.ColumnNo == sq.Position.ColumnNo).ImagePath = QueenImagePath);
     }
 
     public void CreateSquares(sbyte boardSize, IEnumerable<SquareViewModel> squares)

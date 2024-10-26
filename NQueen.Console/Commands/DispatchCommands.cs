@@ -194,7 +194,7 @@ public static class DispatchCommands
     private static async Task<bool> RunApp()
     {
         ISolutionManager solutionManager = new SolutionManager();
-        var solver = new BackTracking(solutionManager);
+        var solver = new BackTrackingSolver(solutionManager);
 
         var simulationResult = await solver
             .GetResultsAsync(BoardSize, SolutionMode, DisplayMode.Hide);
