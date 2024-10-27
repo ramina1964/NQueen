@@ -1,4 +1,4 @@
-namespace NQueen.UnitTests;
+namespace NQueen.UnitTests.Tests;
 
 public class NQueenSolverTests(SolverBackEndFixture fixture) :
     TestBase(fixture.Sut), IClassFixture<SolverBackEndFixture>

@@ -1,4 +1,4 @@
-namespace NQueen.UnitTests;
+namespace NQueen.UnitTests.Fixtures;
 
 public class SolverBackEndFixture : IClassFixture<SolverBackEndFixture>
 {
@@ -8,7 +8,7 @@ public class SolverBackEndFixture : IClassFixture<SolverBackEndFixture>
     {
         var solutionDTO = new SolutionUpdateDTO
         {
-            BoardSize = 4,
+            BoardSize = Utility.DefaultBoardSize,
             SolutionMode = SolutionMode.All
         };
 
