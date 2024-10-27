@@ -9,7 +9,7 @@ public static class HelpCommands
         if (parts.Length != 2)
         {
             Console.WriteLine();
-            ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, "AVAILABLE SUBCOMMANDS");
+            ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, "Available Subcommands");
             DumpAllHelp();
         }
         else
@@ -17,29 +17,31 @@ public static class HelpCommands
             switch (parts[1])
             {
                 case CommandConstants.SolutionMode:
-                    DumpHelpText(NQUEEN_HELP_SOLUTIONMODE);
+                    DumpHelpText(NQueen_Help_Solution_Mode);
                     break;
 
                 case CommandConstants.BoardSize:
-                    DumpHelpText(NQUEEN_HELP_BOARDSIZE);
+                    DumpHelpText(NQueen_Help_Board_Size);
                     break;
 
                 default:
                     DispatchCommands.ShowExitError(
-                        $"Unrecognized command {parts[1]}, try {VALID_COMMANDS}");
+                        $"Unrecognized command {parts[1]}, try {Valid_Commands}");
                     break;
             }
         }
     }
 
-    // Todo: See if you can insert CommandConstants values into the following string.
-    public const string VALID_COMMANDS = $"BOARDSIZE, SOLUTIONMODE";
-    public const string COMMANDEXAMPLE = "BOARDSIZE = 8 SOLUTIONMODE = 2";
+    public const string Valid_Commands = 
+        $"{CommandConstants.BoardSize}, {CommandConstants.SolutionMode}";
 
-    public const string NQUEEN_HELP_SOLUTIONMODE =
+    public const string Command_Example = 
+        $"{CommandConstants.BoardSize} = 8 {CommandConstants.SolutionMode} = 2";
+
+    public const string NQueen_Help_Solution_Mode =
         @"  SOLUTIONMODE - Values one of the following: 0 - 'Single', 1 - 'Unique', 2 - 'All'";
 
-    public static readonly string NQUEEN_HELP_BOARDSIZE =
+    public static readonly string NQueen_Help_Board_Size =
         @$"  BOARDSIZE   - Whole Numbers in the Range:
                 [1, {Utility.MaxBoardSizeForSingleSolution}] for 'Single',
                 [1, {Utility.MaxBoardSizeForUniqueSolutions}] for 'Unique',
@@ -56,8 +58,8 @@ public static class HelpCommands
 
     private static void DumpAllHelp()
     {
-        DumpHelpText(NQUEEN_HELP_SOLUTIONMODE);
-        DumpHelpText(NQUEEN_HELP_BOARDSIZE);
+        DumpHelpText(NQueen_Help_Solution_Mode);
+        DumpHelpText(NQueen_Help_Board_Size);
     }
 
     private static void DumpHelpText(string text)
