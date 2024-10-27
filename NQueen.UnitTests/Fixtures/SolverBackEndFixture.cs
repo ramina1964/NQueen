@@ -1,10 +1,9 @@
-using Microsoft.Extensions.DependencyInjection;
-
 namespace NQueen.UnitTests.Fixtures;
 
 public class SolverBackEndFixture : IClassFixture<SolverBackEndFixture>
 {
     public ISolverBackEnd Sut { get; }
+
     public ServiceProvider ServiceProvider { get; }
 
     public SolverBackEndFixture()
