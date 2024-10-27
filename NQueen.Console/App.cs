@@ -6,6 +6,4 @@ public class App(ISolver solver)
     {
 
     }
-
-    private readonly ISolver _solver = solver;
 }

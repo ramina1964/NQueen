@@ -1,24 +1,26 @@
 ﻿namespace NQueen.ConsoleApp.Commands;
 
-public static class DispatchCommands
+public class DispatchCommands(
+    ISolver solver,
+    IConsoleUtils consoleUtils)
 {
-    public static char WhiteQueen { get; set; } = '\u2655';
+    public char WhiteQueen { get; set; } = '\u2655';
 
-    public static sbyte BoardSize { get; set; }
+    public sbyte BoardSize { get; set; }
 
-    public static SolutionMode SolutionMode { get; set; }
+    public SolutionMode SolutionMode { get; set; }
 
-    public static bool IsSolutionModeSingle => SolutionMode == SolutionMode.Single;
+    public bool IsSingleSolution => SolutionMode == SolutionMode.Single;
 
-    public static bool IsSolutionModeUnique => SolutionMode == SolutionMode.Unique;
+    public bool IsUniqueSolution => SolutionMode == SolutionMode.Unique;
 
-    public static bool IsSolutionModeAll => SolutionMode == SolutionMode.All;
+    public bool IsAllSolution => SolutionMode == SolutionMode.All;
 
-    public static Dictionary<string, bool> Commands { get; set; }
+    public Dictionary<string, bool> Commands { get; set; }
 
-    public static Dictionary<string, string> AvailableCommands { get; set; }
+    public Dictionary<string, string> AvailableCommands { get; set; }
 
-    public static bool ProcessCommand(string key, string value)
+    public bool ProcessCommand(string key, string value)
     {
         var returnValue = false;
         key = key.Replace("  ", " ").TrimEnd().ToUpper();
@@ -38,7 +40,7 @@ public static class DispatchCommands
         };
     }
 
-    public static void ProcessCommandsInteractively()
+    public void ProcessCommandsInteractively()
     {
         while (Commands.Any(e => !e.Value))
         {
@@ -49,13 +51,12 @@ public static class DispatchCommands
                 break;
             }
 
-            ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, $"Enter a {required} ");
+            _consoleUtils.WriteLineColored(ConsoleColor.Cyan, $"Enter a {required} ");
             Console.WriteLine($"\t{AvailableCommands[required]}");
             var userInput = Console.ReadLine().Trim().ToLower();
+
             if (userInput.Equals("help") || userInput.Equals("-h"))
-            {
                 HelpCommands.ProcessHelpCommand(userInput);
-            }
             else
             {
                 var ok = ProcessCommand(required, userInput);
@@ -73,7 +74,7 @@ public static class DispatchCommands
         }
     }
 
-    public static void ProcessCommandsFromArgs(string[] args)
+    public void ProcessCommandsFromArgs(string[] args)
     {
         for (var i = 0; i < args.Length; i++)
         {
@@ -91,7 +92,7 @@ public static class DispatchCommands
 
         if (GetRequiredCommand() == CommandConstants.Run)
         {
-            ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, "Solver is running:\n");
+            _consoleUtils.WriteLineColored(ConsoleColor.Cyan, "Solver is running:\n");
             ProcessCommand(CommandConstants.Run, "ok");
         }
     }
@@ -107,7 +108,7 @@ public static class DispatchCommands
         Environment.Exit(-1);
     }
 
-    public static void InitCommands()
+    public void InitCommands()
     {
         Commands = new Dictionary<string, bool>
         {
@@ -158,10 +159,10 @@ public static class DispatchCommands
         }
     }
 
-    public static void RunSolver()
+    public void RunSolver()
     {
-        ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, $"\nSolver is running ...");
-        DispatchCommands.ProcessCommand(CommandConstants.Run, "ok");
+        _consoleUtils.WriteLineColored(ConsoleColor.Cyan, $"\nSolver is running ...");
+        ProcessCommand(CommandConstants.Run, "ok");
         var runAgain = true;
         while (runAgain)
         {
@@ -171,7 +172,7 @@ public static class DispatchCommands
             if (runAgainAnswer.Equals("yes") || runAgainAnswer.Equals("y"))
             {
                 Console.WriteLine();
-                DispatchCommands.ProcessCommand(CommandConstants.Run, "ok");
+                ProcessCommand(CommandConstants.Run, "ok");
             }
             else
             {
@@ -180,58 +181,52 @@ public static class DispatchCommands
         }
     }
 
-    public static (string feature, string value) ParseInput(string msg)
+    public (string feature, string value) ParseInput(string msg)
     {
         var option = msg.ToCharArray().TakeWhile(e => e != '=').ToArray();
         var n = msg[(option.Length + 1)..];
         return (new string(option), n);
     }
 
-    // This is used for enabling dotnet-counters performance utility when you run the application
-    private static readonly bool _dotNetCountersEnabled = false;
-
     #region PrivateMethods
-    private static async Task<bool> RunApp()
+    private async Task<bool> RunApp()
     {
-        ISolutionManager solutionManager = new SolutionManager();
-        var solver = new BackTrackingSolver(solutionManager);
-
-        var simulationResult = await solver
+        var simulationResult = await _solver
             .GetResultsAsync(BoardSize, SolutionMode, DisplayMode.Hide);
 
         var noOfSolutions = simulationResult.NoOfSolutions;
         var elapsedTime = simulationResult.ElapsedTimeInSec;
         if (noOfSolutions == 0)
         {
-            ConsoleUtils.WriteLineColored(ConsoleColor.Blue, $"\n{Utility.NoSolutionMessage}");
+            _consoleUtils.WriteLineColored(ConsoleColor.Blue, $"\n{Utility.NoSolutionMessage}");
             return true;
         }
 
         var simTitle = $"Summary of the Results for BoardSize =" +
-            $"{ BoardSize } and DisplayMode = { SolutionMode }";
+            $"{BoardSize} and DisplayMode = {SolutionMode}";
 
-        ConsoleUtils.WriteLineColored(ConsoleColor.Blue, $"\n{simTitle}:");
+        _consoleUtils.WriteLineColored(ConsoleColor.Blue, $"\n{simTitle}:");
 
-        ConsoleUtils.WriteLineColored(ConsoleColor.Gray, $"Number of solutions found: {noOfSolutions,10}");
-        ConsoleUtils.WriteLineColored(ConsoleColor.Gray, $"Elapsed time in seconds: {elapsedTime,14}");
+        _consoleUtils.WriteLineColored(ConsoleColor.Gray, $"Number of solutions found: {noOfSolutions,10}");
+        _consoleUtils.WriteLineColored(ConsoleColor.Gray, $"Elapsed time in seconds: {elapsedTime,14}");
 
         var example = simulationResult.Solutions.FirstOrDefault();
         var solutionTitle = (example == null)
                             ? "\nNo Solution Found!"
                             : "\nFirst Solution Found - Numbers in paranteses: Column No. and Row No., Starting from the Lower Left Corner:";
-        ConsoleUtils.WriteLineColored(ConsoleColor.Blue, solutionTitle);
-        ConsoleUtils.WriteLineColored(ConsoleColor.Yellow, example.Details);
+        _consoleUtils.WriteLineColored(ConsoleColor.Blue, solutionTitle);
+        _consoleUtils.WriteLineColored(ConsoleColor.Yellow, example.Details);
         var board = CreateChessBoard(example.QueenList);
-        ConsoleUtils.WriteLineColored(ConsoleColor.Blue, $"\nDrawing of first solution:\n");
+        _consoleUtils.WriteLineColored(ConsoleColor.Blue, $"\nDrawing of first solution:\n");
 
         var message = "\tIMPORTANT - You need to set default fonts (in this console window) to SimSun-ExtB in order to show unicode characters.\n";
-        ConsoleUtils.WriteLineColored(ConsoleColor.Gray, message);
+        _consoleUtils.WriteLineColored(ConsoleColor.Gray, message);
         Console.WriteLine(board);
-        
+
         return true;
     }
 
-    private static bool CheckSolutionMode(string value)
+    private bool CheckSolutionMode(string value)
     {
         if (!int.TryParse(value, out int userChoice))
         {
@@ -251,7 +246,7 @@ public static class DispatchCommands
         return true;
     }
 
-    private static bool CheckBoardSize(string value)
+    private bool CheckBoardSize(string value)
     {
         if (sbyte.TryParse(value, out sbyte size) == false)
         {
@@ -267,19 +262,19 @@ public static class DispatchCommands
 
         BoardSize = size;
 
-        if (IsSolutionModeSingle && BoardSize > Utility.MaxBoardSizeForSingleSolution)
+        if (IsSingleSolution && BoardSize > Utility.MaxBoardSizeForSingleSolution)
         {
             ShowExitError(Utility.SizeTooLargeForSingleSolutionMsg);
             return false;
         }
 
-        if (IsSolutionModeUnique && BoardSize > Utility.MaxBoardSizeForUniqueSolutions)
+        if (IsUniqueSolution && BoardSize > Utility.MaxBoardSizeForUniqueSolutions)
         {
             ShowExitError(Utility.SizeTooLargeForUniqueSolutionsMsg);
             return false;
         }
 
-        if (IsSolutionModeAll && BoardSize > Utility.MaxBoardSizeForAllSolutions)
+        if (IsAllSolution && BoardSize > Utility.MaxBoardSizeForAllSolutions)
         {
             ShowExitError(Utility.SizeTooLargeForAllSolutionsMsg);
             return false;
@@ -288,7 +283,7 @@ public static class DispatchCommands
         return true;
     }
 
-    private static string[,] ChessBoardHelper(sbyte[] queens)
+    private string[,] ChessBoardHelper(sbyte[] queens)
     {
         var size = queens.Length;
         string[,] arr = new string[size, size];
@@ -312,7 +307,7 @@ public static class DispatchCommands
         return arr;
     }
 
-    private static string CreateChessBoard(sbyte[] queens)
+    private string CreateChessBoard(sbyte[] queens)
     {
         var arr = ChessBoardHelper(queens);
         var size = queens.Length;
@@ -329,26 +324,35 @@ public static class DispatchCommands
         return board;
     }
 
-    private static string GetRequiredCommand()
+    private string GetRequiredCommand()
     {
         var cmd = Commands.Where(e => !e.Value).Select(e => e.Key).FirstOrDefault();
         return cmd ?? "";
     }
 
-    private const string _bannerString =
-                @"
-                        |====================================================|
-                        | NQueen.ConsoleApp - A .NET 8.0 Console Application |
-                        |                                                    |
-                        | (c) 2022 - Ramin Anvar and Lars Erik Pedersen      |
-                        |                                                    |
-                        | App Developed for Solving N-Queen Problem          |
-                        | Using the Iterative Backtracking Algorithm         |
-                        |                                                    |
-                        | Version 0.60. Use help to list available commands. |
-                        |                                                    |
-                        |====================================================|
-                    ";
     #endregion PrivateMethods
 
+    private const string _bannerString =
+        @"
+                |====================================================|
+                | NQueen.ConsoleApp - A .NET 8.0 Console Application |
+                |                                                    |
+                | (c) 2022 - Ramin Anvar and Lars Erik Pedersen      |
+                |                                                    |
+                | App Developed for Solving N-Queen Problem          |
+                | Using the Iterative Backtracking Algorithm         |
+                |                                                    |
+                | Version 0.90. Use help to list available commands. |
+                |                                                    |
+                |====================================================|
+            ";
+
+    // This is used for enabling dotnet-counters performance utility when you run the application
+    private static readonly bool _dotNetCountersEnabled = false;
+
+    private readonly ISolver _solver = solver
+        ?? throw new ArgumentNullException(nameof(solver));
+
+    private readonly IConsoleUtils _consoleUtils = consoleUtils
+        ?? throw new ArgumentNullException(nameof(consoleUtils));
 }

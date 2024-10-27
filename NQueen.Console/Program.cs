@@ -26,14 +26,16 @@ public class Program
         // Todo: Put the methods below inside the App class.
         // Todo: You need to change to font to SimSun-ExtB in order to show unicode characters in console - IMPORTANT
         Console.OutputEncoding = System.Text.Encoding.UTF8;
-        DispatchCommands.InitCommands();
+       
+        var dispatchCommands = services.GetRequiredService<DispatchCommands>();
+        dispatchCommands.InitCommands();
         DispatchCommands.OutputBanner();
         DispatchCommands.LaunchConsoleMonitor();
 
         if (args.Length == 0)
-            DispatchCommands.ProcessCommandsInteractively();
+            dispatchCommands.ProcessCommandsInteractively();
         else
-            DispatchCommands.ProcessCommandsFromArgs(args);
+            dispatchCommands.ProcessCommandsFromArgs(args);
     }
 
     private static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -44,6 +46,8 @@ public class Program
                 .AddTransient<SolutionUpdateDTO>()
                 .AddTransient<ISolutionManager, SolutionManager>()
                 .AddTransient<ISolver, BackTrackingSolver>()
+                .AddTransient<IConsoleUtils, ConsoleUtils>()
+                .AddTransient<DispatchCommands>()
                 .AddTransient<App>();
         });
 }

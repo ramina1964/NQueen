@@ -1,6 +1,6 @@
 ﻿namespace NQueen.ConsoleApp.Commands;
 
-public class HelpCommands
+public static class HelpCommands
 {
     public static void ProcessHelpCommand(string cmd)
     {
