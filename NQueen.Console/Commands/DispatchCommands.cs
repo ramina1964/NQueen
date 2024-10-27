@@ -118,7 +118,7 @@ public class DispatchCommands(
         };
         AvailableCommands = new Dictionary<string, string>
         {
-            [CommandConstants.SolutionMode] = HelpCommands.NQUEEN_SOLUTIONMODE,
+            [CommandConstants.SolutionMode] = HelpCommands.NQueen_Solution_Mode,
             [CommandConstants.BoardSize] = HelpCommands.NQUEEN_BOARDSIZE,
         };
     }

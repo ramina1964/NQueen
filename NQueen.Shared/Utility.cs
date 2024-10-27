@@ -20,7 +20,7 @@ public static class Utility
     public const sbyte MaxBoardSizeForUniqueSolutions = 18;
     public const sbyte MaxBoardSizeForAllSolutions = 18;
 
-    // This property indicates who often we update the progreebar value as a function of the board size.
+    // This indicates the frequency of progreebar update based on the board size value.
     // Todo: Use constants here.
     public static int SolutionCountPerUpdate(sbyte boardSize) =>
         (boardSize <= SmallBoardSizeForUniqueSolutions)
@@ -29,21 +29,28 @@ public static class Utility
         ? 1_000 :
         100_000;
 
-    public static string InvalidSByteError => $"Board size must be a valid integer.";
+    public const string InvalidSByteError =
+        "Board size must be a valid integer.";
 
-    public static string NoSolutionMessage => $"No Solutions found. Try a larger board size!";
+    public const string NoSolutionMessage =
+        "No Solutions found. Try a larger board size!";
 
-    public static string ValueNullOrWhiteSpaceMsg => $"Board size can not be null, empty or contain exclusively spaces.";
+    public const string ValueNullOrWhiteSpaceMsg =
+        "Board size can not be null, empty or contain exclusively spaces.";
 
-    public static string SizeTooSmallMsg => $"Board size must be greater than or equal to {MinBoardSize}.";
+    public static string SizeTooSmallMsg =>
+        $"Board size must be greater than or equal to {MinBoardSize}.";
 
-    public static string SizeTooLargeForSingleSolutionMsg => $"Board size for single solution must not exceed {MaxBoardSizeForSingleSolution}.";
+    public static string SizeTooLargeForSingleSolutionMsg =>
+        $"Board size for single solution must not exceed {MaxBoardSizeForSingleSolution}.";
 
-    public static string SizeTooLargeForUniqueSolutionsMsg => $"Board size for unique solutions must not exceed {MaxBoardSizeForUniqueSolutions}.";
+    public static string SizeTooLargeForUniqueSolutionsMsg =>
+        $"Board size for unique solutions must not exceed {MaxBoardSizeForUniqueSolutions}.";
 
-    public static string SizeTooLargeForAllSolutionsMsg => $"Board size for all solutions must not exceed {MaxBoardSizeForAllSolutions}.";
+    public static string SizeTooLargeForAllSolutionsMsg =>
+        $"Board size for all solutions must not exceed {MaxBoardSizeForAllSolutions}.";
 
-    public static double StartProgressValue { get; set; } = 0;
+    public const double StartProgressValue = 0;
 
     public static HashSet<sbyte[]> GetSymmetricalSolutions(sbyte[] solution)
     {
