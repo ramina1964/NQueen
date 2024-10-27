@@ -2,9 +2,6 @@
 
 public partial class TestBase(ISolverBackEnd sut)
 {
-    protected readonly ISolverBackEnd Sut =
-        sut ?? throw new ArgumentNullException(nameof(sut));
-
     public List<sbyte[]> ExpectedSolutions { get; set; } = [];
 
     public List<sbyte[]> ActualSolutions { get; set; } = [];
@@ -28,15 +25,6 @@ public partial class TestBase(ISolverBackEnd sut)
                .ToList();
     }
 
-    protected static ISolver GenerateSut(sbyte boardSize, SolutionMode solutionMode)
-    {
-        var solutionDTO = new SolutionUpdateDTO
-        {
-            BoardSize = boardSize,
-            SolutionMode = solutionMode
-        };
-
-        ISolutionManager solutionManager = new SolutionManager(solutionDTO);
-        return new BackTrackingSolver(solutionManager);
-    }
+    protected readonly ISolverBackEnd Sut = sut
+        ?? throw new ArgumentNullException(nameof(sut));
 }
