@@ -8,7 +8,7 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        var serviceProvider = ConfigureServices();
+        using var serviceProvider = ConfigureServices();
         var app = serviceProvider.GetRequiredService<App>();
         app.Run(args);
     }
@@ -16,13 +16,14 @@ public class Program
     private static ServiceProvider ConfigureServices()
     {
         var services = new ServiceCollection();
-        services.AddTransient<SolutionUpdateDTO>();
-        services.AddTransient<ISolutionManager, SolutionManager>();
-        services.AddTransient<ISolver, BackTrackingSolver>();
-        services.AddTransient<IConsoleUtils, ConsoleUtils>();
         services.AddTransient<DispatchCommands>();
-        services.AddTransient<App>();
+        services.AddTransient<IConsoleUtils, ConsoleUtils>();
+        services.AddTransient<SolutionUpdateDTO>();
+        services.AddScoped<ISolutionManager, SolutionManager>();
+        services.AddScoped<ISolver, BackTrackingSolver>();
+        services.AddSingleton<App>();
 
         return services.BuildServiceProvider();
     }
+
 }
