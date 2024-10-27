@@ -1,5 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-
 namespace NQueen.UnitTests.Fixtures;
 
 public class SolverBackEndFixture : IClassFixture<SolverBackEndFixture>
