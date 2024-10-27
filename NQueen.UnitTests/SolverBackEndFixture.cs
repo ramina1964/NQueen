@@ -1,24 +1,20 @@
 namespace NQueen.UnitTests;
 
-public class SolverBackEndFixture
+public class SolverBackEndFixture : IClassFixture<SolverBackEndFixture>
 {
     public ISolverBackEnd Sut { get; }
 
     public SolverBackEndFixture()
     {
-        // Initialize the Sut with a default configuration
-        Sut = GenerateSut(4, SolutionMode.All);
-    }
-
-    private static ISolverBackEnd GenerateSut(sbyte boardSize, SolutionMode solutionMode)
-    {
         var solutionDTO = new SolutionUpdateDTO
         {
-            BoardSize = boardSize,
-            SolutionMode = solutionMode
+            BoardSize = 4,
+            SolutionMode = SolutionMode.All
         };
 
         ISolutionManager solutionManager = new SolutionManager(solutionDTO);
-        return new BackTrackingSolver(solutionManager);
+        var solver = new BackTrackingSolver(solutionManager);
+
+        Sut = solver ?? throw new ArgumentNullException(nameof(solver));
     }
 }
