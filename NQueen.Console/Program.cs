@@ -8,46 +8,21 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        // The "using" keyword in the following two lines helps disposing of resources properly.
-        using IHost host = CreateHostBuilder(args).Build();
-        using var scope = host.Services.CreateScope();
-
-        var services = scope.ServiceProvider;
-        try
-        {
-            services.GetService<App>()?.Run();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"An error has occurred: {ex.Message}");
-            Console.ReadLine();
-        }
-
-        // Todo: Put the methods below inside the App class.
-        // Todo: You need to change to font to SimSun-ExtB in order to show unicode characters in console - IMPORTANT
-        Console.OutputEncoding = System.Text.Encoding.UTF8;
-       
-        var dispatchCommands = services.GetRequiredService<DispatchCommands>();
-        dispatchCommands.InitCommands();
-        DispatchCommands.OutputBanner();
-        DispatchCommands.LaunchConsoleMonitor();
-
-        if (args.Length == 0)
-            dispatchCommands.ProcessCommandsInteractively();
-        else
-            dispatchCommands.ProcessCommandsFromArgs(args);
+        var serviceProvider = ConfigureServices();
+        var app = serviceProvider.GetRequiredService<App>();
+        app.Run(args);
     }
 
-    private static IHostBuilder CreateHostBuilder(string[] args) =>
-        Host.CreateDefaultBuilder(args)
-        .ConfigureServices((_, services) =>
-        {
-            services
-                .AddTransient<SolutionUpdateDTO>()
-                .AddTransient<ISolutionManager, SolutionManager>()
-                .AddTransient<ISolver, BackTrackingSolver>()
-                .AddTransient<IConsoleUtils, ConsoleUtils>()
-                .AddTransient<DispatchCommands>()
-                .AddTransient<App>();
-        });
+    private static ServiceProvider ConfigureServices()
+    {
+        var services = new ServiceCollection();
+        services.AddTransient<SolutionUpdateDTO>();
+        services.AddTransient<ISolutionManager, SolutionManager>();
+        services.AddTransient<ISolver, BackTrackingSolver>();
+        services.AddTransient<IConsoleUtils, ConsoleUtils>();
+        services.AddTransient<DispatchCommands>();
+        services.AddTransient<App>();
+
+        return services.BuildServiceProvider();
+    }
 }

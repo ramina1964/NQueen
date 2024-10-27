@@ -181,7 +181,7 @@ public class DispatchCommands(
         }
     }
 
-    public (string feature, string value) ParseInput(string msg)
+    public static (string feature, string value) ParseInput(string msg)
     {
         var option = msg.ToCharArray().TakeWhile(e => e != '=').ToArray();
         var n = msg[(option.Length + 1)..];
