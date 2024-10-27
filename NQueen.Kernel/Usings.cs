@@ -1,4 +1,5 @@
-﻿global using NQueen.Shared;
+﻿global using Microsoft.Extensions.DependencyInjection;
+global using NQueen.Shared;
 global using NQueen.Shared.Enums;
 global using NQueen.Shared.Interfaces;
 global using NQueen.Shared.SimulationEvents;

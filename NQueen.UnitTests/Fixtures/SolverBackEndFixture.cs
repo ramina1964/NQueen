@@ -3,18 +3,19 @@ namespace NQueen.UnitTests.Fixtures;
 public class SolverBackEndFixture : IClassFixture<SolverBackEndFixture>
 {
     public ISolverBackEnd Sut { get; }
+    public ServiceProvider ServiceProvider { get; }
 
     public SolverBackEndFixture()
     {
-        var solutionDTO = new SolutionUpdateDTO
-        {
-            BoardSize = Utility.DefaultBoardSize,
-            SolutionMode = SolutionMode.All
-        };
+        var services = new ServiceCollection();
 
-        ISolutionManager solutionManager = new SolutionManager(solutionDTO);
-        var solver = new BackTrackingSolver(solutionManager);
+        // Register shared services
+        services.AddNQueenServices();
 
-        Sut = solver ?? throw new ArgumentNullException(nameof(solver));
+        // Build the service provider
+        ServiceProvider = services.BuildServiceProvider();
+
+        // Resolve the ISolverBackEnd instance
+        Sut = ServiceProvider.GetRequiredService<ISolverBackEnd>();
     }
 }

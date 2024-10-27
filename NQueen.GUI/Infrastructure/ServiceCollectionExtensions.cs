@@ -4,19 +4,16 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceProvider Initialize()
     {
-        var serviceCollection = new ServiceCollection();
+        var services = new ServiceCollection();
 
-        // Register core servicess
-        serviceCollection.AddSingleton<ISolver, BackTrackingSolver>();
-        serviceCollection.AddSingleton<ISolutionManager, SolutionManager>();
+        // Register shared servicess
+        services.AddNQueenServices();
 
-        // Register view models
-        serviceCollection.AddTransient<Chessboard>();
-        serviceCollection.AddTransient<MainViewModel>();
+        // Register specific services, i.e., views and view models
+        services.AddTransient<Chessboard>();
+        services.AddTransient<MainView>();
+        services.AddTransient<MainViewModel>();
 
-        // Register views
-        serviceCollection.AddTransient<MainView>();
-
-        return serviceCollection.BuildServiceProvider();
+        return services.BuildServiceProvider();
     }
 }

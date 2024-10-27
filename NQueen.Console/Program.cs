@@ -16,14 +16,15 @@ public class Program
     private static ServiceProvider ConfigureServices()
     {
         var services = new ServiceCollection();
+
+        // Specific dependencies for the Console App
         services.AddTransient<DispatchCommands>();
         services.AddTransient<IConsoleUtils, ConsoleUtils>();
-        services.AddTransient<SolutionUpdateDTO>();
-        services.AddScoped<ISolutionManager, SolutionManager>();
-        services.AddScoped<ISolver, BackTrackingSolver>();
         services.AddSingleton<App>();
+
+        // Register shared services
+        services.AddNQueenServices();
 
         return services.BuildServiceProvider();
     }
-
 }
