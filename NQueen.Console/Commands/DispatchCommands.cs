@@ -212,8 +212,9 @@ public class DispatchCommands(
 
         var example = simulationResult.Solutions.FirstOrDefault();
         var solutionTitle = (example == null)
-                            ? "\nNo Solution Found!"
-                            : "\nFirst Solution Found - Numbers in paranteses: Column No. and Row No., Starting from the Lower Left Corner:";
+            ? "\nNo Solution Found!"
+            : "\nFirst Solution Found - Numbers in parentheses: Column No. and Row No., Starting from the Lower Left Corner:";
+
         _consoleUtils.WriteLineColored(ConsoleColor.Blue, solutionTitle);
         _consoleUtils.WriteLineColored(ConsoleColor.Yellow, example.Details);
         var board = CreateChessBoard(example.QueenList);
