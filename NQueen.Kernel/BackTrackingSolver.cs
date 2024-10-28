@@ -1,4 +1,6 @@
-﻿namespace NQueen.Kernel;
+﻿using System.Threading;
+
+namespace NQueen.Kernel;
 
 public class BackTrackingSolver : ISolver, IDisposable
 {
@@ -37,11 +39,15 @@ public class BackTrackingSolver : ISolver, IDisposable
 
         // Clear collections
         Solutions?.Clear();
+
+        // Dispose CancellationToken
+        _cancelationTokenSource?.Dispose();
     }
     #endregion IDisposable Implementation
 
     #region ISolverBackEnd
-    public bool IsSolverCanceled { get; set; }
+    public bool IsSolverCanceled =>
+        _cancelationTokenSource?.IsCancellationRequested ?? false;
 
     public async Task<SimulationResults> GetResultsAsync(
         sbyte boardSize,
@@ -122,7 +128,7 @@ public class BackTrackingSolver : ISolver, IDisposable
     private void Initialize(sbyte boardSize = Utility.DefaultBoardSize)
     {
         BoardSize = boardSize;
-        IsSolverCanceled = false;
+        _cancelationTokenSource = new CancellationTokenSource();
         HalfBoardSize = GetHalfSize();
         Array.Fill(QueenPositions, (sbyte)-1, 0, BoardSize);
         Solutions = new HashSet<sbyte[]>(new SequenceEquality<sbyte>());
@@ -274,4 +280,5 @@ public class BackTrackingSolver : ISolver, IDisposable
     #endregion
 
     private bool _disposed = false;
+    private CancellationTokenSource _cancelationTokenSource;
 }
