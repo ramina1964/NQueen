@@ -46,8 +46,17 @@ public class BackTrackingSolver : ISolver, IDisposable
     #endregion IDisposable Implementation
 
     #region ISolverBackEnd
-    public bool IsSolverCanceled =>
-        _cancelationTokenSource?.IsCancellationRequested ?? false;
+    public bool IsSolverCanceled
+    {
+        get => _cancelationTokenSource?.IsCancellationRequested ?? false;
+        set
+        {
+            if (value)
+                _cancelationTokenSource?.Cancel();
+            else
+                _cancelationTokenSource = new CancellationTokenSource();
+        }
+    }
 
     public async Task<SimulationResults> GetResultsAsync(
         sbyte boardSize,
@@ -130,7 +139,7 @@ public class BackTrackingSolver : ISolver, IDisposable
         BoardSize = boardSize;
         _cancelationTokenSource = new CancellationTokenSource();
         HalfBoardSize = GetHalfSize();
-        Array.Fill(QueenPositions, (sbyte)-1, 0, BoardSize);
+        QueenPositions = Enumerable.Repeat((sbyte)-1, BoardSize).ToArray();
         Solutions = new HashSet<sbyte[]>(new SequenceEquality<sbyte>());
     }
 
