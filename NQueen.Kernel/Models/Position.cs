@@ -1,4 +1,4 @@
-﻿namespace NQueen.Shared;
+﻿namespace NQueen.Kernel.Models;
 
 public class Position
 {

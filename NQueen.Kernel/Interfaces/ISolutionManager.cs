@@ -1,4 +1,6 @@
-﻿namespace NQueen.Shared.Interfaces;
+﻿using NQueen.Kernel.Models;
+
+namespace NQueen.Kernel.Interfaces;
 
 public interface ISolutionManager
 {

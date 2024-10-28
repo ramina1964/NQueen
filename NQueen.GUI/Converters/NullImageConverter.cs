@@ -3,9 +3,7 @@
 public class NullImageConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
-        value == null
-        ? DependencyProperty.UnsetValue
-        : value;
+        value ?? DependencyProperty.UnsetValue;
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {

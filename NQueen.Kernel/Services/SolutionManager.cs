@@ -1,8 +1,13 @@
-﻿namespace NQueen.Kernel;
+﻿using NQueen.Kernel.Enums;
+using NQueen.Kernel.Interfaces;
+using NQueen.Kernel.Models;
+using NQueen.Kernel.Utilities;
+
+namespace NQueen.Kernel.Services;
 
 public class SolutionManager : ISolutionManager
 {
-    public SolutionManager() { } 
+    public SolutionManager() { }
 
     // This is used in unit testing to send in board size and solution mode.
     public SolutionManager(SolutionUpdateDTO dto) => UpdateDTO = dto;

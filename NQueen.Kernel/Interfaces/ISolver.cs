@@ -1,4 +1,4 @@
-﻿namespace NQueen.Shared.Interfaces;
+﻿namespace NQueen.Kernel.Interfaces;
 
 public interface ISolver : ISolverBackEnd, ISolverUI
 { }

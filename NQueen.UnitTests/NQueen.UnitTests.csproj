@@ -29,7 +29,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\NQueen.Kernel\NQueen.Kernel.csproj" />
-		<ProjectReference Include="..\NQueen.Shared\NQueen.Shared.csproj" />
 	</ItemGroup>
 
 </Project>

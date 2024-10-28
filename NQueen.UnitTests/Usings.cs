@@ -1,8 +1,9 @@
 ﻿global using FluentAssertions;
 global using Microsoft.Extensions.DependencyInjection;
-global using NQueen.Kernel;
-global using NQueen.Shared.Enums;
-global using NQueen.Shared.Interfaces;
+global using NQueen.Kernel.Enums;
+global using NQueen.Kernel.Interfaces;
+global using NQueen.Kernel.Services;
+global using NQueen.Kernel.Solvers;
 global using NQueen.UnitTests.Fixtures;
 global using System;
 global using System.Collections.Generic;
