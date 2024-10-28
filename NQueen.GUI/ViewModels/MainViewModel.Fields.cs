@@ -24,7 +24,7 @@ public sealed partial class MainViewModel
     private bool _isSimulating;
     private bool _isInInputMode;
     private bool _isOutputReady;
-    private ISolver _solver;
+    private readonly ISolver _solver;
     private Solution _selectedSolution;
     private string _solutionTitle;
     private string _memoryUsage;

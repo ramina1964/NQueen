@@ -10,7 +10,7 @@ public class SimulationResults
         if (sol == null)
         {
             NoOfSolutions = 0;
-            Solutions = new List<Solution>();
+            Solutions = [];
         }
         else
         {

@@ -1,6 +1,4 @@
-﻿using System.Threading;
-
-namespace NQueen.Kernel;
+﻿namespace NQueen.Kernel;
 
 public class BackTrackingSolver : ISolver, IDisposable
 {
