@@ -19,12 +19,13 @@ public class BackTrackingSolver : ISolver, IDisposable
 
     protected virtual void Dispose(bool disposing)
     {
-        if (_disposed == false)
-        {
-            _disposed = true;
-            if (disposing)
-                CleanupResources();
-        }
+        if (_disposed)
+            return;
+
+        // Here _disposed == true
+        _disposed = true;
+        if (disposing)
+            CleanupResources();
     }
 
     private void CleanupResources()
@@ -51,8 +52,7 @@ public class BackTrackingSolver : ISolver, IDisposable
         SolutionMode = solutionMode;
         DisplayMode = displayMode;
 
-        var ret = Task.Factory.StartNew(GetResultsAsync);
-        return await (await ret);
+        return await Task.Run(GetResultsAsync);
     }
     #endregion ISolverBackEnd
 
@@ -95,8 +95,7 @@ public class BackTrackingSolver : ISolver, IDisposable
         var stopwatch = Stopwatch.StartNew();
         var solutions = await SolveNQueenProblem();
         stopwatch.Stop();
-        var timeInSec = (double)stopwatch.ElapsedMilliseconds / 1000;
-        var elapsedTimeInSec = Math.Round(timeInSec, 1);
+        var elapsedTimeInSec = Math.Round(stopwatch.Elapsed.TotalSeconds, 1);
 
         return new SimulationResults(solutions)
         {
@@ -125,7 +124,7 @@ public class BackTrackingSolver : ISolver, IDisposable
         BoardSize = boardSize;
         IsSolverCanceled = false;
         HalfBoardSize = GetHalfSize();
-        QueenPositions = Enumerable.Repeat((sbyte)-1, BoardSize).ToArray();
+        Array.Fill(QueenPositions, (sbyte)-1, 0, BoardSize);
         Solutions = new HashSet<sbyte[]>(new SequenceEquality<sbyte>());
     }
 
@@ -136,12 +135,15 @@ public class BackTrackingSolver : ISolver, IDisposable
             case SolutionMode.Single:
                 await FindSingleOrUniqueSolutions(0, SolutionMode.Single);
                 break;
+
             case SolutionMode.Unique:
                 await FindSingleOrUniqueSolutions(0, SolutionMode.Unique);
                 break;
+
             case SolutionMode.All:
                 await FindAllSolutions(0);
                 break;
+
             default:
                 throw new NotImplementedException();
         }
@@ -168,7 +170,7 @@ public class BackTrackingSolver : ISolver, IDisposable
                     BoardSize = BoardSize,
                     SolutionMode = SolutionMode,
                     Solutions = Solutions,
-                    QueenPositions = [.. QueenPositions]
+                    QueenPositions = (sbyte[])QueenPositions.Clone()
                 };
                 SolutionManager.UpdateSolutions(updateDTO);
                 return;
@@ -265,7 +267,7 @@ public class BackTrackingSolver : ISolver, IDisposable
             BoardSize = BoardSize,
             SolutionMode = SolutionMode,
             Solutions = Solutions,
-            QueenPositions = [.. QueenPositions]
+            QueenPositions = (sbyte[])QueenPositions.Clone()
         };
         SolutionManager.UpdateSolutions(updateDTO);
     }
