@@ -1,4 +1,6 @@
-﻿namespace NQueen.Shared;
+﻿using NQueen.Kernel.Enums;
+
+namespace NQueen.Kernel.Utilities;
 
 public static class Utility
 {
@@ -23,9 +25,9 @@ public static class Utility
     // This indicates the frequency of progreebar update based on the board size value.
     // Todo: Use constants here.
     public static int SolutionCountPerUpdate(sbyte boardSize) =>
-        (boardSize <= SmallBoardSizeForUniqueSolutions)
+        boardSize <= SmallBoardSizeForUniqueSolutions
         ? 5
-        : (boardSize <= MediumBoardSizeForUniqueSolutions)
+        : boardSize <= MediumBoardSizeForUniqueSolutions
         ? 1_000 :
         100_000;
 

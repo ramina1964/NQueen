@@ -1,4 +1,7 @@
-﻿namespace NQueen.Shared;
+﻿using NQueen.Kernel.Enums;
+using System.Text;
+
+namespace NQueen.Kernel.Models;
 
 public class Solution
 {
@@ -32,14 +35,14 @@ public class Solution
     private string GetDetails(IndexingType indexingType = IndexingType.ZeroBased)
     {
         const int noOfQueensPerLine = 40;
-        var noOfLines = (BoardSize % noOfQueensPerLine == 0) ?
+        var noOfLines = BoardSize % noOfQueensPerLine == 0 ?
             BoardSize / noOfQueensPerLine :
             BoardSize / noOfQueensPerLine + 1;
 
         StringBuilder sb = new();
         for (var lineNo = 0; lineNo < noOfLines; lineNo++)
         {
-            var maxQueensInLastLine = (lineNo < noOfLines - 1 || BoardSize % noOfQueensPerLine == 0) ?
+            var maxQueensInLastLine = lineNo < noOfLines - 1 || BoardSize % noOfQueensPerLine == 0 ?
                 noOfQueensPerLine :
                 Math.Min(BoardSize % noOfQueensPerLine, noOfQueensPerLine);
 

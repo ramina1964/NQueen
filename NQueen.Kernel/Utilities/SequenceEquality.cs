@@ -1,4 +1,4 @@
-﻿namespace NQueen.Shared;
+﻿namespace NQueen.Kernel.Utilities;
 
 public class SequenceEquality<T> : IEqualityComparer<IEnumerable<T>>
 {

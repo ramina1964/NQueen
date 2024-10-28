@@ -1,4 +1,4 @@
-﻿namespace NQueen.Shared.SimulationEvents;
+﻿namespace NQueen.Kernel.Events;
 
 public class QueenPlacedEventArgs(sbyte[] solution) : EventArgs
 {

@@ -1,4 +1,8 @@
-﻿namespace NQueen.GUI.ViewModels;
+﻿using NQueen.Kernel.Enums;
+using NQueen.Kernel.Models;
+using NQueen.Kernel.Utilities;
+
+namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel
 {
