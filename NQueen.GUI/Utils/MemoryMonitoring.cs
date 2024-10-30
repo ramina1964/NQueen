@@ -6,9 +6,9 @@ public class MemoryMonitoring
     {
         var currentProcess = System.Diagnostics.Process.GetCurrentProcess();
         var memoryUsageInBytes = currentProcess.WorkingSet64;
-        var memoryUsageInMB = Math.Round(memoryUsageInBytes / MB);
+        var roundedMemoryUsageInMB = RoundToNearestTen(memoryUsageInBytes / MB);
 
-        return FormatWithSpaceSeparator(memoryUsageInMB, 0);
+        return FormatWithSpaceSeparator(roundedMemoryUsageInMB, 0);
     }
 
     private static string FormatWithSpaceSeparator(double value, int decimalPlaces)
@@ -21,6 +21,9 @@ public class MemoryMonitoring
 
         return value.ToString("N", numberFormat);
     }
+
+    private static double RoundToNearestTen(double value) =>
+        Math.Round(value / 10) * 10;
 
     private const double MB = 1024.0 * 1024.0;
 }
