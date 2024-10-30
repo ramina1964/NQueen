@@ -190,7 +190,7 @@
                            Content="{Binding ElapsedTimeInSec}" HorizontalContentAlignment="Right" />
 
                     <Label Style="{StaticResource LabelStyle}" Grid.Row="3" Grid.Column="0" Margin="1" 
-                           Content="Memory Usage" HorizontalContentAlignment="Stretch" />
+                           Content="Memory Usage (MB)" HorizontalContentAlignment="Stretch" />
 
                     <Label Style="{StaticResource LabelStyle}" Grid.Row="3" Grid.Column="1" Margin="1" 
                            Content="{Binding MemoryUsage}" HorizontalContentAlignment="Right" />

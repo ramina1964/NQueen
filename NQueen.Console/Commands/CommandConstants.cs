@@ -2,7 +2,7 @@
 
 public static class CommandConstants
 {
-    public const string Run = "RUN";
-    public const string SolutionMode = "SOLUTIONMODE";
-    public const string BoardSize = "BOARDSIZE";
+    public const string Run = "Run";
+    public const string SolutionMode = "Solution Mode";
+    public const string BoardSize = "Board Size";
 }
