@@ -1,9 +1,4 @@
-﻿using NQueen.Kernel.Enums;
-using NQueen.Kernel.Interfaces;
-using NQueen.Kernel.Models;
-using NQueen.Kernel.Utilities;
-
-namespace NQueen.Kernel.Services;
+﻿namespace NQueen.Kernel.Services;
 
 public class SolutionManager : ISolutionManager
 {

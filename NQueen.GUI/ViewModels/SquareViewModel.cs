@@ -1,6 +1,4 @@
-﻿using NQueen.Kernel.Models;
-
-namespace NQueen.GUI.ViewModels;
+﻿namespace NQueen.GUI.ViewModels;
 
 public class SquareViewModel(Position pos, Brush color) : ObservableObject
 {

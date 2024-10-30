@@ -1,11 +1,4 @@
-﻿using NQueen.Kernel.Enums;
-using NQueen.Kernel.Models;
-using NQueen.Kernel.Utilities;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Text;
-
-namespace NQueen.Kernel.Services;
+﻿namespace NQueen.Kernel.Services;
 
 public class ResultPresentation
 {

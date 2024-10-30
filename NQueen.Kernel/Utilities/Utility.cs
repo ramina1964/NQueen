@@ -1,6 +1,4 @@
-﻿using NQueen.Kernel.Enums;
-
-namespace NQueen.Kernel.Utilities;
+﻿namespace NQueen.Kernel.Utilities;
 
 public static class Utility
 {

@@ -1,6 +1,3 @@
-using NQueen.Kernel.Interfaces;
-using NQueen.Kernel.Solvers;
-
 namespace NQueen.Kernel.Services;
 
 public static class ServiceRegistration

@@ -1,7 +1,4 @@
-﻿using NQueen.Kernel.Enums;
-using System.Text;
-
-namespace NQueen.Kernel.Models;
+﻿namespace NQueen.Kernel.Models;
 
 public class Solution
 {
