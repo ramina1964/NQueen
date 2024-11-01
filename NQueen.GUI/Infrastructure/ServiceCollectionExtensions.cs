@@ -6,7 +6,7 @@ public static class ServiceCollectionExtensions
     {
         var services = new ServiceCollection();
 
-        // Register shared servicess
+        // Register shared services
         services.AddNQueenServices();
 
         // Register specific services, i.e., views and view models
