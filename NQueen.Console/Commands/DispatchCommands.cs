@@ -24,42 +24,11 @@ public partial class DispatchCommands(
     public bool ProcessCommand(string key, string value) =>
         _commandProcessor.ProcessCommand(key, value, this);
 
-    public void ProcessCommandsInteractively()
-    {
-        while (Commands.Any(e => !e.Value))
-        {
-            var required = GetRequiredCommand();
-            if (required == CommandConst.Run)
-            {
-                RunSolver();
-                break;
-            }
-
-            _consoleUtils.WriteLineColored(ConsoleColor.Cyan, $"Enter a {required} ");
-            Console.WriteLine($"\t{AvailableCommands[required]}");
-            var userInput = Console.ReadLine().Trim().ToLower();
-
-            if (userInput.Equals("help") || userInput.Equals("-h"))
-                HelpCommands.ProcessHelpCommand(userInput);
-            else
-            {
-                var ok = ProcessCommand(required, userInput);
-                if (ok)
-                {
-                    Commands[required] = true;
-                    if (required.Trim().Equals(
-                        CommandConst.BoardSize,
-                        StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        BoardSize = Convert.ToSByte(userInput);
-                    }
-                }
-            }
-        }
-    }
-
     public void ProcessCommandsFromArgs(string[] args) =>
         _commandProcessor.ProcessCommandsFromArgs(args, this);
+
+    public void ProcessCommandsInteractively() =>
+        _commandProcessor.ProcessCommandsInteractively(this);
 
     public static void ShowExitError(string errorString)
     {
@@ -122,6 +91,9 @@ public partial class DispatchCommands(
             Process.Start(ps);
         }
     }
+
+    public void WriteLineColored(ConsoleColor color, string message) =>
+        _consoleUtils.WriteLineColored(color, message);
 
     public void RunSolver()
     {
@@ -298,8 +270,6 @@ public partial class DispatchCommands(
         var cmd = Commands.Where(e => !e.Value).Select(e => e.Key).FirstOrDefault();
         return cmd ?? "";
     }
-
-    //private static Regex RegexSpaces() => CreateWhiteSpacesRegEx();
 
     #endregion PrivateMethods
 

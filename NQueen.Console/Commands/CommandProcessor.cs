@@ -45,6 +45,40 @@ public class CommandProcessor(IConsoleUtils consoleUtils) : ICommandProcessor
         }
     }
 
+    public void ProcessCommandsInteractively(DispatchCommands dispatchCommands)
+    {
+        while (dispatchCommands.Commands.Any(e => !e.Value))
+        {
+            var required = dispatchCommands.GetRequiredCommand();
+            if (required == CommandConst.Run)
+            {
+                dispatchCommands.RunSolver();
+                break;
+            }
+
+            dispatchCommands.WriteLineColored(ConsoleColor.Cyan, $"Enter a {required} ");
+            Console.WriteLine($"\t{dispatchCommands.AvailableCommands[required]}");
+            var userInput = Console.ReadLine().Trim().ToLower();
+
+            if (userInput.Equals("help") || userInput.Equals("-h"))
+                HelpCommands.ProcessHelpCommand(userInput);
+            else
+            {
+                var ok = ProcessCommand(required, userInput, dispatchCommands);
+                if (ok)
+                {
+                    dispatchCommands.Commands[required] = true;
+                    if (required.Trim().Equals(
+                        CommandConst.BoardSize,
+                        StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        dispatchCommands.BoardSize = Convert.ToSByte(userInput);
+                    }
+                }
+            }
+        }
+    }
+
     private readonly IConsoleUtils _consoleUtils = consoleUtils
             ?? throw new ArgumentNullException(nameof(consoleUtils));
 }
