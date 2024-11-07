@@ -2,7 +2,8 @@
 
 public partial class DispatchCommands(
     ISolver solver,
-    IConsoleUtils consoleUtils)
+    IConsoleUtils consoleUtils,
+    ICommandProcessor commandProcessor)
 {
     public char WhiteQueen { get; set; } = '\u2655';
 
@@ -189,7 +190,7 @@ public partial class DispatchCommands(
     }
 
     #region PrivateMethods
-    private async Task<bool> RunApp()
+    public async Task<bool> RunApp()
     {
         var simulationResult = await _solver
             .GetResultsAsync(BoardSize, SolutionMode, DisplayMode.Hide);
@@ -226,7 +227,7 @@ public partial class DispatchCommands(
         return true;
     }
 
-    private bool CheckSolutionMode(string value)
+    public bool CheckSolutionMode(string value)
     {
         Console.WriteLine($"Checking SolutionMode with value: {value}");
 
@@ -251,7 +252,7 @@ public partial class DispatchCommands(
         return true;
     }
 
-    private bool CheckBoardSize(string value)
+    public bool CheckBoardSize(string value)
     {
         if (sbyte.TryParse(value, out sbyte size) == false)
         {
@@ -329,13 +330,13 @@ public partial class DispatchCommands(
         return board;
     }
 
-    private string GetRequiredCommand()
+    public string GetRequiredCommand()
     {
         var cmd = Commands.Where(e => !e.Value).Select(e => e.Key).FirstOrDefault();
         return cmd ?? "";
     }
 
-    private static Regex RegexSpaces() => CreateWhiteSpacesRegEx();
+    //private static Regex RegexSpaces() => CreateWhiteSpacesRegEx();
 
     #endregion PrivateMethods
 
@@ -363,7 +364,6 @@ public partial class DispatchCommands(
     private readonly IConsoleUtils _consoleUtils = consoleUtils
         ?? throw new ArgumentNullException(nameof(consoleUtils));
 
-    // A partial, compiler generated method returning a regex pattern for two or more white space characters:
-    [GeneratedRegex(@"\s+")]
-    private static partial Regex CreateWhiteSpacesRegEx();
+    private readonly ICommandProcessor _commandProcessor = commandProcessor
+        ?? throw new ArgumentNullException(nameof(_commandProcessor));
 }
