@@ -23,13 +23,15 @@ public class DispatchCommands(
     public bool ProcessCommand(string key, string value)
     {
         var returnValue = false;
-        key = key.Replace("  ", " ").TrimEnd().ToUpper();
+        key = key.Replace("  ", " ").TrimEnd();
 
         if (string.IsNullOrEmpty(key))
         {
             ShowExitError("Command key cannot be empty.");
             return false;
         }
+
+        Console.WriteLine($"Processing command: {key} with value: {value}");
 
         return key switch
         {
@@ -229,7 +231,9 @@ public class DispatchCommands(
 
     private bool CheckSolutionMode(string value)
     {
-        if (!int.TryParse(value, out int userChoice))
+        Console.WriteLine($"Checking SolutionMode with value: {value}");
+
+        if (int.TryParse(value, out int userChoice) == false)
         {
             ShowExitError("Invalid Integer. Try again.");
             return false;
@@ -243,6 +247,9 @@ public class DispatchCommands(
             _ => throw new ArgumentOutOfRangeException(
                 nameof(value), "Invalid Option: Try 0, 1, or 2.")
         };
+
+        // Mark the command as processed
+        Commands[CommandConstants.SolutionMode] = true;
 
         return true;
     }
