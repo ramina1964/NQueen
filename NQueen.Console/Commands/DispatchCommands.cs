@@ -366,6 +366,7 @@ public partial class DispatchCommands(
     private readonly IConsoleUtils _consoleUtils = consoleUtils
         ?? throw new ArgumentNullException(nameof(consoleUtils));
 
+    // A partial, compiler generated method returning a regex pattern for two or more white space characters:
     [GeneratedRegex(@"\s+")]
     private static partial Regex CreateWhiteSpacesRegEx();
 }
