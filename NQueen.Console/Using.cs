@@ -1,6 +1,7 @@
 ﻿global using Microsoft.Extensions.DependencyInjection;
 global using NQueen.ConsoleApp.Commands;
 global using NQueen.ConsoleApp.Interfaces;
+global using NQueen.ConsoleApp.Utils;
 global using NQueen.Kernel.Enums;
 global using NQueen.Kernel.Interfaces;
 global using NQueen.Kernel.Services;

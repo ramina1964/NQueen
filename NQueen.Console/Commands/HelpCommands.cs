@@ -25,17 +25,17 @@ public static class HelpCommands
                     break;
 
                 default:
-                    DispatchCommands.ShowExitError(
+                    ShowExitError(
                         $"Unrecognized command {parts[1]}, try {Valid_Commands}");
                     break;
             }
         }
     }
 
-    public const string Valid_Commands = 
+    public const string Valid_Commands =
         $"{CommandConst.BoardSize}, {CommandConst.SolutionMode}";
 
-    public const string Command_Example = 
+    public const string Command_Example =
         $"{CommandConst.BoardSize} = 8 {CommandConst.SolutionMode} = 2";
 
     public static readonly string NQueen_Help_Board_Size =
@@ -70,4 +70,41 @@ public static class HelpCommands
                 Console.WriteLine(line);
         }
     }
+
+    public static void ShowExitError(string errorString)
+    {
+        ConsoleColor priorColor = Console.ForegroundColor;
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.Write("ERROR: ");
+        Console.ForegroundColor = priorColor;
+        Console.WriteLine(errorString);
+        Console.WriteLine();
+        Environment.Exit(-1);
+    }
+
+    public static void ShowHelp()
+    {
+        Console.WriteLine();
+        ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, "Available Commands");
+        Console.WriteLine($"\t{CommandConst.BoardSize}");
+        Console.WriteLine($"\t{CommandConst.SolutionMode}");
+        Console.WriteLine();
+        ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, "Example Command");
+        Console.WriteLine($"\t{Command_Example}");
+    }
+
+    public const string Banner =
+        @"
+                |====================================================|
+                | NQueen.ConsoleApp - A .NET 8.0 Console Application |
+                |                                                    |
+                | (c) 2022 - Ramin Anvar and Lars Erik Pedersen      |
+                |                                                    |
+                | App Developed for Solving N-Queen Problem          |
+                | Using the Iterative Backtracking Algorithm         |
+                |                                                    |
+                | Version 0.90. Use help to list available commands. |
+                |                                                    |
+                |====================================================|
+            ";
 }
