@@ -23,7 +23,7 @@ public class DispatchCommands(
     public bool ProcessCommand(string key, string value)
     {
         var returnValue = false;
-        key = key.Replace("  ", " ").TrimEnd();
+        key = RegexSpaces().Replace(key, " ").Trim();
 
         if (string.IsNullOrEmpty(key))
         {
@@ -337,6 +337,8 @@ public class DispatchCommands(
         var cmd = Commands.Where(e => !e.Value).Select(e => e.Key).FirstOrDefault();
         return cmd ?? "";
     }
+
+    private static Regex RegexSpaces() => new(@"\s+");
 
     #endregion PrivateMethods
 
