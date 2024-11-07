@@ -5,8 +5,6 @@ public partial class DispatchCommands(
     IConsoleUtils consoleUtils,
     ICommandProcessor commandProcessor)
 {
-    public char WhiteQueen { get; set; } = '\u2655';
-
     public sbyte BoardSize { get; set; }
 
     public SolutionMode SolutionMode { get; set; }
@@ -30,17 +28,6 @@ public partial class DispatchCommands(
     public void ProcessCommandsInteractively() =>
         _commandProcessor.ProcessCommandsInteractively(this);
 
-    public static void ShowExitError(string errorString)
-    {
-        ConsoleColor priorColor = Console.ForegroundColor;
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.Write("ERROR: ");
-        Console.ForegroundColor = priorColor;
-        Console.WriteLine(errorString);
-        Console.WriteLine();
-        Environment.Exit(-1);
-    }
-
     public void InitCommands()
     {
         Commands = new Dictionary<string, bool>
@@ -58,7 +45,7 @@ public partial class DispatchCommands(
 
     public static void OutputBanner()
     {
-        string[] bannerLines = _bannerString.Split("\r\n");
+        string[] bannerLines = HelpCommands.Banner.Split("\r\n");
         foreach (string line in bannerLines)
         {
             if (line.StartsWith("| NQueen"))
@@ -74,21 +61,6 @@ public partial class DispatchCommands(
             {
                 Console.WriteLine(line);
             }
-        }
-    }
-
-    public static void LaunchConsoleMonitor(string extraSourceNames = "")
-    {
-        if (_dotNetCountersEnabled)
-        {
-            int processID = Environment.ProcessId;
-            ProcessStartInfo ps = new()
-            {
-                FileName = "dotnet-counters",
-                Arguments = $"monitor --process-id {processID} NQueen.ConsoleApp System.Runtime " + extraSourceNames,
-                UseShellExecute = true
-            };
-            Process.Start(ps);
         }
     }
 
@@ -115,13 +87,6 @@ public partial class DispatchCommands(
                 runAgain = false;
             }
         }
-    }
-
-    public static (string feature, string value) ParseInput(string msg)
-    {
-        var option = msg.ToCharArray().TakeWhile(e => e != '=').ToArray();
-        var n = msg[(option.Length + 1)..];
-        return (new string(option), n);
     }
 
     #region PrivateMethods
@@ -153,7 +118,7 @@ public partial class DispatchCommands(
 
         _consoleUtils.WriteLineColored(ConsoleColor.Blue, solutionTitle);
         _consoleUtils.WriteLineColored(ConsoleColor.Yellow, example.Details);
-        var board = CreateChessBoard(example.QueenList);
+        var board = DispatchUtils.CreateChessBoard(example.QueenList);
         _consoleUtils.WriteLineColored(ConsoleColor.Blue, CommandConst.DrawFirstSolution);
 
         _consoleUtils.WriteLineColored(ConsoleColor.Gray, CommandConst.SetDefaultFonts);
@@ -168,7 +133,7 @@ public partial class DispatchCommands(
 
         if (int.TryParse(value, out int userChoice) == false)
         {
-            ShowExitError(CommandConst.InvalidBoardSize);
+            HelpCommands.ShowExitError(CommandConst.InvalidBoardSize);
             return false;
         }
 
@@ -191,13 +156,13 @@ public partial class DispatchCommands(
     {
         if (sbyte.TryParse(value, out sbyte size) == false)
         {
-            ShowExitError(CommandConst.InvalidBoardSize);
+            HelpCommands.ShowExitError(CommandConst.InvalidBoardSize);
             return false;
         }
 
         if (size < 1)
         {
-            ShowExitError("BoardSize must be a positive number.");
+            HelpCommands.ShowExitError("BoardSize must be a positive number.");
             return false;
         }
 
@@ -205,64 +170,23 @@ public partial class DispatchCommands(
 
         if (IsSingleSolution && BoardSize > Utility.MaxBoardSizeForSingleSolution)
         {
-            ShowExitError(Utility.SizeTooLargeForSingleSolutionMsg);
+            HelpCommands.ShowExitError(Utility.SizeTooLargeForSingleSolutionMsg);
             return false;
         }
 
         if (IsUniqueSolution && BoardSize > Utility.MaxBoardSizeForUniqueSolutions)
         {
-            ShowExitError(Utility.SizeTooLargeForUniqueSolutionsMsg);
+            HelpCommands.ShowExitError(Utility.SizeTooLargeForUniqueSolutionsMsg);
             return false;
         }
 
         if (IsAllSolution && BoardSize > Utility.MaxBoardSizeForAllSolutions)
         {
-            ShowExitError(Utility.SizeTooLargeForAllSolutionsMsg);
+            HelpCommands.ShowExitError(Utility.SizeTooLargeForAllSolutionsMsg);
             return false;
         }
 
         return true;
-    }
-
-    private string[,] ChessBoardHelper(sbyte[] queens)
-    {
-        var size = queens.Length;
-        string[,] arr = new string[size, size];
-
-        for (int col = 0; col < size; col++)
-        {
-            var rowPlace = queens[col];
-            for (int row = 0; row < size; row++)
-            {
-                if (row == rowPlace)
-                {
-                    arr[row, col] = col == size - 1 ? $"|{WhiteQueen}|" : $"|{WhiteQueen}"; ;
-                }
-                else
-                {
-                    arr[row, col] = col == size - 1 ? "|-|" : "|-";
-                }
-            }
-        }
-
-        return arr;
-    }
-
-    private string CreateChessBoard(sbyte[] queens)
-    {
-        var arr = ChessBoardHelper(queens);
-        var size = queens.Length;
-        var board = string.Empty;
-        for (int row = size - 1; row >= 0; row--)
-        {
-            for (int col = 0; col < size; col++)
-            {
-                board += arr[row, col];
-            }
-            board += Environment.NewLine;
-        }
-
-        return board;
     }
 
     public string GetRequiredCommand()
@@ -272,24 +196,6 @@ public partial class DispatchCommands(
     }
 
     #endregion PrivateMethods
-
-    private const string _bannerString =
-        @"
-                |====================================================|
-                | NQueen.ConsoleApp - A .NET 8.0 Console Application |
-                |                                                    |
-                | (c) 2022 - Ramin Anvar and Lars Erik Pedersen      |
-                |                                                    |
-                | App Developed for Solving N-Queen Problem          |
-                | Using the Iterative Backtracking Algorithm         |
-                |                                                    |
-                | Version 0.90. Use help to list available commands. |
-                |                                                    |
-                |====================================================|
-            ";
-
-    // This is used for enabling dotnet-counters performance utility when you run the application
-    private static readonly bool _dotNetCountersEnabled = false;
 
     private readonly ISolver _solver = solver
         ?? throw new ArgumentNullException(nameof(solver));

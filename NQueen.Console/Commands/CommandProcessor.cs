@@ -9,7 +9,7 @@ public class CommandProcessor(IConsoleUtils consoleUtils) : ICommandProcessor
 
         if (string.IsNullOrEmpty(key))
         {
-            DispatchCommands.ShowExitError(CommandConst.CommandEmptyError);
+            HelpCommands.ShowExitError(CommandConst.CommandEmptyError);
             return false;
         }
 
@@ -26,7 +26,7 @@ public class CommandProcessor(IConsoleUtils consoleUtils) : ICommandProcessor
     {
         for (var i = 0; i < args.Length; i++)
         {
-            (string key, string value) = DispatchCommands.ParseInput(args[i]);
+            (string key, string value) = DispatchUtils.ParseInput(args[i]);
             var ok = ProcessCommand(key, value, dispatchCommands);
             if (ok)
             {
