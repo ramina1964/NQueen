@@ -1,6 +1,6 @@
 ﻿namespace NQueen.ConsoleApp.Commands;
 
-public class DispatchCommands(
+public partial class DispatchCommands(
     ISolver solver,
     IConsoleUtils consoleUtils)
 {
@@ -338,7 +338,7 @@ public class DispatchCommands(
         return cmd ?? "";
     }
 
-    private static Regex RegexSpaces() => new(@"\s+");
+    private static Regex RegexSpaces() => CreateWhiteSpacesRegEx();
 
     #endregion PrivateMethods
 
@@ -365,4 +365,7 @@ public class DispatchCommands(
 
     private readonly IConsoleUtils _consoleUtils = consoleUtils
         ?? throw new ArgumentNullException(nameof(consoleUtils));
+
+    [GeneratedRegex(@"\s+")]
+    private static partial Regex CreateWhiteSpacesRegEx();
 }
