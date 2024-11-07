@@ -20,6 +20,7 @@ public class Program
         // Specific dependencies for the Console App
         services.AddTransient<DispatchCommands>();
         services.AddTransient<IConsoleUtils, ConsoleUtils>();
+        services.AddTransient<ICommandProcessor, CommandProcessor> ();
         services.AddSingleton<App>();
 
         // Register shared services

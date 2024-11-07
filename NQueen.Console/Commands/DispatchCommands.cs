@@ -21,25 +21,8 @@ public partial class DispatchCommands(
 
     public Dictionary<string, string> AvailableCommands { get; set; }
 
-    public bool ProcessCommand(string key, string value)
-    {
-        var returnValue = false;
-        key = RegexSpaces().Replace(key, " ").Trim();
-
-        if (string.IsNullOrEmpty(key))
-        {
-            ShowExitError(CommandConst.CommandEmptyError);
-            return false;
-        }
-
-        return key switch
-        {
-            CommandConst.Run => RunApp().Result,
-            CommandConst.SolutionMode => CheckSolutionMode(value),
-            CommandConst.BoardSize => CheckBoardSize(value),
-            _ => returnValue,
-        };
-    }
+    public bool ProcessCommand(string key, string value) =>
+        _commandProcessor.ProcessCommand(key, value, this);
 
     public void ProcessCommandsInteractively()
     {
@@ -75,28 +58,8 @@ public partial class DispatchCommands(
         }
     }
 
-    public void ProcessCommandsFromArgs(string[] args)
-    {
-        for (var i = 0; i < args.Length; i++)
-        {
-            (string key, string value) = ParseInput(args[i]);
-            var ok = ProcessCommand(key, value);
-            if (ok)
-            {
-                Commands[key.ToUpper()] = true;
-                if (key.Equals(CommandConst.BoardSize))
-                {
-                    BoardSize = Convert.ToSByte(value);
-                }
-            }
-        }
-
-        if (GetRequiredCommand() == CommandConst.Run)
-        {
-            _consoleUtils.WriteLineColored(ConsoleColor.Cyan, CommandConst.SolverRunning);
-            ProcessCommand(CommandConst.Run, "ok");
-        }
-    }
+    public void ProcessCommandsFromArgs(string[] args) =>
+        _commandProcessor.ProcessCommandsFromArgs(args, this);
 
     public static void ShowExitError(string errorString)
     {

@@ -2,11 +2,16 @@
 
 public class App
 {
-    public App(ISolver solver, IConsoleUtils consoleUtils)
+    public App(ISolver solver, IConsoleUtils consoleUtils, DispatchCommands dispatchCommands)
     {
-        _solver = solver ?? throw new ArgumentNullException(nameof(solver));
-        _consoleUtils = consoleUtils ?? throw new ArgumentNullException(nameof(consoleUtils));
-        _dispatchCommands = new DispatchCommands(_solver, _consoleUtils);
+        _solver = solver
+            ?? throw new ArgumentNullException(nameof(solver));
+
+        _consoleUtils = consoleUtils
+            ?? throw new ArgumentNullException(nameof(consoleUtils));
+
+        _dispatchCommands = dispatchCommands
+            ?? throw new ArgumentNullException(nameof(dispatchCommands));
     }
 
     public void Run(string[] args)
