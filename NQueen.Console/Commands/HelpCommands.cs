@@ -16,11 +16,11 @@ public static class HelpCommands
         {
             switch (parts[1])
             {
-                case CommandConstants.SolutionMode:
+                case CommandConst.SolutionMode:
                     DumpHelpText(NQueen_Solution_Mode);
                     break;
 
-                case CommandConstants.BoardSize:
+                case CommandConst.BoardSize:
                     DumpHelpText(NQueen_Help_Board_Size);
                     break;
 
@@ -33,10 +33,10 @@ public static class HelpCommands
     }
 
     public const string Valid_Commands = 
-        $"{CommandConstants.BoardSize}, {CommandConstants.SolutionMode}";
+        $"{CommandConst.BoardSize}, {CommandConst.SolutionMode}";
 
     public const string Command_Example = 
-        $"{CommandConstants.BoardSize} = 8 {CommandConstants.SolutionMode} = 2";
+        $"{CommandConst.BoardSize} = 8 {CommandConst.SolutionMode} = 2";
 
     public static readonly string NQueen_Help_Board_Size =
         @$"  Board Size   - Whole Numbers in the following Ranges:

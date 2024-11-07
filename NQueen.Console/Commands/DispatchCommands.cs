@@ -27,17 +27,15 @@ public partial class DispatchCommands(
 
         if (string.IsNullOrEmpty(key))
         {
-            ShowExitError("Command key cannot be empty.");
+            ShowExitError(CommandConst.CommandEmptyError);
             return false;
         }
 
-        Console.WriteLine($"Processing command: {key} with value: {value}");
-
         return key switch
         {
-            CommandConstants.Run => RunApp().Result,
-            CommandConstants.SolutionMode => CheckSolutionMode(value),
-            CommandConstants.BoardSize => CheckBoardSize(value),
+            CommandConst.Run => RunApp().Result,
+            CommandConst.SolutionMode => CheckSolutionMode(value),
+            CommandConst.BoardSize => CheckBoardSize(value),
             _ => returnValue,
         };
     }
@@ -47,7 +45,7 @@ public partial class DispatchCommands(
         while (Commands.Any(e => !e.Value))
         {
             var required = GetRequiredCommand();
-            if (required == CommandConstants.Run)
+            if (required == CommandConst.Run)
             {
                 RunSolver();
                 break;
@@ -66,7 +64,7 @@ public partial class DispatchCommands(
                 {
                     Commands[required] = true;
                     if (required.Trim().Equals(
-                        CommandConstants.BoardSize,
+                        CommandConst.BoardSize,
                         StringComparison.CurrentCultureIgnoreCase))
                     {
                         BoardSize = Convert.ToSByte(userInput);
@@ -85,17 +83,17 @@ public partial class DispatchCommands(
             if (ok)
             {
                 Commands[key.ToUpper()] = true;
-                if (key.Equals(CommandConstants.BoardSize))
+                if (key.Equals(CommandConst.BoardSize))
                 {
                     BoardSize = Convert.ToSByte(value);
                 }
             }
         }
 
-        if (GetRequiredCommand() == CommandConstants.Run)
+        if (GetRequiredCommand() == CommandConst.Run)
         {
-            _consoleUtils.WriteLineColored(ConsoleColor.Cyan, "Solver is running:\n");
-            ProcessCommand(CommandConstants.Run, "ok");
+            _consoleUtils.WriteLineColored(ConsoleColor.Cyan, CommandConst.SolverRunning);
+            ProcessCommand(CommandConst.Run, "ok");
         }
     }
 
@@ -114,14 +112,14 @@ public partial class DispatchCommands(
     {
         Commands = new Dictionary<string, bool>
         {
-            [CommandConstants.SolutionMode] = false,
-            [CommandConstants.BoardSize] = false,
-            [CommandConstants.Run] = false
+            [CommandConst.SolutionMode] = false,
+            [CommandConst.BoardSize] = false,
+            [CommandConst.Run] = false
         };
         AvailableCommands = new Dictionary<string, string>
         {
-            [CommandConstants.SolutionMode] = HelpCommands.NQueen_Solution_Mode,
-            [CommandConstants.BoardSize] = HelpCommands.NQUEEN_BOARDSIZE,
+            [CommandConst.SolutionMode] = HelpCommands.NQueen_Solution_Mode,
+            [CommandConst.BoardSize] = HelpCommands.NQUEEN_BOARDSIZE,
         };
     }
 
@@ -163,18 +161,18 @@ public partial class DispatchCommands(
 
     public void RunSolver()
     {
-        _consoleUtils.WriteLineColored(ConsoleColor.Cyan, $"\nSolver is running ...");
-        ProcessCommand(CommandConstants.Run, "ok");
+        _consoleUtils.WriteLineColored(ConsoleColor.Cyan, CommandConst.SolverRunning);
+        ProcessCommand(CommandConst.Run, "ok");
         var runAgain = true;
         while (runAgain)
         {
-            Console.WriteLine("\nRun again to debug memory usage?");
-            Console.WriteLine("\tYes or No\n");
+            Console.WriteLine(CommandConst.RunAgainPrompt);
+            Console.WriteLine(CommandConst.YesOrNoPrompt);
             var runAgainAnswer = Console.ReadLine().Trim().ToLower();
             if (runAgainAnswer.Equals("yes") || runAgainAnswer.Equals("y"))
             {
                 Console.WriteLine();
-                ProcessCommand(CommandConstants.Run, "ok");
+                ProcessCommand(CommandConst.Run, "ok");
             }
             else
             {
@@ -220,10 +218,9 @@ public partial class DispatchCommands(
         _consoleUtils.WriteLineColored(ConsoleColor.Blue, solutionTitle);
         _consoleUtils.WriteLineColored(ConsoleColor.Yellow, example.Details);
         var board = CreateChessBoard(example.QueenList);
-        _consoleUtils.WriteLineColored(ConsoleColor.Blue, $"\nDrawing of first solution:\n");
+        _consoleUtils.WriteLineColored(ConsoleColor.Blue, CommandConst.DrawFirstSolution);
 
-        var message = "\tIMPORTANT - You need to set default fonts (in this console window) to SimSun-ExtB in order to show unicode characters.\n";
-        _consoleUtils.WriteLineColored(ConsoleColor.Gray, message);
+        _consoleUtils.WriteLineColored(ConsoleColor.Gray, CommandConst.SetDefaultFonts);
         Console.WriteLine(board);
 
         return true;
@@ -235,7 +232,7 @@ public partial class DispatchCommands(
 
         if (int.TryParse(value, out int userChoice) == false)
         {
-            ShowExitError("Invalid Integer. Try again.");
+            ShowExitError(CommandConst.InvalidBoardSize);
             return false;
         }
 
@@ -245,11 +242,11 @@ public partial class DispatchCommands(
             1 => SolutionMode.Unique,
             2 => SolutionMode.All,
             _ => throw new ArgumentOutOfRangeException(
-                nameof(value), "Invalid Option: Try 0, 1, or 2.")
+                nameof(value), CommandConst.InvalidSolutionMode)
         };
 
         // Mark the command as processed
-        Commands[CommandConstants.SolutionMode] = true;
+        Commands[CommandConst.SolutionMode] = true;
 
         return true;
     }
@@ -258,7 +255,7 @@ public partial class DispatchCommands(
     {
         if (sbyte.TryParse(value, out sbyte size) == false)
         {
-            ShowExitError("Invalid number. Try again.");
+            ShowExitError(CommandConst.InvalidBoardSize);
             return false;
         }
 
