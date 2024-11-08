@@ -154,44 +154,17 @@ public partial class DispatchCommands(
 
     public bool CheckBoardSize(string value)
     {
-        if (sbyte.TryParse(value, out sbyte size) == false)
-        {
-            HelpCommands.ShowExitError(CommandConst.InvalidBoardSize);
-            return false;
-        }
-
-        if (size < 1)
-        {
-            HelpCommands.ShowExitError("BoardSize must be a positive number.");
-            return false;
-        }
-
-        BoardSize = size;
-
-        if (IsSingleSolution && BoardSize > Utility.MaxBoardSizeForSingleSolution)
-        {
-            HelpCommands.ShowExitError(Utility.SizeTooLargeForSingleSolutionMsg);
-            return false;
-        }
-
-        if (IsUniqueSolution && BoardSize > Utility.MaxBoardSizeForUniqueSolutions)
-        {
-            HelpCommands.ShowExitError(Utility.SizeTooLargeForUniqueSolutionsMsg);
-            return false;
-        }
-
-        if (IsAllSolution && BoardSize > Utility.MaxBoardSizeForAllSolutions)
-        {
-            HelpCommands.ShowExitError(Utility.SizeTooLargeForAllSolutionsMsg);
-            return false;
-        }
-
-        return true;
+        var (isValid, size) = DispatchUtils.CheckBoardSize(value, SolutionMode);
+        if (isValid)
+            BoardSize = size;
+        
+        return isValid;
     }
 
     public string GetRequiredCommand()
     {
         var cmd = Commands.Where(e => !e.Value).Select(e => e.Key).FirstOrDefault();
+        
         return cmd ?? "";
     }
 
