@@ -11,14 +11,23 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         SubscribeToSimulationEvents();
     }
 
-    // Dispose of resources held by MainViewModel, e.g. unsubscribing from events, clearing collections.
     public void Dispose()
     {
-        // Unsubscribe from events
-        UnsubscribeFromSimulationEvents();
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
 
-        // Clear collections
-        ObservableSolutions?.Clear();
+    private void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+
+        if (disposing)
+        {
+            UnsubscribeFromSimulationEvents();
+            ObservableSolutions?.Clear();
+        }
+
+        _disposed = true;
     }
 
     private InputViewModel InputViewModel { get; set; }
@@ -40,7 +49,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         IsInInputMode = true;
         IsSimulating = false;
         IsOutputReady = false;
-        ObservableSolutions = [];
+        ObservableSolutions = new ObservableCollection<Solution>();
         NoOfSolutions = $"{ObservableSolutions.Count,0:N0}";
 
         DelayInMilliseconds = Utility.DefaultDelayInMilliseconds;
@@ -56,7 +65,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         NoOfSolutions = "0";
         ElapsedTimeInSec = $"{0,0:N1}";
         MemoryUsage = "0";
-        Chessboard?.CreateSquares(BoardSize, []);
+        Chessboard?.CreateSquares(BoardSize, new List<SquareViewModel>());
     }
 
     private void UpdateButtonFunctionality()
@@ -73,13 +82,17 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                     .Take(Utility.MaxNoOfSolutionsInOutput)
                     .ToList();
 
-        // In case of activated visualization, clear all solutions before adding a no. of MaxNoOfSolutionsInOutput to the solutions.
         if (DisplayMode == DisplayMode.Visualize)
         {
             ObservableSolutions.Clear();
-            sols.ForEach(s => ObservableSolutions.Add(s));
+            foreach (var s in sols)
+            {
+                ObservableSolutions.Add(s);
+            }
             return;
         }
-        sols.ForEach(s => ObservableSolutions.Add(s));
+
+        foreach (var s in sols)
+            ObservableSolutions.Add(s);
     }
 }

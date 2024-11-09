@@ -185,10 +185,10 @@ public sealed partial class MainViewModel
 
     public string NoOfSolutions
     {
-        get => _noOfSoltions;
+        get => _noOfSolutions;
         set
         {
-            if (SetProperty(ref _noOfSoltions, value))
+            if (SetProperty(ref _noOfSolutions, value))
             { OnPropertyChanged(nameof(ResultTitle)); }
         }
     }

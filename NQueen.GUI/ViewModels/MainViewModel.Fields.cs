@@ -3,6 +3,7 @@ namespace NQueen.GUI.ViewModels;
 public sealed partial class MainViewModel
 {
     #region PrivateFields
+    private bool _disposed;
     private double _progressValue;
     private string _progressLabel;
     private Visibility _progressLabelVisibility;
@@ -11,7 +12,7 @@ public sealed partial class MainViewModel
     private IEnumerable<DisplayMode> _enumDisplayModes;
     private static SimulationResults _simulationResults;
     private int _delayInMilliseconds;
-    private string _noOfSoltions;
+    private string _noOfSolutions;
     private string _elapsedTime;
     private SolutionMode _solutionMode;
     private DisplayMode _displayMode;
