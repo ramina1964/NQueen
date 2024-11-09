@@ -4,10 +4,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
     public MainViewModel(ISolver solver)
     {
-        _solver = solver
-            ?? throw new ArgumentNullException(nameof(solver));
+        _solver = solver ?? throw new ArgumentNullException(nameof(solver));
 
-        ObservableSolutions = [];
+        ObservableSolutions = new ObservableCollection<Solution>();
         Initialize();
         SubscribeToSimulationEvents();
     }
@@ -20,13 +19,17 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     private void Dispose(bool disposing)
     {
-        if (_disposed) return;
+        if (_disposed)
+            return;
 
         if (disposing)
         {
-            UnsubscribeFromSimulationEvents();
-            ObservableSolutions?.Clear();
+            // Dispose managed resources
+            _cancelationTokenSource?.Dispose();
+            _cancelationTokenSource = null;
         }
+
+        // Dispose unmanaged resources
 
         _disposed = true;
     }
@@ -79,9 +82,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             .Solutions
             .Take(Utility.MaxNoOfSolutionsInOutput);
 
+        ObservableSolutions.Clear(); // Ensure previous solutions are cleared
+
         if (DisplayMode == DisplayMode.Visualize)
         {
-            ObservableSolutions.Clear();
             foreach (var s in sols)
                 ObservableSolutions.Add(s);
 

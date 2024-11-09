@@ -8,13 +8,13 @@ public sealed partial class MainViewModel
 
     public RelayCommand SaveCommand { get; set; }
 
-    private bool CanSimulate() => IsValid && IsIdle;
+    private bool CanSimulate() => IsIdle && IsValid;
 
     private void Cancel() => _solver.IsSolverCanceled = true;
 
     private bool CanCancel() => IsSimulating;
 
-    private bool CanSave() => IsIdle && IsOutputReady;
+    private bool CanSave() => IsOutputReady;
 
     private void Save()
     {

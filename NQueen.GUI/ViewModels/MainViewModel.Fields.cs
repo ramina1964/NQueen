@@ -6,6 +6,7 @@ public sealed partial class MainViewModel
 
     #region PrivateFields
     private bool _disposed;
+    private CancellationTokenSource _cancelationTokenSource;
     private double _progressValue;
     private string _progressLabel;
     private Visibility _progressLabelVisibility;

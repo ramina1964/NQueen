@@ -1,6 +1,4 @@
-﻿using NQueen.Kernel.Enums;
-
-namespace NQueen.Kernel.Models;
+﻿namespace NQueen.Kernel.Models;
 
 public class SolutionUpdateDTO
 {
