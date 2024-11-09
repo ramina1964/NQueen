@@ -8,24 +8,6 @@ public sealed partial class MainViewModel
 
     public RelayCommand SaveCommand { get; set; }
 
-    private async Task SimulateAsync()
-    {
-        ManageSimulationStatus(SimulationStatus.Started);
-
-        UpdateGui();
-        SimulationResults = await _solver.GetResultsAsync(BoardSize, SolutionMode, DisplayMode);
-
-        ExtractCorrectNoOfSols();
-        NoOfSolutions = $"{SimulationResults.NoOfSolutions,0:N0}";
-        ElapsedTimeInSec = $"{SimulationResults.ElapsedTimeInSec,0:N1}";
-        SelectedSolution = ObservableSolutions.FirstOrDefault();
-
-        // Update memory usage after the simulation process completes
-        MemoryUsage = MemoryMonitoring.UpdateMemoryUsage();
-
-        ManageSimulationStatus(SimulationStatus.Finished);
-    }
-
     private bool CanSimulate() => IsValid && IsIdle;
 
     private void Cancel() => _solver.IsSolverCanceled = true;

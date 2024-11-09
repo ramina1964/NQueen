@@ -18,6 +18,7 @@ global using System.Collections.ObjectModel;
 global using System.ComponentModel;
 global using System.Globalization;
 global using System.Linq;
+global using System.Text;
 global using System.Threading.Tasks;
 global using System.Windows;
 global using System.Windows.Controls;

@@ -71,7 +71,7 @@ public sealed partial class MainViewModel
         set => SetProperty(ref _simulationResults, value);
     }
 
-    public ObservableCollection<Solution> ObservableSolutions { get; set; }
+    public ObservableCollection<Solution> ObservableSolutions { get; }
 
     public Solution SelectedSolution
     {

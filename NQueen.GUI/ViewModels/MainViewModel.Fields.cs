@@ -2,6 +2,8 @@ namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel
 {
+    private InputViewModel InputViewModel { get; set; }
+
     #region PrivateFields
     private bool _disposed;
     private double _progressValue;
