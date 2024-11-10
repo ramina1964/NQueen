@@ -6,7 +6,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         _solver = solver ?? throw new ArgumentNullException(nameof(solver));
 
-        ObservableSolutions = new ObservableCollection<Solution>();
+        ObservableSolutions = [];
         Initialize();
         SubscribeToSimulationEvents();
     }
@@ -38,9 +38,12 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         SolutionMode solutionMode = Utility.DefaultSolutionMode,
         DisplayMode displayMode = Utility.DefaultDisplayMode)
     {
-        InputViewModel = new InputViewModel { ClassLevelCascadeMode = CascadeMode.Stop };
-        SimulateCommand = new AsyncRelayCommand(SimulateAsync, CanSimulate);
         CancelCommand = new RelayCommand(Cancel, CanCancel);
+        InputViewModel = new InputViewModel { ClassLevelCascadeMode = CascadeMode.Stop };
+
+        SimulateCommand = new AsyncRelayCommand(SimulateAsync,
+            AsyncRelayCommandOptions.AllowConcurrentExecutions);
+
         SaveCommand = new RelayCommand(Save, CanSave);
 
         BoardSize = boardSize;
@@ -66,7 +69,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         NoOfSolutions = "0";
         ElapsedTimeInSec = $"{0,0:N1}";
         MemoryUsage = "0";
-        Chessboard?.CreateSquares(BoardSize, new List<SquareViewModel>());
+        Chessboard?.CreateSquares(BoardSize, []);
     }
 
     private void UpdateButtonFunctionality()
@@ -92,7 +95,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             return;
         }
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         foreach (var s in sols)
         {
             sb.Append(s.ToString());
@@ -101,7 +104,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         }
 
         // If you need to use the concatenated string for some purpose
-        var concatenatedSolutions = sb.ToString();
+        _ = sb.ToString();
     }
 
     private async Task SimulateAsync()
