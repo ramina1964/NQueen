@@ -5,7 +5,7 @@ public partial class DispatchCommands(
     IConsoleUtils consoleUtils,
     ICommandProcessor commandProcessor)
 {
-    public sbyte BoardSize { get; set; }
+    public byte BoardSize { get; set; }
 
     public SolutionMode SolutionMode { get; set; }
 

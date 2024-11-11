@@ -1,6 +1,6 @@
 ﻿namespace NQueen.Kernel.Events;
 
-public class QueenPlacedEventArgs(sbyte[] solution) : EventArgs
+public class QueenPlacedEventArgs(byte[] solution) : EventArgs
 {
-    public sbyte[] Solution { get; } = solution;
+    public byte[] Solution { get; } = solution;
 }

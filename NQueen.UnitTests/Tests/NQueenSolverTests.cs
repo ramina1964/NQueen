@@ -10,7 +10,7 @@ public class NQueenSolverTests(SolverBackEndFixture fixture) :
     [InlineData(3, SolutionMode.Unique)]
     [InlineData(2, SolutionMode.All)]
     [InlineData(3, SolutionMode.All)]
-    public void SolverShouldNotGenerateAnySolution(sbyte boardSize, SolutionMode solutionMode)
+    public void SolverShouldNotGenerateAnySolution(byte boardSize, SolutionMode solutionMode)
     {
         // Arrange
         ExpectedSolutions = GetExpectedSolutions(boardSize, solutionMode);
@@ -47,7 +47,7 @@ public class NQueenSolverTests(SolverBackEndFixture fixture) :
     [InlineData(26, SolutionMode.Single)]
     [InlineData(27, SolutionMode.Single)]
     [InlineData(28, SolutionMode.Single)]
-    public void SolverShouldGenerateOneSingleSolution(sbyte boardSize, SolutionMode solutionMode)
+    public void SolverShouldGenerateOneSingleSolution(byte boardSize, SolutionMode solutionMode)
     {
         // Arrange
         ExpectedSolutions = GetExpectedSolutions(boardSize, solutionMode);
@@ -66,7 +66,7 @@ public class NQueenSolverTests(SolverBackEndFixture fixture) :
     [InlineData(6, SolutionMode.Unique)]
     [InlineData(7, SolutionMode.Unique)]
     [InlineData(8, SolutionMode.Unique)]
-    public void SolverShouldGenerateCorrectListOfUniqueSolutions(sbyte boardSize, SolutionMode solutionMode)
+    public void SolverShouldGenerateCorrectListOfUniqueSolutions(byte boardSize, SolutionMode solutionMode)
     {
         // Arrange
         ExpectedSolutions = GetExpectedSolutions(boardSize, solutionMode);
@@ -85,7 +85,7 @@ public class NQueenSolverTests(SolverBackEndFixture fixture) :
     [InlineData(6, SolutionMode.All)]
     [InlineData(7, SolutionMode.All)]
     [InlineData(8, SolutionMode.All)]
-    public void SolverShouldGenerateCorrectListOfAllSolutions(sbyte boardSize, SolutionMode solutionMode)
+    public void SolverShouldGenerateCorrectListOfAllSolutions(byte boardSize, SolutionMode solutionMode)
     {
         // Arrange
         ExpectedSolutions = GetExpectedSolutions(boardSize, solutionMode);

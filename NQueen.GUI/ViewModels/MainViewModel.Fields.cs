@@ -20,7 +20,7 @@ public sealed partial class MainViewModel
     private SolutionMode _solutionMode;
     private DisplayMode _displayMode;
     private string _boardSizeText;
-    private sbyte _boardSize;
+    private byte _boardSize;
     private bool _isVisualized;
     private bool _isValid;
     private bool _isSingleRunning;

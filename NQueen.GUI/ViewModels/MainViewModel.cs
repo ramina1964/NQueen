@@ -6,7 +6,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         _solver = solver ?? throw new ArgumentNullException(nameof(solver));
 
-        ObservableSolutions = new ObservableCollection<Solution>();
+        ObservableSolutions = [];
         Initialize();
         SubscribeToSimulationEvents();
     }
@@ -34,7 +34,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _disposed = true;
     }
 
-    private void Initialize(sbyte boardSize = Utility.DefaultBoardSize,
+    private void Initialize(byte boardSize = Utility.DefaultBoardSize,
         SolutionMode solutionMode = Utility.DefaultSolutionMode,
         DisplayMode displayMode = Utility.DefaultDisplayMode)
     {
@@ -62,11 +62,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         ObservableSolutions.Clear();
         Chessboard?.Squares.Clear();
-        BoardSize = sbyte.Parse(BoardSizeText);
+        BoardSize = byte.Parse(BoardSizeText);
         NoOfSolutions = "0";
         ElapsedTimeInSec = $"{0,0:N1}";
         MemoryUsage = "0";
-        Chessboard?.CreateSquares(BoardSize, new List<SquareViewModel>());
+        Chessboard?.CreateSquares(BoardSize, []);
     }
 
     private void UpdateButtonFunctionality()
@@ -92,7 +92,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             return;
         }
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         foreach (var s in sols)
         {
             sb.Append(s.ToString());
@@ -101,7 +101,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         }
 
         // If you need to use the concatenated string for some purpose
-        var concatenatedSolutions = sb.ToString();
+        _ = sb.ToString();
     }
 
     private async Task SimulateAsync()
