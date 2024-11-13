@@ -22,7 +22,7 @@ public static class Utility
     public const byte MaxBoardSizeForUniqueSolutions = 18;
     public const byte MaxBoardSizeForAllSolutions = 18;
 
-    // This indicates the frequency of progreebar update based on the board size value.
+    // This indicates the frequency of progrssbar update based on the board size value.
     // Todo: Use constants here.
     public static int SolutionCountPerUpdate(byte boardSize) =>
         boardSize <= SmallBoardSizeForUniqueSolutions

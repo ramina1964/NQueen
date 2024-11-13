@@ -28,78 +28,16 @@
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
-        <!-- Start of Selected Solution -->
-        <GroupBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Background="Bisque" Header="Selected Solution" Margin="5"
-                  BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <!-- Selected Solution Groupbox -->
+        <view:SelectedSolutionUserControl Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" />
 
-            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+        <!-- Solution List -->
+        <view:SolutionListUserControl Grid.Row="1" Grid.Column="0" />
 
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <Label Style="{StaticResource LabelStyle}" Grid.Row="0" Grid.Column="0" Foreground="Purple" Content="Locations"
-                       HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                       HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
-
-                <ScrollViewer Grid.Row="0" Grid.Column="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Hidden">
-                    <Label Style="{StaticResource LabelStyle}" Foreground="Purple" Content="{Binding SelectedSolution.Details}"
-                           HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                           HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
-                </ScrollViewer>
-            </Grid>
-        </GroupBox>
-        <!-- End of Selected Solution -->
-
-        <!-- Start of Solution List -->
-        <Grid Grid.Row="1" Grid.Column="0" Background="Bisque" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="30" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-
-                <Label Style="{StaticResource LabelStyle}" Grid.Row="0" Grid.Column="0"
-                       Content="{Binding SolutionTitle}" HorizontalAlignment="Stretch" Foreground="Purple"
-                       VerticalAlignment="Stretch" HorizontalContentAlignment="Left" />
-
-                <ListBox Grid.Row="1" Grid.Column="0" Foreground="Black"
-                         ItemsSource="{Binding ObservableSolutions}" SelectedItem="{Binding SelectedSolution}">
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="ListBoxItem">
-                            <Style.Triggers>
-                                <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="FontWeight" Value="Bold" />
-                                    <Setter Property="Background" Value="Transparent" />
-                                    <Setter Property="Foreground" Value="Crimson" />
-                                </Trigger>
-                            </Style.Triggers>
-                            <Style.Resources>
-                                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent" />
-                            </Style.Resources>
-                        </Style>
-                    </ListBox.ItemContainerStyle>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel>
-                                <TextBlock Text="{Binding Name}" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </Grid>
-        </Grid>
-        <!-- End of Solution List -->
-
-        <!-- Start of Chessboard -->
+        <!-- Chessboard -->
         <Grid Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
             <view:ChessboardUserControl x:Name="chessboard" />
         </Grid>
-        <!-- End of Chessboard -->
 
         <!-- Start of Input / Output Panel -->
         <Grid Grid.Row="1" Grid.Column="2" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5,0,5,0">
