@@ -2,13 +2,13 @@
 
 public class SolutionUpdateDTO
 {
-    public sbyte BoardSize { get; set; }
+    public byte BoardSize { get; set; }
 
     public SolutionMode SolutionMode { get; set; }
 
-    public sbyte[] QueenPositions { get; set; }
+    public byte[] QueenPositions { get; set; }
 
-    public HashSet<sbyte[]> Solutions { get; set; }
+    public HashSet<byte[]> Solutions { get; set; }
 
     public int NoOfSolution => Solutions.Count;
 }

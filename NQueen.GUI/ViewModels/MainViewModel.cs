@@ -34,7 +34,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _disposed = true;
     }
 
-    private void Initialize(sbyte boardSize = Utility.DefaultBoardSize,
+    private void Initialize(byte boardSize = Utility.DefaultBoardSize,
         SolutionMode solutionMode = Utility.DefaultSolutionMode,
         DisplayMode displayMode = Utility.DefaultDisplayMode)
     {
@@ -65,7 +65,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         ObservableSolutions.Clear();
         Chessboard?.Squares.Clear();
-        BoardSize = sbyte.Parse(BoardSizeText);
+        BoardSize = byte.Parse(BoardSizeText);
         NoOfSolutions = "0";
         ElapsedTimeInSec = $"{0,0:N1}";
         MemoryUsage = "0";

@@ -33,7 +33,7 @@ public class CommandProcessor(IConsoleUtils consoleUtils) : ICommandProcessor
                 dispatchCommands.Commands[key.ToUpper()] = true;
                 if (key.Equals(CommandConst.BoardSize))
                 {
-                    dispatchCommands.BoardSize = Convert.ToSByte(value);
+                    dispatchCommands.BoardSize = Convert.ToByte(value);
                 }
             }
         }
@@ -72,7 +72,7 @@ public class CommandProcessor(IConsoleUtils consoleUtils) : ICommandProcessor
                         CommandConst.BoardSize,
                         StringComparison.CurrentCultureIgnoreCase))
                     {
-                        dispatchCommands.BoardSize = Convert.ToSByte(userInput);
+                        dispatchCommands.BoardSize = Convert.ToByte(userInput);
                     }
                 }
             }

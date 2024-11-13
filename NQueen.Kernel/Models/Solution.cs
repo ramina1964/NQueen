@@ -2,13 +2,13 @@
 
 public class Solution
 {
-    public Solution(sbyte[] queenList, int? id = null)
+    public Solution(byte[] queenPositions, int? id = null)
     {
-        BoardSize = queenList.Length;
+        BoardSize = queenPositions.Length;
         Id = id;
         Name = ToString();
-        QueenList = queenList;
-        Positions = SetPositions(QueenList);
+        QueenPositions = queenPositions;
+        Positions = SetPositions(QueenPositions);
         Details = GetDetails();
     }
 
@@ -19,11 +19,11 @@ public class Solution
 
     public string Name { get; set; }
 
+    public byte[] QueenPositions { get; }
+
     public string Details { get; set; }
 
     public sealed override string ToString() => $"No. {Id}";
-
-    public sbyte[] QueenList { get; }
     #endregion PublicProperties
 
     #region PrivateMembers
@@ -66,10 +66,10 @@ public class Solution
         return sb.ToString();
     }
 
-    private static List<Position> SetPositions(IEnumerable<sbyte> queenList)
+    private static List<Position> SetPositions(IEnumerable<byte> queenPositions)
     {
-        return queenList.Select((item, index) =>
-            new Position((sbyte)index, item)).ToList();
+        return queenPositions.Select((item, index) =>
+            new Position((byte)index, item)).ToList();
     }
     #endregion PrivateMembers
 }

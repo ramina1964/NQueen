@@ -2,26 +2,26 @@
 
 public partial class TestBase(ISolverBackEnd sut)
 {
-    public List<sbyte[]> ExpectedSolutions { get; set; } = [];
+    public List<byte[]> ExpectedSolutions { get; set; } = [];
 
-    public List<sbyte[]> ActualSolutions { get; set; } = [];
+    public List<byte[]> ActualSolutions { get; set; } = [];
 
-    public static List<sbyte[]> GetExpectedSolutions(sbyte boardSize, SolutionMode solutionMode)
+    public static List<byte[]> GetExpectedSolutions(byte boardSize, SolutionMode solutionMode)
     {
         return solutionMode == SolutionMode.Single
-               ? new List<sbyte[]>(GetExpectedSingleSolution(boardSize))
+               ? new List<byte[]>(GetExpectedSingleSolution(boardSize))
                : solutionMode == SolutionMode.Unique
-               ? new List<sbyte[]>(GetExpectedUniqueSolutions(boardSize))
-               : new List<sbyte[]>(GetExpectedAllSolutions(boardSize));
+               ? new List<byte[]>(GetExpectedUniqueSolutions(boardSize))
+               : new List<byte[]>(GetExpectedAllSolutions(boardSize));
     }
 
-    public List<sbyte[]> GetActualSolutions(sbyte boardSize, SolutionMode solutionMode)
+    public List<byte[]> GetActualSolutions(byte boardSize, SolutionMode solutionMode)
     {
         return Sut
                .GetResultsAsync(boardSize, solutionMode)
                .Result
                .Solutions
-               .Select(sol => sol.QueenList)
+               .Select(sol => sol.QueenPositions)
                .ToList();
     }
 

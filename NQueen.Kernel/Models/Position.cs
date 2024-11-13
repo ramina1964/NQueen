@@ -2,13 +2,13 @@
 
 public class Position
 {
-    public Position(sbyte rowNo, sbyte columnNo)
+    public Position(byte rowNo, byte columnNo)
     {
         RowNo = rowNo;
         ColumnNo = columnNo;
     }
 
-    public sbyte RowNo { get; set; }
+    public byte RowNo { get; set; }
 
-    public sbyte ColumnNo { get; set; }
+    public byte ColumnNo { get; set; }
 }

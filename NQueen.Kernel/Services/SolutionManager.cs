@@ -9,20 +9,20 @@ public class SolutionManager : ISolutionManager
 
     public void UpdateSolutions(SolutionUpdateDTO solutionUpdateDTO)
     {
-        var queenList = solutionUpdateDTO.QueenPositions;
+        var queenPositions = solutionUpdateDTO.QueenPositions;
 
         // For SolutionMode.Single:
         if (solutionUpdateDTO.SolutionMode == SolutionMode.Single)
         {
-            solutionUpdateDTO.Solutions.Add(queenList);
+            solutionUpdateDTO.Solutions.Add(queenPositions);
             return;
         }
 
         // For each solution find all symmetrical counterparts, i.e., a list of maximum
-        // eight items included the solution itself.
-        var symmetricalSolutions = Utility.GetSymmetricalSolutions(queenList);
+        // eight items including the solution itself.
+        var symmetricalSolutions = Utility.GetSymmetricalSolutions(queenPositions);
 
-        // For SolutionMode.All, add this solution and all its symmetrical counterparts to Solutions.
+        // For SolutionMode.All: Add this solution and all its symmetrical counterparts to the Solutions.
         if (solutionUpdateDTO.SolutionMode == SolutionMode.All)
         {
             solutionUpdateDTO.Solutions.UnionWith(symmetricalSolutions);
@@ -33,7 +33,7 @@ public class SolutionManager : ISolutionManager
         // and symmetricalSolutions are found. Note that it is more efficient to have the larger collection
         // as the outer variable and the smaller as the argument of Overlap().
         if (solutionUpdateDTO.Solutions.Overlaps(symmetricalSolutions) == false)
-            solutionUpdateDTO.Solutions.Add(queenList);
+            solutionUpdateDTO.Solutions.Add(queenPositions);
     }
 
     public SolutionUpdateDTO UpdateDTO { get; }

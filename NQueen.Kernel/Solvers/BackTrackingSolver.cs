@@ -6,7 +6,7 @@ public class BackTrackingSolver : ISolver, IDisposable
 {
     public BackTrackingSolver(
         ISolutionManager solutionManager,
-        sbyte boardSize = Utility.DefaultBoardSize)
+        byte boardSize = Utility.DefaultBoardSize)
     {
         Initialize(boardSize);
         SolutionManager = solutionManager;
@@ -59,7 +59,7 @@ public class BackTrackingSolver : ISolver, IDisposable
     }
 
     public async Task<SimulationResults> GetResultsAsync(
-        sbyte boardSize,
+        byte boardSize,
         SolutionMode solutionMode,
         DisplayMode displayMode = DisplayMode.Hide)
     {
@@ -86,21 +86,21 @@ public class BackTrackingSolver : ISolver, IDisposable
     #region PublicProperties
     public ISolutionManager SolutionManager { get; }
 
-    public sbyte BoardSize { get; set; }
+    public byte BoardSize { get; set; }
 
     public int NoOfSolutions => Solutions.Count;
 
-    public sbyte HalfBoardSize { get; set; }
+    public byte HalfBoardSize { get; set; }
 
-    public sbyte[] QueenPositions { get; set; }
+    public byte[] QueenPositions { get; set; }
 
     public int SolutionCountPerUpdate =>
         Utility.SolutionCountPerUpdate(BoardSize);
     #endregion PublicProperties
 
     #region PublicMethods
-    public sbyte GetHalfSize() =>
-        (sbyte)(BoardSize % 2 == 0 ? BoardSize / 2 : BoardSize / 2 + 1);
+    public byte GetHalfSize() =>
+        (byte)(BoardSize % 2 == 0 ? BoardSize / 2 : BoardSize / 2 + 1);
 
     public void OnProgressChanged(object sender, ProgressValueChangedEventArgs e) =>
         ProgressValueChanged?.Invoke(this, e);
@@ -125,7 +125,7 @@ public class BackTrackingSolver : ISolver, IDisposable
 
     public DisplayMode DisplayMode { get; set; }
 
-    public HashSet<sbyte[]> Solutions { get; set; }
+    public HashSet<byte[]> Solutions { get; set; }
     #endregion
 
     #region Protected
@@ -134,13 +134,13 @@ public class BackTrackingSolver : ISolver, IDisposable
     #endregion Protected
 
     #region PrivateMethods
-    private void Initialize(sbyte boardSize = Utility.DefaultBoardSize)
+    private void Initialize(byte boardSize = Utility.DefaultBoardSize)
     {
         BoardSize = boardSize;
         _cancelationTokenSource = new CancellationTokenSource();
         HalfBoardSize = GetHalfSize();
-        QueenPositions = Enumerable.Repeat((sbyte)-1, BoardSize).ToArray();
-        Solutions = new HashSet<sbyte[]>(new SequenceEquality<sbyte>());
+        QueenPositions = Enumerable.Repeat(Utility.ByteMaxValue, BoardSize).ToArray();
+        Solutions = new HashSet<byte[]>(new SequenceEquality<byte>());
     }
 
     private async Task<IEnumerable<Solution>> SolveNQueenProblem()
@@ -166,9 +166,9 @@ public class BackTrackingSolver : ISolver, IDisposable
         return Solutions.Select((s, index) => new Solution(s, index + 1));
     }
 
-    private async Task FindSingleOrUniqueSolutions(sbyte colNo, SolutionMode solutionMode)
+    private async Task FindSingleOrUniqueSolutions(byte colNo, SolutionMode solutionMode)
     {
-        while (colNo != -1)
+        while (colNo != Utility.ByteMaxValue)
         {
             if (IsSolverCanceled)
                 return;
@@ -185,7 +185,7 @@ public class BackTrackingSolver : ISolver, IDisposable
                     BoardSize = BoardSize,
                     SolutionMode = SolutionMode,
                     Solutions = Solutions,
-                    QueenPositions = (sbyte[])QueenPositions.Clone()
+                    QueenPositions = (byte[])QueenPositions.Clone()
                 };
                 SolutionManager.UpdateSolutions(updateDTO);
                 return;
@@ -202,7 +202,7 @@ public class BackTrackingSolver : ISolver, IDisposable
 
             QueenPositions[colNo] = FindQueenPosition(colNo);
 
-            if (QueenPositions[colNo] == -1)
+            if (QueenPositions[colNo] == Utility.ByteMaxValue)
             {
                 colNo--;
                 continue;
@@ -218,7 +218,7 @@ public class BackTrackingSolver : ISolver, IDisposable
         }
     }
 
-    private async Task FindAllSolutions(sbyte colNo)
+    private async Task FindAllSolutions(byte colNo)
     {
         await FindSingleOrUniqueSolutions(colNo, SolutionMode.Unique);
 
@@ -245,19 +245,19 @@ public class BackTrackingSolver : ISolver, IDisposable
             SolutionFound?.Invoke(this, new SolutionFoundEventArgs(QueenPositions));
     }
 
-    private sbyte FindQueenPosition(sbyte colNo)
+    private byte FindQueenPosition(byte colNo)
     {
-        colNo = (sbyte)Math.Min(colNo, BoardSize - 1);
-        for (sbyte pos = (sbyte)(QueenPositions[colNo] + 1); pos < BoardSize; pos++)
+        colNo = (byte)Math.Min(colNo, BoardSize - 1);
+        for (byte pos = (byte)(QueenPositions[colNo] + 1); pos < BoardSize; pos++)
         {
             if (IsValidPosition(colNo, pos))
                 return pos;
         }
 
-        return -1;
+        return Utility.ByteMaxValue;
     }
 
-    private bool IsValidPosition(sbyte colNo, sbyte pos)
+    private bool IsValidPosition(byte colNo, byte pos)
     {
         for (int j = 0; j < colNo; j++)
         {
@@ -282,7 +282,7 @@ public class BackTrackingSolver : ISolver, IDisposable
             BoardSize = BoardSize,
             SolutionMode = SolutionMode,
             Solutions = Solutions,
-            QueenPositions = (sbyte[])QueenPositions.Clone()
+            QueenPositions = (byte[])QueenPositions.Clone()
         };
         SolutionManager.UpdateSolutions(updateDTO);
     }
