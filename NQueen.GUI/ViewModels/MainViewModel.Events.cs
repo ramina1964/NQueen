@@ -1,4 +1,6 @@
-﻿namespace NQueen.GUI.ViewModels;
+﻿global using System.Diagnostics;
+
+namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel
 {
@@ -23,10 +25,19 @@ public sealed partial class MainViewModel
         _ = Application
             .Current
             .Dispatcher
-            .BeginInvoke(DispatcherPriority.Send, new Action(() => ObservableSolutions.Add(sol)));
+            .BeginInvoke(DispatcherPriority.Send, new Action(() =>
+            {
+                if (ObservableSolutions.Count >= Utility.MaxNoOfSolutionsInOutput)
+                {
+                    ObservableSolutions.RemoveAt(0); // Remove the oldest solution
+                }
+                ObservableSolutions.Add(sol);
+                Debug.WriteLine($"ObservableSolutions count: {ObservableSolutions.Count}");
+            }));
 
         SelectedSolution = sol;
     }
+
 
     private void SubscribeToSimulationEvents()
     {

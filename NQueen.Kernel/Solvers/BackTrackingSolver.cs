@@ -1,6 +1,4 @@
-﻿using NQueen.Kernel.Models;
-
-namespace NQueen.Kernel.Solvers;
+﻿namespace NQueen.Kernel.Solvers;
 
 public class BackTrackingSolver : ISolver, IDisposable
 {
@@ -9,7 +7,8 @@ public class BackTrackingSolver : ISolver, IDisposable
         byte boardSize = Utility.DefaultBoardSize)
     {
         Initialize(boardSize);
-        SolutionManager = solutionManager;
+        SolutionManager = solutionManager
+            ?? throw new ArgumentNullException(nameof(solutionManager));
     }
 
     #region IDisposable Implementation

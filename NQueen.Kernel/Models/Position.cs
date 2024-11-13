@@ -1,14 +1,8 @@
 ﻿namespace NQueen.Kernel.Models;
 
-public class Position
+public class Position(byte rowNo, byte columnNo)
 {
-    public Position(byte rowNo, byte columnNo)
-    {
-        RowNo = rowNo;
-        ColumnNo = columnNo;
-    }
+    public byte RowNo { get; set; } = rowNo;
 
-    public byte RowNo { get; set; }
-
-    public byte ColumnNo { get; set; }
+    public byte ColumnNo { get; set; } = columnNo;
 }

@@ -81,11 +81,12 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     private void ExtractCorrectNoOfSols()
     {
+        // Ensure previous solutions are cleared before adding new ones
+        ObservableSolutions.Clear();
+
         var sols = SimulationResults
             .Solutions
             .Take(Utility.MaxNoOfSolutionsInOutput);
-
-        ObservableSolutions.Clear(); // Ensure previous solutions are cleared
 
         if (DisplayMode == DisplayMode.Visualize)
         {
