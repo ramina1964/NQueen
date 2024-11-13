@@ -21,7 +21,7 @@ public partial class TestBase(ISolverBackEnd sut)
                .GetResultsAsync(boardSize, solutionMode)
                .Result
                .Solutions
-               .Select(sol => sol.QueenList)
+               .Select(sol => sol.QueenPositions)
                .ToList();
     }
 

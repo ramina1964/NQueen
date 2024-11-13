@@ -9,7 +9,7 @@ public sealed partial class MainViewModel
     {
         var sol = new Solution([.. e.Solution], 1);
         var positions = sol
-            .QueenList.Where(q => q < Utility.ByteMaxValue)
+            .QueenPositions.Where(q => q < Utility.ByteMaxValue)
             .Select((item, index) => new Position((byte)index, item)).ToList();
 
         Chessboard.PlaceQueens(positions);

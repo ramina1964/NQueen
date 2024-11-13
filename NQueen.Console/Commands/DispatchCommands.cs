@@ -118,7 +118,7 @@ public partial class DispatchCommands(
 
         _consoleUtils.WriteLineColored(ConsoleColor.Blue, solutionTitle);
         _consoleUtils.WriteLineColored(ConsoleColor.Yellow, example.Details);
-        var board = DispatchUtils.CreateChessBoard(example.QueenList);
+        var board = DispatchUtils.CreateChessBoard(example.QueenPositions);
         _consoleUtils.WriteLineColored(ConsoleColor.Blue, CommandConst.DrawFirstSolution);
 
         _consoleUtils.WriteLineColored(ConsoleColor.Gray, CommandConst.SetDefaultFonts);
