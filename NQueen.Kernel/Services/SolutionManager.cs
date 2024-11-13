@@ -4,8 +4,9 @@ public class SolutionManager : ISolutionManager
 {
     public SolutionManager() { }
 
-    // This is used in unit testing to send in board size and solution mode.
     public SolutionManager(SolutionUpdateDTO dto) => UpdateDTO = dto;
+
+    public event Action<SolutionUpdateDTO> SolutionsUpdated;
 
     public void UpdateSolutions(SolutionUpdateDTO solutionUpdateDTO)
     {
@@ -15,6 +16,7 @@ public class SolutionManager : ISolutionManager
         if (solutionUpdateDTO.SolutionMode == SolutionMode.Single)
         {
             solutionUpdateDTO.Solutions.Add(queenPositions);
+            SolutionsUpdated?.Invoke(solutionUpdateDTO);
             return;
         }
 
@@ -26,6 +28,7 @@ public class SolutionManager : ISolutionManager
         if (solutionUpdateDTO.SolutionMode == SolutionMode.All)
         {
             solutionUpdateDTO.Solutions.UnionWith(symmetricalSolutions);
+            SolutionsUpdated?.Invoke(solutionUpdateDTO);
             return;
         }
 
@@ -33,7 +36,10 @@ public class SolutionManager : ISolutionManager
         // and symmetricalSolutions are found. Note that it is more efficient to have the larger collection
         // as the outer variable and the smaller as the argument of Overlap().
         if (solutionUpdateDTO.Solutions.Overlaps(symmetricalSolutions) == false)
+        {
             solutionUpdateDTO.Solutions.Add(queenPositions);
+            SolutionsUpdated?.Invoke(solutionUpdateDTO);
+        }
     }
 
     public SolutionUpdateDTO UpdateDTO { get; }
