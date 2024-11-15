@@ -27,14 +27,6 @@ public sealed partial class MainViewModel
 
     private void ManageSimulationStatus(SimulationStatus simulationStatus)
     {
-        IsIdle = true;
-        IsInInputMode = true;
-        IsSimulating = false;
-        IsSingleRunning = false;
-        IsOutputReady = true;
-        ProgressVisibility = Visibility.Hidden;
-        ProgressLabelVisibility = Visibility.Hidden;
-
         switch (simulationStatus)
         {
             case SimulationStatus.Started:
@@ -60,7 +52,21 @@ public sealed partial class MainViewModel
 
             case SimulationStatus.Finished:
                 UnsubscribeFromSimulationEvents();
+
+                IsIdle = true;
+                IsInInputMode = true;
+                IsSimulating = false;
+                IsSingleRunning = false;
+                IsOutputReady = true;
+                ProgressVisibility = Visibility.Hidden;
+                ProgressLabelVisibility = Visibility.Hidden;
                 break;
         }
+
+        // Notify the commands to re-evaluate their CanExecute state
+        SimulateCommand.NotifyCanExecuteChanged();
+        CancelCommand.NotifyCanExecuteChanged();
+        SaveCommand.NotifyCanExecuteChanged();
     }
+
 }

@@ -9,6 +9,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         ObservableSolutions = [];
         Initialize();
         SubscribeToSimulationEvents();
+
+        SimulateCommand = new AsyncRelayCommand(SimulateAsync, CanSimulate);
+        CancelCommand = new RelayCommand(Cancel, CanCancel);
+        SaveCommand = new RelayCommand(Save, CanSave);
     }
 
     public void Dispose()
@@ -30,7 +34,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         }
 
         // Dispose unmanaged resources
-
         _disposed = true;
     }
 
