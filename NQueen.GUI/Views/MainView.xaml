@@ -15,6 +15,10 @@
         Title="Solutions of NQueen Problem with Backtracking - .Net 8.0"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResize" WindowState="Normal">
 
+    <Window.DataContext>
+        <viewmodel:MainViewModel />
+    </Window.DataContext>
+
     <!-- Start of Outer Grid -->
     <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5.0">
         <Grid.RowDefinitions>
