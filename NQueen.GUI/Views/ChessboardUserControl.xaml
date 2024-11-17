@@ -12,7 +12,7 @@
 		<local:NullImageConverter x:Key="NullImageConverter" />
 	</UserControl.Resources>
 
-	<Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 		<Grid.RowDefinitions>
 			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>

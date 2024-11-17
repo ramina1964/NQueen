@@ -16,7 +16,7 @@
         WindowStartupLocation="CenterScreen" ResizeMode="CanResize" WindowState="Normal">
 
     <!-- Start of Outer Grid -->
-    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5.0">
+    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
         <Grid.RowDefinitions>
             <RowDefinition MinHeight="40" Height="Auto" />
             <RowDefinition Height="*" />
@@ -29,20 +29,18 @@
         </Grid.ColumnDefinitions>
 
         <!-- Selected Solution Groupbox -->
-        <view:SelectedSolutionUserControl Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" />
+        <view:SelectedSolutionUserControl Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="5"/>
 
         <!-- Solution List -->
-        <view:SolutionListUserControl Grid.Row="1" Grid.Column="0" />
+        <view:SolutionListUserControl Grid.Row="1" Grid.Column="0" Margin="5"/>
 
         <!-- Chessboard -->
-        <Grid Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-              Margin="5">
-            <view:ChessboardUserControl x:Name="chessboard" />
-        </Grid>
+        <view:ChessboardUserControl x:Name="chessboard" Grid.Row="1" Grid.Column="1"
+              HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5"/>
 
         <!-- Start of Input / Output Panel -->
         <Grid Grid.Row="1" Grid.Column="2" HorizontalAlignment="Left" VerticalAlignment="Center"
-              Margin="5,0,5,0">
+              Margin="5">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />

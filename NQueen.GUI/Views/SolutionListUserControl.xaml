@@ -6,7 +6,8 @@
              xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
              d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
              mc:Ignorable="d">
-    <Grid Background="Bisque" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
+    
+    <Grid Background="Bisque" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="30" />

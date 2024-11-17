@@ -7,8 +7,10 @@
              d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
              mc:Ignorable="d">
     
-    <GroupBox Background="Bisque" Header="Selected Solution" Margin="5"
-              BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+    <GroupBox Background="Bisque" Header="Selected Solution"
+              BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch"
+              VerticalAlignment="Stretch">
+        
         <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
