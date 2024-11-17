@@ -2,6 +2,9 @@
 
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
+    public MainViewModel() : this(new BackTrackingSolver(new SolutionManager()))
+    { }
+
     public MainViewModel(ISolver solver)
     {
         _solver = solver ?? throw new ArgumentNullException(nameof(solver));

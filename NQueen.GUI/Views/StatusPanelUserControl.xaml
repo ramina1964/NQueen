@@ -8,7 +8,11 @@
              d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    
+
+    <UserControl.DataContext>
+        <viewmodels:MainViewModel />
+    </UserControl.DataContext>
+
     <GroupBox Grid.Row="3" Background="Bisque" Header="Progress Status" Height="70"  Margin="0,2,0,0"
               BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
@@ -20,12 +24,14 @@
             <!-- Functions as both a Traditional progress bar and a BusyIndicator based on the value of SolutionMode -->
             <ProgressBar Style="{StaticResource ProgressBarStyle}" Grid.Row="0" Width="Auto" Foreground="Green"
                          Value="{Binding ProgressValue, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                         Visibility="{Binding ProgressVisibility}" IsIndeterminate="{Binding IsSingleRunning}" />
+                         Visibility="{Binding ProgressVisibility}" IsIndeterminate="{Binding IsSingleRunning}"
+                         AutomationProperties.Name="Progress Bar" />
 
             <Label Style="{StaticResource LabelStyle}" Grid.Row="0" Width="50" Height="Auto" Background="Transparent"
                    Visibility="{Binding ProgressLabelVisibility}" HorizontalAlignment="Center" VerticalAlignment="Center"
                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                   Content="{Binding ProgressLabel, UpdateSourceTrigger=PropertyChanged}"/>
+                   Content="{Binding ProgressLabel, UpdateSourceTrigger=PropertyChanged}"
+                   AutomationProperties.Name="Progress Label" />
 
         </Grid>
     </GroupBox>

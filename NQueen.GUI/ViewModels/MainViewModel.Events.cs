@@ -1,6 +1,4 @@
-﻿global using System.Diagnostics;
-
-namespace NQueen.GUI.ViewModels;
+﻿namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel
 {

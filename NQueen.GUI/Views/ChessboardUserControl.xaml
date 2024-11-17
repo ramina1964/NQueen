@@ -16,6 +16,7 @@
 		<Grid.RowDefinitions>
 			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>
+        
 		<ItemsControl ItemsSource="{Binding Chessboard.Squares}">
 			<ItemsControl.ItemsPanel>
 				<ItemsPanelTemplate>
@@ -31,5 +32,6 @@
 				</DataTemplate>
 			</ItemsControl.ItemTemplate>
 		</ItemsControl>
+        
 	</Grid>
 </UserControl>

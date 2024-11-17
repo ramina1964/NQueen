@@ -17,16 +17,18 @@ public sealed partial class MainViewModel
         get => _progressLabel;
         set => SetProperty(ref _progressLabel, value);
     }
-
     public Visibility ProgressVisibility
     {
         get => _progressVisibility;
         set
         {
-            _ = SetProperty(ref _progressVisibility, value);
-            if (DisplayMode == DisplayMode.Visualize)
+            if (SetProperty(ref _progressVisibility, value))
             {
-                OnPropertyChanged(nameof(ProgressLabel));
+                IsProgressBarOffscreen = value != Visibility.Visible;
+                if (DisplayMode == DisplayMode.Visualize)
+                {
+                    OnPropertyChanged(nameof(ProgressLabel));
+                }
             }
         }
     }
@@ -34,7 +36,25 @@ public sealed partial class MainViewModel
     public Visibility ProgressLabelVisibility
     {
         get => _progressLabelVisibility;
-        set => SetProperty(ref _progressLabelVisibility, value);
+        set
+        {
+            if (SetProperty(ref _progressLabelVisibility, value))
+            {
+                IsProgressLabelOffscreen = value != Visibility.Visible;
+            }
+        }
+    }
+
+    public bool IsProgressBarOffscreen
+    {
+        get => _isProgressBarOffscreen;
+        set => SetProperty(ref _isProgressBarOffscreen, value);
+    }
+
+    public bool IsProgressLabelOffscreen
+    {
+        get => _isProgressLabelOffscreen;
+        set => SetProperty(ref _isProgressLabelOffscreen, value);
     }
 
     public IEnumerable<SolutionMode> SolutionModeList

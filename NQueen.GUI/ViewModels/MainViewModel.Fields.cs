@@ -7,10 +7,16 @@ public sealed partial class MainViewModel
     #region PrivateFields
     private bool _disposed;
     private CancellationTokenSource _cancelationTokenSource;
+    
     private double _progressValue;
     private string _progressLabel;
-    private Visibility _progressLabelVisibility;
+
     private Visibility _progressVisibility;
+    private Visibility _progressLabelVisibility;
+    private bool _isProgressBarOffscreen;
+    private bool _isProgressLabelOffscreen;
+
+
     private IEnumerable<SolutionMode> _enumSolutionModes;
     private IEnumerable<DisplayMode> _enumDisplayModes;
     private static SimulationResults _simulationResults;
