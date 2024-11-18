@@ -11,8 +11,12 @@ public static class ServiceCollectionExtensions
 
         // Register specific services, i.e., views and view models
         services.AddTransient<Chessboard>();
-        services.AddTransient<MainView>();
-        services.AddTransient<MainViewModel>();
+        services.AddTransient<ChessboardUserControl>();
+        services.AddSingleton<InputPanelUserControl>();
+        services.AddSingleton<StatusPanelUserControl>();
+
+        services.AddSingleton<MainViewModel>();
+        services.AddSingleton<MainView>();
 
         return services.BuildServiceProvider();
     }

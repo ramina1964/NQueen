@@ -38,8 +38,8 @@
         <!-- Solution List -->
         <view:SolutionListUserControl Grid.Row="1" Grid.Column="0" Margin="5"/>
 
-        <!-- Chessboard -->
-        <view:ChessboardUserControl x:Name="chessboard" Grid.Row="1" Grid.Column="1"
+        <!-- Chessboard Placeholder -->
+        <ContentControl x:Name="chessboardPlaceholder" Grid.Row="1" Grid.Column="1"
               HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5"/>
 
         <!-- Start of Input / Output Panel -->
@@ -53,7 +53,7 @@
             </Grid.RowDefinitions>
 
             <!-- Input Panel -->
-            <view:InputPanelUserControl Grid.Row="0" />
+            <ContentControl x:Name="inputPanelPlaceHolder" Grid.Row="0" />
 
             <!-- Solution Summary Panel -->
             <view:SolutionSummaryUserControl Grid.Row="1" />
@@ -62,7 +62,7 @@
             <view:SimulationPanelUserControl Grid.Row="2"/>
 
             <!-- Status Panel -->
-            <view:StatusPanelUserControl Grid.Row="3" />
+            <ContentControl x:Name="statusPanelPlaceholder" Grid.Row="3" />
 
         </Grid>
         <!-- End of Input / Output Panel -->
