@@ -34,6 +34,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             // Dispose managed resources
             _cancelationTokenSource?.Dispose();
             _cancelationTokenSource = null;
+
+            // Clear collections
+            ObservableSolutions.Clear();
+            Chessboard?.Squares.Clear();
         }
 
         // Dispose unmanaged resources

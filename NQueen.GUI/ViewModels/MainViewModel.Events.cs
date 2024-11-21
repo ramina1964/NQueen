@@ -20,22 +20,22 @@ public sealed partial class MainViewModel
         var id = ObservableSolutions.Count + 1;
         var sol = new Solution([.. e.Solution], id);
 
-        _ = Application
-            .Current
-            .Dispatcher
-            .BeginInvoke(DispatcherPriority.Send, new Action(() =>
+        // Update the total number of solutions
+        NoOfSolutions = $"{int.Parse(NoOfSolutions) + 1,0:N0}";
+
+        // Limit the number of solutions shown in ObservableSolutions
+        Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
+        {
+            if (ObservableSolutions.Count >= Utility.MaxNoOfSolutionsInOutput)
             {
-                if (ObservableSolutions.Count >= Utility.MaxNoOfSolutionsInOutput)
-                {
-                    ObservableSolutions.RemoveAt(0); // Remove the oldest solution
-                }
-                ObservableSolutions.Add(sol);
-                Debug.WriteLine($"ObservableSolutions count: {ObservableSolutions.Count}");
-            }));
+                ObservableSolutions.RemoveAt(0); // Remove the oldest solution
+            }
+            ObservableSolutions.Add(sol);
+            Debug.WriteLine($"ObservableSolutions count: {ObservableSolutions.Count}");
+        }));
 
         SelectedSolution = sol;
     }
-
 
     private void SubscribeToSimulationEvents()
     {
@@ -46,8 +46,8 @@ public sealed partial class MainViewModel
 
     private void UnsubscribeFromSimulationEvents()
     {
+        _solver.ProgressValueChanged -= OnProgressValueChanged;
         _solver.QueenPlaced -= OnQueenPlaced;
         _solver.SolutionFound -= OnSolutionFound;
-        _solver.ProgressValueChanged -= OnProgressValueChanged;
     }
 }

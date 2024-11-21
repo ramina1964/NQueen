@@ -27,5 +27,4 @@ public class SimulationResults
     public IEnumerable<Solution> Solutions { get; set; }
 
     public double ElapsedTimeInSec { get; set; }
-
 }
