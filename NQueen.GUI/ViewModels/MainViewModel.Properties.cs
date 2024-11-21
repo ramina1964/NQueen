@@ -200,7 +200,11 @@ public sealed partial class MainViewModel
     public string SolutionTitle
     {
         get => _solutionTitle;
-        set => SetProperty(ref _solutionTitle, value);
+        set
+        {
+            if (_solutionTitle != value)
+                SetProperty(ref _solutionTitle, value);
+        }
     }
 
     public string NoOfSolutions
