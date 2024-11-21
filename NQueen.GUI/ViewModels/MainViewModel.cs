@@ -7,7 +7,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public MainViewModel(ISolver solver)
     {
-        _solver = solver ?? throw new ArgumentNullException(nameof(solver));
+        Solver = solver ?? throw new ArgumentNullException(nameof(solver));
 
         ObservableSolutions = [];
         Initialize();
@@ -32,8 +32,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         if (disposing)
         {
             // Dispose managed resources
-            _cancelationTokenSource?.Dispose();
-            _cancelationTokenSource = null;
+            CancelationTokenSource?.Dispose();
+            CancelationTokenSource = null;
 
             // Clear collections
             ObservableSolutions.Clear();
@@ -123,7 +123,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         ManageSimulationStatus(SimulationStatus.Started);
 
         UpdateGui();
-        SimulationResults = await _solver.GetResultsAsync(BoardSize, SolutionMode, DisplayMode);
+        SimulationResults = await Solver.GetResultsAsync(BoardSize, SolutionMode, DisplayMode);
 
         ExtractCorrectNoOfSols();
         NoOfSolutions = $"{SimulationResults.NoOfSolutions,0:N0}";

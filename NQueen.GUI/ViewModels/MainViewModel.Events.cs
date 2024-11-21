@@ -39,15 +39,15 @@ public sealed partial class MainViewModel
 
     private void SubscribeToSimulationEvents()
     {
-        _solver.ProgressValueChanged += OnProgressValueChanged;
-        _solver.QueenPlaced += OnQueenPlaced;
-        _solver.SolutionFound += OnSolutionFound;
+        Solver.ProgressValueChanged += OnProgressValueChanged;
+        Solver.QueenPlaced += OnQueenPlaced;
+        Solver.SolutionFound += OnSolutionFound;
     }
 
     private void UnsubscribeFromSimulationEvents()
     {
-        _solver.ProgressValueChanged -= OnProgressValueChanged;
-        _solver.QueenPlaced -= OnQueenPlaced;
-        _solver.SolutionFound -= OnSolutionFound;
+        Solver.ProgressValueChanged -= OnProgressValueChanged;
+        Solver.QueenPlaced -= OnQueenPlaced;
+        Solver.SolutionFound -= OnSolutionFound;
     }
 }

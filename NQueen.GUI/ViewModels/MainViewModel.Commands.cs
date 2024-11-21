@@ -10,7 +10,7 @@ public sealed partial class MainViewModel
 
     private bool CanSimulate() => IsIdle && IsValid;
 
-    private void Cancel() => _solver.IsSolverCanceled = true;
+    private void Cancel() => Solver.IsSolverCanceled = true;
 
     private bool CanCancel() => IsSimulating;
 
