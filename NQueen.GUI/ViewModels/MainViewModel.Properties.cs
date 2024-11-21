@@ -59,13 +59,13 @@ public sealed partial class MainViewModel
 
     public IEnumerable<SolutionMode> SolutionModeList
     {
-        get => Enum.GetValues(typeof(SolutionMode)).Cast<SolutionMode>();
+        get => Enum.GetValues<SolutionMode>().Cast<SolutionMode>();
         set => SetProperty(ref _enumSolutionModes, value);
     }
 
     public IEnumerable<DisplayMode> DisplayModeList
     {
-        get => Enum.GetValues(typeof(DisplayMode)).Cast<DisplayMode>();
+        get => Enum.GetValues<DisplayMode>().Cast<DisplayMode>();
         set => SetProperty(ref _enumDisplayModes, value);
     }
 
@@ -209,7 +209,9 @@ public sealed partial class MainViewModel
         set
         {
             if (SetProperty(ref _noOfSolutions, value))
-            { OnPropertyChanged(nameof(ResultTitle)); }
+            {
+                OnPropertyChanged(nameof(ResultTitle));
+            }
         }
     }
 

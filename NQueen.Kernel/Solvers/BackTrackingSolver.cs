@@ -26,7 +26,12 @@ public class BackTrackingSolver : ISolver, IDisposable
         // Here _disposed == true
         _disposed = true;
         if (disposing)
+        {
             CleanupResources();
+
+            // Clear collections
+            Solutions?.Clear();
+        }
     }
 
     private void CleanupResources()
@@ -114,8 +119,8 @@ public class BackTrackingSolver : ISolver, IDisposable
         return new SimulationResults(solutions)
         {
             BoardSize = BoardSize,
-            Solutions = solutions.ToList(),
-            NoOfSolutions = Solutions.Count,
+            Solutions = solutions,
+            NoOfSolutions = solutions.Count(),
             ElapsedTimeInSec = elapsedTimeInSec
         };
     }
@@ -126,11 +131,6 @@ public class BackTrackingSolver : ISolver, IDisposable
 
     public HashSet<byte[]> Solutions { get; set; }
     #endregion
-
-    #region Protected
-    protected void OnQueenPlaced(object sender, QueenPlacedEventArgs e) =>
-        QueenPlaced?.Invoke(this, e);
-    #endregion Protected
 
     #region PrivateMethods
     private void Initialize(byte boardSize = Utility.DefaultBoardSize)
@@ -162,6 +162,7 @@ public class BackTrackingSolver : ISolver, IDisposable
                 throw new NotImplementedException();
         }
 
+        // Return the solutions directly without converting to a list
         return Solutions.Select((s, index) => new Solution(s, index + 1));
     }
 
@@ -209,7 +210,7 @@ public class BackTrackingSolver : ISolver, IDisposable
 
             if (DisplayMode == DisplayMode.Visualize)
             {
-                OnQueenPlaced(this, new QueenPlacedEventArgs(QueenPositions));
+                QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(QueenPositions));
                 await Task.Delay(DelayInMilliseconds);
             }
 
