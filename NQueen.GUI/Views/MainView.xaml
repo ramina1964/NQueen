@@ -1,5 +1,5 @@
 ﻿<!-- Todo: Add AutomationProperties.Name to active UI elements, i.e, every thing else other than containers. -->
-
+<!-- Todo: Fix all WPF Bounding Errors. -->
 <Window
     x:Class="NQueen.GUI.Views.MainView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -9,7 +9,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:view="clr-namespace:NQueen.GUI.Views"
     xmlns:viewmodel="clr-namespace:NQueen.GUI.ViewModels"
-    Title="Solutions of NQueen Problem with Backtracking - .Net 8.0"
+    Title="Solutions of NQueen Problem with Backtracking - .NET 9.0"
     MinWidth="{Binding Source={x:Static SystemParameters.PrimaryScreenWidth}, Converter={converter:RatioConverter}, ConverterParameter='0.90'}"
     MinHeight="{Binding Source={x:Static SystemParameters.PrimaryScreenHeight}, Converter={converter:RatioConverter}, ConverterParameter='0.96'}"
     d:DataContext="{d:DesignInstance Type=viewmodel:MainViewModel}"
