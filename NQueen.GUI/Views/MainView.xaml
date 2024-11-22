@@ -71,8 +71,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="80" />
+                <RowDefinition Height="*" MinHeight="100"/>
             </Grid.RowDefinitions>
 
             <!--  Input Panel  -->
@@ -82,7 +81,7 @@
             <view:SolutionSummaryUserControl Grid.Row="1" />
 
             <!--  Simulation Panel  -->
-            <view:SimulationPanelUserControl Grid.Row="2" />
+            <ContentControl x:Name="simulationPanelPlaceHolder"  Grid.Row="2" />
 
             <!--  Status Panel (Removed)  -->
         </Grid>

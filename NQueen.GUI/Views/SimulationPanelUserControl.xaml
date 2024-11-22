@@ -19,7 +19,8 @@
         Background="Bisque"
         BorderBrush="Black"
         BorderThickness="1"
-        Header="Simulation">
+        Header="Simulation"
+        MinHeight="100">
 
         <Grid
             Margin="30,3,30,3"
@@ -64,8 +65,8 @@
                 Foreground="Green"
                 IsIndeterminate="{Binding IsSingleRunning}"
                 Style="{StaticResource ProgressBarStyle}"
-                Visibility="{Binding ProgressVisibility}"
-                Value="{Binding ProgressValue, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                Visibility="{Binding ProgressVisibility,
+                    Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
             <Label
                 Grid.Row="1"
@@ -79,7 +80,8 @@
                 Background="Transparent"
                 Content="{Binding ProgressLabel, UpdateSourceTrigger=PropertyChanged}"
                 Style="{StaticResource LabelStyle}"
-                Visibility="{Binding ProgressLabelVisibility}" />
+                Visibility="{Binding ProgressLabelVisibility,
+                    Converter={StaticResource BooleanToVisibilityConverter}}"/>
         </Grid>
     </GroupBox>
 </UserControl>

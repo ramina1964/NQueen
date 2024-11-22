@@ -60,10 +60,6 @@ public sealed partial class MainViewModel
                 IsOutputReady = true;
                 ProgressVisibility = Visibility.Hidden;
                 ProgressLabelVisibility = Visibility.Hidden;
-
-                // Clear collections to free memory
-                //ObservableSolutions.Clear();
-                //Chessboard?.Squares.Clear();
                 break;
         }
 
