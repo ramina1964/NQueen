@@ -15,11 +15,7 @@ public partial class MainView : Window, IDisposable
 
         // Resolve and add InputPanelUserControl to the MainView
         var inputPanel = _serviceProvider.GetRequiredService<InputPanelUserControl>();
-        inputPanelPlaceHolder.Content = inputPanel; 
-
-        // Resolve and add StatusPanelUserControl to the MainView
-        var statusPanel = _serviceProvider.GetRequiredService<StatusPanelUserControl>();
-        statusPanelPlaceholder.Content = statusPanel;
+        inputPanelPlaceHolder.Content = inputPanel;
     }
 
     public MainViewModel MainViewModel { get; }

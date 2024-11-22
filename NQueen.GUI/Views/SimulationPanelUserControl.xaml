@@ -13,18 +13,37 @@
               BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
         <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="30,3,30,3">
-
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition />
-                <ColumnDefinition />
+                <ColumnDefinition Width="90"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="90"/>
             </Grid.ColumnDefinitions>
 
             <Button Style="{StaticResource ButtonStyle}" Grid.Row="0" Grid.Column="0" Content="Cancel"
-                    Margin="3" Command="{Binding CancelCommand, UpdateSourceTrigger=PropertyChanged}" />
+                    Margin="5" Command="{Binding CancelCommand, UpdateSourceTrigger=PropertyChanged}"
+                    AutomationProperties.Name="Cancel Button"/>
 
-            <Button Style="{StaticResource ButtonStyle}" Grid.Row="0" Grid.Column="1" Content="Simulate"
-                    Margin="3" Command="{Binding SimulateCommand, UpdateSourceTrigger=PropertyChanged}"
-                    IsDefault="True" />
+            <Button Style="{StaticResource ButtonStyle}" Grid.Row="0" Grid.Column="2" Content="Simulate"
+                    Margin="5" Command="{Binding SimulateCommand, UpdateSourceTrigger=PropertyChanged}"
+                    IsDefault="True" AutomationProperties.Name="Simulate Button"/>
+
+            <!-- Progress Bar and Label -->
+            <ProgressBar Style="{StaticResource ProgressBarStyle}" Grid.Row="1" Grid.ColumnSpan="3"
+                         Height="25" Foreground="Green" HorizontalAlignment="Stretch"
+                         Value="{Binding ProgressValue, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                         Visibility="{Binding ProgressVisibility}" IsIndeterminate="{Binding IsSingleRunning}"
+                         AutomationProperties.Name="Progress Bar"/>
+
+            <Label Style="{StaticResource LabelStyle}" Grid.Row="1" Grid.ColumnSpan="3"
+                   Height="30" Background="Transparent" Visibility="{Binding ProgressLabelVisibility}"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                   HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                   Content="{Binding ProgressLabel, UpdateSourceTrigger=PropertyChanged}"
+                   AutomationProperties.Name="Progress Label"/>
         </Grid>
     </GroupBox>
 </UserControl>
