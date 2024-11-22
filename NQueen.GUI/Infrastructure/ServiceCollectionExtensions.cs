@@ -13,7 +13,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<Chessboard>();
         services.AddTransient<ChessboardUserControl>();
         services.AddSingleton<InputPanelUserControl>();
-        services.AddSingleton<StatusPanelUserControl>();
+        //services.AddSingleton<StatusPanelUserControl>();
 
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainView>();

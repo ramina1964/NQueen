@@ -1,19 +1,31 @@
-﻿<UserControl x:Class="NQueen.GUI.Views.InputPanelUserControl"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:NQueen.GUI.Views"
-             xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
-             d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
-    
-    <GroupBox Grid.Row="0" Background="Bisque" Header="Input" BorderThickness="1" BorderBrush="Black"
-                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                      HorizontalContentAlignment="Left" VerticalContentAlignment="Stretch">
+﻿<UserControl
+    x:Class="NQueen.GUI.Views.InputPanelUserControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:NQueen.GUI.Views"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
+    d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
 
-        <Grid Margin="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+    <GroupBox
+        Grid.Row="0"
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
+        HorizontalContentAlignment="Left"
+        VerticalContentAlignment="Stretch"
+        Background="Bisque"
+        BorderBrush="Black"
+        BorderThickness="1"
+        Header="Input">
+
+        <Grid
+            Margin="5"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -26,28 +38,73 @@
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
 
-            <Label Style="{StaticResource LabelStyle}" Grid.Row="0" Grid.Column="0" Content="Board Size" Margin="5,2" />
+            <Label
+                Grid.Row="0"
+                Grid.Column="0"
+                Margin="5,2"
+                Content="Board Size"
+                Style="{StaticResource LabelStyle}" />
 
-            <TextBox Style="{StaticResource TextBoxNumericalStyle}" Grid.Row="0" Grid.Column="1" Margin="5,2"
-                             IsEnabled="{Binding IsInInputMode}" Text="{Binding BoardSizeText, UpdateSourceTrigger=LostFocus,
-                                        Mode=TwoWay, ValidatesOnDataErrors=True, ValidatesOnExceptions=True}" />
+            <TextBox
+                Grid.Row="0"
+                Grid.Column="1"
+                Margin="5,2"
+                IsEnabled="{Binding IsInInputMode}"
+                Style="{StaticResource TextBoxNumericalStyle}"
+                Text="{Binding BoardSizeText, UpdateSourceTrigger=LostFocus, Mode=TwoWay, ValidatesOnDataErrors=True, ValidatesOnExceptions=True}" />
 
-            <Label Style="{StaticResource LabelStyle}" Grid.Row="1" Grid.Column="0" Content="Solution Mode" Margin="5,2" />
+            <Label
+                Grid.Row="1"
+                Grid.Column="0"
+                Margin="5,2"
+                Content="Solution Mode"
+                Style="{StaticResource LabelStyle}" />
 
-            <ComboBox Style="{StaticResource ComboBoxStyle}" Grid.Row="1" Grid.Column="1" Margin="5,2" Height="30"
-                              ItemsSource="{Binding SolutionModeList, Mode=TwoWay}"
-                              SelectedItem="{Binding SolutionMode}" IsEnabled="{Binding IsInInputMode}" />
+            <ComboBox
+                Grid.Row="1"
+                Grid.Column="1"
+                Height="30"
+                Margin="5,2"
+                IsEnabled="{Binding IsInInputMode}"
+                ItemsSource="{Binding SolutionModeList, Mode=TwoWay}"
+                SelectedItem="{Binding SolutionMode}"
+                Style="{StaticResource ComboBoxStyle}" />
 
-            <Label Style="{StaticResource LabelStyle}" Grid.Row="2" Grid.Column="0" Content="Display Mode" Margin="5,2" />
+            <Label
+                Grid.Row="2"
+                Grid.Column="0"
+                Margin="5,2"
+                Content="Display Mode"
+                Style="{StaticResource LabelStyle}" />
 
-            <ComboBox Style="{StaticResource ComboBoxStyle}" Grid.Row="2" Grid.Column="1" x:Name="CmbDisplayMode"
-                              Height="30" Margin="5,2" ItemsSource="{Binding DisplayModeList, Mode=TwoWay}"
-                              SelectedItem="{Binding DisplayMode}" IsEnabled="{Binding IsInInputMode}" />
+            <ComboBox
+                x:Name="CmbDisplayMode"
+                Grid.Row="2"
+                Grid.Column="1"
+                Height="30"
+                Margin="5,2"
+                IsEnabled="{Binding IsInInputMode}"
+                ItemsSource="{Binding DisplayModeList, Mode=TwoWay}"
+                SelectedItem="{Binding DisplayMode}"
+                Style="{StaticResource ComboBoxStyle}" />
 
-            <Label Style="{StaticResource LabelStyle}" Grid.Row="3" Grid.Column="0" Content="Delay in Milisec" Margin="5,2" />
+            <Label
+                Grid.Row="3"
+                Grid.Column="0"
+                Margin="5,2"
+                Content="Delay in Milisec"
+                Style="{StaticResource LabelStyle}" />
 
-            <Slider Style="{StaticResource SliderStyle}" Grid.Row="3" Grid.Column="1" Height="25" Margin="5"
-                            Minimum="10" Maximum="3000" Value="{Binding DelayInMilliseconds}" IsEnabled="{Binding IsVisualized}" />
+            <Slider
+                Grid.Row="3"
+                Grid.Column="1"
+                Height="25"
+                Margin="5"
+                IsEnabled="{Binding IsVisualized}"
+                Maximum="3000"
+                Minimum="10"
+                Style="{StaticResource SliderStyle}"
+                Value="{Binding DelayInMilliseconds}" />
         </Grid>
     </GroupBox>
 </UserControl>

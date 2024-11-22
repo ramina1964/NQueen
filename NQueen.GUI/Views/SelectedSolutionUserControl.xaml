@@ -1,16 +1,21 @@
-﻿<UserControl x:Class="NQueen.GUI.Views.SelectedSolutionUserControl"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
-             d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
-             mc:Ignorable="d">
-    
-    <GroupBox Background="Bisque" Header="Selected Solution"
-              BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch"
-              VerticalAlignment="Stretch">
-        
+﻿<UserControl
+    x:Class="NQueen.GUI.Views.SelectedSolutionUserControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
+    d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
+    mc:Ignorable="d">
+
+    <GroupBox
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
+        Background="Bisque"
+        BorderBrush="Black"
+        BorderThickness="1"
+        Header="Selected Solution">
+
         <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -19,13 +24,29 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <Label Style="{StaticResource LabelStyle}" Grid.Row="0" Grid.Column="0" Foreground="Purple" Content="Locations"
-                   HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                   HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
-            <ScrollViewer Grid.Row="0" Grid.Column="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Hidden">
-                <Label Style="{StaticResource LabelStyle}" Foreground="Purple" Content="{Binding SelectedSolution.Details}"
-                       HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                       HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+            <Label
+                Grid.Row="0"
+                Grid.Column="0"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                VerticalContentAlignment="Stretch"
+                Content="Locations"
+                Foreground="Purple"
+                Style="{StaticResource LabelStyle}" />
+            <ScrollViewer
+                Grid.Row="0"
+                Grid.Column="1"
+                HorizontalScrollBarVisibility="Auto"
+                VerticalScrollBarVisibility="Hidden">
+                <Label
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    VerticalContentAlignment="Stretch"
+                    Content="{Binding SelectedSolution.Details}"
+                    Foreground="Purple"
+                    Style="{StaticResource LabelStyle}" />
             </ScrollViewer>
         </Grid>
     </GroupBox>
