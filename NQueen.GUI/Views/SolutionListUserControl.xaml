@@ -31,7 +31,8 @@
                 Grid.Column="0"
                 Foreground="Black"
                 ItemsSource="{Binding ObservableSolutions}"
-                SelectedItem="{Binding SelectedSolution}">
+                SelectedItem="{Binding SelectedSolution}"
+                AutomationProperties.Name="SolutionList">
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
                         <Style.Triggers>
