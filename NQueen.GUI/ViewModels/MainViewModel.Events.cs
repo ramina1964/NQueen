@@ -28,10 +28,9 @@ public sealed partial class MainViewModel
         {
             if (ObservableSolutions.Count >= Utility.MaxNoOfSolutionsInOutput)
             {
-                ObservableSolutions.RemoveAt(0); // Remove the oldest solution
+                ObservableSolutions.RemoveAt(0);
             }
             ObservableSolutions.Add(sol);
-            Debug.WriteLine($"ObservableSolutions count: {ObservableSolutions.Count}");
         }));
 
         SelectedSolution = sol;
