@@ -272,7 +272,8 @@ public class BackTrackingSolver : ISolver, IDisposable
     private void NotifyProgressChanged()
     {
         ProgressValue = Math.Round(100.0 * QueenPositions[0] / HalfBoardSize, 1);
-        OnProgressChanged(this, new ProgressValueChangedEventArgs(ProgressValue));
+        ProgressValueChanged?.Invoke(this, new ProgressValueChangedEventArgs(ProgressValue));
+        //OnProgressChanged(this, new ProgressValueChangedEventArgs(ProgressValue));
     }
 
     private void UpdateSolutions()

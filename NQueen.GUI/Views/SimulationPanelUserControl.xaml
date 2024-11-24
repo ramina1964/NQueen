@@ -57,6 +57,7 @@
 
             <!--  Progress Bar and Label  -->
             <ProgressBar
+                Name="ProgressBar"
                 Grid.Row="1"
                 Grid.ColumnSpan="3"
                 Height="25"
@@ -65,9 +66,11 @@
                 Foreground="Green"
                 IsIndeterminate="{Binding IsSingleRunning}"
                 Style="{StaticResource ProgressBarStyle}"
-                Visibility="{Binding ProgressVisibility, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                Visibility="{Binding ProgressVisibility}" />
 
+            <!--  Progress Label  -->
             <Label
+                Name="ProgressLabel"
                 Grid.Row="1"
                 Grid.ColumnSpan="3"
                 Height="30"
@@ -77,9 +80,9 @@
                 VerticalContentAlignment="Center"
                 AutomationProperties.Name="ProgressStatus"
                 Background="Transparent"
-                Content="{Binding SelectedSolution, UpdateSourceTrigger=PropertyChanged}"
+                Content="{Binding ProgressLabel}"
                 Style="{StaticResource LabelStyle}"
-                Visibility="{Binding ProgressLabelVisibility, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                Visibility="{Binding ProgressLabelVisibility}" />
         </Grid>
     </GroupBox>
 </UserControl>
