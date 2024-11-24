@@ -13,14 +13,14 @@
 
     <GroupBox
         Grid.Row="2"
+        MinHeight="100"
         Margin="0,2,0,0"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         Background="Bisque"
         BorderBrush="Black"
         BorderThickness="1"
-        Header="Simulation"
-        MinHeight="100">
+        Header="Simulation">
 
         <Grid
             Margin="30,3,30,3"
@@ -65,8 +65,7 @@
                 Foreground="Green"
                 IsIndeterminate="{Binding IsSingleRunning}"
                 Style="{StaticResource ProgressBarStyle}"
-                Visibility="{Binding ProgressVisibility,
-                    Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                Visibility="{Binding ProgressVisibility, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
             <Label
                 Grid.Row="1"
@@ -78,10 +77,9 @@
                 VerticalContentAlignment="Center"
                 AutomationProperties.Name="ProgressStatus"
                 Background="Transparent"
-                Content="{Binding ProgressLabel, UpdateSourceTrigger=PropertyChanged}"
+                Content="{Binding SelectedSolution, UpdateSourceTrigger=PropertyChanged}"
                 Style="{StaticResource LabelStyle}"
-                Visibility="{Binding ProgressLabelVisibility,
-                    Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                Visibility="{Binding ProgressLabelVisibility, Converter={StaticResource BooleanToVisibilityConverter}}" />
         </Grid>
     </GroupBox>
 </UserControl>

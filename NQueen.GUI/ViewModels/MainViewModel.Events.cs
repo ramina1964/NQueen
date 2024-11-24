@@ -18,7 +18,7 @@ public sealed partial class MainViewModel
     private void OnSolutionFound(object sender, SolutionFoundEventArgs e)
     {
         var id = ObservableSolutions.Count + 1;
-        var sol = new Solution([.. e.Solution], id);
+        var sol = new Solution(e.Solution, id);
 
         // Update the total number of solutions
         NoOfSolutions = $"{int.Parse(NoOfSolutions) + 1,0:N0}";
@@ -30,7 +30,10 @@ public sealed partial class MainViewModel
             {
                 ObservableSolutions.RemoveAt(0);
             }
-            ObservableSolutions.Add(sol);
+            if (!ObservableSolutions.Any(s => s.Id == sol.Id))
+            {
+                ObservableSolutions.Add(sol);
+            }
         }));
 
         SelectedSolution = sol;
