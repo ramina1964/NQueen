@@ -63,14 +63,14 @@
                 Height="25"
                 HorizontalAlignment="Stretch"
                 AutomationProperties.Name="SimulationProgress"
-                Foreground="Green"
-                IsIndeterminate="{Binding IsSingleRunning}"
                 Style="{StaticResource ProgressBarStyle}"
-                Visibility="{Binding ProgressVisibility}" />
+                IsIndeterminate="{Binding IsSingleRunning}"
+                Visibility="{Binding ProgressVisibility}"
+                Value="{Binding ProgressValue}" />
 
             <!--  Progress Label  -->
             <Label
-                Name="ProgressLabel"
+                Name="ProgressLabelStyle"
                 Grid.Row="1"
                 Grid.ColumnSpan="3"
                 Height="30"
