@@ -32,7 +32,7 @@
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="140" />
-                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="0" />
                 <ColumnDefinition Width="140" />
             </Grid.ColumnDefinitions>
 
@@ -61,6 +61,7 @@
                 Grid.Row="1"
                 Grid.ColumnSpan="3"
                 Height="25"
+                Margin="0,2"
                 HorizontalAlignment="Stretch"
                 AutomationProperties.Name="SimulationProgress"
                 IsIndeterminate="{Binding IsSingleRunning}"
