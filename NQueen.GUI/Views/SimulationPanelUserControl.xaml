@@ -23,7 +23,7 @@
         Header="Simulation">
 
         <Grid
-            Margin="30,3,30,3"
+            Margin="10,3,10,3"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch">
             <Grid.RowDefinitions>
@@ -31,9 +31,9 @@
                 <RowDefinition />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="140" />
-                <ColumnDefinition Width="0" />
-                <ColumnDefinition Width="140" />
+                <ColumnDefinition Width="100" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="100" />
             </Grid.ColumnDefinitions>
 
             <Button
