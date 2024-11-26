@@ -60,23 +60,25 @@
             Margin="5, 5, 0, 5"
             Grid.Row="1"
             Grid.Column="2"
-            HorizontalAlignment="Center"
+            HorizontalAlignment="Left"
             VerticalAlignment="Center">
             <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" MinHeight="100"/>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+            <StackPanel Grid.Row="1" Grid.RowSpan="3" HorizontalAlignment="Left" VerticalAlignment="Center">
                 <!--  Input Panel  -->
-                <ContentControl x:Name="inputPanelPlaceHolder" />
+                <ContentControl x:Name="inputPanelPlaceHolder" Margin="0,0,0,10" />
 
                 <!--  Solution Summary Panel  -->
-                <view:SolutionSummaryUserControl />
+                <view:SolutionSummaryUserControl Margin="0,0,0,10" />
 
                 <!--  Simulation Panel  -->
-                <ContentControl x:Name="simulationPanelPlaceHolder" />
+                <ContentControl x:Name="simulationPanelPlaceHolder" Margin="0,0,0,10" />
             </StackPanel>
         </Grid>
         <!--  End of Input / Output Panel  -->
