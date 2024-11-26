@@ -31,7 +31,7 @@
 
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" MinWidth="140" />
-            <ColumnDefinition Width="*" MaxWidth="1000" />
+            <ColumnDefinition Width="*" MaxWidth="800" />
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
@@ -63,7 +63,9 @@
             Grid.Row="1"
             Grid.Column="2"
             HorizontalAlignment="Left"
-            VerticalAlignment="Center">
+            VerticalAlignment="Center"
+            Width="300">
+            <!-- Set a fixed width for the parent container -->
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
@@ -72,7 +74,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="1" Grid.RowSpan="3" HorizontalAlignment="Left" VerticalAlignment="Center">
+            <StackPanel Grid.Row="1" Grid.RowSpan="3" HorizontalAlignment="Stretch" VerticalAlignment="Center">
                 <!--  Input Panel  -->
                 <ContentControl x:Name="inputPanelPlaceHolder" Margin="0,0,0,10" />
 
@@ -81,7 +83,6 @@
 
                 <!--  Simulation Panel  -->
                 <ContentControl x:Name="simulationPanelPlaceHolder" Margin="0,0,0,10" />
-
             </StackPanel>
         </Grid>
         <!--  End of Input / Output Panel  -->
