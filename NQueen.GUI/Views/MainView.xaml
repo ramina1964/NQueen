@@ -10,6 +10,8 @@
     Title="Solutions of NQueen Problem with Backtracking - .NET 9.0"
     MinWidth="{Binding Source={x:Static SystemParameters.PrimaryScreenWidth}, Converter={converter:RatioConverter}, ConverterParameter='0.43'}"
     MinHeight="{Binding Source={x:Static SystemParameters.PrimaryScreenHeight}, Converter={converter:RatioConverter}, ConverterParameter='0.43'}"
+    Width="800"
+    Height="{Binding Source={x:Static SystemParameters.PrimaryScreenHeight}}"
     d:DataContext="{d:DesignInstance Type=viewmodel:MainViewModel}"
     FontSize="14"
     ResizeMode="CanResize"
