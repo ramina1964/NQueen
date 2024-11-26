@@ -1,11 +1,15 @@
-﻿namespace NQueen.GUI.ViewModels;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
-public sealed partial class MainViewModel
+namespace NQueen.GUI.ViewModels;
+
+public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
     private InputViewModel InputViewModel { get; set; }
 
     private double _progressValue;
-
     public double ProgressValue
     {
         get => _progressValue;
@@ -17,7 +21,6 @@ public sealed partial class MainViewModel
     }
 
     private string _progressLabel;
-
     public string ProgressLabel
     {
         get => _progressLabel;
@@ -25,7 +28,6 @@ public sealed partial class MainViewModel
     }
 
     private Visibility _progressVisibility;
-
     public Visibility ProgressVisibility
     {
         get => _progressVisibility;
@@ -43,7 +45,6 @@ public sealed partial class MainViewModel
     }
 
     private Visibility _progressLabelVisibility;
-
     public Visibility ProgressLabelVisibility
     {
         get => _progressLabelVisibility;
@@ -57,7 +58,6 @@ public sealed partial class MainViewModel
     }
 
     private bool _isProgressBarOffscreen;
-
     public bool IsProgressBarOffscreen
     {
         get => _isProgressBarOffscreen;
@@ -65,7 +65,6 @@ public sealed partial class MainViewModel
     }
 
     private bool _isProgressLabelOffscreen;
-
     public bool IsProgressLabelOffscreen
     {
         get => _isProgressLabelOffscreen;
@@ -73,7 +72,6 @@ public sealed partial class MainViewModel
     }
 
     private IEnumerable<SolutionMode> _enumSolutionModes;
-
     public IEnumerable<SolutionMode> SolutionModeList
     {
         get => Enum.GetValues<SolutionMode>().Cast<SolutionMode>();
@@ -81,7 +79,6 @@ public sealed partial class MainViewModel
     }
 
     private IEnumerable<DisplayMode> _enumDisplayModes;
-
     public IEnumerable<DisplayMode> DisplayModeList
     {
         get => Enum.GetValues<DisplayMode>().Cast<DisplayMode>();
@@ -89,7 +86,6 @@ public sealed partial class MainViewModel
     }
 
     private bool _isVisualized;
-
     public bool IsVisualized
     {
         get => _isVisualized;
@@ -97,7 +93,6 @@ public sealed partial class MainViewModel
     }
 
     private int _delayInMilliseconds;
-    
     public int DelayInMilliseconds
     {
         get => _delayInMilliseconds;
@@ -109,17 +104,15 @@ public sealed partial class MainViewModel
     }
 
     private static SimulationResults _simulationResults;
-
     public SimulationResults SimulationResults
     {
         get => _simulationResults;
         set => SetProperty(ref _simulationResults, value);
     }
 
-    public ObservableCollection<Solution> ObservableSolutions { get; }
+    public ObservableCollection<Solution> ObservableSolutions { get; } = new();
 
     private Solution _selectedSolution;
-
     public Solution SelectedSolution
     {
         get => _selectedSolution;
@@ -127,12 +120,13 @@ public sealed partial class MainViewModel
         {
             SetProperty(ref _selectedSolution, value);
             if (value != null)
-            { Chessboard.PlaceQueens(_selectedSolution.Positions); }
+            {
+                Chessboard.PlaceQueens(_selectedSolution.Positions);
+            }
         }
     }
 
     private SolutionMode _solutionMode;
-
     public SolutionMode SolutionMode
     {
         get => _solutionMode;
@@ -140,7 +134,9 @@ public sealed partial class MainViewModel
         {
             var isChanged = SetProperty(ref _solutionMode, value);
             if (Solver == null || !isChanged)
-            { return; }
+            {
+                return;
+            }
 
             SolutionTitle =
                 (SolutionMode == SolutionMode.Single)
@@ -166,7 +162,6 @@ public sealed partial class MainViewModel
     }
 
     private DisplayMode _displayMode;
-
     public DisplayMode DisplayMode
     {
         get => _displayMode;
@@ -186,14 +181,15 @@ public sealed partial class MainViewModel
     }
 
     private string _boardSizeText;
-
     public string BoardSizeText
     {
         get => _boardSizeText;
         set
         {
             if (!SetProperty(ref _boardSizeText, value))
-            { return; }
+            {
+                return;
+            }
             IsValid = InputViewModel.Validate(this).IsValid;
 
             if (IsValid == false)
@@ -201,7 +197,6 @@ public sealed partial class MainViewModel
                 IsIdle = false;
                 IsSimulating = false;
             }
-
             else
             {
                 IsIdle = true;
@@ -217,7 +212,6 @@ public sealed partial class MainViewModel
     }
 
     private byte _boardSize;
-
     public byte BoardSize
     {
         get => _boardSize;
@@ -227,7 +221,6 @@ public sealed partial class MainViewModel
     public string ResultTitle => Utility.SolutionTitle(SolutionMode);
 
     private bool _isValid;
-
     public bool IsValid
     {
         get => _isValid;
@@ -235,7 +228,6 @@ public sealed partial class MainViewModel
     }
 
     private string _solutionTitle;
-
     public string SolutionTitle
     {
         get => _solutionTitle;
@@ -247,7 +239,6 @@ public sealed partial class MainViewModel
     }
 
     private string _noOfSolutions;
-
     public string NoOfSolutions
     {
         get => _noOfSolutions;
@@ -261,7 +252,6 @@ public sealed partial class MainViewModel
     }
 
     private string _memoryUsage;
-
     public string MemoryUsage
     {
         get => _memoryUsage;
@@ -281,7 +271,6 @@ public sealed partial class MainViewModel
     }
 
     private string _elapsedTime;
-
     public string ElapsedTimeInSec
     {
         get => _elapsedTime;
@@ -289,31 +278,32 @@ public sealed partial class MainViewModel
     }
 
     private bool _isSimulating;
-
     public bool IsSimulating
     {
         get => _isSimulating;
         set
         {
             if (SetProperty(ref _isSimulating, value))
-            { UpdateButtonFunctionality(); }
+            {
+                UpdateButtonFunctionality();
+            }
         }
     }
 
     private bool _isInInputMode;
-
     public bool IsInInputMode
     {
         get => _isInInputMode;
         set
         {
             if (SetProperty(ref _isInInputMode, value))
-            { UpdateButtonFunctionality(); }
+            {
+                UpdateButtonFunctionality();
+            }
         }
     }
 
     private bool _isSingleRunning;
-
     public bool IsSingleRunning
     {
         get => _isSingleRunning;
@@ -321,26 +311,28 @@ public sealed partial class MainViewModel
     }
 
     private bool _isIdle;
-
     public bool IsIdle
     {
         get => _isIdle;
         set
         {
             if (SetProperty(ref _isIdle, value))
-            { UpdateButtonFunctionality(); }
+            {
+                UpdateButtonFunctionality();
+            }
         }
     }
 
     private bool _isOutputReady;
-
     public bool IsOutputReady
     {
         get => _isOutputReady;
         set
         {
             if (SetProperty(ref _isOutputReady, value))
-            { UpdateButtonFunctionality(); }
+            {
+                UpdateButtonFunctionality();
+            }
         }
     }
 

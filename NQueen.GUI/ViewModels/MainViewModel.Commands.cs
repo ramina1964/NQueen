@@ -39,10 +39,10 @@ public sealed partial class MainViewModel
 
                 ProgressVisibility = Visibility.Visible;
                 if (SolutionMode == SolutionMode.Single)
+                {
                     IsSingleRunning = true;
-
-                // If SolutionMode.Unique || SolutionMode.All
-                else if (IsSimulating)
+                }
+                else
                 {
                     IsSingleRunning = false;
                     ProgressLabelVisibility = Visibility.Visible;

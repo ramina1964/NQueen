@@ -57,7 +57,7 @@
                 IsDefault="True"
                 Style="{StaticResource ButtonStyle}" />
 
-            <!--  Progress Bar and Label  -->
+            <!--  Progress Bar  -->
             <ProgressBar
                 Name="ProgressBar"
                 Grid.Row="1"
@@ -67,7 +67,6 @@
                 HorizontalAlignment="Stretch"
                 AutomationProperties.Name="SimulationProgress"
                 IsIndeterminate="{Binding IsSingleRunning}"
-                Style="{StaticResource ProgressBarStyle}"
                 Visibility="{Binding ProgressVisibility}"
                 Value="{Binding ProgressValue}" />
 
