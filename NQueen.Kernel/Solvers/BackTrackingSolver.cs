@@ -23,28 +23,20 @@ public class BackTrackingSolver : ISolver, IDisposable
         if (_disposed)
             return;
 
-        // Here _disposed == true
         _disposed = true;
         if (disposing)
         {
             CleanupResources();
-
-            // Clear collections
             Solutions?.Clear();
         }
     }
 
     private void CleanupResources()
     {
-        // Unsubscribe event handlers
         QueenPlaced = null;
         SolutionFound = null;
         ProgressValueChanged = null;
-
-        // Clear collections
         Solutions?.Clear();
-
-        // Dispose CancellationToken
         _cancelationTokenSource?.Dispose();
     }
     #endregion IDisposable Implementation
@@ -162,7 +154,6 @@ public class BackTrackingSolver : ISolver, IDisposable
                 throw new NotImplementedException();
         }
 
-        // Return the solutions directly without converting to a list
         return Solutions.Select((s, index) => new Solution(s, index + 1));
     }
 
@@ -195,7 +186,6 @@ public class BackTrackingSolver : ISolver, IDisposable
             {
                 UpdateSolutions();
                 NotifySolutionFound();
-
                 colNo--;
                 continue;
             }
@@ -273,7 +263,6 @@ public class BackTrackingSolver : ISolver, IDisposable
     {
         ProgressValue = Math.Round(100.0 * QueenPositions[0] / HalfBoardSize, 1);
         ProgressValueChanged?.Invoke(this, new ProgressValueChangedEventArgs(ProgressValue));
-        //OnProgressChanged(this, new ProgressValueChangedEventArgs(ProgressValue));
     }
 
     private void UpdateSolutions()
