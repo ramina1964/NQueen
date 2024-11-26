@@ -11,11 +11,11 @@
     xmlns:viewmodel="clr-namespace:NQueen.GUI.ViewModels"
     Title="Solutions of NQueen Problem with Backtracking - .NET 9.0"
     MinWidth="{Binding Source={x:Static SystemParameters.PrimaryScreenWidth},
-        Converter={converter:RatioConverter}, ConverterParameter='0.90'}"
-    
-    MinHeight="{Binding Source={x:Static SystemParameters.PrimaryScreenHeight},
-        Converter={converter:RatioConverter}, ConverterParameter='0.96'}"
+        Converter={converter:RatioConverter}, ConverterParameter='0.43'}"
 
+    MinHeight="{Binding Source={x:Static SystemParameters.PrimaryScreenHeight},
+        Converter={converter:RatioConverter}, ConverterParameter='0.43'}"
+    
     d:DataContext="{d:DesignInstance Type=viewmodel:MainViewModel}"
     FontSize="14"
     ResizeMode="CanResize"
