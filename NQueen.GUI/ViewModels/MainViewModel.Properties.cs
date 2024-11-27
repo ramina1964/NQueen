@@ -1,9 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-
-namespace NQueen.GUI.ViewModels;
+﻿namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
@@ -110,7 +105,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         set => SetProperty(ref _simulationResults, value);
     }
 
-    public ObservableCollection<Solution> ObservableSolutions { get; } = new();
+    public ObservableCollection<Solution> ObservableSolutions { get; } = [];
 
     private Solution _selectedSolution;
     public Solution SelectedSolution
@@ -258,12 +253,12 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         set => SetProperty(ref _memoryUsage, value);
     }
 
-    public Chessboard Chessboard { get; set; }
+    public ChessboardViewModel Chessboard { get; set; }
 
     public void SetChessboard(double boardDimension)
     {
         BoardSizeText = BoardSize.ToString();
-        Chessboard = new Chessboard { WindowWidth = boardDimension, WindowHeight = boardDimension };
+        Chessboard = new ChessboardViewModel { WindowWidth = boardDimension, WindowHeight = boardDimension };
         Chessboard.CreateSquares(BoardSize, []);
 
         IsIdle = true;

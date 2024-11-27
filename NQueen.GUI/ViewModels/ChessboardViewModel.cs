@@ -1,8 +1,8 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public class Chessboard : ObservableObject
+public class ChessboardViewModel : ObservableObject
 {
-    public Chessboard()
+    public ChessboardViewModel()
     {
         Squares = [];
         QueenImagePath = @"..\..\Images\WhiteQueen.png";

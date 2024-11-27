@@ -10,7 +10,7 @@ public static class ServiceCollectionExtensions
         services.AddNQueenServices();
 
         // Register specific services, i.e., views and view models
-        services.AddTransient<Chessboard>();
+        services.AddTransient<ChessboardViewModel>();
         services.AddTransient<ChessboardUserControl>();
         services.AddSingleton<InputPanelUserControl>();
         services.AddSingleton<SimulationPanelUserControl>();
