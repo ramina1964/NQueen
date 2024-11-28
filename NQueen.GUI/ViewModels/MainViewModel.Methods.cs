@@ -69,10 +69,7 @@ public sealed partial class MainViewModel
         SaveCommand.NotifyCanExecuteChanged();
     }
 
-    partial void OnProgressValueChanged(double value)
-    {
-        ProgressLabel = $"{value} %";
-    }
+    partial void OnProgressValueChanged(double value) => ProgressLabel = $"{value} %";
 
     partial void OnProgressVisibilityChanged(Visibility value)
     {
@@ -83,15 +80,11 @@ public sealed partial class MainViewModel
         }
     }
 
-    partial void OnProgressLabelVisibilityChanged(Visibility value)
-    {
+    partial void OnProgressLabelVisibilityChanged(Visibility value) =>
         IsProgressLabelOffscreen = value != Visibility.Visible;
-    }
 
-    partial void OnDelayInMillisecondsChanged(int value)
-    {
+    partial void OnDelayInMillisecondsChanged(int value) =>
         Solver.DelayInMilliseconds = value;
-    }
 
     partial void OnSelectedSolutionChanged(Solution value)
     {
@@ -161,28 +154,14 @@ public sealed partial class MainViewModel
         }
     }
 
-    partial void OnNoOfSolutionsChanged(string value)
-    {
+    partial void OnNoOfSolutionsChanged(string value) =>
         OnPropertyChanged(nameof(ResultTitle));
-    }
 
-    partial void OnIsSimulatingChanged(bool value)
-    {
-        UpdateButtonFunctionality();
-    }
+    partial void OnIsSimulatingChanged(bool value) => UpdateButtonFunctionality();
 
-    partial void OnIsInInputModeChanged(bool value)
-    {
-        UpdateButtonFunctionality();
-    }
+    partial void OnIsInInputModeChanged(bool value) => UpdateButtonFunctionality();
 
-    partial void OnIsIdleChanged(bool value)
-    {
-        UpdateButtonFunctionality();
-    }
+    partial void OnIsIdleChanged(bool value) => UpdateButtonFunctionality();
 
-    partial void OnIsOutputReadyChanged(bool value)
-    {
-        UpdateButtonFunctionality();
-    }
+    partial void OnIsOutputReadyChanged(bool value) => UpdateButtonFunctionality();
 }
