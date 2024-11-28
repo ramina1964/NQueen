@@ -2,327 +2,216 @@
 
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
-    private InputViewModel InputViewModel { get; set; }
+    [ObservableProperty]
+    private InputViewModel _inputViewModel;
 
+    [ObservableProperty]
     private double _progressValue;
-    public double ProgressValue
+
+    partial void OnProgressValueChanged(double value)
     {
-        get => _progressValue;
-        set
-        {
-            SetProperty(ref _progressValue, value);
-            ProgressLabel = $"{_progressValue} %";
-        }
+        ProgressLabel = $"{value} %";
     }
 
+    [ObservableProperty]
     private string _progressLabel;
-    public string ProgressLabel
-    {
-        get => _progressLabel;
-        set => SetProperty(ref _progressLabel, value);
-    }
 
+    [ObservableProperty]
     private Visibility _progressVisibility;
-    public Visibility ProgressVisibility
+
+    partial void OnProgressVisibilityChanged(Visibility value)
     {
-        get => _progressVisibility;
-        set
+        IsProgressBarOffscreen = value != Visibility.Visible;
+        if (DisplayMode == DisplayMode.Visualize)
         {
-            if (SetProperty(ref _progressVisibility, value))
-            {
-                IsProgressBarOffscreen = value != Visibility.Visible;
-                if (DisplayMode == DisplayMode.Visualize)
-                {
-                    OnPropertyChanged(nameof(ProgressLabel));
-                }
-            }
+            OnPropertyChanged(nameof(ProgressLabel));
         }
     }
 
+    [ObservableProperty]
     private Visibility _progressLabelVisibility;
-    public Visibility ProgressLabelVisibility
+
+    partial void OnProgressLabelVisibilityChanged(Visibility value)
     {
-        get => _progressLabelVisibility;
-        set
-        {
-            if (SetProperty(ref _progressLabelVisibility, value))
-            {
-                IsProgressLabelOffscreen = value != Visibility.Visible;
-            }
-        }
+        IsProgressLabelOffscreen = value != Visibility.Visible;
     }
 
+    [ObservableProperty]
     private bool _isProgressBarOffscreen;
-    public bool IsProgressBarOffscreen
-    {
-        get => _isProgressBarOffscreen;
-        set => SetProperty(ref _isProgressBarOffscreen, value);
-    }
 
+    [ObservableProperty]
     private bool _isProgressLabelOffscreen;
-    public bool IsProgressLabelOffscreen
-    {
-        get => _isProgressLabelOffscreen;
-        set => SetProperty(ref _isProgressLabelOffscreen, value);
-    }
 
-    private IEnumerable<SolutionMode> _enumSolutionModes;
-    public IEnumerable<SolutionMode> SolutionModeList
-    {
-        get => Enum.GetValues<SolutionMode>().Cast<SolutionMode>();
-        set => SetProperty(ref _enumSolutionModes, value);
-    }
+    [ObservableProperty]
+    private IEnumerable<SolutionMode> _solutionModeList = Enum.GetValues<SolutionMode>().Cast<SolutionMode>();
 
-    private IEnumerable<DisplayMode> _enumDisplayModes;
-    public IEnumerable<DisplayMode> DisplayModeList
-    {
-        get => Enum.GetValues<DisplayMode>().Cast<DisplayMode>();
-        set => SetProperty(ref _enumDisplayModes, value);
-    }
+    [ObservableProperty]
+    private IEnumerable<DisplayMode> _displayModeList = Enum.GetValues<DisplayMode>().Cast<DisplayMode>();
 
+    [ObservableProperty]
     private bool _isVisualized;
-    public bool IsVisualized
-    {
-        get => _isVisualized;
-        set => SetProperty(ref _isVisualized, value);
-    }
 
+    [ObservableProperty]
     private int _delayInMilliseconds;
-    public int DelayInMilliseconds
+
+    partial void OnDelayInMillisecondsChanged(int value)
     {
-        get => _delayInMilliseconds;
-        set
-        {
-            SetProperty(ref _delayInMilliseconds, value);
-            Solver.DelayInMilliseconds = value;
-        }
+        Solver.DelayInMilliseconds = value;
     }
 
+    [ObservableProperty]
     private static SimulationResults _simulationResults;
-    public SimulationResults SimulationResults
-    {
-        get => _simulationResults;
-        set => SetProperty(ref _simulationResults, value);
-    }
 
-    public ObservableCollection<Solution> ObservableSolutions { get; } = [];
+    [ObservableProperty]
+    public ObservableCollection<Solution> _observableSolutions = new();
 
+    [ObservableProperty]
     private Solution _selectedSolution;
-    public Solution SelectedSolution
+
+    partial void OnSelectedSolutionChanged(Solution value)
     {
-        get => _selectedSolution;
-        set
+        if (value != null)
         {
-            SetProperty(ref _selectedSolution, value);
-            if (value != null)
-            {
-                Chessboard.PlaceQueens(_selectedSolution.Positions);
-            }
+            Chessboard.PlaceQueens(value.Positions);
         }
     }
 
+    [ObservableProperty]
     private SolutionMode _solutionMode;
-    public SolutionMode SolutionMode
+
+    partial void OnSolutionModeChanged(SolutionMode value)
     {
-        get => _solutionMode;
-        set
+        if (Solver == null)
         {
-            var isChanged = SetProperty(ref _solutionMode, value);
-            if (Solver == null || !isChanged)
-            {
-                return;
-            }
+            return;
+        }
 
-            SolutionTitle =
-                (SolutionMode == SolutionMode.Single)
-                ? $"Solution"
-                : $"Solutions (Max: {Utility.MaxNoOfSolutionsInOutput})";
+        SolutionTitle = (value == SolutionMode.Single)
+            ? $"Solution"
+            : $"Solutions (Max: {Utility.MaxNoOfSolutionsInOutput})";
 
-            OnPropertyChanged(nameof(BoardSize));
-            OnPropertyChanged(nameof(SolutionTitle));
-            IsValid = InputViewModel.Validate(this).IsValid;
+        OnPropertyChanged(nameof(BoardSize));
+        OnPropertyChanged(nameof(SolutionTitle));
+        IsValid = InputViewModel.Validate(this).IsValid;
 
-            if (IsValid == false)
-            {
-                IsIdle = false;
-                IsSimulating = false;
-                IsOutputReady = false;
-                return;
-            }
-
-            IsIdle = true;
+        if (!IsValid)
+        {
+            IsIdle = false;
             IsSimulating = false;
+            IsOutputReady = false;
+            return;
+        }
+
+        IsIdle = true;
+        IsSimulating = false;
+        UpdateGui();
+    }
+
+    [ObservableProperty]
+    private DisplayMode _displayMode;
+
+    partial void OnDisplayModeChanged(DisplayMode value)
+    {
+        IsValid = InputViewModel.Validate(this).IsValid;
+
+        if (IsValid)
+        {
+            IsIdle = true;
+            IsVisualized = value == DisplayMode.Visualize;
+            OnPropertyChanged(nameof(BoardSize));
             UpdateGui();
         }
     }
 
-    private DisplayMode _displayMode;
-    public DisplayMode DisplayMode
-    {
-        get => _displayMode;
-        set
-        {
-            _ = SetProperty(ref _displayMode, value);
-            IsValid = InputViewModel.Validate(this).IsValid;
-
-            if (IsValid)
-            {
-                IsIdle = true;
-                IsVisualized = value == DisplayMode.Visualize;
-                OnPropertyChanged(nameof(BoardSize));
-                UpdateGui();
-            }
-        }
-    }
-
+    [ObservableProperty]
     private byte _boardSize;
-    public byte BoardSize
+
+    partial void OnBoardSizeChanged(byte value)
     {
-        get => _boardSize;
-        set
+        IsValid = InputViewModel.Validate(this).IsValid;
+
+        if (!IsValid)
         {
-            if (!SetProperty(ref _boardSize, value))
-            {
-                return;
-            }
-            IsValid = InputViewModel.Validate(this).IsValid;
-
-            if (IsValid == false)
-            {
-                IsIdle = false;
-                IsSimulating = false;
-            }
-            else
-            {
-                IsIdle = true;
-                IsSimulating = false;
-                IsOutputReady = false;
-                SetProperty(ref _boardSize, value);
-                OnPropertyChanged(nameof(BoardSize));
-
-                UpdateButtonFunctionality();
-                UpdateGui();
-            }
+            IsIdle = false;
+            IsSimulating = false;
+        }
+        else
+        {
+            IsIdle = true;
+            IsSimulating = false;
+            IsOutputReady = false;
+            UpdateButtonFunctionality();
+            UpdateGui();
         }
     }
 
     public string ResultTitle => Utility.SolutionTitle(SolutionMode);
 
+    [ObservableProperty]
     private bool _isValid;
-    public bool IsValid
-    {
-        get => _isValid;
-        set => SetProperty(ref _isValid, value);
-    }
 
+    [ObservableProperty]
     private string _solutionTitle;
-    public string SolutionTitle
-    {
-        get => _solutionTitle;
-        set
-        {
-            if (_solutionTitle != value)
-                SetProperty(ref _solutionTitle, value);
-        }
-    }
 
+    [ObservableProperty]
     private string _noOfSolutions;
-    public string NoOfSolutions
+
+    partial void OnNoOfSolutionsChanged(string value)
     {
-        get => _noOfSolutions;
-        set
-        {
-            if (SetProperty(ref _noOfSolutions, value))
-            {
-                OnPropertyChanged(nameof(ResultTitle));
-            }
-        }
+        OnPropertyChanged(nameof(ResultTitle));
     }
 
+    [ObservableProperty]
     private string _memoryUsage;
-    public string MemoryUsage
-    {
-        get => _memoryUsage;
-        set => SetProperty(ref _memoryUsage, value);
-    }
 
-    public ChessboardViewModel Chessboard { get; set; }
+    [ObservableProperty]
+    public ChessboardViewModel _chessboard;
 
     public void SetChessboard(double boardDimension)
     {
-        Chessboard = new ChessboardViewModel
-        { WindowWidth = boardDimension, WindowHeight = boardDimension };
-        
-        Chessboard.CreateSquares(BoardSize, []);
+        Chessboard = new ChessboardViewModel { WindowWidth = boardDimension, WindowHeight = boardDimension };
+        Chessboard.CreateSquares(BoardSize, new List<SquareViewModel>());
 
         IsIdle = true;
         IsSimulating = false;
     }
 
-    private string _elapsedTime;
-    public string ElapsedTimeInSec
-    {
-        get => _elapsedTime;
-        set => SetProperty(ref _elapsedTime, value);
-    }
+    [ObservableProperty]
+    private string _elapsedTimeInSec;
 
+    [ObservableProperty]
     private bool _isSimulating;
-    public bool IsSimulating
+
+    partial void OnIsSimulatingChanged(bool value)
     {
-        get => _isSimulating;
-        set
-        {
-            if (SetProperty(ref _isSimulating, value))
-            {
-                UpdateButtonFunctionality();
-            }
-        }
+        UpdateButtonFunctionality();
     }
 
+    [ObservableProperty]
     private bool _isInInputMode;
-    public bool IsInInputMode
+
+    partial void OnIsInInputModeChanged(bool value)
     {
-        get => _isInInputMode;
-        set
-        {
-            if (SetProperty(ref _isInInputMode, value))
-            {
-                UpdateButtonFunctionality();
-            }
-        }
+        UpdateButtonFunctionality();
     }
 
+    [ObservableProperty]
     private bool _isSingleRunning;
-    public bool IsSingleRunning
-    {
-        get => _isSingleRunning;
-        set => SetProperty(ref _isSingleRunning, value);
-    }
 
+    [ObservableProperty]
     private bool _isIdle;
-    public bool IsIdle
+
+    partial void OnIsIdleChanged(bool value)
     {
-        get => _isIdle;
-        set
-        {
-            if (SetProperty(ref _isIdle, value))
-            {
-                UpdateButtonFunctionality();
-            }
-        }
+        UpdateButtonFunctionality();
     }
 
+    [ObservableProperty]
     private bool _isOutputReady;
-    public bool IsOutputReady
+
+    partial void OnIsOutputReadyChanged(bool value)
     {
-        get => _isOutputReady;
-        set
-        {
-            if (SetProperty(ref _isOutputReady, value))
-            {
-                UpdateButtonFunctionality();
-            }
-        }
+        UpdateButtonFunctionality();
     }
 
     private bool _disposed;
