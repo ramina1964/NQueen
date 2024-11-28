@@ -24,10 +24,12 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private bool _isProgressLabelOffscreen;
 
     [ObservableProperty]
-    private IEnumerable<SolutionMode> _solutionModeList = Enum.GetValues<SolutionMode>().Cast<SolutionMode>();
+    private IEnumerable<SolutionMode> _solutionModeList =
+        Enum.GetValues<SolutionMode>().Cast<SolutionMode>();
 
     [ObservableProperty]
-    private IEnumerable<DisplayMode> _displayModeList = Enum.GetValues<DisplayMode>().Cast<DisplayMode>();
+    private IEnumerable<DisplayMode> _displayModeList =
+        Enum.GetValues<DisplayMode>().Cast<DisplayMode>();
 
     [ObservableProperty]
     private bool _isVisualized;
@@ -39,7 +41,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private static SimulationResults _simulationResults;
 
     [ObservableProperty]
-    public ObservableCollection<Solution> _observableSolutions = new();
+    public ObservableCollection<Solution> _observableSolutions = [];
 
     [ObservableProperty]
     private Solution _selectedSolution;
@@ -72,8 +74,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public void SetChessboard(double boardDimension)
     {
-        Chessboard = new ChessboardViewModel { WindowWidth = boardDimension, WindowHeight = boardDimension };
-        Chessboard.CreateSquares(BoardSize, new List<SquareViewModel>());
+        Chessboard = new ChessboardViewModel
+        { WindowWidth = boardDimension, WindowHeight = boardDimension };
+        
+        Chessboard.CreateSquares(BoardSize, []);
 
         IsIdle = true;
         IsSimulating = false;
