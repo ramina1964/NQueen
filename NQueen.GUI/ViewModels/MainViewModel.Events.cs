@@ -30,7 +30,7 @@ public sealed partial class MainViewModel
             {
                 ObservableSolutions.RemoveAt(0);
             }
-            if (!ObservableSolutions.Any(s => s.Id == sol.Id))
+            if (ObservableSolutions.Any(s => s.Id == sol.Id) == false)
             {
                 ObservableSolutions.Add(sol);
             }

@@ -109,7 +109,7 @@ public sealed partial class MainViewModel
         OnPropertyChanged(nameof(SolutionTitle));
         IsValid = InputViewModel.Validate(this).IsValid;
 
-        if (!IsValid)
+        if (IsValid == false)
         {
             IsIdle = false;
             IsSimulating = false;
@@ -139,7 +139,7 @@ public sealed partial class MainViewModel
     {
         IsValid = InputViewModel.Validate(this).IsValid;
 
-        if (!IsValid)
+        if (IsValid == false)
         {
             IsIdle = false;
             IsSimulating = false;
