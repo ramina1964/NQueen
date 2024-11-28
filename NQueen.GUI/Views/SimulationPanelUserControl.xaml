@@ -67,6 +67,7 @@
                 Margin="0,2"
                 HorizontalAlignment="Stretch"
                 AutomationProperties.Name="SimulationProgress"
+                Foreground="Green"
                 IsIndeterminate="{Binding IsSingleRunning}"
                 Visibility="{Binding ProgressVisibility}"
                 Value="{Binding ProgressValue}" />
