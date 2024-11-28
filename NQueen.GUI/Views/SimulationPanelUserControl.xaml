@@ -68,7 +68,6 @@
                 AutomationProperties.Name="SimulationProgress"
                 IsIndeterminate="{Binding IsSingleRunning}"
                 Visibility="{Binding ProgressVisibility}"
-                Style="{StaticResource ProgressBarStyle}"
                 Value="{Binding ProgressValue}" />
 
             <!--  Progress Label  -->
