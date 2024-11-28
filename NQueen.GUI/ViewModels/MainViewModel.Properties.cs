@@ -8,33 +8,14 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private double _progressValue;
 
-    partial void OnProgressValueChanged(double value)
-    {
-        ProgressLabel = $"{value} %";
-    }
-
     [ObservableProperty]
     private string _progressLabel;
 
     [ObservableProperty]
     private Visibility _progressVisibility;
 
-    partial void OnProgressVisibilityChanged(Visibility value)
-    {
-        IsProgressBarOffscreen = value != Visibility.Visible;
-        if (DisplayMode == DisplayMode.Visualize)
-        {
-            OnPropertyChanged(nameof(ProgressLabel));
-        }
-    }
-
     [ObservableProperty]
     private Visibility _progressLabelVisibility;
-
-    partial void OnProgressLabelVisibilityChanged(Visibility value)
-    {
-        IsProgressLabelOffscreen = value != Visibility.Visible;
-    }
 
     [ObservableProperty]
     private bool _isProgressBarOffscreen;
@@ -54,11 +35,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private int _delayInMilliseconds;
 
-    partial void OnDelayInMillisecondsChanged(int value)
-    {
-        Solver.DelayInMilliseconds = value;
-    }
-
     [ObservableProperty]
     private static SimulationResults _simulationResults;
 
@@ -68,82 +44,14 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private Solution _selectedSolution;
 
-    partial void OnSelectedSolutionChanged(Solution value)
-    {
-        if (value != null)
-        {
-            Chessboard.PlaceQueens(value.Positions);
-        }
-    }
-
     [ObservableProperty]
     private SolutionMode _solutionMode;
-
-    partial void OnSolutionModeChanged(SolutionMode value)
-    {
-        if (Solver == null)
-        {
-            return;
-        }
-
-        SolutionTitle = (value == SolutionMode.Single)
-            ? $"Solution"
-            : $"Solutions (Max: {Utility.MaxNoOfSolutionsInOutput})";
-
-        OnPropertyChanged(nameof(BoardSize));
-        OnPropertyChanged(nameof(SolutionTitle));
-        IsValid = InputViewModel.Validate(this).IsValid;
-
-        if (!IsValid)
-        {
-            IsIdle = false;
-            IsSimulating = false;
-            IsOutputReady = false;
-            return;
-        }
-
-        IsIdle = true;
-        IsSimulating = false;
-        UpdateGui();
-    }
 
     [ObservableProperty]
     private DisplayMode _displayMode;
 
-    partial void OnDisplayModeChanged(DisplayMode value)
-    {
-        IsValid = InputViewModel.Validate(this).IsValid;
-
-        if (IsValid)
-        {
-            IsIdle = true;
-            IsVisualized = value == DisplayMode.Visualize;
-            OnPropertyChanged(nameof(BoardSize));
-            UpdateGui();
-        }
-    }
-
     [ObservableProperty]
     private byte _boardSize;
-
-    partial void OnBoardSizeChanged(byte value)
-    {
-        IsValid = InputViewModel.Validate(this).IsValid;
-
-        if (!IsValid)
-        {
-            IsIdle = false;
-            IsSimulating = false;
-        }
-        else
-        {
-            IsIdle = true;
-            IsSimulating = false;
-            IsOutputReady = false;
-            UpdateButtonFunctionality();
-            UpdateGui();
-        }
-    }
 
     public string ResultTitle => Utility.SolutionTitle(SolutionMode);
 
@@ -155,11 +63,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     private string _noOfSolutions;
-
-    partial void OnNoOfSolutionsChanged(string value)
-    {
-        OnPropertyChanged(nameof(ResultTitle));
-    }
 
     [ObservableProperty]
     private string _memoryUsage;
@@ -182,18 +85,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private bool _isSimulating;
 
-    partial void OnIsSimulatingChanged(bool value)
-    {
-        UpdateButtonFunctionality();
-    }
-
     [ObservableProperty]
     private bool _isInInputMode;
-
-    partial void OnIsInInputModeChanged(bool value)
-    {
-        UpdateButtonFunctionality();
-    }
 
     [ObservableProperty]
     private bool _isSingleRunning;
@@ -201,18 +94,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private bool _isIdle;
 
-    partial void OnIsIdleChanged(bool value)
-    {
-        UpdateButtonFunctionality();
-    }
-
     [ObservableProperty]
     private bool _isOutputReady;
-
-    partial void OnIsOutputReadyChanged(bool value)
-    {
-        UpdateButtonFunctionality();
-    }
 
     private bool _disposed;
 
