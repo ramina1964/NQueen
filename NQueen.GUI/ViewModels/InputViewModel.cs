@@ -6,27 +6,24 @@ public class InputViewModel : AbstractValidator<MainViewModel>
 
     private void ValidationRules()
     {
-        byte boardSize = Utility.ByteMaxValue;
-        _ = RuleFor(vm => vm.BoardSizeText)
-            .NotNull().NotEmpty()
-            .WithMessage(_ => Utility.ValueNullOrWhiteSpaceMsg)
-            .Must(bst => byte.TryParse(bst, out boardSize))
-            .WithMessage(_ => Utility.InvalidSByteError)
-            .Must(bst => Utility.MinBoardSize <= boardSize)
-            .WithMessage(_ => Utility.SizeTooSmallMsg);
+        _ = RuleFor(vm => vm.BoardSize)
+            .Must(boardSize => boardSize >= Utility.MinBoardSize)
+            .WithMessage(_ => Utility.SizeTooSmallMsg)
+            .Must(boardSize => boardSize <= Utility.ByteMaxValue)
+            .WithMessage(_ => Utility.InvalidSByteError);
 
-        _ = RuleFor(vm => vm.BoardSizeText)
-            .Must(_ => boardSize <= Utility.MaxBoardSizeForSingleSolution)
+        _ = RuleFor(vm => vm.BoardSize)
+            .Must(boardSize => boardSize <= Utility.MaxBoardSizeForSingleSolution)
             .When(vm => vm.SolutionMode == SolutionMode.Single)
             .WithMessage(_ => Utility.SizeTooLargeForSingleSolutionMsg);
 
-        _ = RuleFor(vm => vm.BoardSizeText)
-            .Must(_ => boardSize <= Utility.MaxBoardSizeForUniqueSolutions)
+        _ = RuleFor(vm => vm.BoardSize)
+            .Must(boardSize => boardSize <= Utility.MaxBoardSizeForUniqueSolutions)
             .When(vm => vm.SolutionMode == SolutionMode.Unique)
             .WithMessage(_ => Utility.SizeTooLargeForUniqueSolutionsMsg);
 
-        _ = RuleFor(vm => vm.BoardSizeText)
-            .Must(_ => boardSize <= Utility.MaxBoardSizeForAllSolutions)
+        _ = RuleFor(vm => vm.BoardSize)
+            .Must(boardSize => boardSize <= Utility.MaxBoardSizeForAllSolutions)
             .When(vm => vm.SolutionMode == SolutionMode.All)
             .WithMessage(_ => Utility.SizeTooLargeForAllSolutionsMsg);
     }

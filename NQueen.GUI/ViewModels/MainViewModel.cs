@@ -76,7 +76,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         ObservableSolutions.Clear();
         Chessboard?.Squares.Clear();
-        BoardSize = byte.Parse(BoardSizeText);
         NoOfSolutions = "0";
         ElapsedTimeInSec = $"{0,0:N1}";
         MemoryUsage = "0";

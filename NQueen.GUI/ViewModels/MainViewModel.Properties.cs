@@ -138,7 +138,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                 ? $"Solution"
                 : $"Solutions (Max: {Utility.MaxNoOfSolutionsInOutput})";
 
-            OnPropertyChanged(nameof(BoardSizeText));
+            OnPropertyChanged(nameof(BoardSize));
             OnPropertyChanged(nameof(SolutionTitle));
             IsValid = InputViewModel.Validate(this).IsValid;
 
@@ -169,19 +169,19 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             {
                 IsIdle = true;
                 IsVisualized = value == DisplayMode.Visualize;
-                OnPropertyChanged(nameof(BoardSizeText));
+                OnPropertyChanged(nameof(BoardSize));
                 UpdateGui();
             }
         }
     }
 
-    private string _boardSizeText;
-    public string BoardSizeText
+    private byte _boardSize;
+    public byte BoardSize
     {
-        get => _boardSizeText;
+        get => _boardSize;
         set
         {
-            if (!SetProperty(ref _boardSizeText, value))
+            if (!SetProperty(ref _boardSize, value))
             {
                 return;
             }
@@ -197,20 +197,13 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                 IsIdle = true;
                 IsSimulating = false;
                 IsOutputReady = false;
-                SetProperty(ref _boardSize, byte.Parse(value));
+                SetProperty(ref _boardSize, value);
                 OnPropertyChanged(nameof(BoardSize));
 
                 UpdateButtonFunctionality();
                 UpdateGui();
             }
         }
-    }
-
-    private byte _boardSize;
-    public byte BoardSize
-    {
-        get => _boardSize;
-        set => SetProperty(ref _boardSize, value);
     }
 
     public string ResultTitle => Utility.SolutionTitle(SolutionMode);
@@ -257,8 +250,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public void SetChessboard(double boardDimension)
     {
-        BoardSizeText = BoardSize.ToString();
-        Chessboard = new ChessboardViewModel { WindowWidth = boardDimension, WindowHeight = boardDimension };
+        Chessboard = new ChessboardViewModel
+        { WindowWidth = boardDimension, WindowHeight = boardDimension };
+        
         Chessboard.CreateSquares(BoardSize, []);
 
         IsIdle = true;
