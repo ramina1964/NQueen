@@ -62,6 +62,7 @@
                 Name="ProgressBar"
                 Grid.Row="1"
                 Grid.ColumnSpan="5"
+                Width="250"
                 Height="25"
                 Margin="0,2"
                 HorizontalAlignment="Stretch"

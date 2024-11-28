@@ -115,7 +115,7 @@
     </Style>
 
     <!--  ************************ Based on ProgressBar ************************  -->
-    <Style x:Key="ProgressBarStyle" TargetType="ProgressBar">
+    <Style x:Key="ProgressbarStyle" TargetType="ProgressBar">
         <Setter Property="Width" Value="300" />
         <Setter Property="Height" Value="Auto" />
         <Setter Property="Foreground" Value="Green" />
