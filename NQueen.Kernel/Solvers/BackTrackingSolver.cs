@@ -4,7 +4,7 @@ public class BackTrackingSolver : ISolver, IDisposable
 {
     public BackTrackingSolver(
         ISolutionManager solutionManager,
-        byte boardSize = Utility.DefaultBoardSize)
+        byte boardSize = BoardSettings.DefaultBoardSize)
     {
         Initialize(boardSize);
         SolutionManager = solutionManager
@@ -91,7 +91,7 @@ public class BackTrackingSolver : ISolver, IDisposable
     public byte[] QueenPositions { get; set; }
 
     public int SolutionCountPerUpdate =>
-        Utility.SolutionCountPerUpdate(BoardSize);
+        ProgressSettings.SolutionCountPerUpdate(BoardSize);
     #endregion PublicProperties
 
     #region PublicMethods
@@ -125,12 +125,12 @@ public class BackTrackingSolver : ISolver, IDisposable
     #endregion
 
     #region PrivateMethods
-    private void Initialize(byte boardSize = Utility.DefaultBoardSize)
+    private void Initialize(byte boardSize = BoardSettings.DefaultBoardSize)
     {
         BoardSize = boardSize;
         _cancelationTokenSource = new CancellationTokenSource();
         HalfBoardSize = GetHalfSize();
-        QueenPositions = Enumerable.Repeat(Utility.ByteMaxValue, BoardSize).ToArray();
+        QueenPositions = Enumerable.Repeat(BoardSettings.ByteMaxValue, BoardSize).ToArray();
         Solutions = new HashSet<byte[]>(new SequenceEquality<byte>());
     }
 
@@ -159,7 +159,7 @@ public class BackTrackingSolver : ISolver, IDisposable
 
     private async Task FindSingleOrUniqueSolutions(byte colNo, SolutionMode solutionMode)
     {
-        while (colNo != Utility.ByteMaxValue)
+        while (colNo != BoardSettings.ByteMaxValue)
         {
             if (IsSolverCanceled)
                 return;
@@ -192,7 +192,7 @@ public class BackTrackingSolver : ISolver, IDisposable
 
             QueenPositions[colNo] = FindQueenPosition(colNo);
 
-            if (QueenPositions[colNo] == Utility.ByteMaxValue)
+            if (QueenPositions[colNo] == BoardSettings.ByteMaxValue)
             {
                 colNo--;
                 continue;
@@ -244,7 +244,7 @@ public class BackTrackingSolver : ISolver, IDisposable
                 return pos;
         }
 
-        return Utility.ByteMaxValue;
+        return BoardSettings.ByteMaxValue;
     }
 
     private bool IsValidPosition(byte colNo, byte pos)

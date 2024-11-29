@@ -9,7 +9,7 @@ public sealed partial class MainViewModel
     {
         var sol = new Solution([.. e.Solution], 1);
         var positions = sol
-            .QueenPositions.Where(q => q < Utility.ByteMaxValue)
+            .QueenPositions.Where(q => q < BoardSettings.ByteMaxValue)
             .Select((item, index) => new Position((byte)index, item)).ToList();
 
         Chessboard.PlaceQueens(positions);
@@ -26,7 +26,7 @@ public sealed partial class MainViewModel
         // Limit the number of solutions shown in ObservableSolutions
         Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
         {
-            if (ObservableSolutions.Count >= Utility.MaxNoOfSolutionsInOutput)
+            if (ObservableSolutions.Count >= SolutionHelper.MaxNoOfSolutionsInOutput)
             {
                 ObservableSolutions.RemoveAt(0);
             }

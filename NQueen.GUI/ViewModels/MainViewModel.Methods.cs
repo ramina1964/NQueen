@@ -46,7 +46,7 @@ public sealed partial class MainViewModel
                 {
                     IsSingleRunning = false;
                     ProgressLabelVisibility = Visibility.Visible;
-                    ProgressValue = Utility.StartProgressValue;
+                    ProgressValue = ProgressSettings.StartProgressValue;
                 }
                 break;
 
@@ -103,7 +103,7 @@ public sealed partial class MainViewModel
 
         SolutionTitle = (value == SolutionMode.Single)
             ? $"Solution"
-            : $"Solutions (Max: {Utility.MaxNoOfSolutionsInOutput})";
+            : $"Solutions (Max: {SolutionHelper.MaxNoOfSolutionsInOutput})";
 
         OnPropertyChanged(nameof(BoardSize));
         OnPropertyChanged(nameof(SolutionTitle));

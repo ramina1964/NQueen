@@ -45,9 +45,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _disposed = true;
     }
 
-    private void Initialize(byte boardSize = Utility.DefaultBoardSize,
-        SolutionMode solutionMode = Utility.DefaultSolutionMode,
-        DisplayMode displayMode = Utility.DefaultDisplayMode)
+    private void Initialize(byte boardSize = BoardSettings.DefaultBoardSize,
+        SolutionMode solutionMode = SolutionHelper.DefaultSolutionMode,
+        DisplayMode displayMode = SolutionHelper.DefaultDisplayMode)
     {
         CancelCommand = new RelayCommand(Cancel, CanCancel);
         InputViewModel = new InputViewModel { ClassLevelCascadeMode = CascadeMode.Stop };
@@ -67,7 +67,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         IsOutputReady = false;
         NoOfSolutions = $"{ObservableSolutions.Count,0:N0}";
 
-        DelayInMilliseconds = Utility.DefaultDelayInMilliseconds;
+        DelayInMilliseconds = SolutionHelper.DefaultDelayInMilliseconds;
         ProgressVisibility = Visibility.Hidden;
         ProgressLabelVisibility = Visibility.Hidden;
     }
@@ -96,7 +96,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         var sols = SimulationResults
             .Solutions
-            .Take(Utility.MaxNoOfSolutionsInOutput);
+            .Take(SolutionHelper.MaxNoOfSolutionsInOutput);
 
         if (DisplayMode == DisplayMode.Visualize)
         {

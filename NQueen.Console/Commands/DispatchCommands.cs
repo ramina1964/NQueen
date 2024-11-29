@@ -99,7 +99,7 @@ public partial class DispatchCommands(
         var elapsedTime = simulationResult.ElapsedTimeInSec;
         if (noOfSolutions == 0)
         {
-            _consoleUtils.WriteLineColored(ConsoleColor.Blue, $"\n{Utility.NoSolutionMessage}");
+            _consoleUtils.WriteLineColored(ConsoleColor.Blue, $"\n{Messages.NoSolutionMessage}");
             return true;
         }
 

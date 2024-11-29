@@ -5,7 +5,7 @@ public class ChessboardViewModel : ObservableObject
     public ChessboardViewModel()
     {
         Squares = [];
-        QueenImagePath = @"..\..\Images\WhiteQueen.png";
+        QueenImagePath = Constants.QueenImagePath;
     }
 
     public string QueenImagePath { get; }

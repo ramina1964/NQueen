@@ -55,7 +55,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private byte _boardSize;
 
-    public string ResultTitle => Utility.SolutionTitle(SolutionMode);
+    public string ResultTitle => SolutionHelper.SolutionTitle(SolutionMode);
 
     [ObservableProperty]
     private bool _isValid;
