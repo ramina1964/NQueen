@@ -4,7 +4,7 @@ public class ChessboardViewModel : ObservableObject
 {
     public ChessboardViewModel()
     {
-        Squares = [];
+        Squares = new ObservableCollection<SquareViewModel>();
         QueenImagePath = Constants.QueenImagePath;
     }
 
@@ -22,10 +22,15 @@ public class ChessboardViewModel : ObservableObject
         ClearImages();
 
         // Place queens
-        positions
-            .ToList()
-            .ForEach(pos => Squares.First(sq => pos.RowNo == sq.Position.RowNo &&
-                     pos.ColumnNo == sq.Position.ColumnNo).ImagePath = QueenImagePath);
+        foreach (var pos in positions)
+        {
+            var square = Squares.FirstOrDefault(sq => pos.RowNo == sq.Position.RowNo
+                && pos.ColumnNo == sq.Position.ColumnNo);
+            if (square != null)
+            {
+                square.ImagePath = QueenImagePath;
+            }
+        }
     }
 
     public void CreateSquares(byte boardSize, IEnumerable<SquareViewModel> squares)

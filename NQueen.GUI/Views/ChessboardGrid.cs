@@ -1,49 +1,59 @@
 ﻿namespace NQueen.GUI.Views;
 
-public class ChessboardGrid(byte size) : Grid
+public class ChessboardGrid : Grid
 {
-    public static int WindowHeight => 500;
+    public ChessboardGrid(byte size)
+    {
+        Size = size;
+        CreateGrid();
+    }
 
-    public static int WindowWidth => 500;
+    public byte Size { get; set; }
 
-    public byte Size { get; set; } = size;
-
-    public byte Column { get; set; }
-
-    public byte Row { get; set; }
-
-    public int WidthBorder => (WindowWidth - 50) / Size;
-
-    public int HeightBorder => (WindowHeight - 50) / Size;
+    public int WidthBorder => (int)(ActualWidth / Size);
+    public int HeightBorder => (int)(ActualHeight / Size);
 
     // Test of dynamic grid written in code - no Xaml
     public void CreateGrid()
     {
-        GridLength width = new(WidthBorder);
-        GridLength height = new(HeightBorder);
-        Grid grid = new() { Height = WindowHeight, Width = WindowHeight };
+        ColumnDefinitions.Clear();
+        RowDefinitions.Clear();
+        Children.Clear();
+
         for (byte i = 0; i < Size; i++)
         {
-            ColumnDefinition column = new() { Width = width, Tag = i };
-            RowDefinition row = new() { Height = height, Tag = i };
-            grid.ColumnDefinitions.Add(column);
-            grid.RowDefinitions.Add(row);
+            ColumnDefinitions.Add(new ColumnDefinition());
+            RowDefinitions.Add(new RowDefinition());
+        }
+
+        for (byte i = 0; i < Size; i++)
+        {
             for (byte j = 0; j < Size; j++)
             {
-                SolidColorBrush color = new(Colors.Wheat);
+                SolidColorBrush color = new((i + j) % 2 == 0 ? Colors.Wheat : Colors.Brown);
                 Position pos = new(i, j);
                 SquareViewModel sq = new(pos, color);
                 Border border = new()
                 {
                     Background = color,
-                    Height = HeightBorder,
-                    Width = WidthBorder,
                     DataContext = sq
                 };
 
                 SetColumn(border, j);
                 SetRow(border, i);
+                Children.Add(border);
             }
+        }
+
+        SizeChanged += OnSizeChanged;
+    }
+
+    private void OnSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        foreach (Border border in Children)
+        {
+            border.Width = WidthBorder;
+            border.Height = HeightBorder;
         }
     }
 }
