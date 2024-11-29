@@ -2,7 +2,7 @@
 
 public class Dimensions
 {
-    public static int DefaultWindowHeight => 500;
+    public static double DefaultWindowHeight => 1000.0;
     
-    public static int DefaultWindowWidth => 500;
+    public static double DefaultWindowWidth => 1000.0;
 }

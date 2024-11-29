@@ -4,7 +4,7 @@ public class ChessboardViewModel : ObservableObject
 {
     public ChessboardViewModel()
     {
-        Squares = new ObservableCollection<SquareViewModel>();
+        Squares = [];
         QueenImagePath = Constants.QueenImagePath;
     }
 
