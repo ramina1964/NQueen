@@ -33,7 +33,6 @@
             <ColumnDefinition Width="Auto" MinWidth="140" />
             <ColumnDefinition Width="*" MaxWidth="1000" />
             <ColumnDefinition Width="Auto" MinWidth="200" MaxWidth="350" />
-            <!-- Adjusted min and max width -->
         </Grid.ColumnDefinitions>
 
         <!--  Selected Solution Groupbox  -->
