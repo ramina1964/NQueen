@@ -10,8 +10,8 @@ public partial class MainView : Window, IDisposable
         _serviceProvider = serviceProvider;
 
         // Resolve and add ChessboardUserControl to the MainView
-        var chessboardUserContrl = _serviceProvider.GetRequiredService<ChessboardUserControl>();
-        chessboardPlaceholder.Content = chessboardUserContrl;
+        var chessboardUserControl = new ChessboardUserControl(MainViewModel);
+        chessboardPlaceholder.Content = chessboardUserControl;
 
         // Resolve and add InputPanelUserControl to the MainView
         var inputPanel = _serviceProvider.GetRequiredService<InputPanelUserControl>();

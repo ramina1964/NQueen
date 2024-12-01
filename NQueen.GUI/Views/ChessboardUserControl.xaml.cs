@@ -2,8 +2,9 @@
 
 public partial class ChessboardUserControl
 {
-    public ChessboardUserControl()
+    public ChessboardUserControl(MainViewModel mainViewModel)
     {
         InitializeComponent();
+        DataContext = mainViewModel;
     }
 }
