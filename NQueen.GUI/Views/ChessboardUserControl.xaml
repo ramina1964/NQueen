@@ -15,7 +15,7 @@
     </UserControl.Resources>
 
     <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-          Width="{x:Static utils:Dimensions.DefaultWindowHeight}"
+          Width="{x:Static utils:Dimensions.DefaultWindowWidth}"
           Height="{x:Static utils:Dimensions.DefaultWindowHeight}">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
