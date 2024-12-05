@@ -10,16 +10,16 @@ public partial class MainView : Window, IDisposable
         _serviceProvider = serviceProvider;
 
         // Resolve and add ChessboardUserControl to the MainView
-        var chessboardUserControl = new ChessboardUserControl(MainViewModel);
-        chessboardPlaceholder.Content = chessboardUserControl;
+        var ChessboardUserControl = new ChessboardUserControl(MainViewModel);
+        ChessboardPlaceholder.Content = ChessboardUserControl;
 
         // Resolve and add InputPanelUserControl to the MainView
-        var inputPanel = _serviceProvider.GetRequiredService<InputPanelUserControl>();
-        inputPanelPlaceHolder.Content = inputPanel;
+        var InputPanel = _serviceProvider.GetRequiredService<InputPanelUserControl>();
+        InputPanelPlaceHolder.Content = InputPanel;
 
         // Resolve and add SimulationPanelUserControl to the MainView
-        var simulationPanelUserControl = _serviceProvider.GetRequiredService<SimulationPanelUserControl>();
-        simulationPanelPlaceHolder.Content = simulationPanelUserControl;
+        var SimulationPanelUserControl = _serviceProvider.GetRequiredService<SimulationPanelUserControl>();
+        SimulationPanelPlaceHolder.Content = SimulationPanelUserControl;
     }
 
     public MainViewModel MainViewModel { get; }
@@ -64,7 +64,7 @@ public partial class MainView : Window, IDisposable
 
     private void MainView_Loaded(object sender, RoutedEventArgs e)
     {
-        var board = chessboardPlaceholder.Content as ChessboardUserControl;
+        var board = ChessboardPlaceholder.Content as ChessboardUserControl;
         var size = (int)Math.Min(board.ActualWidth, board.ActualHeight);
         board.Width = size;
         board.Height = size;

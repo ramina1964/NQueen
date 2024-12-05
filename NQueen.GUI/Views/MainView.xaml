@@ -8,10 +8,8 @@
     xmlns:view="clr-namespace:NQueen.GUI.Views"
     xmlns:viewmodel="clr-namespace:NQueen.GUI.ViewModels"
     Title="Solutions of NQueen Problem with Backtracking - .NET 9.0"
-    MinWidth="{Binding Source={x:Static SystemParameters.PrimaryScreenWidth},
-        Converter={converter:RatioConverter}, ConverterParameter='0.90'}"
-    MinHeight="{Binding Source={x:Static SystemParameters.PrimaryScreenHeight},
-        Converter={converter:RatioConverter}, ConverterParameter='0.96'}"
+    MinWidth="{Binding Source={x:Static SystemParameters.PrimaryScreenWidth}, Converter={converter:RatioConverter}, ConverterParameter='0.90'}"
+    MinHeight="{Binding Source={x:Static SystemParameters.PrimaryScreenHeight}, Converter={converter:RatioConverter}, ConverterParameter='0.96'}"
     d:DataContext="{d:DesignInstance Type=viewmodel:MainViewModel}"
     FontSize="14"
     ResizeMode="CanResize"
@@ -32,11 +30,16 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" MinWidth="140" />
             <ColumnDefinition Width="*" MaxWidth="1000" />
-            <ColumnDefinition Width="Auto" MinWidth="200" MaxWidth="350" />
+            <ColumnDefinition
+                Width="Auto"
+                MinWidth="200"
+                MaxWidth="350" />
         </Grid.ColumnDefinitions>
 
         <!--  Selected Solution Groupbox  -->
         <view:SelectedSolutionUserControl
+            x:Name="SelectedSolutionUserControl"
+            AutomationProperties.Name="SelectedSolutionGroupbox"
             Grid.Row="0"
             Grid.Column="0"
             Grid.ColumnSpan="3"
@@ -44,6 +47,8 @@
 
         <!--  Solution List  -->
         <view:SolutionListUserControl
+            x:Name="SolutionListUserControl"
+            AutomationProperties.Name="SolutionList"
             Grid.Row="1"
             Grid.Column="0"
             Margin="5"
@@ -51,7 +56,8 @@
 
         <!--  Chessboard Placeholder  -->
         <ContentControl
-            x:Name="chessboardPlaceholder"
+            x:Name="ChessboardPlaceholder"
+            AutomationProperties.Name="ChessboardPlaceholder"
             Grid.Row="1"
             Grid.Column="1"
             Margin="5"
@@ -68,17 +74,26 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" MinHeight="100"/>
+                <RowDefinition Height="*" MinHeight="100" />
             </Grid.RowDefinitions>
 
             <!--  Input Panel  -->
-            <ContentControl x:Name="inputPanelPlaceHolder" Grid.Row="0" />
+            <ContentControl
+                x:Name="InputPanelPlaceHolder"
+                AutomationProperties.Name="InputPanelPlaceholder"
+                Grid.Row="0" />
 
             <!--  Solution Summary Panel  -->
-            <view:SolutionSummaryUserControl Grid.Row="1" />
+            <view:SolutionSummaryUserControl
+                x:Name="SolutionSummaryUserControl"
+                AutomationProperties.Name="SolutionSummaryPanel"
+                Grid.Row="1" />
 
             <!--  Simulation Panel  -->
-            <ContentControl x:Name="simulationPanelPlaceHolder"  Grid.Row="2" />
+            <ContentControl
+                x:Name="SimulationPanelPlaceHolder"
+                AutomationProperties.Name="SimulationPanelPlaceholder"
+                Grid.Row="2" />
 
             <!--  Status Panel (Removed)  -->
         </Grid>
