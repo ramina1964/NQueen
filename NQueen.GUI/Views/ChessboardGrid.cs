@@ -45,10 +45,10 @@ public class ChessboardGrid : Grid
             }
         }
 
-        SizeChanged += OnSizeChanged;
+        SizeChanged += HandleBoardSizeChanged;
     }
 
-    private void OnSizeChanged(object sender, SizeChangedEventArgs e)
+    private void HandleBoardSizeChanged(object sender, SizeChangedEventArgs e)
     {
         foreach (Border border in Children)
         {

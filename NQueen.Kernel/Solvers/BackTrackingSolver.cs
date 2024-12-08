@@ -98,7 +98,7 @@ public class BackTrackingSolver : ISolver, IDisposable
     public byte GetHalfSize() =>
         (byte)(BoardSize % 2 == 0 ? BoardSize / 2 : BoardSize / 2 + 1);
 
-    public void OnProgressChanged(object sender, ProgressValueChangedEventArgs e) =>
+    public void HandleProgressValueChanged(object sender, ProgressValueChangedEventArgs e) =>
         ProgressValueChanged?.Invoke(this, e);
 
     public async Task<SimulationResults> GetResultsAsync()

@@ -2,10 +2,10 @@
 
 public sealed partial class MainViewModel
 {
-    private void OnProgressValueChanged(object sender, ProgressValueChangedEventArgs e) =>
+    private void HandleProgressValueChanged(object sender, ProgressValueChangedEventArgs e) =>
         ProgressValue = e.Value;
 
-    private void OnQueenPlaced(object sender, QueenPlacedEventArgs e)
+    private void HandleQueenPlaced(object sender, QueenPlacedEventArgs e)
     {
         var sol = new Solution([.. e.Solution], 1);
         var positions = sol
@@ -15,7 +15,7 @@ public sealed partial class MainViewModel
         Chessboard.PlaceQueens(positions);
     }
 
-    private void OnSolutionFound(object sender, SolutionFoundEventArgs e)
+    private void HandleSolutionFound(object sender, SolutionFoundEventArgs e)
     {
         var id = ObservableSolutions.Count + 1;
         var sol = new Solution(e.Solution, id);
@@ -41,15 +41,15 @@ public sealed partial class MainViewModel
 
     private void SubscribeToSimulationEvents()
     {
-        Solver.ProgressValueChanged += OnProgressValueChanged;
-        Solver.QueenPlaced += OnQueenPlaced;
-        Solver.SolutionFound += OnSolutionFound;
+        Solver.ProgressValueChanged += HandleProgressValueChanged;
+        Solver.QueenPlaced += HandleQueenPlaced;
+        Solver.SolutionFound += HandleSolutionFound;
     }
 
     private void UnsubscribeFromSimulationEvents()
     {
-        Solver.ProgressValueChanged -= OnProgressValueChanged;
-        Solver.QueenPlaced -= OnQueenPlaced;
-        Solver.SolutionFound -= OnSolutionFound;
+        Solver.ProgressValueChanged -= HandleProgressValueChanged;
+        Solver.QueenPlaced -= HandleQueenPlaced;
+        Solver.SolutionFound -= HandleSolutionFound;
     }
 }
