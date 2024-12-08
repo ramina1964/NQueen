@@ -154,6 +154,7 @@ public sealed partial class MainViewModel
 
             // Update the chessboard with the new board size
             Chessboard?.CreateSquares(value, Enumerable.Empty<SquareViewModel>());
+            OnPropertyChanged(nameof(Chessboard.SquareSize));
         }
     }
 

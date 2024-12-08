@@ -16,6 +16,10 @@ public class ChessboardViewModel : ObservableObject
 
     public double WindowHeight { get; set; }
 
+    public double SquareSize => Math.Min(WindowWidth, WindowHeight) / BoardSize;
+
+    public int BoardSize { get; set; }
+
     public void PlaceQueens(IEnumerable<Position> positions)
     {
         ClearImages();
@@ -33,9 +37,7 @@ public class ChessboardViewModel : ObservableObject
 
     public void CreateSquares(int boardSize, IEnumerable<SquareViewModel> squares)
     {
-        var width = (int)WindowWidth / boardSize;
-        var height = width;
-
+        BoardSize = boardSize;
         var sqList = squares.ToList();
         for (var i = 0; i < boardSize; i++)
         {
@@ -45,31 +47,27 @@ public class ChessboardViewModel : ObservableObject
                 var square = new SquareViewModel(pos, FindColor(pos))
                 {
                     ImagePath = null,
-                    Height = height,
-                    Width = width,
+                    Height = SquareSize,
+                    Width = SquareSize,
                 };
 
                 sqList.Add(square);
             }
         }
 
-        sqList
-            .OrderByDescending(sq => sq.Position.ColumnNo)
-            .ThenBy(sq => sq.Position.RowNo).ToList()
-            .ForEach(sq => Squares.Add(sq));
+        Squares.Clear();
+        foreach (var square in sqList.OrderByDescending(sq => sq.Position.ColumnNo).ThenBy(sq => sq.Position.RowNo))
+        {
+            Squares.Add(square);
+        }
     }
 
     private void ClearImages() =>
-        Squares
-            .ToList()
-            .ForEach(sq => sq.ImagePath = null);
+        Squares.ToList().ForEach(sq => sq.ImagePath = null);
 
     private static SolidColorBrush FindColor(Position pos)
     {
-        var col = (pos.RowNo + pos.ColumnNo) % 2 == 1
-            ? Colors.Wheat
-            : Colors.Brown;
-
+        var col = (pos.RowNo + pos.ColumnNo) % 2 == 1 ? Colors.Wheat : Colors.Brown;
         return new SolidColorBrush(col);
     }
 }
