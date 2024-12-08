@@ -151,6 +151,9 @@ public sealed partial class MainViewModel
             IsOutputReady = false;
             UpdateButtonFunctionality();
             UpdateGui();
+
+            // Update the chessboard with the new board size
+            Chessboard?.CreateSquares(value, Enumerable.Empty<SquareViewModel>());
         }
     }
 

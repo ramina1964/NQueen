@@ -18,10 +18,8 @@ public class ChessboardViewModel : ObservableObject
 
     public void PlaceQueens(IEnumerable<Position> positions)
     {
-        // Clear board
         ClearImages();
 
-        // Place queens
         foreach (var pos in positions)
         {
             var square = Squares.FirstOrDefault(sq => pos.RowNo == sq.Position.RowNo

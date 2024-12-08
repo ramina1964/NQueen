@@ -24,7 +24,7 @@
         <ItemsControl ItemsSource="{Binding Chessboard.Squares}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <UniformGrid Rows="{Binding DataContext.BoardSize, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                    <UniformGrid Rows="{Binding BoardSize}" Columns="{Binding BoardSize}" />
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
 

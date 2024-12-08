@@ -5,6 +5,26 @@ public partial class ChessboardUserControl : UserControl
     public ChessboardUserControl(MainViewModel mainViewModel)
     {
         InitializeComponent();
-        DataContext = mainViewModel;
+        _mainViewModel = mainViewModel;
+        DataContext = _mainViewModel;
+
+        // Subscribe to BoardSize changes
+        _mainViewModel.PropertyChanged += MainViewModel_PropertyChanged;
     }
+
+    private void MainViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainViewModel.BoardSize))
+        {
+            UpdateChessboard();
+        }
+    }
+
+    private void UpdateChessboard()
+    {
+        var boardSize = _mainViewModel.BoardSize;
+        _mainViewModel.Chessboard.CreateSquares(boardSize, []);
+    }
+
+    private readonly MainViewModel _mainViewModel;
 }
