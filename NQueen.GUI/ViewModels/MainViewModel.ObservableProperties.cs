@@ -75,10 +75,12 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     public void SetChessboard(double boardDimension)
     {
         Chessboard = new ChessboardViewModel
-        { WindowWidth = boardDimension, WindowHeight = boardDimension };
-        
-        Chessboard.CreateSquares(BoardSize, []);
+        {
+            WindowWidth = boardDimension,
+            WindowHeight = boardDimension
+        };
 
+        Chessboard.InitializeSquares(BoardSize);
         IsIdle = true;
         IsSimulating = false;
     }

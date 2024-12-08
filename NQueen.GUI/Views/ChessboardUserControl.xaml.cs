@@ -23,7 +23,7 @@ public partial class ChessboardUserControl : UserControl
     private void UpdateChessboard()
     {
         var boardSize = _mainViewModel.BoardSize;
-        _mainViewModel.Chessboard.CreateSquares(boardSize, []);
+        _mainViewModel.Chessboard.InitializeSquares(boardSize);
     }
 
     private readonly MainViewModel _mainViewModel;

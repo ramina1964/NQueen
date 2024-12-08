@@ -79,7 +79,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         NoOfSolutions = "0";
         ElapsedTimeInSec = $"{0,0:N1}";
         MemoryUsage = "0";
-        Chessboard?.CreateSquares(BoardSize, []);
+        Chessboard?.InitializeSquares(BoardSize);
     }
 
     private void UpdateButtonFunctionality()

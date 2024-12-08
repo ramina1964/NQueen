@@ -35,31 +35,26 @@ public class ChessboardViewModel : ObservableObject
         }
     }
 
-    public void CreateSquares(int boardSize, IEnumerable<SquareViewModel> squares)
+    public void InitializeSquares(int boardSize)
     {
         BoardSize = boardSize;
-        var sqList = squares.ToList();
-        for (var i = 0; i < boardSize; i++)
+        var squareSize = SquareSize;
+
+        Squares.Clear();
+        for (var col = boardSize - 1; col >= 0; col--)
         {
-            for (var j = 0; j < boardSize; j++)
+            for (var row = 0; row < boardSize; row++)
             {
-                var pos = new Position(i, j);
+                var pos = new Position(row, col);
                 var square = new SquareViewModel(pos, FindColor(pos))
                 {
                     ImagePath = null,
-                    Height = SquareSize,
-                    Width = SquareSize,
+                    Height = squareSize,
+                    Width = squareSize,
                 };
 
-                sqList.Add(square);
+                Squares.Add(square);
             }
-        }
-
-        Squares.Clear();
-        foreach (var square in sqList.OrderByDescending(sq => sq.Position.ColumnNo)
-            .ThenBy(sq => sq.Position.RowNo))
-        {
-            Squares.Add(square);
         }
     }
 
@@ -72,3 +67,5 @@ public class ChessboardViewModel : ObservableObject
         return new SolidColorBrush(col);
     }
 }
+
+
