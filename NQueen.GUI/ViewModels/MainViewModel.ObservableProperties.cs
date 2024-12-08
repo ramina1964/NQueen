@@ -53,7 +53,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private DisplayMode _displayMode;
 
     [ObservableProperty]
-    private byte _boardSize;
+    private int _boardSize;
 
     public string ResultTitle => SolutionHelper.SolutionTitle(SolutionMode);
 

@@ -135,7 +135,7 @@ public sealed partial class MainViewModel
         }
     }
 
-    partial void OnBoardSizeChanged(byte value)
+    partial void OnBoardSizeChanged(int value)
     {
         IsValid = InputViewModel.Validate(this).IsValid;
 
