@@ -56,7 +56,8 @@ public class ChessboardViewModel : ObservableObject
         }
 
         Squares.Clear();
-        foreach (var square in sqList.OrderByDescending(sq => sq.Position.ColumnNo).ThenBy(sq => sq.Position.RowNo))
+        foreach (var square in sqList.OrderByDescending(sq => sq.Position.ColumnNo)
+            .ThenBy(sq => sq.Position.RowNo))
         {
             Squares.Add(square);
         }
