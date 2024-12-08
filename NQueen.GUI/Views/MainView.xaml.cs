@@ -65,7 +65,8 @@ public partial class MainView : Window, IDisposable
     private void MainView_Loaded(object sender, RoutedEventArgs e)
     {
         var board = ChessboardPlaceholder.Content as ChessboardUserControl;
-        var size = (int)Math.Min(board.ActualWidth, board.ActualHeight);
+        var solutionList = SolutionListUserControl;
+        var size = (int)Math.Min(board.ActualWidth, solutionList.ActualHeight);
         board.Width = size;
         board.Height = size;
         MainViewModel.SetChessboard(size);

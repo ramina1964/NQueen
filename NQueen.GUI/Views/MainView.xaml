@@ -51,7 +51,7 @@
             AutomationProperties.Name="SolutionList"
             Grid.Row="1"
             Grid.Column="0"
-            Margin="5"
+            Margin="5,0"
             VerticalAlignment="Stretch" />
 
         <!--  Chessboard Placeholder  -->
@@ -60,15 +60,15 @@
             AutomationProperties.Name="ChessboardPlaceholder"
             Grid.Row="1"
             Grid.Column="1"
-            Margin="5"
+            Margin="5,0"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch" />
 
-        <!--  Start of Input / Output Panel  -->
+        <!--  Start of Input/Output Panel  -->
         <Grid
             Grid.Row="1"
             Grid.Column="2"
-            Margin="5"
+            Margin="5,0"
             HorizontalAlignment="Left"
             VerticalAlignment="Center">
             <Grid.RowDefinitions>
