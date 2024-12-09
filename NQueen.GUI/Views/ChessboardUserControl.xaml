@@ -8,7 +8,8 @@
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
     xmlns:utils="clr-namespace:NQueen.Kernel.Utilities;assembly=NQueen.Kernel"
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
-    mc:Ignorable="d">
+    mc:Ignorable="d"
+    Name="ChessboardControl">
 
     <UserControl.Resources>
         <local:NullImageConverter x:Key="NullImageConverter" />
@@ -31,11 +32,13 @@
                     <Border
                         Width="{Binding DataContext.Chessboard.SquareSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
                         Height="{Binding DataContext.Chessboard.SquareSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                        Background="{Binding Color}">
+                        Background="{Binding Color}"
+                        Name="ChessboardSquareBorder">
                         <Image
                             Width="{Binding DataContext.Chessboard.SquareSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
                             Height="{Binding DataContext.Chessboard.SquareSize, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            Source="{Binding ImagePath, Converter={StaticResource NullImageConverter}}" />
+                            Source="{Binding ImagePath, Converter={StaticResource NullImageConverter}}"
+                            Name="ChessboardSquareImage" />
                     </Border>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>

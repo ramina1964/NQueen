@@ -16,7 +16,10 @@ public class ChessboardViewModel : ObservableObject
 
     public double WindowHeight { get; set; }
 
-    public double SquareSize => Math.Min(WindowWidth, WindowHeight) / BoardSize;
+    public double SquareSize =>
+        BoardSize > 0
+        ? Math.Min(WindowWidth, WindowHeight) / BoardSize
+        : 0;
 
     public int BoardSize { get; set; }
 

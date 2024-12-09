@@ -16,9 +16,14 @@ public partial class ChessboardUserControl : UserControl
     {
         if (e.PropertyName == nameof(MainViewModel.BoardSize))
         {
-            var boardSize = _mainViewModel.BoardSize;
-            _mainViewModel.Chessboard.InitializeSquares(boardSize);
+            UpdateChessboard();
         }
+    }
+
+    private void UpdateChessboard()
+    {
+        var boardSize = _mainViewModel.BoardSize;
+        _mainViewModel.Chessboard.InitializeSquares(boardSize);
     }
 
     private readonly MainViewModel _mainViewModel;
