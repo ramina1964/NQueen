@@ -1,6 +1,5 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-// Todo: Fix a bug where Solution No. in the ListView of the GUI studders, Solution 1, Solution 1, ...
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
     public MainViewModel() : this(new BackTrackingSolver(new SolutionManager()))
