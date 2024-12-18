@@ -52,8 +52,8 @@ Sol. No. 50                  (0, 0), (1, 2), (2, 5), (3, 8), (4, 6), (5, 11), (6
 
 
 Summary of Results:
-Date and Time                21/11/2024 23:38:36
+Date and Time                18/12/2024 22:11:09
 BoardSize                                     14
 No. of Solutions Included                  50
-Elapsed Time (s)                             6.4
+Elapsed Time (s)                             6.7
 

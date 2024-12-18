@@ -152,6 +152,9 @@ public sealed partial class MainViewModel
             UpdateButtonFunctionality();
             UpdateGui();
         }
+
+        // Manually raise the PropertyChanged event for BoardSize
+        OnPropertyChanged(nameof(BoardSize));
     }
 
     partial void OnNoOfSolutionsChanged(string value) =>

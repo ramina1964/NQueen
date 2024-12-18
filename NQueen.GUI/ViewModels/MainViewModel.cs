@@ -79,6 +79,13 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         ElapsedTimeInSec = $"{0,0:N1}";
         MemoryUsage = "0";
         Chessboard?.CreateSquares(BoardSize, []);
+
+        // Call CreateDynamicGrid to update the chessboard
+        if (Application.Current.MainWindow is MainView mainWindow)
+        {
+            var chessboardUserControl = mainWindow.FindName("ChessboardControl") as ChessboardUserControl;
+            chessboardUserControl?.CreateDynamicGrid(BoardSize);
+        }
     }
 
     private void UpdateButtonFunctionality()

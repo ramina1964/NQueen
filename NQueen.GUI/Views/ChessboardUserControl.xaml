@@ -1,5 +1,6 @@
 ﻿<UserControl
     x:Class="NQueen.GUI.Views.ChessboardUserControl"
+    x:Name="ChessboardControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -8,40 +9,34 @@
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
     xmlns:utils="clr-namespace:NQueen.Kernel.Utilities;assembly=NQueen.Kernel"
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
-    mc:Ignorable="d">
+    mc:Ignorable="d"
+    HorizontalAlignment="Stretch"
+    VerticalAlignment="Stretch">
 
     <UserControl.Resources>
         <local:NullImageConverter x:Key="NullImageConverter" />
     </UserControl.Resources>
 
-    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-          Width="{x:Static utils:Dimensions.DefaultWindowWidth}"
-          Height="{x:Static utils:Dimensions.DefaultWindowHeight}">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-
-        <ItemsControl ItemsSource="{Binding Chessboard.Squares}">
+    <Grid x:Name="ChessboardGrid" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <ItemsControl x:Name="ChessboardItemsControl" ItemsSource="{Binding Chessboard.Squares}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <UniformGrid Rows="{Binding DataContext.BoardSize, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                    <Grid />
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
-
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <Border
-                        Width="{Binding Width}"
-                        Height="{Binding Height}"
-                        Background="{Binding Color}">
+                        Background="{Binding Color}"
+                        BorderBrush="Black"
+                        BorderThickness="1"
+                        Margin="0">
                         <Image
-                            Width="{Binding Width}"
-                            Height="{Binding Height}"
+                            Stretch="Uniform"
                             Source="{Binding ImagePath, Converter={StaticResource NullImageConverter}}" />
                     </Border>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
-
     </Grid>
 </UserControl>

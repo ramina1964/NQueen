@@ -1,6 +1,6 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public sealed partial class MainViewModel : ObservableObject, IDisposable
+public sealed partial class MainViewModel : ObservableObject
 {
     [ObservableProperty]
     private InputViewModel _inputViewModel;
