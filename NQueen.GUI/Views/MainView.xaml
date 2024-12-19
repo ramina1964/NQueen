@@ -24,12 +24,12 @@
         VerticalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" MinHeight="40" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="1030" />
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" MinWidth="140" />
-            <ColumnDefinition Width="*" MaxWidth="1000" />
+            <ColumnDefinition Width="*" MaxWidth="1030" />
             <ColumnDefinition
                 Width="Auto"
                 MinWidth="200"
@@ -39,30 +39,30 @@
         <!--  Selected Solution Groupbox  -->
         <view:SelectedSolutionUserControl
             x:Name="SelectedSolutionUserControl"
-            AutomationProperties.Name="SelectedSolutionGroupbox"
             Grid.Row="0"
             Grid.Column="0"
             Grid.ColumnSpan="3"
-            Margin="5" />
+            Margin="5"
+            AutomationProperties.Name="SelectedSolutionGroupbox" />
 
         <!--  Solution List  -->
         <view:SolutionListUserControl
             x:Name="SolutionListUserControl"
-            AutomationProperties.Name="SolutionList"
             Grid.Row="1"
             Grid.Column="0"
             Margin="5"
-            VerticalAlignment="Stretch" />
+            VerticalAlignment="Stretch"
+            AutomationProperties.Name="SolutionList" />
 
         <!--  Chessboard Placeholder  -->
         <ContentControl
             x:Name="ChessboardPlaceholder"
-            AutomationProperties.Name="ChessboardPlaceholder"
             Grid.Row="1"
             Grid.Column="1"
             Margin="5"
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch" />
+            VerticalAlignment="Stretch"
+            AutomationProperties.Name="ChessboardPlaceholder" />
 
         <!--  Start of Input / Output Panel  -->
         <Grid
@@ -80,20 +80,20 @@
             <!--  Input Panel  -->
             <ContentControl
                 x:Name="InputPanelPlaceHolder"
-                AutomationProperties.Name="InputPanelPlaceholder"
-                Grid.Row="0" />
+                Grid.Row="0"
+                AutomationProperties.Name="InputPanelPlaceholder" />
 
             <!--  Solution Summary Panel  -->
             <view:SolutionSummaryUserControl
                 x:Name="SolutionSummaryUserControl"
-                AutomationProperties.Name="SolutionSummaryPanel"
-                Grid.Row="1" />
+                Grid.Row="1"
+                AutomationProperties.Name="SolutionSummaryPanel" />
 
             <!--  Simulation Panel  -->
             <ContentControl
                 x:Name="SimulationPanelPlaceHolder"
-                AutomationProperties.Name="SimulationPanelPlaceholder"
-                Grid.Row="2" />
+                Grid.Row="2"
+                AutomationProperties.Name="SimulationPanelPlaceholder" />
 
             <!--  Status Panel (Removed)  -->
         </Grid>
