@@ -91,6 +91,13 @@ public sealed partial class MainViewModel
         if (value != null)
         {
             Chessboard.PlaceQueens(value.Positions);
+
+            // Call DisplaySolution on ChessboardUserControl
+            if (Application.Current.MainWindow is MainView mainWindow)
+            {
+                var chessboardUserControl = mainWindow.FindName("ChessboardControl") as ChessboardUserControl;
+                chessboardUserControl?.DisplaySolution(value);
+            }
         }
     }
 

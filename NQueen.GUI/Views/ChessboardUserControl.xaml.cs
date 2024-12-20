@@ -6,4 +6,12 @@ public partial class ChessboardUserControl
     {
         InitializeComponent();
     }
+
+    public void DisplaySolution(Solution solution)
+    {
+        if (DataContext is MainViewModel viewModel)
+        {
+            viewModel.Chessboard.PlaceQueens(solution.Positions);
+        }
+    }
 }
