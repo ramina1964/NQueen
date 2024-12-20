@@ -1,6 +1,6 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public sealed partial class MainViewModel : ObservableObject, IDisposable
+public sealed partial class MainViewModel : ObservableObject
 {
     [ObservableProperty]
     private InputViewModel _inputViewModel;
@@ -41,7 +41,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private static SimulationResults _simulationResults;
 
     [ObservableProperty]
-    public ObservableCollection<Solution> _observableSolutions = [];
+    public ObservableCollection<Solution> _observableSolutions = new();
 
     [ObservableProperty]
     private Solution _selectedSolution;
@@ -75,9 +75,12 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     public void SetChessboard(double boardDimension)
     {
         Chessboard = new ChessboardViewModel
-        { WindowWidth = boardDimension, WindowHeight = boardDimension };
-        
-        Chessboard.CreateSquares(BoardSize, []);
+        {
+            WindowWidth = boardDimension,
+            WindowHeight = boardDimension
+        };
+
+        Chessboard.CreateSquares(BoardSize, new List<SquareViewModel>());
 
         IsIdle = true;
         IsSimulating = false;
@@ -106,4 +109,22 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private CancellationTokenSource CancelationTokenSource { get; set; }
 
     private readonly ISolver Solver;
+
+    partial void OnSelectedSolutionChanged(Solution value)
+    {
+        if (value != null)
+        {
+            Chessboard.PlaceQueens(value.Positions);
+
+            // Call DisplaySolution on ChessboardUserControl
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                if (Application.Current.MainWindow is MainView mainWindow)
+                {
+                    var chessboardUserControl = mainWindow.FindName("ChessboardControl") as ChessboardUserControl;
+                    chessboardUserControl?.DisplaySolution(value);
+                }
+            });
+        }
+    }
 }

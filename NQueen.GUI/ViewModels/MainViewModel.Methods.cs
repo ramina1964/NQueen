@@ -86,21 +86,6 @@ public sealed partial class MainViewModel
     partial void OnDelayInMillisecondsChanged(int value) =>
         Solver.DelayInMilliseconds = value;
 
-    partial void OnSelectedSolutionChanged(Solution value)
-    {
-        if (value != null)
-        {
-            Chessboard.PlaceQueens(value.Positions);
-
-            // Call DisplaySolution on ChessboardUserControl
-            if (Application.Current.MainWindow is MainView mainWindow)
-            {
-                var chessboardUserControl = mainWindow.FindName("ChessboardControl") as ChessboardUserControl;
-                chessboardUserControl?.DisplaySolution(value);
-            }
-        }
-    }
-
     partial void OnSolutionModeChanged(SolutionMode value)
     {
         if (Solver == null)
