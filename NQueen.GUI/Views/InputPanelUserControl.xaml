@@ -46,12 +46,14 @@
                 Style="{StaticResource LabelStyle}" />
 
             <TextBox
+                x:Name="TxtBoardSize"
                 Grid.Row="0"
                 Grid.Column="1"
                 Margin="5,2"
                 IsEnabled="{Binding IsInInputMode}"
                 Style="{StaticResource TextBoxNumericalStyle}"
-                Text="{Binding BoardSize, UpdateSourceTrigger=LostFocus, Mode=TwoWay, ValidatesOnDataErrors=True, ValidatesOnExceptions=True}" />
+                Text="{Binding BoardSize, UpdateSourceTrigger=LostFocus, Mode=TwoWay, ValidatesOnDataErrors=True, ValidatesOnExceptions=True}"
+                AutomationProperties.Name="Board Size" />
 
             <Label
                 Grid.Row="1"
@@ -61,6 +63,7 @@
                 Style="{StaticResource LabelStyle}" />
 
             <ComboBox
+                x:Name="CmbSolutionMode"
                 Grid.Row="1"
                 Grid.Column="1"
                 Height="30"
@@ -68,7 +71,8 @@
                 IsEnabled="{Binding IsInInputMode}"
                 ItemsSource="{Binding SolutionModeList, Mode=TwoWay}"
                 SelectedItem="{Binding SolutionMode}"
-                Style="{StaticResource ComboBoxStyle}" />
+                Style="{StaticResource ComboBoxStyle}"
+                AutomationProperties.Name="Solution" />
 
             <Label
                 Grid.Row="2"
@@ -86,7 +90,8 @@
                 IsEnabled="{Binding IsInInputMode}"
                 ItemsSource="{Binding DisplayModeList, Mode=TwoWay}"
                 SelectedItem="{Binding DisplayMode}"
-                Style="{StaticResource ComboBoxStyle}" />
+                Style="{StaticResource ComboBoxStyle}"
+                AutomationProperties.Name="Display" />
 
             <Label
                 Grid.Row="3"
@@ -96,6 +101,7 @@
                 Style="{StaticResource LabelStyle}" />
 
             <Slider
+                x:Name="SldDelay"
                 Grid.Row="3"
                 Grid.Column="1"
                 Height="25"
@@ -104,7 +110,8 @@
                 Maximum="3000"
                 Minimum="10"
                 Style="{StaticResource SliderStyle}"
-                Value="{Binding DelayInMilliseconds}" />
+                Value="{Binding DelayInMilliseconds}"
+                AutomationProperties.Name="Delay" />
         </Grid>
     </GroupBox>
 </UserControl>

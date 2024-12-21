@@ -24,9 +24,16 @@ public class SquareViewModel(Position pos, Brush color) : ObservableObject
         set => SetProperty(ref _imagePath, value);
     }
 
+    public bool IsOffscreen
+    {
+        get => _isOffscreen;
+        set => SetProperty(ref _isOffscreen, value);
+    }
+
     public override string ToString() => $"{Position.RowNo}, {Position.ColumnNo}";
 
     private double _width;
     private double _height;
     private string _imagePath;
+    private bool _isOffscreen;
 }
