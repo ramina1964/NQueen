@@ -7,7 +7,7 @@ public sealed partial class MainViewModel
 
     private void OnQueenPlaced(object sender, QueenPlacedEventArgs e)
     {
-        var sol = new Solution([.. e.Solution], 1);
+        var sol = new Solution(e.Solution, 1);
         var positions = sol
             .QueenPositions.Where(q => q < BoardSettings.ByteMaxValue)
             .Select((item, index) => new Position((byte)index, item)).ToList();

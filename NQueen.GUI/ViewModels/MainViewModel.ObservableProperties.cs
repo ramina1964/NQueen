@@ -72,20 +72,6 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public ChessboardViewModel _chessboard;
 
-    public void SetChessboard(double boardDimension)
-    {
-        Chessboard = new ChessboardViewModel
-        {
-            WindowWidth = boardDimension,
-            WindowHeight = boardDimension
-        };
-
-        Chessboard.CreateSquares(BoardSize, new List<SquareViewModel>());
-
-        IsIdle = true;
-        IsSimulating = false;
-    }
-
     [ObservableProperty]
     private string _elapsedTimeInSec;
 

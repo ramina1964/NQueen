@@ -69,6 +69,20 @@ public sealed partial class MainViewModel
         SaveCommand.NotifyCanExecuteChanged();
     }
 
+    public void SetChessboard(double boardDimension)
+    {
+        Chessboard = new ChessboardViewModel
+        {
+            WindowWidth = boardDimension,
+            WindowHeight = boardDimension
+        };
+
+        Chessboard.CreateSquares(BoardSize, new List<SquareViewModel>());
+
+        IsIdle = true;
+        IsSimulating = false;
+    }
+
     partial void OnProgressValueChanged(double value) => ProgressLabel = $"{value} %";
 
     partial void OnProgressVisibilityChanged(Visibility value)
