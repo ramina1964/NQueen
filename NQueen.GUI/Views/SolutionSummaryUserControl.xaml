@@ -43,6 +43,7 @@
                 Grid.Column="0"
                 Margin="1"
                 Content="Board Size"
+                HorizontalContentAlignment="Left"
                 Style="{StaticResource LabelStyle}" />
 
             <Label
@@ -57,7 +58,7 @@
                 Grid.Row="1"
                 Grid.Column="0"
                 Margin="1"
-                HorizontalContentAlignment="Right"
+                HorizontalContentAlignment="Left"
                 Content="{Binding ResultTitle}"
                 Style="{StaticResource LabelStyle}" />
 
@@ -73,7 +74,7 @@
                 Grid.Row="2"
                 Grid.Column="0"
                 Margin="1"
-                HorizontalContentAlignment="Stretch"
+                HorizontalContentAlignment="Left"
                 Content="Elapsed Time (sec)"
                 Style="{StaticResource LabelStyle}" />
 
@@ -89,7 +90,7 @@
                 Grid.Row="3"
                 Grid.Column="0"
                 Margin="1"
-                HorizontalContentAlignment="Stretch"
+                HorizontalContentAlignment="Left"
                 Content="Memory Usage (MB)"
                 Style="{StaticResource LabelStyle}" />
 
