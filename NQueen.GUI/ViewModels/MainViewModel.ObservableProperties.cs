@@ -105,9 +105,9 @@ public sealed partial class MainViewModel : ObservableObject
             // Call DisplaySolution on ChessboardUserControl
             Application.Current.Dispatcher.Invoke(() =>
             {
-                if (Application.Current.MainWindow is MainView mainWindow)
+                if (Application.Current.MainWindow is MainView mainView)
                 {
-                    var chessboardUserControl = mainWindow.FindName("ChessboardControl") as ChessboardUserControl;
+                    var chessboardUserControl = mainView.FindName("ChessboardControl") as ChessboardUserControl;
                     chessboardUserControl?.DisplaySolution(value);
                 }
             });
