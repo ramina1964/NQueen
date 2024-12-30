@@ -7,6 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:utils="clr-namespace:NQueen.Kernel.Utilities;assembly=NQueen.Kernel"
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
+    xmlns:helpers="clr-namespace:NQueen.GUI.Utils"
     x:Name="ChessboardControl"
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
     AutomationProperties.Name="ChessboardControl"
@@ -50,7 +51,9 @@
                             Width="{Binding Width}"
                             Height="{Binding Height}"
                             AutomationProperties.Name="ChessboardSquareImage"
-                            Source="{Binding ImagePath, Converter={StaticResource NullImageConverter}}" />
+                            Source="{Binding ImagePath, Converter={StaticResource NullImageConverter}}"
+                            Stretch="Uniform"
+                            helpers:AutomationPropertiesHelper.IsOffscreen="{Binding IsOffscreen}" />
                     </Border>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
