@@ -4,7 +4,7 @@ public class ChessboardViewModel : ObservableObject
 {
     public ChessboardViewModel()
     {
-        Squares = [];
+        Squares = new ObservableCollection<SquareViewModel>();
         QueenImagePath = Constants.QueenImagePath;
     }
 
@@ -29,6 +29,7 @@ public class ChessboardViewModel : ObservableObject
             if (square != null)
             {
                 square.ImagePath = QueenImagePath;
+                square.IsOffscreen = false;
             }
         }
     }
@@ -49,6 +50,7 @@ public class ChessboardViewModel : ObservableObject
                     ImagePath = null,
                     Height = height,
                     Width = width,
+                    IsOffscreen = true
                 };
 
                 sqList.Add(square);
@@ -64,7 +66,11 @@ public class ChessboardViewModel : ObservableObject
     private void ClearImages() =>
         Squares
             .ToList()
-            .ForEach(sq => sq.ImagePath = null);
+            .ForEach(sq =>
+            {
+                sq.ImagePath = null;
+                sq.IsOffscreen = true;
+            });
 
     private static SolidColorBrush FindColor(Position pos)
     {

@@ -1,10 +1,16 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public class SquareViewModel(Position pos, Brush color) : ObservableObject
+public class SquareViewModel : ObservableObject
 {
-    public Brush Color { get; set; } = color;
+    public SquareViewModel(Position pos, Brush color)
+    {
+        Position = pos;
+        Color = color;
+    }
 
-    public Position Position { get; set; } = pos;
+    public Brush Color { get; set; }
+
+    public Position Position { get; set; }
 
     public double Width
     {
@@ -24,9 +30,16 @@ public class SquareViewModel(Position pos, Brush color) : ObservableObject
         set => SetProperty(ref _imagePath, value);
     }
 
+    public bool IsOffscreen
+    {
+        get => _isOffscreen;
+        set => SetProperty(ref _isOffscreen, value);
+    }
+
     public override string ToString() => $"{Position.RowNo}, {Position.ColumnNo}";
 
     private double _width;
     private double _height;
     private string _imagePath;
+    private bool _isOffscreen;
 }

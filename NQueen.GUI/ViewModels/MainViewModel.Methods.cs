@@ -69,6 +69,20 @@ public sealed partial class MainViewModel
         SaveCommand.NotifyCanExecuteChanged();
     }
 
+    public void SetChessboard(double boardDimension)
+    {
+        Chessboard = new ChessboardViewModel
+        {
+            WindowWidth = boardDimension,
+            WindowHeight = boardDimension
+        };
+
+        Chessboard.CreateSquares(BoardSize, new List<SquareViewModel>());
+
+        IsIdle = true;
+        IsSimulating = false;
+    }
+
     partial void OnProgressValueChanged(double value) => ProgressLabel = $"{value} %";
 
     partial void OnProgressVisibilityChanged(Visibility value)
@@ -85,14 +99,6 @@ public sealed partial class MainViewModel
 
     partial void OnDelayInMillisecondsChanged(int value) =>
         Solver.DelayInMilliseconds = value;
-
-    partial void OnSelectedSolutionChanged(Solution value)
-    {
-        if (value != null)
-        {
-            Chessboard.PlaceQueens(value.Positions);
-        }
-    }
 
     partial void OnSolutionModeChanged(SolutionMode value)
     {

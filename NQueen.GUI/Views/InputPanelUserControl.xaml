@@ -52,7 +52,8 @@
                 Margin="5,2"
                 IsEnabled="{Binding IsInInputMode}"
                 Style="{StaticResource TextBoxNumericalStyle}"
-                Text="{Binding BoardSize, UpdateSourceTrigger=LostFocus, Mode=TwoWay, ValidatesOnDataErrors=True, ValidatesOnExceptions=True}" />
+                Text="{Binding BoardSize, UpdateSourceTrigger=LostFocus, Mode=TwoWay, ValidatesOnDataErrors=True, ValidatesOnExceptions=True}"
+                AutomationProperties.Name="Board Size" />
 
             <Label
                 Grid.Row="1"
@@ -71,7 +72,8 @@
                 IsEnabled="{Binding IsInInputMode}"
                 ItemsSource="{Binding SolutionModeList, Mode=TwoWay}"
                 SelectedItem="{Binding SolutionMode}"
-                Style="{StaticResource ComboBoxStyle}" />
+                Style="{StaticResource ComboBoxStyle}"
+                AutomationProperties.Name="Solution" />
 
             <Label
                 Grid.Row="2"
@@ -90,7 +92,8 @@
                 IsEnabled="{Binding IsInInputMode}"
                 ItemsSource="{Binding DisplayModeList, Mode=TwoWay}"
                 SelectedItem="{Binding DisplayMode}"
-                Style="{StaticResource ComboBoxStyle}" />
+                Style="{StaticResource ComboBoxStyle}"
+                AutomationProperties.Name="Display" />
 
             <Label
                 Grid.Row="3"
@@ -110,7 +113,8 @@
                 Maximum="3000"
                 Minimum="10"
                 Style="{StaticResource SliderStyle}"
-                Value="{Binding DelayInMilliseconds}" />
+                Value="{Binding DelayInMilliseconds}"
+                AutomationProperties.Name="Delay" />
         </Grid>
     </GroupBox>
 </UserControl>
