@@ -3,11 +3,11 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:helpers="clr-namespace:NQueen.GUI.Utils"
     xmlns:local="clr-namespace:NQueen.GUI.Converters"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:utils="clr-namespace:NQueen.Kernel.Utilities;assembly=NQueen.Kernel"
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
-    xmlns:helpers="clr-namespace:NQueen.GUI.Utils"
     x:Name="ChessboardControl"
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
     AutomationProperties.Name="ChessboardControl"
@@ -28,10 +28,10 @@
 
         <ItemsControl
             x:Name="ChessboardItemsControl"
-            AutomationProperties.Name="ChessboardItemsControl"
-            ItemsSource="{Binding Chessboard.Squares}"
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch">
+            VerticalAlignment="Stretch"
+            AutomationProperties.Name="ChessboardItemsControl"
+            ItemsSource="{Binding Chessboard.Squares}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <UniformGrid Columns="{Binding BoardSize}" Rows="{Binding BoardSize}" />
@@ -42,18 +42,18 @@
                 <DataTemplate>
                     <Border
                         x:Name="ChessboardSquareBorder"
-                        AutomationProperties.Name="ChessboardSquareBorder"
                         Width="{Binding Width}"
                         Height="{Binding Height}"
+                        AutomationProperties.Name="ChessboardSquareBorder"
                         Background="{Binding Color}">
                         <Image
                             x:Name="ChessboardSquareImage"
                             Width="{Binding Width}"
                             Height="{Binding Height}"
+                            helpers:AutomationPropertiesHelper.IsOffscreen="{Binding IsOffscreen}"
                             AutomationProperties.Name="ChessboardSquareImage"
                             Source="{Binding ImagePath, Converter={StaticResource NullImageConverter}}"
-                            Stretch="Uniform"
-                            helpers:AutomationPropertiesHelper.IsOffscreen="{Binding IsOffscreen}"/>
+                            Stretch="Uniform" />
                     </Border>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>

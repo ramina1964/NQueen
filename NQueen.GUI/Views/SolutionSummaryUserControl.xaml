@@ -42,8 +42,8 @@
                 Grid.Row="0"
                 Grid.Column="0"
                 Margin="1"
-                Content="Board Size"
                 HorizontalContentAlignment="Left"
+                Content="Board Size"
                 Style="{StaticResource LabelStyle}" />
 
             <Label
