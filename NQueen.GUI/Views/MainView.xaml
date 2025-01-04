@@ -24,18 +24,18 @@
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" MinHeight="{x:Static utils:Dimensions.SolutionTextBoxHeight}" />
+            <RowDefinition Height="Auto" MinHeight="{x:Static utils:Dimensions.SolutionTextBoxMinHeight}" />
             <RowDefinition Height="{x:Static utils:Dimensions.ChessboardDefaultHeight}" 
                            MaxHeight="{x:Static utils:Dimensions.ChessboardMaxHeight}" />
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" MinWidth="{x:Static utils:Dimensions.MinWidth}" />
+            <ColumnDefinition Width="Auto" MinWidth="{x:Static utils:Dimensions.ChessboardMinWidth}" />  
             <ColumnDefinition Width="{x:Static utils:Dimensions.ChessboardDefaultWidth}"
                               MaxWidth="{x:Static utils:Dimensions.ChessboardMaxWidth}" />
             <ColumnDefinition
                 Width="Auto"
-                MinWidth="{x:Static utils:Dimensions.MinWidth}"
+                MinWidth="{x:Static utils:Dimensions.ChessboardMinWidth}"
                 MaxWidth="{x:Static utils:Dimensions.GroupBoxMaxWidth}" />
         </Grid.ColumnDefinitions>
 

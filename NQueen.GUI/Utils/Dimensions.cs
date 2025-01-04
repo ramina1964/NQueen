@@ -2,7 +2,7 @@
 
 public static class Dimensions
 {
-    public static double MinWidth => 140;
+    public static double ChessboardMinWidth => 140;
 
     public static double ChessboardMaxHeight => 1050;
 
@@ -10,7 +10,7 @@ public static class Dimensions
 
     public static readonly GridLength ChessboardDefaultWidth = new(1000, GridUnitType.Pixel);
 
-    public static double SolutionTextBoxHeight => 40;
+    public static double SolutionTextBoxMinHeight => 40;
 
     public static readonly GridLength ChessboardDefaultHeight = new(1000, GridUnitType.Pixel);
 
