@@ -4,7 +4,7 @@ public class ChessboardViewModel : ObservableObject
 {
     public ChessboardViewModel()
     {
-        Squares = new ObservableCollection<SquareViewModel>();
+        Squares = [];
         QueenImagePath = Constants.QueenImagePath;
     }
 
@@ -36,8 +36,8 @@ public class ChessboardViewModel : ObservableObject
 
     public void CreateSquares(byte boardSize, IEnumerable<SquareViewModel> squares)
     {
-        var width = (int)WindowWidth / boardSize;
-        var height = width;
+        var width = WindowWidth / boardSize;
+        var height = WindowHeight / boardSize;
 
         var sqList = squares.ToList();
         for (byte i = 0; i < boardSize; i++)

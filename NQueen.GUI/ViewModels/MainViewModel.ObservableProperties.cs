@@ -41,7 +41,7 @@ public sealed partial class MainViewModel : ObservableObject
     private static SimulationResults _simulationResults;
 
     [ObservableProperty]
-    public ObservableCollection<Solution> _observableSolutions = new();
+    public ObservableCollection<Solution> _observableSolutions = [];
 
     [ObservableProperty]
     private Solution _selectedSolution;
@@ -108,7 +108,7 @@ public sealed partial class MainViewModel : ObservableObject
                 if (Application.Current.MainWindow is MainView mainView)
                 {
                     var chessboardUserControl = mainView.FindName("ChessboardControl") as ChessboardUserControl;
-                    chessboardUserControl?.DisplaySolution(value);
+                    chessboardUserControl?.DisplaySolution(value.Positions);
                 }
             });
         }
