@@ -5,6 +5,7 @@
     xmlns:converter="clr-namespace:NQueen.GUI.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:utils="clr-namespace:NQueen.GUI.Utils"
     xmlns:view="clr-namespace:NQueen.GUI.Views"
     xmlns:viewmodel="clr-namespace:NQueen.GUI.ViewModels"
     Title="Solutions of NQueen Problem with Backtracking - .NET 9.0"
@@ -23,46 +24,48 @@
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" MinHeight="40" />
-            <RowDefinition Height="1010" />
+            <RowDefinition Height="Auto" MinHeight="{x:Static utils:Dimensions.MinHeight}" />
+            <RowDefinition Height="{x:Static utils:Dimensions.DefaultChessboardHeight}" 
+                           MaxHeight="{x:Static utils:Dimensions.MaxChessboardHeight}" />
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" MinWidth="140" />
-            <ColumnDefinition Width="*" MaxWidth="1010" />
+            <ColumnDefinition Width="Auto" MinWidth="{x:Static utils:Dimensions.MinWidth}" />
+            <ColumnDefinition Width="{x:Static utils:Dimensions.DefaultChessboardWidth}"
+                              MaxWidth="{x:Static utils:Dimensions.MaxChessboardWidth}" />
             <ColumnDefinition
                 Width="Auto"
-                MinWidth="200"
-                MaxWidth="350" />
+                MinWidth="{x:Static utils:Dimensions.MinWidth}"
+                MaxWidth="{x:Static utils:Dimensions.GroupBoxMaxWidth}" />
         </Grid.ColumnDefinitions>
 
         <!--  Selected Solution Groupbox  -->
         <view:SelectedSolutionUserControl
             x:Name="SelectedSolutionUserControl"
-            AutomationProperties.Name="SelectedSolutionGroupbox"
             Grid.Row="0"
             Grid.Column="0"
             Grid.ColumnSpan="3"
-            Margin="5" />
+            Margin="5"
+            AutomationProperties.Name="SelectedSolutionGroupbox" />
 
         <!--  Solution List  -->
         <view:SolutionListUserControl
             x:Name="SolutionListUserControl"
-            AutomationProperties.Name="SolutionList"
             Grid.Row="1"
             Grid.Column="0"
             Margin="5"
-            VerticalAlignment="Stretch" />
+            VerticalAlignment="Stretch"
+            AutomationProperties.Name="SolutionList" />
 
         <!--  Chessboard Placeholder  -->
         <ContentControl
             x:Name="ChessboardPlaceholder"
-            AutomationProperties.Name="ChessboardPlaceholder"
             Grid.Row="1"
             Grid.Column="1"
             Margin="5"
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch" />
+            VerticalAlignment="Stretch"
+            AutomationProperties.Name="ChessboardPlaceholder" />
 
         <!--  Start of Input / Output Panel  -->
         <Grid
@@ -80,20 +83,20 @@
             <!--  Input Panel  -->
             <ContentControl
                 x:Name="InputPanelPlaceHolder"
-                AutomationProperties.Name="InputPanelPlaceholder"
-                Grid.Row="0" />
+                Grid.Row="0"
+                AutomationProperties.Name="InputPanelPlaceholder" />
 
             <!--  Solution Summary Panel  -->
             <view:SolutionSummaryUserControl
                 x:Name="SolutionSummaryUserControl"
-                AutomationProperties.Name="SolutionSummaryPanel"
-                Grid.Row="1" />
+                Grid.Row="1"
+                AutomationProperties.Name="SolutionSummaryPanel" />
 
             <!--  Simulation Panel  -->
             <ContentControl
                 x:Name="SimulationPanelPlaceHolder"
-                AutomationProperties.Name="SimulationPanelPlaceholder"
-                Grid.Row="2" />
+                Grid.Row="2"
+                AutomationProperties.Name="SimulationPanelPlaceholder" />
 
             <!--  Status Panel (Removed)  -->
         </Grid>

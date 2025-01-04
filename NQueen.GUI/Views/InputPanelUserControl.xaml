@@ -5,6 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:NQueen.GUI.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:utils="clr-namespace:NQueen.GUI.Utils"
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
     d:DesignHeight="450"
@@ -46,10 +47,10 @@
 
             <TextBox
                 x:Name="TxtBoardSize"
-                AutomationProperties.Name="Board Size"
                 Grid.Row="0"
                 Grid.Column="1"
                 Margin="5,2"
+                AutomationProperties.Name="Board Size"
                 IsEnabled="{Binding IsInInputMode}"
                 Style="{StaticResource TextBoxNumericalStyle}"
                 Text="{Binding BoardSize, UpdateSourceTrigger=LostFocus, Mode=TwoWay, ValidatesOnDataErrors=True, ValidatesOnExceptions=True}" />
@@ -63,11 +64,11 @@
 
             <ComboBox
                 x:Name="CmbSolutionMode"
-                AutomationProperties.Name="Solution Mode"
                 Grid.Row="1"
                 Grid.Column="1"
-                Height="30"
+                Height="{x:Static utils:Dimensions.ComboBoxHeight}"
                 Margin="5,2"
+                AutomationProperties.Name="Solution Mode"
                 IsEnabled="{Binding IsInInputMode}"
                 ItemsSource="{Binding SolutionModeList, Mode=TwoWay}"
                 SelectedItem="{Binding SolutionMode}"
@@ -82,11 +83,11 @@
 
             <ComboBox
                 x:Name="CmbDisplayMode"
-                AutomationProperties.Name="Display Mode"
                 Grid.Row="2"
                 Grid.Column="1"
-                Height="30"
+                Height="{x:Static utils:Dimensions.ComboBoxHeight}"
                 Margin="5,2"
+                AutomationProperties.Name="Display Mode"
                 IsEnabled="{Binding IsInInputMode}"
                 ItemsSource="{Binding DisplayModeList, Mode=TwoWay}"
                 SelectedItem="{Binding DisplayMode}"
@@ -101,11 +102,11 @@
 
             <Slider
                 x:Name="SldDelayInMilliseconds"
-                AutomationProperties.Name="Delay in Milisec"
                 Grid.Row="3"
                 Grid.Column="1"
                 Height="25"
                 Margin="5"
+                AutomationProperties.Name="Delay in Milisec"
                 IsEnabled="{Binding IsVisualized}"
                 Maximum="3000"
                 Minimum="10"
