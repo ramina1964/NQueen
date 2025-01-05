@@ -15,7 +15,7 @@
         Background="Bisque">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="{x:Static utils:Dimensions.SolutionListTitleHeight}" />
+                <RowDefinition Height="{x:Static utils:Dimensions.SolutionsListTitleHeight}" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <Label
