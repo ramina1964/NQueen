@@ -128,7 +128,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     private static SimulationResults _simulationResults;
 
     [ObservableProperty]
-    public ObservableCollection<Solution> _observableSolutions = [];
+    public ObservableCollection<Solution> _observableSolutions;
 
     [ObservableProperty]
     private Solution _selectedSolution;
@@ -355,7 +355,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             WindowHeight = boardDimension
         };
 
-        Chessboard.CreateSquares(BoardSize, new List<SquareViewModel>());
+        Chessboard.CreateSquares(BoardSize, []);
 
         IsIdle = true;
         IsSimulating = false;
