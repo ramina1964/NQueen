@@ -18,7 +18,7 @@ public static class Dimensions
     public static readonly GridLength ChessboardDefaultWidth = new(1000, GridUnitType.Pixel);
 
     // User Panels: The third row of the second row, consisting of Input, Ouput and Simulation Panels
-    public static double UserPanelsMinWidth => 140;
+    public static double UserPanelsMinWidth => 120;
 
     public static double GroupBoxMinHeight => 100;
 
