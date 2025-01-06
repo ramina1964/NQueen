@@ -3,7 +3,7 @@
 public static class Dimensions
 {
     // Selected Solution: Spanning over all three columns of the first row
-    public static double SelectedSolutionMinHeight => 40;
+    public static double SelectedSolutionMinHeight => 40; 
 
     // Solutions List: The first column of the second row
     public static double SolutionsListMaxHeight => 1050;
@@ -18,7 +18,7 @@ public static class Dimensions
     public static readonly GridLength ChessboardDefaultWidth = new(1000, GridUnitType.Pixel);
 
     // User Panels: The third row of the second row, consisting of Input, Ouput and Simulation Panels
-    public static double UserPanelsMinWidth => 140;
+    public static double UserPanelsMinWidth => 120;
 
     public static double GroupBoxMinHeight => 100;
 
