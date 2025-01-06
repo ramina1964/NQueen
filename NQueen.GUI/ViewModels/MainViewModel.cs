@@ -128,7 +128,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     private static SimulationResults _simulationResults;
 
     [ObservableProperty]
-    public ObservableCollection<Solution> _observableSolutions = [];
+    public ObservableCollection<Solution> _observableSolutions;
 
     [ObservableProperty]
     private Solution _selectedSolution;
@@ -265,24 +265,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             .Solutions
             .Take(SolutionHelper.MaxNoOfSolutionsInOutput);
 
-        if (DisplayMode == DisplayMode.Visualize)
-        {
-            foreach (var s in sols)
-                ObservableSolutions.Add(s);
-
-            return;
-        }
-
-        StringBuilder sb = new();
         foreach (var s in sols)
-        {
-            sb.Append(s.ToString());
-            sb.Append(Environment.NewLine);
             ObservableSolutions.Add(s);
-        }
-
-        // If you need to use the concatenated string for some purpose
-        _ = sb.ToString();
     }
 
     private async Task SimulateAsync()
@@ -355,7 +339,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             WindowHeight = boardDimension
         };
 
-        Chessboard.CreateSquares(BoardSize, new List<SquareViewModel>());
+        Chessboard.CreateSquares(BoardSize, []);
 
         IsIdle = true;
         IsSimulating = false;
@@ -374,7 +358,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             .QueenPositions.Where(q => q < BoardSettings.ByteMaxValue)
             .Select((item, index) => new Position((byte)index, item)).ToList();
 
-        Chessboard.PlaceQueens(positions);
+        Chessboard?.PlaceQueens(positions);
     }
 
     private void OnSolutionFound(object sender, SolutionFoundEventArgs e)
@@ -422,7 +406,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     {
         if (value != null)
         {
-            Chessboard.PlaceQueens(value.Positions);
+            Chessboard?.PlaceQueens(value.Positions);
 
             // Call DisplaySolution on ChessboardUserControl
             Application.Current.Dispatcher.Invoke(() =>
