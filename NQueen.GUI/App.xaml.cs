@@ -29,18 +29,18 @@ public partial class App : Application
 
     private static void ConfigureServices(IServiceCollection services)
     {
+        services.AddSingleton<ISolutionManager, SolutionManager>();
+        services.AddSingleton<ISolver, BackTrackingSolver>();
         services.AddSingleton<ICommandManager, CommandManager>();
         services.AddSingleton<MainViewModel>(provider =>
         {
             var solver = provider.GetRequiredService<ISolver>();
             var commandManager = provider.GetRequiredService<ICommandManager>();
-            var mainViewModel = new MainViewModel(solver)
-            {
-                CommandManager = commandManager
-            };
+            var mainViewModel = new MainViewModel(solver, commandManager);
             return mainViewModel;
         });
 
+        services.AddSingleton<SolutionUpdateDTO>();
         services.AddTransient<ChessboardUserControl>();
         services.AddTransient<InputPanelUserControl>();
         services.AddTransient<SimulationPanelUserControl>();

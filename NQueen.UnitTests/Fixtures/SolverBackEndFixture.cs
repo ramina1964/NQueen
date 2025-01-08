@@ -1,3 +1,5 @@
+using NQueen.Kernel.Models;
+
 namespace NQueen.UnitTests.Fixtures;
 
 public class SolverBackEndFixture : IClassFixture<SolverBackEndFixture>

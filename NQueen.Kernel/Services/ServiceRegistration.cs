@@ -5,6 +5,7 @@ public static class ServiceRegistration
     public static void AddNQueenServices(this IServiceCollection services)
     {
         services.AddScoped<ISolutionManager, SolutionManager>();
+        services.AddTransient<SolutionUpdateDTO>();
         services.AddScoped<ISolver, BackTrackingSolver>();
     }
 }

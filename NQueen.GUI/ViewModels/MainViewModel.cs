@@ -4,19 +4,30 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 {
     // Constructors
     #region Constructors
-    public MainViewModel() : this(new BackTrackingSolver(new SolutionManager()))
-    { }
 
-    public MainViewModel(ISolver solver)
+    public MainViewModel(ISolver solver, ICommandManager commandManager)
     {
-        Solver = solver ??
-            throw new ArgumentNullException(nameof(solver));
+        Solver = solver ?? throw new ArgumentNullException(nameof(solver));
+        CommandManager = commandManager ?? throw new ArgumentNullException(nameof(commandManager));
 
-        ObservableSolutions = [];
+        ObservableSolutions = new ObservableCollection<Solution>();
         Initialize();
         SubscribeToSimulationEvents();
+        CommandManager.Initialize(this);
     }
+
     #endregion Constructors
+
+    // Property Injection for CommandManager
+    public ICommandManager CommandManager
+    {
+        get => _commandManager;
+        set
+        {
+            _commandManager = value;
+            _commandManager?.Initialize(this); // Ensure CommandManager is initialized
+        }
+    }
 
     // IDisposable Implementation
     #region IDisposable Implementation
@@ -179,20 +190,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     public readonly ISolver Solver;
 
     private CancellationTokenSource CancelationTokenSource { get; set; }
-
-    // Property Injection for CommandManager
-    public ICommandManager CommandManager
-    {
-        get => _commandManager;
-        set
-        {
-            _commandManager = value;
-            // Remove or comment out the following line if Initialize is not needed
-            //_commandManager.Initialize(this);
-        }
-    }
-
-    private ICommandManager _commandManager;
 
     // Methods
     #region Methods
@@ -471,4 +468,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 
     partial void OnIsOutputReadyChanged(bool value) => UpdateButtonFunctionality();
     #endregion Partial Methods
+
+    private ICommandManager _commandManager;
 }

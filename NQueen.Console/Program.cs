@@ -1,4 +1,6 @@
-﻿namespace NQueen.ConsoleApp;
+﻿using NQueen.Kernel.Models;
+
+namespace NQueen.ConsoleApp;
 
 // In order to enable dotnet-counters you need to install dotnet-counters tool with the
 // following command (use cmd) dotnet tool install --global dotnet-counters
@@ -21,6 +23,7 @@ public class Program
         services.AddTransient<DispatchCommands>();
         services.AddTransient<IConsoleUtils, ConsoleUtils>();
         services.AddTransient<ICommandProcessor, CommandProcessor> ();
+        services.AddSingleton<SolutionUpdateDTO>();
         services.AddSingleton<App>();
 
         // Register shared services

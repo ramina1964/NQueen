@@ -1,11 +1,7 @@
 ﻿namespace NQueen.Kernel.Services;
 
-public class SolutionManager : ISolutionManager
+public class SolutionManager(SolutionUpdateDTO dto) : ISolutionManager
 {
-    public SolutionManager() { }
-
-    public SolutionManager(SolutionUpdateDTO dto) => UpdateDTO = dto;
-
     public event Action<SolutionUpdateDTO> SolutionsUpdated;
 
     public void UpdateSolutions(SolutionUpdateDTO solutionUpdateDTO)
@@ -42,5 +38,5 @@ public class SolutionManager : ISolutionManager
         }
     }
 
-    public SolutionUpdateDTO UpdateDTO { get; }
+    public SolutionUpdateDTO UpdateDTO { get; } = dto;
 }
