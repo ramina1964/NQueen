@@ -1,8 +1,11 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public class CommandManager
+public class CommandManager : ICommandManager
 {
-    public CommandManager(MainViewModel mainViewModel)
+    public CommandManager()
+    { }
+
+    public void Initialize(MainViewModel mainViewModel)
     {
         _mainViewModel = mainViewModel;
 
@@ -11,9 +14,11 @@ public class CommandManager
         SaveCommand = new RelayCommand(Save, CanSave);
     }
 
-    public IAsyncRelayCommand SimulateCommand { get; }
-    public RelayCommand CancelCommand { get; }
-    public RelayCommand SaveCommand { get; }
+    public IAsyncRelayCommand SimulateCommand { get; private set; }
+
+    public RelayCommand CancelCommand { get; private set; }
+
+    public RelayCommand SaveCommand { get; private set; }
 
     private bool CanSimulate() => _mainViewModel.IsIdle && _mainViewModel.IsValid;
 
@@ -51,5 +56,5 @@ public class CommandManager
         _mainViewModel.ManageSimulationStatus(SimulationStatus.Finished);
     }
 
-    private readonly MainViewModel _mainViewModel;
+    private MainViewModel _mainViewModel;
 }

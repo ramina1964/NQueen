@@ -9,13 +9,15 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 
     public MainViewModel(ISolver solver)
     {
-        Solver = solver ?? throw new ArgumentNullException(nameof(solver));
+        Solver = solver ??
+            throw new ArgumentNullException(nameof(solver));
 
         ObservableSolutions = [];
-        CommandManager = new CommandManager(this);
+        CommandManager = new CommandManager();
         Initialize();
         SubscribeToSimulationEvents();
     }
+
     #endregion Constructors
 
     // IDisposable Implementation
@@ -180,7 +182,19 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 
     private CancellationTokenSource CancelationTokenSource { get; set; }
 
-    public CommandManager CommandManager { get; }
+    // Property Injection for CommandManager
+    public ICommandManager CommandManager
+    {
+        get => _commandManager;
+        set
+        {
+            _commandManager = value;
+            // Remove or comment out the following line if Initialize is not needed
+            _commandManager.Initialize(this);
+        }
+    }
+
+    private ICommandManager _commandManager;
 
     // Methods
     #region Methods
@@ -217,9 +231,12 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 
     public void UpdateButtonFunctionality()
     {
-        CommandManager.SimulateCommand.NotifyCanExecuteChanged();
-        CommandManager.CancelCommand.NotifyCanExecuteChanged();
-        CommandManager.SaveCommand.NotifyCanExecuteChanged();
+        if (CommandManager == null)
+            return;
+
+        CommandManager.SimulateCommand?.NotifyCanExecuteChanged();
+        CommandManager.CancelCommand?.NotifyCanExecuteChanged();
+        CommandManager.SaveCommand?.NotifyCanExecuteChanged();
     }
 
     public void ExtractCorrectNoOfSols()
