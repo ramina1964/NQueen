@@ -13,11 +13,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             throw new ArgumentNullException(nameof(solver));
 
         ObservableSolutions = [];
-        CommandManager = new CommandManager();
         Initialize();
         SubscribeToSimulationEvents();
     }
-
     #endregion Constructors
 
     // IDisposable Implementation
@@ -190,7 +188,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         {
             _commandManager = value;
             // Remove or comment out the following line if Initialize is not needed
-            _commandManager.Initialize(this);
+            //_commandManager.Initialize(this);
         }
     }
 

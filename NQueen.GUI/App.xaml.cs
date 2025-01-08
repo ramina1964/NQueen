@@ -5,8 +5,6 @@
 
 public partial class App : Application
 {
-    private IServiceProvider? _serviceProvider;
-
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -19,15 +17,6 @@ public partial class App : Application
         mainWindow.Show();
     }
 
-    private void ConfigureServices(IServiceCollection services)
-    {
-        services.AddSingleton<MainViewModel>();
-        services.AddTransient<ChessboardUserControl>();
-        services.AddTransient<InputPanelUserControl>();
-        services.AddTransient<SimulationPanelUserControl>();
-        services.AddTransient<MainView>();
-    }
-
     protected override void OnExit(ExitEventArgs e)
     {
         if (_serviceProvider is IDisposable disposable)
@@ -37,4 +26,26 @@ public partial class App : Application
 
         base.OnExit(e);
     }
+
+    private static void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton<ICommandManager, CommandManager>();
+        services.AddSingleton<MainViewModel>(provider =>
+        {
+            var solver = provider.GetRequiredService<ISolver>();
+            var commandManager = provider.GetRequiredService<ICommandManager>();
+            var mainViewModel = new MainViewModel(solver)
+            {
+                CommandManager = commandManager
+            };
+            return mainViewModel;
+        });
+
+        services.AddTransient<ChessboardUserControl>();
+        services.AddTransient<InputPanelUserControl>();
+        services.AddTransient<SimulationPanelUserControl>();
+        services.AddTransient<MainView>();
+    }
+
+    private IServiceProvider _serviceProvider;
 }
