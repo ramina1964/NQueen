@@ -12,12 +12,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         Solver = solver ?? throw new ArgumentNullException(nameof(solver));
 
         ObservableSolutions = [];
+        CommandManager = new CommandManager(this);
         Initialize();
         SubscribeToSimulationEvents();
-
-        SimulateCommand = new AsyncRelayCommand(SimulateAsync, CanSimulate);
-        CancelCommand = new RelayCommand(Cancel, CanCancel);
-        SaveCommand = new RelayCommand(Save, CanSave);
     }
     #endregion Constructors
 
@@ -179,36 +176,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     // Other properties and fields
     public string ResultTitle => SolutionHelper.SolutionTitle(SolutionMode);
 
-    private readonly ISolver Solver;
+    public readonly ISolver Solver;
 
     private CancellationTokenSource CancelationTokenSource { get; set; }
 
-    // Commands
-    #region Commands
-
-    public IAsyncRelayCommand SimulateCommand { get; set; }
-
-    public RelayCommand CancelCommand { get; set; }
-
-    public RelayCommand SaveCommand { get; set; }
-
-    private bool CanSimulate() => IsIdle && IsValid;
-
-    private void Cancel() => Solver.IsSolverCanceled = true;
-
-    private bool CanCancel() => IsSimulating;
-
-    private bool CanSave() => IsOutputReady;
-
-    private void Save()
-    {
-        var results = new ResultPresentation(SimulationResults);
-        var filePath = results.Write2File(SolutionMode);
-        var msg = $"Successfully wrote results to: {filePath}";
-        MessageBox.Show(msg);
-        IsIdle = true;
-    }
-    #endregion Commands
+    public CommandManager CommandManager { get; }
 
     // Methods
     #region Methods
@@ -216,13 +188,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         SolutionMode solutionMode = SolutionHelper.DefaultSolutionMode,
         DisplayMode displayMode = SolutionHelper.DefaultDisplayMode)
     {
-        CancelCommand = new RelayCommand(Cancel, CanCancel);
         InputViewModel = new InputViewModel { ClassLevelCascadeMode = CascadeMode.Stop };
-
-        SimulateCommand = new AsyncRelayCommand(SimulateAsync,
-            AsyncRelayCommandOptions.AllowConcurrentExecutions);
-
-        SaveCommand = new RelayCommand(Save, CanSave);
 
         BoardSize = boardSize;
         SolutionMode = solutionMode;
@@ -239,7 +205,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         ProgressLabelVisibility = Visibility.Hidden;
     }
 
-    private void UpdateGui()
+    public void UpdateGui()
     {
         ObservableSolutions.Clear();
         Chessboard?.Squares.Clear();
@@ -249,14 +215,14 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         Chessboard?.CreateSquares(BoardSize, []);
     }
 
-    private void UpdateButtonFunctionality()
+    public void UpdateButtonFunctionality()
     {
-        SimulateCommand.NotifyCanExecuteChanged();
-        CancelCommand.NotifyCanExecuteChanged();
-        SaveCommand.NotifyCanExecuteChanged();
+        CommandManager.SimulateCommand.NotifyCanExecuteChanged();
+        CommandManager.CancelCommand.NotifyCanExecuteChanged();
+        CommandManager.SaveCommand.NotifyCanExecuteChanged();
     }
 
-    private void ExtractCorrectNoOfSols()
+    public void ExtractCorrectNoOfSols()
     {
         // Ensure previous solutions are cleared before adding new ones
         ObservableSolutions.Clear();
@@ -269,25 +235,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             ObservableSolutions.Add(s);
     }
 
-    private async Task SimulateAsync()
-    {
-        ManageSimulationStatus(SimulationStatus.Started);
-
-        UpdateGui();
-        SimulationResults = await Solver.GetResultsAsync(BoardSize, SolutionMode, DisplayMode);
-
-        ExtractCorrectNoOfSols();
-        NoOfSolutions = $"{SimulationResults.NoOfSolutions,0:N0}";
-        ElapsedTimeInSec = $"{SimulationResults.ElapsedTimeInSec,0:N1}";
-        SelectedSolution = ObservableSolutions.FirstOrDefault();
-
-        // Update memory usage after the simulation process completes
-        MemoryUsage = MemoryMonitoring.UpdateMemoryUsage();
-
-        ManageSimulationStatus(SimulationStatus.Finished);
-    }
-
-    private void ManageSimulationStatus(SimulationStatus simulationStatus)
+    public void ManageSimulationStatus(SimulationStatus simulationStatus)
     {
         switch (simulationStatus)
         {
@@ -326,9 +274,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         }
 
         // Notify the commands to re-evaluate their CanExecute state
-        SimulateCommand.NotifyCanExecuteChanged();
-        CancelCommand.NotifyCanExecuteChanged();
-        SaveCommand.NotifyCanExecuteChanged();
+        CommandManager.SimulateCommand.NotifyCanExecuteChanged();
+        CommandManager.CancelCommand.NotifyCanExecuteChanged();
+        CommandManager.SaveCommand.NotifyCanExecuteChanged();
     }
 
     public void SetChessboard(double boardDimension)

@@ -108,8 +108,18 @@
                 Width="Auto"
                 Margin="5"
                 HorizontalContentAlignment="Center"
-                Command="{Binding SaveCommand}"
+                Command="{Binding CommandManager.SaveCommand}"
                 Content="Save To File"
+                Style="{StaticResource ButtonStyle}" />
+
+            <Button
+                Grid.Row="5"
+                Grid.ColumnSpan="2"
+                Width="Auto"
+                Margin="5"
+                HorizontalContentAlignment="Center"
+                Command="{Binding CommandManager.SimulateCommand}"
+                Content="Simulate"
                 Style="{StaticResource ButtonStyle}" />
         </Grid>
     </GroupBox>

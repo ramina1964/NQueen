@@ -5,8 +5,8 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:NQueen.GUI.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:utils="clr-namespace:NQueen.GUI.Utils"
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
+    xmlns:utils="clr-namespace:NQueen.GUI.Utils"
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
     d:DesignHeight="450"
     d:DesignWidth="800"
@@ -44,7 +44,7 @@
                 Grid.Column="1"
                 Margin="0"
                 AutomationProperties.Name="CancelAction"
-                Command="{Binding CancelCommand, UpdateSourceTrigger=PropertyChanged}"
+                Command="{Binding CommandManager.CancelCommand, UpdateSourceTrigger=PropertyChanged}"
                 Content="Cancel"
                 Style="{StaticResource ButtonStyle}" />
 
@@ -53,7 +53,7 @@
                 Grid.Column="3"
                 Margin="0"
                 AutomationProperties.Name="SimulateAction"
-                Command="{Binding SimulateCommand, UpdateSourceTrigger=PropertyChanged}"
+                Command="{Binding CommandManager.SimulateCommand, UpdateSourceTrigger=PropertyChanged}"
                 Content="Simulate"
                 IsDefault="True"
                 Style="{StaticResource ButtonStyle}" />
