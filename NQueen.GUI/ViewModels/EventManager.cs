@@ -1,6 +1,6 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public class EventManagement(MainViewModel mainViewModel)
+public class EventManager(MainViewModel mainViewModel)
 {
     private void OnProgressValueChanged(object sender, ProgressValueChangedEventArgs e) =>
         _mainViewModel.ProgressValue = e.Value;
