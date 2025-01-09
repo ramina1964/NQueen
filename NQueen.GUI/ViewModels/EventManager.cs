@@ -1,7 +1,21 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public class EventManagement(MainViewModel mainViewModel)
+public class EventManager(MainViewModel mainViewModel)
 {
+    public void SubscribeToSimulationEvents()
+    {
+        _mainViewModel.Solver.ProgressValueChanged += OnProgressValueChanged;
+        _mainViewModel.Solver.QueenPlaced += OnQueenPlaced;
+        _mainViewModel.Solver.SolutionFound += OnSolutionFound;
+    }
+
+    public void UnsubscribeFromSimulationEvents()
+    {
+        _mainViewModel.Solver.ProgressValueChanged -= OnProgressValueChanged;
+        _mainViewModel.Solver.QueenPlaced -= OnQueenPlaced;
+        _mainViewModel.Solver.SolutionFound -= OnSolutionFound;
+    }
+
     private void OnProgressValueChanged(object sender, ProgressValueChangedEventArgs e) =>
         _mainViewModel.ProgressValue = e.Value;
 
@@ -37,20 +51,6 @@ public class EventManagement(MainViewModel mainViewModel)
         }));
 
         _mainViewModel.SelectedSolution = sol;
-    }
-
-    public void SubscribeToSimulationEvents()
-    {
-        _mainViewModel.Solver.ProgressValueChanged += OnProgressValueChanged;
-        _mainViewModel.Solver.QueenPlaced += OnQueenPlaced;
-        _mainViewModel.Solver.SolutionFound += OnSolutionFound;
-    }
-
-    public void UnsubscribeFromSimulationEvents()
-    {
-        _mainViewModel.Solver.ProgressValueChanged -= OnProgressValueChanged;
-        _mainViewModel.Solver.QueenPlaced -= OnQueenPlaced;
-        _mainViewModel.Solver.SolutionFound -= OnSolutionFound;
     }
 
     private readonly MainViewModel _mainViewModel = mainViewModel;

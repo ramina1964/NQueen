@@ -11,7 +11,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         CommandManager = commandManager ?? throw new ArgumentNullException(nameof(commandManager));
         ObservableSolutions = [];
 
-        _eventManagement = new EventManagement(this); // Initialize EventManagement
+        _eventManagement = new EventManager(this); // Initialize EventManagement
         Initialize();
         _eventManagement.SubscribeToSimulationEvents(); // Subscribe to events
         CommandManager.Initialize(this);
@@ -417,5 +417,5 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     #endregion Partial Methods
 
     private ICommandManager _commandManager;
-    private readonly EventManagement _eventManagement;
+    private readonly EventManager _eventManagement;
 }
