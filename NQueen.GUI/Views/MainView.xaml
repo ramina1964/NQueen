@@ -31,7 +31,7 @@
 
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" MinWidth="{x:Static utils:Dimensions.UserPanelsMinWidth}" />
-            <ColumnDefinition Width="{x:Static utils:Dimensions.ChessboardDefaultWidth}"
+            <ColumnDefinition Width="*"
                               MaxWidth="{x:Static utils:Dimensions.ChessboardMaxWidth}" />
             <ColumnDefinition
                 Width="Auto"
