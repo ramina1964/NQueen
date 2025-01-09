@@ -11,9 +11,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         CommandManager = commandManager ?? throw new ArgumentNullException(nameof(commandManager));
         ObservableSolutions = [];
 
-        _eventManagement = new EventManager(this);
+        _eventManager = new EventManager(this);
         Initialize();
-        _eventManagement.SubscribeToSimulationEvents();
+        _eventManager.SubscribeToSimulationEvents();
         CommandManager.Initialize(this);
     }
 
@@ -219,7 +219,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         ObservableSolutions.Clear();
         Chessboard?.Squares.Clear();
         NoOfSolutions = "0";
-        ElapsedTimeInSec = $"{0,0:N1}";
+        ElapsedTimeInSec = $"{0}";
         MemoryUsage = "0";
         Chessboard?.CreateSquares(BoardSize, []);
     }
@@ -252,7 +252,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         switch (simulationStatus)
         {
             case SimulationStatus.Started:
-                _eventManagement.SubscribeToSimulationEvents();
+                _eventManager.SubscribeToSimulationEvents();
 
                 IsIdle = false;
                 IsInInputMode = false;
@@ -273,7 +273,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
                 break;
 
             case SimulationStatus.Finished:
-                _eventManagement.UnsubscribeFromSimulationEvents();
+                _eventManager.UnsubscribeFromSimulationEvents();
 
                 IsIdle = true;
                 IsInInputMode = true;
@@ -416,5 +416,5 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     #endregion Partial Methods
 
     private ICommandManager _commandManager;
-    private readonly EventManager _eventManagement;
+    private readonly EventManager _eventManager;
 }

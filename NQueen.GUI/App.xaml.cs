@@ -32,7 +32,7 @@ public partial class App : Application
         services.AddSingleton<ISolutionManager, SolutionManager>();
         services.AddSingleton<ISolver, BackTrackingSolver>();
         services.AddSingleton<ICommandManager, CommandManager>();
-        services.AddSingleton<MainViewModel>(provider =>
+        services.AddSingleton(provider =>
         {
             var solver = provider.GetRequiredService<ISolver>();
             var commandManager = provider.GetRequiredService<ICommandManager>();
