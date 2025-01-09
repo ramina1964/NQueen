@@ -11,22 +11,21 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         CommandManager = commandManager ?? throw new ArgumentNullException(nameof(commandManager));
         ObservableSolutions = [];
 
-        _eventManagement = new EventManager(this); // Initialize EventManagement
+        _eventManagement = new EventManager(this);
         Initialize();
-        _eventManagement.SubscribeToSimulationEvents(); // Subscribe to events
+        _eventManagement.SubscribeToSimulationEvents();
         CommandManager.Initialize(this);
     }
 
     #endregion Constructors
 
-    // Property Injection for CommandManager
     public ICommandManager CommandManager
     {
         get => _commandManager;
         set
         {
             _commandManager = value;
-            _commandManager?.Initialize(this); // Ensure CommandManager is initialized
+            _commandManager?.Initialize(this);
         }
     }
 
