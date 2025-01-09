@@ -9,10 +9,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     {
         Solver = solver ?? throw new ArgumentNullException(nameof(solver));
         CommandManager = commandManager ?? throw new ArgumentNullException(nameof(commandManager));
+        ObservableSolutions = [];
 
-        ObservableSolutions = new ObservableCollection<Solution>();
+        _eventManagement = new EventManagement(this); // Initialize EventManagement
         Initialize();
-        SubscribeToSimulationEvents();
+        _eventManagement.SubscribeToSimulationEvents(); // Subscribe to events
         CommandManager.Initialize(this);
     }
 
@@ -252,7 +253,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         switch (simulationStatus)
         {
             case SimulationStatus.Started:
-                SubscribeToSimulationEvents();
+                _eventManagement.SubscribeToSimulationEvents();
 
                 IsIdle = false;
                 IsInInputMode = false;
@@ -273,7 +274,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
                 break;
 
             case SimulationStatus.Finished:
-                UnsubscribeFromSimulationEvents();
+                _eventManagement.UnsubscribeFromSimulationEvents();
 
                 IsIdle = true;
                 IsInInputMode = true;
@@ -305,60 +306,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         IsSimulating = false;
     }
     #endregion Methods
-
-    // Event Handlers
-    #region Event Handlers
-    private void OnProgressValueChanged(object sender, ProgressValueChangedEventArgs e) =>
-        ProgressValue = e.Value;
-
-    private void OnQueenPlaced(object sender, QueenPlacedEventArgs e)
-    {
-        var sol = new Solution(e.Solution, 1);
-        var positions = sol
-            .QueenPositions.Where(q => q < BoardSettings.ByteMaxValue)
-            .Select((item, index) => new Position((byte)index, item)).ToList();
-
-        Chessboard?.PlaceQueens(positions);
-    }
-
-    private void OnSolutionFound(object sender, SolutionFoundEventArgs e)
-    {
-        var id = ObservableSolutions.Count + 1;
-        var sol = new Solution(e.Solution, id);
-
-        // Update the total number of solutions
-        NoOfSolutions = $"{int.Parse(NoOfSolutions) + 1,0:N0}";
-
-        // Limit the number of solutions shown in ObservableSolutions
-        Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
-        {
-            if (ObservableSolutions.Count >= SolutionHelper.MaxNoOfSolutionsInOutput)
-            {
-                ObservableSolutions.RemoveAt(0);
-            }
-            if (ObservableSolutions.Any(s => s.Id == sol.Id) == false)
-            {
-                ObservableSolutions.Add(sol);
-            }
-        }));
-
-        SelectedSolution = sol;
-    }
-
-    private void SubscribeToSimulationEvents()
-    {
-        Solver.ProgressValueChanged += OnProgressValueChanged;
-        Solver.QueenPlaced += OnQueenPlaced;
-        Solver.SolutionFound += OnSolutionFound;
-    }
-
-    private void UnsubscribeFromSimulationEvents()
-    {
-        Solver.ProgressValueChanged -= OnProgressValueChanged;
-        Solver.QueenPlaced -= OnQueenPlaced;
-        Solver.SolutionFound -= OnSolutionFound;
-    }
-    #endregion Event Handlers
 
     // Partial Methods
     #region Partial Methods
@@ -470,4 +417,5 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     #endregion Partial Methods
 
     private ICommandManager _commandManager;
+    private readonly EventManagement _eventManagement;
 }
