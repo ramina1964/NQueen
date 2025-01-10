@@ -4,7 +4,6 @@
 		<TargetFramework>net9.0</TargetFramework>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
 		<Nullable>enable</Nullable>
-
 		<IsPackable>false</IsPackable>
 	</PropertyGroup>
 
