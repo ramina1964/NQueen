@@ -7,8 +7,12 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 
     public MainViewModel(ISolver solver, ICommandManager commandManager)
     {
-        Solver = solver ?? throw new ArgumentNullException(nameof(solver));
-        CommandManager = commandManager ?? throw new ArgumentNullException(nameof(commandManager));
+        Solver = solver ??
+            throw new ArgumentNullException(nameof(solver));
+
+        CommandManager = commandManager
+            ?? throw new ArgumentNullException(nameof(commandManager));
+
         ObservableSolutions = [];
 
         _eventManager = new EventManager(this);

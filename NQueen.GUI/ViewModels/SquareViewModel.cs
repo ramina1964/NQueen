@@ -1,16 +1,10 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public class SquareViewModel : ObservableObject
+public class SquareViewModel(Position pos, Brush color) : ObservableObject
 {
-    public SquareViewModel(Position pos, Brush color)
-    {
-        Position = pos;
-        Color = color;
-    }
+    public Brush Color { get; set; } = color;
 
-    public Brush Color { get; set; }
-
-    public Position Position { get; set; }
+    public Position Position { get; set; } = pos;
 
     public double Width
     {
