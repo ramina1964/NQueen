@@ -5,47 +5,34 @@
 
 public partial class App : Application
 {
+    private IServiceProvider _serviceProvider;
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
-        var serviceCollection = new ServiceCollection();
-        ConfigureServices(serviceCollection);
-        _serviceProvider = serviceCollection.BuildServiceProvider();
+        var services = new ServiceCollection();
+        ConfigureServices(services);
+        _serviceProvider = services.BuildServiceProvider();
 
-        var mainWindow = _serviceProvider.GetRequiredService<MainView>();
-        mainWindow.Show();
+        var mainViewModel = _serviceProvider.GetRequiredService<MainViewModel>();
+        var mainView = new MainView(mainViewModel, _serviceProvider);
+        mainView.Show();
     }
 
-    protected override void OnExit(ExitEventArgs e)
+    private void ConfigureServices(IServiceCollection services)
     {
-        if (_serviceProvider is IDisposable disposable)
-        {
-            disposable.Dispose();
-        }
-
-        base.OnExit(e);
-    }
-
-    private static void ConfigureServices(IServiceCollection services)
-    {
+        services.AddTransient<SolutionUpdateDTO>();
         services.AddSingleton<ISolutionManager, SolutionManager>();
         services.AddSingleton<ISolver, BackTrackingSolver>();
         services.AddSingleton<ICommandManager, CommandManager>();
-        services.AddSingleton(provider =>
-        {
-            var solver = provider.GetRequiredService<ISolver>();
-            var commandManager = provider.GetRequiredService<ICommandManager>();
-            var mainViewModel = new MainViewModel(solver, commandManager);
-            return mainViewModel;
-        });
-
-        services.AddSingleton<SolutionUpdateDTO>();
-        services.AddTransient<ChessboardUserControl>();
+        services.AddSingleton<MainViewModel>();
+        services.AddSingleton<ChessboardViewModel>();
         services.AddTransient<InputPanelUserControl>();
         services.AddTransient<SimulationPanelUserControl>();
-        services.AddTransient<MainView>();
+        services.AddTransient<ChessboardUserControl>();
+        services.AddTransient<SelectedSolutionUserControl>();
+        services.AddTransient<SolutionSummaryUserControl>();
+        services.AddTransient<SolutionListUserControl>();
     }
-
-    private IServiceProvider _serviceProvider;
 }

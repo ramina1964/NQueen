@@ -7,18 +7,14 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 
     public MainViewModel(ISolver solver, ICommandManager commandManager)
     {
-        Solver = solver ??
-            throw new ArgumentNullException(nameof(solver));
-
-        CommandManager = commandManager
-            ?? throw new ArgumentNullException(nameof(commandManager));
-
+        Solver = solver ?? throw new ArgumentNullException(nameof(solver));
+        CommandManager = commandManager ?? throw new ArgumentNullException(nameof(commandManager));
+        CommandManager.Initialize(this);
         ObservableSolutions = [];
 
         _eventManager = new EventManager(this);
         Initialize();
         _eventManager.SubscribeToSimulationEvents();
-        CommandManager.Initialize(this);
     }
 
     #endregion Constructors
@@ -186,6 +182,12 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 
     [ObservableProperty]
     private bool _isOutputReady;
+
+    [ObservableProperty]
+    private bool _hasValidationError;
+
+    [ObservableProperty]
+    private string _validationError;
     #endregion Observable Properties
 
     // Other properties and fields
@@ -308,116 +310,54 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         IsIdle = true;
         IsSimulating = false;
     }
-    #endregion Methods
-
-    // Partial Methods
-    #region Partial Methods
-    partial void OnSelectedSolutionChanged(Solution value)
-    {
-        if (value != null)
-        {
-            Chessboard?.PlaceQueens(value.Positions);
-
-            // Call DisplaySolution on ChessboardUserControl
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                if (Application.Current.MainWindow is MainView mainView)
-                {
-                    var chessboardUserControl = mainView.FindName("ChessboardControl") as ChessboardUserControl;
-                    chessboardUserControl?.DisplaySolution(value.Positions);
-                }
-            });
-        }
-    }
-
-    partial void OnProgressValueChanged(double value) => ProgressLabel = $"{value} %";
-
-    partial void OnProgressVisibilityChanged(Visibility value)
-    {
-        IsProgressBarOffscreen = value != Visibility.Visible;
-        if (DisplayMode == DisplayMode.Visualize)
-        {
-            OnPropertyChanged(nameof(ProgressLabel));
-        }
-    }
-
-    partial void OnProgressLabelVisibilityChanged(Visibility value) =>
-        IsProgressLabelOffscreen = value != Visibility.Visible;
-
-    partial void OnDelayInMillisecondsChanged(int value) =>
-        Solver.DelayInMilliseconds = value;
-
-    partial void OnSolutionModeChanged(SolutionMode value)
-    {
-        if (Solver == null)
-        {
-            return;
-        }
-
-        SolutionTitle = (value == SolutionMode.Single)
-            ? $"Solution"
-            : $"Solutions (Max: {SolutionHelper.MaxNoOfSolutionsInOutput})";
-
-        OnPropertyChanged(nameof(BoardSize));
-        OnPropertyChanged(nameof(SolutionTitle));
-        IsValid = InputViewModel.Validate(this).IsValid;
-
-        if (IsValid == false)
-        {
-            IsIdle = false;
-            IsSimulating = false;
-            IsOutputReady = false;
-            return;
-        }
-
-        IsIdle = true;
-        IsSimulating = false;
-        UpdateGui();
-    }
-
-    partial void OnDisplayModeChanged(DisplayMode value)
-    {
-        IsValid = InputViewModel.Validate(this).IsValid;
-
-        if (IsValid)
-        {
-            IsIdle = true;
-            IsVisualized = value == DisplayMode.Visualize;
-            OnPropertyChanged(nameof(BoardSize));
-            UpdateGui();
-        }
-    }
 
     partial void OnBoardSizeChanged(byte value)
     {
-        IsValid = InputViewModel.Validate(this).IsValid;
+        // Validate the new board size
+        var validationResult = InputViewModel.Validate(this);
 
-        if (IsValid == false)
+        if (!validationResult.IsValid)
         {
-            IsIdle = false;
-            IsSimulating = false;
+            // Handle validation failure (e.g., display an error message)
+            ValidationError = validationResult.Errors.First().ErrorMessage;
+            HasValidationError = true;
+            return;
         }
-        else
+
+        // Clear validation error if validation passes
+        ValidationError = string.Empty;
+        HasValidationError = false;
+
+        // If validation passes, proceed with initialization and GUI update
+        Initialize(value, SolutionMode, DisplayMode);
+        UpdateGui();
+    }
+
+    partial void OnSolutionModeChanged(SolutionMode oldValue, SolutionMode newValue)
+    {
+        Initialize(BoardSize, newValue, DisplayMode);
+        UpdateGui();
+    }
+
+    partial void OnDisplayModeChanged(DisplayMode oldValue, DisplayMode newValue)
+    {
+        Validate();
+    }
+
+    partial void OnSelectedSolutionChanged(Solution oldValue, Solution newValue)
+    {
+        if (newValue != null)
         {
-            IsIdle = true;
-            IsSimulating = false;
-            IsOutputReady = false;
-            UpdateButtonFunctionality();
-            UpdateGui();
+            Chessboard?.PlaceQueens(newValue.Positions);
         }
     }
 
-    partial void OnNoOfSolutionsChanged(string value) =>
-        OnPropertyChanged(nameof(ResultTitle));
-
-    partial void OnIsSimulatingChanged(bool value) => UpdateButtonFunctionality();
-
-    partial void OnIsInInputModeChanged(bool value) => UpdateButtonFunctionality();
-
-    partial void OnIsIdleChanged(bool value) => UpdateButtonFunctionality();
-
-    partial void OnIsOutputReadyChanged(bool value) => UpdateButtonFunctionality();
-    #endregion Partial Methods
+    private void Validate()
+    {
+        IsValid = InputViewModel.Validate(this).IsValid;
+        UpdateButtonFunctionality();
+    }
+    #endregion Methods
 
     private ICommandManager _commandManager;
     private readonly EventManager _eventManager;

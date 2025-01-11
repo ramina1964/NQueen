@@ -7,6 +7,15 @@ public partial class SimulationPanelUserControl : UserControl
         InitializeComponent();
         MainViewModel = mainViewModel;
         DataContext = mainViewModel;
+
+        // Ensure CommandManager is initialized
+        if (MainViewModel.CommandManager == null)
+        {
+            throw new ArgumentNullException(nameof(mainViewModel),
+                "CommandManager cannot be null");
+        }
+
+        MainViewModel.CommandManager.Initialize(MainViewModel);
     }
 
     public MainViewModel MainViewModel { get; }
