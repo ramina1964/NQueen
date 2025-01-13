@@ -1,9 +1,14 @@
-﻿namespace NQueen.GUI.ViewModels;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+
+namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject, IDisposable, IDataErrorInfo
 {
-    // Constructors
-    #region Constructors
+    private readonly EventManager _eventManager;
+    private ICommandManager _commandManager;
+    private bool _disposed;
 
     public MainViewModel(ISolver solver, ICommandManager commandManager)
     {
@@ -12,12 +17,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         CommandManager.Initialize(this);
         ObservableSolutions = new ObservableCollection<Solution>();
 
-        _eventManager = new NQueen.GUI.ViewModels.EventManager(this);
+        _eventManager = new EventManager(this);
         Initialize();
         _eventManager.SubscribeToSimulationEvents();
     }
-
-    #endregion Constructors
 
     public ICommandManager CommandManager
     {
@@ -28,10 +31,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             _commandManager?.Initialize(this);
         }
     }
-
-    // IDisposable Implementation
-    #region IDisposable Implementation
-    private bool _disposed;
 
     public void Dispose()
     {
@@ -58,10 +57,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         // Dispose unmanaged resources
         _disposed = true;
     }
-    #endregion IDisposable Implementation
 
-    // IDataErrorInfo Implementation
-    #region IDataErrorInfo Implementation
     public string this[string columnName]
     {
         get
@@ -93,112 +89,108 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             return errors;
         }
     }
-    #endregion IDataErrorInfo Implementation
-
-    // Observable Properties
-    #region Observable Properties
-    [ObservableProperty]
-    private InputViewModel _inputViewModel = new InputViewModel();
 
     [ObservableProperty]
-    private double _progressValue;
+    private InputViewModel inputViewModel = new InputViewModel();
 
     [ObservableProperty]
-    private string _progressLabel;
+    private double progressValue;
 
     [ObservableProperty]
-    private Visibility _progressVisibility;
+    private string progressLabel;
 
     [ObservableProperty]
-    private Visibility _progressLabelVisibility;
+    private Visibility progressVisibility;
 
     [ObservableProperty]
-    private bool _isProgressBarOffscreen;
+    private Visibility progressLabelVisibility;
 
     [ObservableProperty]
-    private bool _isProgressLabelOffscreen;
+    private bool isProgressBarOffscreen;
 
     [ObservableProperty]
-    private IEnumerable<SolutionMode> _solutionModeList =
+    private bool isProgressLabelOffscreen;
+
+    [ObservableProperty]
+    private IEnumerable<SolutionMode> solutionModeList =
         Enum.GetValues<SolutionMode>().Cast<SolutionMode>();
 
     [ObservableProperty]
-    private IEnumerable<DisplayMode> _displayModeList =
+    private IEnumerable<DisplayMode> displayModeList =
         Enum.GetValues<DisplayMode>().Cast<DisplayMode>();
 
     [ObservableProperty]
-    private bool _isVisualized;
+    private bool isVisualized;
 
     [ObservableProperty]
-    private int _delayInMilliseconds;
+    private int delayInMilliseconds;
 
     [ObservableProperty]
-    private static SimulationResults _simulationResults;
+    private static SimulationResults simulationResults;
 
     [ObservableProperty]
-    public ObservableCollection<Solution> _observableSolutions;
+    public ObservableCollection<Solution> observableSolutions;
 
     [ObservableProperty]
-    private Solution _selectedSolution;
+    private Solution selectedSolution;
 
     [ObservableProperty]
-    private SolutionMode _solutionMode;
+    private SolutionMode solutionMode;
 
     [ObservableProperty]
-    private DisplayMode _displayMode;
+    private DisplayMode displayMode;
 
     [ObservableProperty]
-    private byte _boardSize;
+    private byte boardSize;
 
     [ObservableProperty]
-    private bool _isValid;
+    private bool isValid;
 
     [ObservableProperty]
-    private string _solutionTitle;
+    private string solutionTitle;
 
     [ObservableProperty]
-    private string _noOfSolutions;
+    private string noOfSolutions;
 
     [ObservableProperty]
-    private string _memoryUsage;
+    private string memoryUsage;
 
     [ObservableProperty]
-    public ChessboardViewModel _chessboard;
+    public ChessboardViewModel chessboard;
 
     [ObservableProperty]
-    private string _elapsedTimeInSec;
+    private string elapsedTimeInSec;
 
     [ObservableProperty]
-    private bool _isSimulating;
+    private bool isSimulating;
 
     [ObservableProperty]
-    private bool _isInInputMode;
+    private bool isInInputMode;
 
     [ObservableProperty]
-    private bool _isSingleRunning;
+    private bool isSingleRunning;
 
     [ObservableProperty]
-    private bool _isIdle;
+    private bool isIdle;
 
     [ObservableProperty]
-    private bool _isOutputReady;
+    private bool isOutputReady;
 
     [ObservableProperty]
-    private bool _hasValidationError;
+    private bool hasValidationError;
 
     [ObservableProperty]
-    private string _validationError;
-    #endregion Observable Properties
+    private string validationError;
 
-    // Other properties and fields
+    [ObservableProperty]
+    private bool isInputValid;
+
     public string ResultTitle => SolutionHelper.SolutionTitle(SolutionMode);
 
     public readonly ISolver Solver;
 
     private CancellationTokenSource CancelationTokenSource { get; set; }
 
-    // Methods
-    #region Methods
     private void Initialize(byte boardSize = BoardSettings.DefaultBoardSize,
         SolutionMode solutionMode = SolutionHelper.DefaultSolutionMode,
         DisplayMode displayMode = SolutionHelper.DefaultDisplayMode)
@@ -227,7 +219,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         NoOfSolutions = "0";
         ElapsedTimeInSec = $"{0}";
         MemoryUsage = "0";
-        Chessboard?.CreateSquares(BoardSize, []);
+        Chessboard?.CreateSquares(BoardSize, new List<SquareViewModel>());
     }
 
     public void UpdateButtonFunctionality()
@@ -305,7 +297,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             WindowHeight = boardDimension
         };
 
-        Chessboard.CreateSquares(BoardSize, []);
+        Chessboard.CreateSquares(BoardSize, new List<SquareViewModel>());
 
         IsIdle = true;
         IsSimulating = false;
@@ -322,6 +314,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             ValidationError = validationResult.Errors.First().ErrorMessage;
             HasValidationError = true;
             IsValid = false;
+            IsInputValid = false;
             UpdateButtonFunctionality();
             return;
         }
@@ -330,8 +323,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         ValidationError = string.Empty;
         HasValidationError = false;
         IsValid = true;
+        IsInputValid = true;
 
-        // If validation passes, proceed with initialization and GUI update
+        // Proceed with initialization and GUI update
         Initialize(value, SolutionMode, DisplayMode);
         UpdateGui();
         UpdateButtonFunctionality();
@@ -348,6 +342,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             ValidationError = validationResult.Errors.First().ErrorMessage;
             HasValidationError = true;
             IsValid = false;
+            IsInputValid = false;
             UpdateButtonFunctionality();
             return;
         }
@@ -356,6 +351,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         ValidationError = string.Empty;
         HasValidationError = false;
         IsValid = true;
+        IsInputValid = true;
 
         // If validation passes, proceed with initialization and GUI update
         Initialize(BoardSize, newValue, DisplayMode);
@@ -379,11 +375,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 
     private void Validate()
     {
-        IsValid = InputViewModel.Validate(this).IsValid;
+        var validationResult = InputViewModel.Validate(this);
+        IsValid = validationResult.IsValid;
+        IsInputValid = validationResult.IsValid;
         UpdateButtonFunctionality();
     }
-    #endregion Methods
-
-    private ICommandManager _commandManager;
-    private readonly NQueen.GUI.ViewModels.EventManager _eventManager;
 }

@@ -1,6 +1,6 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public class InputViewModel : ObservableObject
+public sealed partial class InputViewModel : ObservableObject
 {
     public InputViewModel()
     {
@@ -15,21 +15,11 @@ public class InputViewModel : ObservableObject
         return result;
     }
 
-    private string _errorMessage;
+    [ObservableProperty]
+    private string errorMessage;
 
-    public string ErrorMessage
-    {
-        get => _errorMessage;
-        set => SetProperty(ref _errorMessage, value);
-    }
-
-    private bool _isErrorVisible;
-
-    public bool IsErrorVisible
-    {
-        get => _isErrorVisible;
-        set => SetProperty(ref _isErrorVisible, value);
-    }
+    [ObservableProperty]
+    private bool isErrorVisible;
 
     private readonly InputValidator _validator;
 }
