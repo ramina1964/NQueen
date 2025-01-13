@@ -10,9 +10,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         Solver = solver ?? throw new ArgumentNullException(nameof(solver));
         CommandManager = commandManager ?? throw new ArgumentNullException(nameof(commandManager));
         CommandManager.Initialize(this);
-        ObservableSolutions = [];
+        ObservableSolutions = new ObservableCollection<Solution>();
 
-        _eventManager = new EventManager(this);
+        _eventManager = new NQueen.GUI.ViewModels.EventManager(this);
         Initialize();
         _eventManager.SubscribeToSimulationEvents();
     }
@@ -98,7 +98,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     // Observable Properties
     #region Observable Properties
     [ObservableProperty]
-    private InputViewModel _inputViewModel;
+    private InputViewModel _inputViewModel = new InputViewModel();
 
     [ObservableProperty]
     private double _progressValue;
@@ -203,7 +203,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         SolutionMode solutionMode = SolutionHelper.DefaultSolutionMode,
         DisplayMode displayMode = SolutionHelper.DefaultDisplayMode)
     {
-        InputViewModel = new InputViewModel { ClassLevelCascadeMode = CascadeMode.Stop };
+        InputViewModel = new InputViewModel();
 
         BoardSize = boardSize;
         SolutionMode = solutionMode;
@@ -321,27 +321,52 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             // Handle validation failure (e.g., display an error message)
             ValidationError = validationResult.Errors.First().ErrorMessage;
             HasValidationError = true;
+            IsValid = false;
+            UpdateButtonFunctionality();
             return;
         }
 
         // Clear validation error if validation passes
         ValidationError = string.Empty;
         HasValidationError = false;
+        IsValid = true;
 
         // If validation passes, proceed with initialization and GUI update
         Initialize(value, SolutionMode, DisplayMode);
         UpdateGui();
+        UpdateButtonFunctionality();
     }
 
     partial void OnSolutionModeChanged(SolutionMode oldValue, SolutionMode newValue)
     {
+        // Validate the board size again when the solution mode changes
+        var validationResult = InputViewModel.Validate(this);
+
+        if (!validationResult.IsValid)
+        {
+            // Handle validation failure (e.g., display an error message)
+            ValidationError = validationResult.Errors.First().ErrorMessage;
+            HasValidationError = true;
+            IsValid = false;
+            UpdateButtonFunctionality();
+            return;
+        }
+
+        // Clear validation error if validation passes
+        ValidationError = string.Empty;
+        HasValidationError = false;
+        IsValid = true;
+
+        // If validation passes, proceed with initialization and GUI update
         Initialize(BoardSize, newValue, DisplayMode);
         UpdateGui();
+        UpdateButtonFunctionality();
     }
 
     partial void OnDisplayModeChanged(DisplayMode oldValue, DisplayMode newValue)
     {
         Validate();
+        UpdateButtonFunctionality();
     }
 
     partial void OnSelectedSolutionChanged(Solution oldValue, Solution newValue)
@@ -360,5 +385,5 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     #endregion Methods
 
     private ICommandManager _commandManager;
-    private readonly EventManager _eventManager;
+    private readonly NQueen.GUI.ViewModels.EventManager _eventManager;
 }

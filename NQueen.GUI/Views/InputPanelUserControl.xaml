@@ -17,116 +17,132 @@
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </UserControl.Resources>
 
-    <GroupBox
-        HorizontalAlignment="Stretch"
-        VerticalAlignment="Stretch"
-        HorizontalContentAlignment="Left"
-        VerticalContentAlignment="Stretch"
-        Background="Bisque"
-        BorderBrush="Black"
-        BorderThickness="1"
-        Header="Input">
+    <StackPanel>
+        <!-- Error Message TextBlock -->
+        <TextBlock
+            Text="{Binding InputViewModel.ErrorMessage}"
+            Foreground="Red"
+            Visibility="{Binding InputViewModel.IsErrorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+            Margin="0,0,0,10" />
 
-        <Grid
-            Margin="5"
+        <GroupBox
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+            VerticalAlignment="Stretch"
+            HorizontalContentAlignment="Left"
+            VerticalContentAlignment="Stretch"
+            Background="Bisque"
+            BorderBrush="Black"
+            BorderThickness="1"
+            Header="Input">
 
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-
-            <Label
-                Grid.Row="0"
-                Grid.Column="0"
-                Margin="5,2"
-                Content="Board Size"
-                Style="{StaticResource LabelStyle}" />
-
-            <TextBox
-                x:Name="TxtBoardSize"
-                Grid.Row="0"
-                Grid.Column="1"
-                Margin="5,2"
-                AutomationProperties.Name="Board Size"
-                IsEnabled="{Binding IsInInputMode}"
-                Style="{StaticResource TextBoxNumericalStyle}"
-                Text="{Binding BoardSize, UpdateSourceTrigger=LostFocus, Mode=TwoWay, ValidatesOnDataErrors=True, ValidatesOnExceptions=True}" />
-
-            <Label
-                Grid.Row="1"
-                Grid.Column="0"
-                Margin="5,2"
-                Content="Solution Mode"
-                Style="{StaticResource LabelStyle}" />
-
-            <ComboBox
-                x:Name="CmbSolutionMode"
-                Grid.Row="1"
-                Grid.Column="1"
-                Height="{x:Static utils:Dimensions.ComboBoxHeight}"
-                Margin="5,2"
-                AutomationProperties.Name="Solution Mode"
-                IsEnabled="{Binding IsInInputMode}"
-                ItemsSource="{Binding SolutionModeList, Mode=TwoWay}"
-                SelectedItem="{Binding SolutionMode}"
-                Style="{StaticResource ComboBoxStyle}" />
-
-            <Label
-                Grid.Row="2"
-                Grid.Column="0"
-                Margin="5,2"
-                Content="Display Mode"
-                Style="{StaticResource LabelStyle}" />
-
-            <ComboBox
-                x:Name="CmbDisplayMode"
-                Grid.Row="2"
-                Grid.Column="1"
-                Height="{x:Static utils:Dimensions.ComboBoxHeight}"
-                Margin="5,2"
-                AutomationProperties.Name="Display Mode"
-                IsEnabled="{Binding IsInInputMode}"
-                ItemsSource="{Binding DisplayModeList, Mode=TwoWay}"
-                SelectedItem="{Binding DisplayMode}"
-                Style="{StaticResource ComboBoxStyle}" />
-
-            <Label
-                Grid.Row="3"
-                Grid.Column="0"
-                Margin="5,2"
-                Content="Delay in Milisec"
-                Style="{StaticResource LabelStyle}" />
-
-            <Slider
-                x:Name="SldDelayInMilliseconds"
-                Grid.Row="3"
-                Grid.Column="1"
-                Height="25"
+            <Grid
                 Margin="5"
-                AutomationProperties.Name="Delay in Milisec"
-                IsEnabled="{Binding IsVisualized}"
-                Maximum="3000"
-                Minimum="10"
-                Style="{StaticResource SliderStyle}"
-                Value="{Binding DelayInMilliseconds}" />
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-            <TextBlock
-                Grid.Row="4"
-                Grid.Column="0"
-                Grid.ColumnSpan="2"
-                Margin="5,2"
-                Foreground="Red"
-                Text="{Binding ValidationError}"
-                Visibility="{Binding HasValidationError, Converter={StaticResource BooleanToVisibilityConverter}}" />
-        </Grid>
-    </GroupBox>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Margin="5,2"
+                    Content="Board Size"
+                    Style="{StaticResource LabelStyle}" />
+
+                <TextBox
+                    x:Name="TxtBoardSize"
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Margin="5,2"
+                    AutomationProperties.Name="Board Size"
+                    IsEnabled="{Binding IsInInputMode}"
+                    Style="{StaticResource TextBoxNumericalStyle}">
+                    <TextBox.Text>
+                        <Binding Path="BoardSize" UpdateSourceTrigger="PropertyChanged" Mode="TwoWay" ValidatesOnDataErrors="True" ValidatesOnExceptions="True">
+                            <Binding.ValidationRules>
+                                <local:NumericValidationRule ValidatesOnTargetUpdated="True"/>
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox.Text>
+                </TextBox>
+
+                <Label
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Margin="5,2"
+                    Content="Solution Mode"
+                    Style="{StaticResource LabelStyle}" />
+
+                <ComboBox
+                    x:Name="CmbSolutionMode"
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Height="{x:Static utils:Dimensions.ComboBoxHeight}"
+                    Margin="5,2"
+                    AutomationProperties.Name="Solution Mode"
+                    IsEnabled="{Binding IsInInputMode}"
+                    ItemsSource="{Binding SolutionModeList, Mode=TwoWay}"
+                    SelectedItem="{Binding SolutionMode}"
+                    Style="{StaticResource ComboBoxStyle}" />
+
+                <Label
+                    Grid.Row="2"
+                    Grid.Column="0"
+                    Margin="5,2"
+                    Content="Display Mode"
+                    Style="{StaticResource LabelStyle}" />
+
+                <ComboBox
+                    x:Name="CmbDisplayMode"
+                    Grid.Row="2"
+                    Grid.Column="1"
+                    Height="{x:Static utils:Dimensions.ComboBoxHeight}"
+                    Margin="5,2"
+                    AutomationProperties.Name="Display Mode"
+                    IsEnabled="{Binding IsInInputMode}"
+                    ItemsSource="{Binding DisplayModeList, Mode=TwoWay}"
+                    SelectedItem="{Binding DisplayMode}"
+                    Style="{StaticResource ComboBoxStyle}" />
+
+                <Label
+                    Grid.Row="3"
+                    Grid.Column="0"
+                    Margin="5,2"
+                    Content="Delay in Milisec"
+                    Style="{StaticResource LabelStyle}" />
+
+                <Slider
+                    x:Name="SldDelayInMilliseconds"
+                    Grid.Row="3"
+                    Grid.Column="1"
+                    Height="25"
+                    Margin="5"
+                    AutomationProperties.Name="Delay in Milisec"
+                    IsEnabled="{Binding IsVisualized}"
+                    Maximum="3000"
+                    Minimum="10"
+                    Style="{StaticResource SliderStyle}"
+                    Value="{Binding DelayInMilliseconds}" />
+
+                <TextBlock
+                    Grid.Row="4"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Margin="5,2"
+                    Foreground="Red"
+                    Text="{Binding ValidationError}"
+                    Visibility="{Binding HasValidationError, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            </Grid>
+        </GroupBox>
+    </StackPanel>
 </UserControl>

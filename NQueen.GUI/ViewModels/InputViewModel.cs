@@ -1,30 +1,35 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public class InputViewModel : AbstractValidator<MainViewModel>
+public class InputViewModel : ObservableObject
 {
-    public InputViewModel() => ValidationRules();
-
-    private void ValidationRules()
+    public InputViewModel()
     {
-        _ = RuleFor(vm => vm.BoardSize)
-            .Must(boardSize => boardSize >= BoardSettings.MinBoardSize)
-            .WithMessage(_ => Messages.SizeTooSmallMsg)
-            .Must(boardSize => boardSize <= BoardSettings.ByteMaxValue)
-            .WithMessage(_ => Messages.InvalidSByteError);
-
-        _ = RuleFor(vm => vm.BoardSize)
-            .Must(boardSize => boardSize <= BoardSettings.MaxBoardSizeForSingleSolution)
-            .When(vm => vm.SolutionMode == SolutionMode.Single)
-            .WithMessage(_ => Messages.SizeTooLargeForSingleSolutionMsg);
-
-        _ = RuleFor(vm => vm.BoardSize)
-            .Must(boardSize => boardSize <= BoardSettings.MaxBoardSizeForUniqueSolutions)
-            .When(vm => vm.SolutionMode == SolutionMode.Unique)
-            .WithMessage(_ => Messages.SizeTooLargeForUniqueSolutionsMsg);
-
-        _ = RuleFor(vm => vm.BoardSize)
-            .Must(boardSize => boardSize <= BoardSettings.MaxBoardSizeForAllSolutions)
-            .When(vm => vm.SolutionMode == SolutionMode.All)
-            .WithMessage(_ => Messages.SizeTooLargeForAllSolutionsMsg);
+        _validator = new InputValidator();
     }
+
+    public FluentValidation.Results.ValidationResult Validate(MainViewModel mainViewModel)
+    {
+        var result = _validator.Validate(mainViewModel);
+        ErrorMessage = result.IsValid ? string.Empty : result.Errors.First().ErrorMessage;
+        IsErrorVisible = !result.IsValid;
+        return result;
+    }
+
+    private string _errorMessage;
+
+    public string ErrorMessage
+    {
+        get => _errorMessage;
+        set => SetProperty(ref _errorMessage, value);
+    }
+
+    private bool _isErrorVisible;
+
+    public bool IsErrorVisible
+    {
+        get => _isErrorVisible;
+        set => SetProperty(ref _isErrorVisible, value);
+    }
+
+    private readonly InputValidator _validator;
 }

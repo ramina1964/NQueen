@@ -22,9 +22,12 @@ public partial class App : Application
 
     private void ConfigureServices(IServiceCollection services)
     {
+        // Register the services related to the NQueen.Kernel project
         services.AddTransient<SolutionUpdateDTO>();
         services.AddSingleton<ISolutionManager, SolutionManager>();
         services.AddSingleton<ISolver, BackTrackingSolver>();
+
+        // Register the services related to the NQueen.GUI project
         services.AddSingleton<ICommandManager, CommandManager>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<ChessboardViewModel>();
@@ -34,5 +37,9 @@ public partial class App : Application
         services.AddTransient<SelectedSolutionUserControl>();
         services.AddTransient<SolutionSummaryUserControl>();
         services.AddTransient<SolutionListUserControl>();
+
+        // Register InputValidator
+        services.AddSingleton<InputValidator>();
     }
 }
+
