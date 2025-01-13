@@ -68,7 +68,7 @@
                     IsEnabled="{Binding IsInInputMode}"
                     Style="{StaticResource TextBoxNumericalStyle}">
                     <TextBox.Text>
-                        <Binding Path="BoardSize" UpdateSourceTrigger="PropertyChanged" Mode="TwoWay" ValidatesOnDataErrors="True" ValidatesOnExceptions="True">
+                        <Binding Path="BoardSize" UpdateSourceTrigger="LostFocus" Mode="TwoWay" ValidatesOnDataErrors="True" ValidatesOnExceptions="True">
                             <Binding.ValidationRules>
                                 <local:NumericValidationRule ValidatesOnTargetUpdated="True"/>
                             </Binding.ValidationRules>
