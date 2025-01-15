@@ -5,8 +5,6 @@
 
 public partial class App : Application
 {
-    private IServiceProvider _serviceProvider;
-
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -38,8 +36,11 @@ public partial class App : Application
         services.AddTransient<SolutionSummaryUserControl>();
         services.AddTransient<SolutionListUserControl>();
 
-        // Register InputValidator
+        // Register InputValidator and InputViewModel
         services.AddSingleton<InputValidator>();
+        services.AddSingleton<InputViewModel>();
     }
+
+    private IServiceProvider _serviceProvider;
 }
 

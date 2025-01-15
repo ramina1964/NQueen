@@ -2,7 +2,7 @@
 
 public static class Messages
 {
-    public const string InvalidSByteError = "Board size must be a valid integer.";
+    public const string InvalidByteError = "Board size must be a positive whole number.";
     public const string NoSolutionMessage = "No Solutions found. Try a larger board size!";
     public const string ValueNullOrWhiteSpaceMsg =
         "Board size can not be null, empty or contain exclusively spaces.";

@@ -8,7 +8,7 @@ public class InputValidator : AbstractValidator<MainViewModel>
     {
         _ = RuleFor(vm => vm.BoardSize)
             .Must(boardSize => IsBoardSizeFormattedCorrectly(boardSize.ToString()))
-            .WithMessage(_ => Messages.InvalidSByteError);
+            .WithMessage(_ => Messages.InvalidByteError);
 
         _ = RuleFor(vm => vm.BoardSize)
             .Must(boardSize => boardSize >= BoardSettings.MinBoardSize)

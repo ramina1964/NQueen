@@ -2,13 +2,17 @@
 
 public sealed partial class MainViewModel : ObservableObject, IDisposable, IDataErrorInfo
 {
-
-    public MainViewModel(ISolver solver, ICommandManager commandManager)
+    public MainViewModel(ISolver solver, ICommandManager commandManager, InputValidator validator)
     {
-        Solver = solver ?? throw new ArgumentNullException(nameof(solver));
+        Solver = solver ??
+            throw new ArgumentNullException(nameof(solver));
+
+        _validator = validator
+            ?? throw new ArgumentNullException(nameof(validator));
+
         CommandManager = commandManager ?? throw new ArgumentNullException(nameof(commandManager));
         CommandManager.Initialize(this);
-        ObservableSolutions = new ObservableCollection<Solution>();
+        ObservableSolutions = [];
 
         _eventManager = new EventManager(this);
         Initialize();
@@ -84,7 +88,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     }
 
     [ObservableProperty]
-    private InputViewModel inputViewModel = new InputViewModel();
+    private InputViewModel _inputViewModel;
 
     [ObservableProperty]
     private double progressValue;
@@ -188,7 +192,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         SolutionMode solutionMode = SolutionHelper.DefaultSolutionMode,
         DisplayMode displayMode = SolutionHelper.DefaultDisplayMode)
     {
-        InputViewModel = new InputViewModel();
+        InputViewModel = new InputViewModel(_validator);
 
         BoardSize = boardSize;
         SolutionMode = solutionMode;
@@ -301,7 +305,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         // Validate the new board size
         var validationResult = InputViewModel.Validate(this);
 
-        if (!validationResult.IsValid)
+        if (validationResult.IsValid == false)
         {
             // Handle validation failure (e.g., display an error message)
             ValidationError = validationResult.Errors.First().ErrorMessage;
@@ -374,7 +378,14 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         UpdateButtonFunctionality();
     }
 
+    public override bool Equals(object obj) => obj is MainViewModel model &&
+               EqualityComparer<InputViewModel>.Default.Equals(InputViewModel, model.InputViewModel);
+
+    public override int GetHashCode() =>
+        HashCode.Combine(InputViewModel);
+
     private readonly EventManager _eventManager;
     private ICommandManager _commandManager;
+    private readonly InputValidator _validator;
     private bool _disposed;
 }
