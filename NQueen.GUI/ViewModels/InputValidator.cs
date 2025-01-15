@@ -2,18 +2,17 @@
 
 public class InputValidator : AbstractValidator<MainViewModel>
 {
-    public InputValidator()
-    {
-        ValidationRules();
-    }
+    public InputValidator() => ValidationRules();
 
     private void ValidationRules()
     {
         _ = RuleFor(vm => vm.BoardSize)
-            .Must(boardSize => boardSize >= BoardSettings.MinBoardSize)
-            .WithMessage(_ => Messages.SizeTooSmallMsg)
-            .Must(boardSize => boardSize <= BoardSettings.ByteMaxValue)
+            .Must(boardSize => IsBoardSizeFormattedCorrectly(boardSize.ToString()))
             .WithMessage(_ => Messages.InvalidSByteError);
+
+        _ = RuleFor(vm => vm.BoardSize)
+            .Must(boardSize => boardSize >= BoardSettings.MinBoardSize)
+            .WithMessage(_ => Messages.SizeTooSmallMsg);
 
         _ = RuleFor(vm => vm.BoardSize)
             .Must(boardSize => boardSize <= BoardSettings.MaxBoardSizeForSingleSolution)
@@ -30,4 +29,8 @@ public class InputValidator : AbstractValidator<MainViewModel>
             .When(vm => vm.SolutionMode == SolutionMode.All)
             .WithMessage(_ => Messages.SizeTooLargeForAllSolutionsMsg);
     }
+
+    private static bool IsBoardSizeFormattedCorrectly(string boardSize) =>
+        byte.TryParse(boardSize, out byte result) &&
+        byte.MinValue <= result && result <= byte.MaxValue;
 }

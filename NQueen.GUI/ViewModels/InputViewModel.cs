@@ -2,10 +2,7 @@
 
 public sealed partial class InputViewModel : ObservableObject
 {
-    public InputViewModel()
-    {
-        _validator = new InputValidator();
-    }
+    public InputViewModel() => _validator = new InputValidator();
 
     public FluentValidation.Results.ValidationResult Validate(MainViewModel mainViewModel)
     {

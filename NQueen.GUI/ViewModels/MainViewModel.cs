@@ -1,14 +1,7 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-
-namespace NQueen.GUI.ViewModels;
+﻿namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject, IDisposable, IDataErrorInfo
 {
-    private readonly EventManager _eventManager;
-    private ICommandManager _commandManager;
-    private bool _disposed;
 
     public MainViewModel(ISolver solver, ICommandManager commandManager)
     {
@@ -380,4 +373,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         IsInputValid = validationResult.IsValid;
         UpdateButtonFunctionality();
     }
+
+    private readonly EventManager _eventManager;
+    private ICommandManager _commandManager;
+    private bool _disposed;
 }

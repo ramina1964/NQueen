@@ -2,8 +2,6 @@
 
 public class EventManager(MainViewModel mainViewModel)
 {
-    private readonly MainViewModel _mainViewModel = mainViewModel;
-
     public void SubscribeToSimulationEvents()
     {
         _mainViewModel.Solver.ProgressValueChanged += OnProgressValueChanged;
@@ -156,4 +154,6 @@ public class EventManager(MainViewModel mainViewModel)
 
     public void OnIsOutputReadyChanged(bool value) => _mainViewModel.UpdateButtonFunctionality();
     #endregion Partial Methods
+
+    private readonly MainViewModel _mainViewModel = mainViewModel;
 }
