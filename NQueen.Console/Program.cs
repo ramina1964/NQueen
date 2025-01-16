@@ -21,11 +21,10 @@ public class Program
         services.AddTransient<DispatchCommands>();
         services.AddTransient<IConsoleUtils, ConsoleUtils>();
         services.AddTransient<ICommandProcessor, CommandProcessor> ();
-        services.AddSingleton<SolutionUpdateDTO>();
         services.AddSingleton<App>();
 
         // Register shared services
-        services.AddNQueenServices();
+        services.AddNQueenCommonServices();
 
         return services.BuildServiceProvider();
     }

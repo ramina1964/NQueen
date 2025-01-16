@@ -3,6 +3,7 @@ global using NQueen.Kernel.Enums;
 global using NQueen.Kernel.Events;
 global using NQueen.Kernel.Interfaces;
 global using NQueen.Kernel.Models;
+global using NQueen.Kernel.Services;
 global using NQueen.Kernel.Solvers;
 global using NQueen.Kernel.Utilities;
 global using System;

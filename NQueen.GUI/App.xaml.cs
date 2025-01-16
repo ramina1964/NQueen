@@ -20,11 +20,6 @@ public partial class App : Application
 
     private void ConfigureServices(IServiceCollection services)
     {
-        // Register the services related to the NQueen.Kernel project
-        services.AddTransient<SolutionUpdateDTO>();
-        services.AddSingleton<ISolutionManager, SolutionManager>();
-        services.AddSingleton<ISolver, BackTrackingSolver>();
-
         // Register the services related to the NQueen.GUI project
         services.AddSingleton<ICommandManager, CommandManager>();
         services.AddSingleton<MainViewModel>();
@@ -39,6 +34,9 @@ public partial class App : Application
         // Register InputValidator and InputViewModel
         services.AddSingleton<InputValidator>();
         services.AddSingleton<InputViewModel>();
+
+        // Register shared services
+        services.AddNQueenCommonServices();
     }
 
     private IServiceProvider _serviceProvider;

@@ -1,5 +1,3 @@
-using NQueen.Kernel.Models;
-
 namespace NQueen.UnitTests.Fixtures;
 
 public class SolverBackEndFixture : IClassFixture<SolverBackEndFixture>
@@ -13,7 +11,7 @@ public class SolverBackEndFixture : IClassFixture<SolverBackEndFixture>
         var services = new ServiceCollection();
 
         // Register services
-        services.AddNQueenServices();
+        services.AddNQueenCommonServices();
         services.AddScoped<ISolverBackEnd, BackTrackingSolver>();
 
         // Build the service provider
