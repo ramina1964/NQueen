@@ -65,13 +65,10 @@
                     Margin="5,2"
                     AutomationProperties.Name="Board Size"
                     IsEnabled="{Binding IsInInputMode}"
-                    Style="{StaticResource TextBoxNumericalStyle}">
+                    Style="{StaticResource TextBoxNumericalStyle}"
+                    LostFocus="TxtBoardSize_LostFocus">
                     <TextBox.Text>
-                        <Binding Path="BoardSize" UpdateSourceTrigger="LostFocus" Mode="TwoWay" ValidatesOnDataErrors="False" ValidatesOnExceptions="True">
-                            <Binding.ValidationRules>
-                                <local:NumericValidationRule ValidatesOnTargetUpdated="True"/>
-                            </Binding.ValidationRules>
-                        </Binding>
+                        <Binding Path="BoardSize" UpdateSourceTrigger="LostFocus" Mode="TwoWay" ValidatesOnDataErrors="False" ValidatesOnExceptions="True" />
                     </TextBox.Text>
                 </TextBox>
 

@@ -4,15 +4,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 {
     public MainViewModel(ISolver solver, ICommandManager commandManager, InputValidator validator)
     {
-        Solver = solver ??
-            throw new ArgumentNullException(nameof(solver));
-
-        _validator = validator
-            ?? throw new ArgumentNullException(nameof(validator));
-
+        Solver = solver ?? throw new ArgumentNullException(nameof(solver));
+        _validator = validator ?? throw new ArgumentNullException(nameof(validator));
         CommandManager = commandManager ?? throw new ArgumentNullException(nameof(commandManager));
         CommandManager.Initialize(this);
-        ObservableSolutions = [];
+        ObservableSolutions = new ObservableCollection<Solution>();
 
         _eventManager = new EventManager(this);
         Initialize();
@@ -181,6 +177,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 
     [ObservableProperty]
     private bool isInputValid;
+
+    [ObservableProperty]
+    private bool isSimulateButtonEnabled;
 
     public string ResultTitle => SolutionHelper.SolutionTitle(SolutionMode);
 

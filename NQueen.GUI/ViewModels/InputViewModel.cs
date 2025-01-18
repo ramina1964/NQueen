@@ -1,8 +1,15 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public sealed partial class InputViewModel(InputValidator validator) : ObservableObject
+public sealed partial class InputViewModel : ObservableObject
 {
-    public FluentValidation.Results.ValidationResult Validate(MainViewModel mainViewModel)
+    private readonly InputValidator _validator;
+
+    public InputViewModel(InputValidator validator)
+    {
+        _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+    }
+
+    public FluentValidationResult Validate(MainViewModel mainViewModel)
     {
         var result = _validator.Validate(mainViewModel);
         ErrorMessage = result.IsValid ? string.Empty : result.Errors.First().ErrorMessage;
@@ -15,7 +22,4 @@ public sealed partial class InputViewModel(InputValidator validator) : Observabl
 
     [ObservableProperty]
     private bool isErrorVisible;
-
-    private readonly InputValidator _validator = validator ??
-            throw new ArgumentNullException(nameof(validator));
 }
