@@ -14,16 +14,17 @@
     mc:Ignorable="d">
 
     <UserControl.Resources>
-        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:StringToByteConverter x:Key="StringToByteConverter"/>
     </UserControl.Resources>
 
     <StackPanel>
-        <!--  Error Message TextBlock  -->
+        <!-- Error Message TextBlock -->
         <TextBlock
-            Margin="0,0,0,10"
-            Foreground="Red"
             Text="{Binding InputViewModel.ErrorMessage}"
-            Visibility="{Binding InputViewModel.IsErrorVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            Foreground="Red"
+            Visibility="{Binding InputViewModel.IsErrorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+            Margin="0,0,0,10" />
 
         <GroupBox
             HorizontalAlignment="Stretch"
@@ -65,15 +66,10 @@
                     Margin="5,2"
                     AutomationProperties.Name="Board Size"
                     IsEnabled="{Binding IsInInputMode}"
-                    LostFocus="TxtBoardSize_LostFocus"
-                    Style="{StaticResource TextBoxNumericalStyle}">
+                    Style="{StaticResource TextBoxNumericalStyle}"
+                    LostFocus="TxtBoardSize_LostFocus">
                     <TextBox.Text>
-                        <Binding
-                            Mode="TwoWay"
-                            Path="BoardSize"
-                            UpdateSourceTrigger="LostFocus"
-                            ValidatesOnDataErrors="False"
-                            ValidatesOnExceptions="True" />
+                        <Binding Path="BoardSize" UpdateSourceTrigger="LostFocus" Mode="TwoWay" ValidatesOnDataErrors="False" ValidatesOnExceptions="True" Converter="{StaticResource StringToByteConverter}" />
                     </TextBox.Text>
                 </TextBox>
 
