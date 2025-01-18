@@ -15,6 +15,15 @@ public partial class InputPanelUserControl : UserControl
     {
         if (sender is TextBox textBox)
         {
+            // Validate the input string format
+            if (!InputValidator.IsBoardSizeFormattedCorrectly(textBox.Text))
+            {
+                _mainViewModel.InputViewModel.ErrorMessage = Messages.InvalidByteError;
+                _mainViewModel.InputViewModel.IsErrorVisible = true;
+                _mainViewModel.IsInputValid = false;
+                return;
+            }
+
             var validationResult = _mainViewModel.InputViewModel.Validate(_mainViewModel);
 
             if (validationResult.IsValid)
@@ -29,7 +38,7 @@ public partial class InputPanelUserControl : UserControl
             }
 
             // Update the state of the "Simulate" button
-            _mainViewModel.IsSimulateButtonEnabled = validationResult.IsValid;
+            _mainViewModel.IsInputValid = validationResult.IsValid;
         }
     }
 }

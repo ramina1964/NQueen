@@ -53,7 +53,7 @@
                 Grid.Column="3"
                 Margin="0"
                 AutomationProperties.Name="SimulateAction"
-                Command="{Binding CommandManager.SimulateCommand, UpdateSourceTrigger=PropertyChanged}"
+                Command="{Binding CommandManager.SimulateCommand}"
                 IsEnabled="{Binding IsInputValid}"
                 Content="Simulate"
                 IsDefault="True"

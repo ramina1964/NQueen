@@ -30,7 +30,7 @@ public class InputValidator : AbstractValidator<MainViewModel>
             .WithMessage(_ => Messages.SizeTooLargeForAllSolutionsMsg);
     }
 
-    private static bool IsBoardSizeFormattedCorrectly(string boardSize) =>
+    public static bool IsBoardSizeFormattedCorrectly(string boardSize) =>
         byte.TryParse(boardSize, out byte result) &&
         byte.MinValue <= result && result <= byte.MaxValue;
 }
