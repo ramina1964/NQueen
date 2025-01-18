@@ -1,7 +1,12 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public class EventManager(MainViewModel mainViewModel)
+public class EventManager
 {
+    public EventManager(MainViewModel mainViewModel)
+    {
+        _mainViewModel = mainViewModel;
+    }
+
     public void SubscribeToSimulationEvents()
     {
         _mainViewModel.Solver.ProgressValueChanged += OnProgressValueChanged;
@@ -35,7 +40,6 @@ public class EventManager(MainViewModel mainViewModel)
         var sol = new Solution(e.Solution, id);
 
         // Update the total number of solutions
-        //_mainViewModel.NoOfSolutions = $"{int.Parse(_mainViewModel.NoOfSolutions) + 1,0:N0}";
         _mainViewModel.NoOfSolutions = $"{int.Parse(_mainViewModel.NoOfSolutions.Replace(" ", "").Replace(",", "")) + 1,0:N0}";
 
         // Limit the number of solutions shown in ObservableSolutions
@@ -155,5 +159,5 @@ public class EventManager(MainViewModel mainViewModel)
     public void OnIsOutputReadyChanged(bool value) => _mainViewModel.UpdateButtonFunctionality();
     #endregion Partial Methods
 
-    private readonly MainViewModel _mainViewModel = mainViewModel;
+    private readonly MainViewModel _mainViewModel;
 }
