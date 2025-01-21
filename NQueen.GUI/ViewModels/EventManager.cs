@@ -21,8 +21,11 @@ public class EventManager
         _mainViewModel.Solver.SolutionFound -= OnSolutionFound;
     }
 
-    private void OnProgressValueChanged(object sender, ProgressValueChangedEventArgs e) =>
+    private void OnProgressValueChanged(object sender, ProgressValueChangedEventArgs e)
+    {
         _mainViewModel.ProgressValue = e.Value;
+        _mainViewModel.ProgressLabel = $"{e.Value} %";
+    }
 
     private void OnQueenPlaced(object sender, QueenPlacedEventArgs e)
     {
