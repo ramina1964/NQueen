@@ -36,6 +36,12 @@ public class ChessboardViewModel : ObservableObject
 
     public void CreateSquares(byte boardSize, IEnumerable<SquareViewModel> squares)
     {
+        if (boardSize < BoardSettings.MinBoardSize || boardSize > BoardSettings.MaxBoardSizeForAllSolutions)
+        {
+            // Do not proceed if the board size is out of range
+            return;
+        }
+
         var width = WindowWidth / boardSize;
         var height = WindowHeight / boardSize;
 

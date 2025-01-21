@@ -176,9 +176,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     private string validationError;
 
     [ObservableProperty]
-    private bool isInputValid;
-
-    [ObservableProperty]
     private bool isSimulateButtonEnabled;
 
     public string ResultTitle => SolutionHelper.SolutionTitle(SolutionMode);
@@ -210,6 +207,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 
     public void UpdateGui()
     {
+        if (!IsValid)
+        {
+            return;
+        }
+
         ObservableSolutions.Clear();
         Chessboard?.Squares.Clear();
         NoOfSolutions = "0";
@@ -310,7 +312,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             ValidationError = validationResult.Errors.First().ErrorMessage;
             HasValidationError = true;
             IsValid = false;
-            IsInputValid = false;
             UpdateButtonFunctionality();
             return;
         }
@@ -319,7 +320,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         ValidationError = string.Empty;
         HasValidationError = false;
         IsValid = true;
-        IsInputValid = true;
 
         // Proceed with initialization and GUI update
         Initialize(value, SolutionMode, DisplayMode);
@@ -338,7 +338,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             ValidationError = validationResult.Errors.First().ErrorMessage;
             HasValidationError = true;
             IsValid = false;
-            IsInputValid = false;
             UpdateButtonFunctionality();
             return;
         }
@@ -347,7 +346,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         ValidationError = string.Empty;
         HasValidationError = false;
         IsValid = true;
-        IsInputValid = true;
 
         // If validation passes, proceed with initialization and GUI update
         Initialize(BoardSize, newValue, DisplayMode);
@@ -373,7 +371,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     {
         var validationResult = InputViewModel.Validate(this);
         IsValid = validationResult.IsValid;
-        IsInputValid = validationResult.IsValid;
         UpdateButtonFunctionality();
     }
 

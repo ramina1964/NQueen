@@ -54,7 +54,7 @@
                 Margin="0"
                 AutomationProperties.Name="SimulateAction"
                 Command="{Binding CommandManager.SimulateCommand}"
-                IsEnabled="{Binding IsInputValid}"
+                IsEnabled="{Binding IsValid}"
                 Content="Simulate"
                 IsDefault="True"
                 Style="{StaticResource ButtonStyle}" />
