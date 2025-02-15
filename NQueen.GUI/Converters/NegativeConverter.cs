@@ -4,11 +4,15 @@ public class NegativeConverter : MarkupExtension, IValueConverter
 {
     public NegativeConverter() : base() { }
 
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
-        ReturnNegative(value);
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return ReturnNegative(value);
+    }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
-        ReturnNegative(value);
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return ReturnNegative(value);
+    }
 
     private static object ReturnNegative(object value)
     {

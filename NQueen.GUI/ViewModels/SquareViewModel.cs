@@ -30,7 +30,10 @@ public class SquareViewModel(Position pos, Brush color) : ObservableObject
         set => SetProperty(ref _isOffscreen, value);
     }
 
-    public override string ToString() => $"{Position.RowNo}, {Position.ColumnNo}";
+    public override string ToString()
+    {
+        return $"{Position.RowNo}, {Position.ColumnNo}";
+    }
 
     private double _width;
     private double _height;

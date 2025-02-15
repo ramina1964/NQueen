@@ -15,11 +15,15 @@ public class RatioConverter : MarkupExtension, IValueConverter
     }
 
     // Read only converter...
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
         throw new NotImplementedException();
+    }
 
-    public override object ProvideValue(IServiceProvider serviceProvider) =>
-        _instance ??= new RatioConverter();
+    public override object ProvideValue(IServiceProvider serviceProvider)
+    {
+        return _instance ??= new RatioConverter();
+    }
 
     private static RatioConverter _instance;
 }

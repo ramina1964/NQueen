@@ -7,7 +7,7 @@ public class ResultPresentation
     {
         MaxNoOfSolutionsInOutput = 50;
         BoardSize = results.BoardSize;
-        Solutions = new ObservableCollection<Solution>(results.Solutions);
+        Solutions = [.. results.Solutions];
         NoOfSolutions = Solutions.Count;
         ElapsedTimeInSec = results.ElapsedTimeInSec;
         NoOfSolutionsInOutput = Math.Min(NoOfSolutions, MaxNoOfSolutionsInOutput);
@@ -26,8 +26,7 @@ public class ResultPresentation
 
     public int NoOfSolutionsInOutput { get; }
 
-    public static StringBuilder FormatSingleSolution(Solution solution) =>
-        new StringBuilder().Append($"{solution.Details}");
+    public static StringBuilder FormatSingleSolution(Solution solution) => new StringBuilder().Append($"{solution.Details}");
 
     public string Write2File(SolutionMode solutionMode)
     {

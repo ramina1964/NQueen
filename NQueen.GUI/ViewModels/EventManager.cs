@@ -21,8 +21,10 @@ public class EventManager
         _mainViewModel.Solver.SolutionFound -= OnSolutionFound;
     }
 
-    private void OnProgressValueChanged(object sender, ProgressValueChangedEventArgs e) =>
+    private void OnProgressValueChanged(object sender, ProgressValueChangedEventArgs e)
+    {
         _mainViewModel.ProgressValue = e.Value;
+    }
 
     private void OnQueenPlaced(object sender, QueenPlacedEventArgs e)
     {
@@ -78,18 +80,25 @@ public class EventManager
         }
     }
 
-    public void OnProgressValueChanged(double value) => _mainViewModel.ProgressLabel = $"{value} %";
+    public void OnProgressValueChanged(double value)
+    {
+        _mainViewModel.ProgressLabel = $"{value} %";
+    }
 
     public void OnProgressVisibilityChanged(Visibility value)
     {
         _mainViewModel.IsProgressBarOffscreen = value != Visibility.Visible;
     }
 
-    public void OnProgressLabelVisibilityChanged(Visibility value) =>
+    public void OnProgressLabelVisibilityChanged(Visibility value)
+    {
         _mainViewModel.IsProgressLabelOffscreen = value != Visibility.Visible;
+    }
 
-    public void OnDelayInMillisecondsChanged(int value) =>
+    public void OnDelayInMillisecondsChanged(int value)
+    {
         _mainViewModel.Solver.DelayInMilliseconds = value;
+    }
 
     public void OnSolutionModeChanged(SolutionMode value)
     {
@@ -150,13 +159,25 @@ public class EventManager
 
     public void OnNoOfSolutionsChanged(string value) { }
 
-    public void OnIsSimulatingChanged(bool value) => _mainViewModel.UpdateButtonFunctionality();
+    public void OnIsSimulatingChanged(bool value)
+    {
+        _mainViewModel.UpdateButtonFunctionality();
+    }
 
-    public void OnIsInInputModeChanged(bool value) => _mainViewModel.UpdateButtonFunctionality();
+    public void OnIsInInputModeChanged(bool value)
+    {
+        _mainViewModel.UpdateButtonFunctionality();
+    }
 
-    public void OnIsIdleChanged(bool value) => _mainViewModel.UpdateButtonFunctionality();
+    public void OnIsIdleChanged(bool value)
+    {
+        _mainViewModel.UpdateButtonFunctionality();
+    }
 
-    public void OnIsOutputReadyChanged(bool value) => _mainViewModel.UpdateButtonFunctionality();
+    public void OnIsOutputReadyChanged(bool value)
+    {
+        _mainViewModel.UpdateButtonFunctionality();
+    }
     #endregion Partial Methods
 
     private readonly MainViewModel _mainViewModel;

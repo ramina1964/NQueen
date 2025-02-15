@@ -4,15 +4,14 @@ public class EnumConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value == null)
-            return DependencyProperty.UnsetValue;
-
-        return GetDescription((Enum)value);
+        return value == null ? DependencyProperty.UnsetValue : GetDescription((Enum)value);
     }
 
     public object ConvertBack(object value, Type targetType, object parameter,
-        CultureInfo culture) =>
-        Enum.ToObject(targetType, value);
+        CultureInfo culture)
+    {
+        return Enum.ToObject(targetType, value);
+    }
 
     public static string GetDescription(Enum en)
     {

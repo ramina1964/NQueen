@@ -2,7 +2,10 @@
 
 public class InputValidator : AbstractValidator<MainViewModel>
 {
-    public InputValidator() => ValidationRules();
+    public InputValidator()
+    {
+        ValidationRules();
+    }
 
     private void ValidationRules()
     {
@@ -30,7 +33,9 @@ public class InputValidator : AbstractValidator<MainViewModel>
             .WithMessage(_ => Messages.SizeTooLargeForAllSolutionsMsg);
     }
 
-    public static bool IsBoardSizeFormattedCorrectly(string boardSize) =>
-        byte.TryParse(boardSize, out byte result) &&
+    public static bool IsBoardSizeFormattedCorrectly(string boardSize)
+    {
+        return byte.TryParse(boardSize, out byte result) &&
         byte.MinValue <= result && result <= byte.MaxValue;
+    }
 }

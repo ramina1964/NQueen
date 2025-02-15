@@ -40,14 +40,20 @@ public class CommandManager : ICommandManager
         _mainViewModel.ManageSimulationStatus(SimulationStatus.Finished);
     }
 
-    private bool CanSimulate() =>
-        _mainViewModel != null && _mainViewModel.IsIdle && _mainViewModel.IsValid;
+    private bool CanSimulate()
+    {
+        return _mainViewModel != null && _mainViewModel.IsIdle && _mainViewModel.IsValid;
+    }
 
-    private void Cancel() =>
+    private void Cancel()
+    {
         _mainViewModel.Solver.IsSolverCanceled = true;
+    }
 
-    private bool CanCancel() =>
-        _mainViewModel != null && _mainViewModel.IsSimulating;
+    private bool CanCancel()
+    {
+        return _mainViewModel != null && _mainViewModel.IsSimulating;
+    }
 
     private void Save()
     {
@@ -58,8 +64,10 @@ public class CommandManager : ICommandManager
         _mainViewModel.IsIdle = true;
     }
 
-    private bool CanSave() =>
-        _mainViewModel != null && _mainViewModel.IsOutputReady;
+    private bool CanSave()
+    {
+        return _mainViewModel != null && _mainViewModel.IsOutputReady;
+    }
 
     private void NotifyCommands()
     {

@@ -7,9 +7,6 @@ public class SequenceEquality<T> : IEqualityComparer<IEnumerable<T>>
 
     public bool Equals(IEnumerable<T> x, IEnumerable<T> y) => x.SequenceEqual(y);
 
-    public int GetHashCode(IEnumerable<T> seq)
-    {
-        return seq.Aggregate(1234567, (current, elem) =>
-            current * HashConstant + elem.GetHashCode());
-    }
+    public int GetHashCode(IEnumerable<T> seq) => seq.Aggregate(1234567, (current, elem) =>
+                                                           current * HashConstant + elem.GetHashCode());
 }

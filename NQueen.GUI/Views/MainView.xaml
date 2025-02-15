@@ -37,7 +37,7 @@
                 MaxWidth="{x:Static utils:Dimensions.GroupBoxMaxWidth}" />
         </Grid.ColumnDefinitions>
 
-        <!--  Selected Solution Groupbox  -->
+        <!--  Selected Solution -->
         <view:SelectedSolutionUserControl
             x:Name="SelectedSolutionUserControl"
             Grid.Row="0"
@@ -46,7 +46,7 @@
             Margin="5"
             AutomationProperties.Name="SelectedSolutionGroupbox" />
 
-        <!--  Solution List  -->
+        <!-- Solution List -->
         <view:SolutionListUserControl
             x:Name="SolutionListUserControl"
             Grid.Row="1"
@@ -55,7 +55,7 @@
             VerticalAlignment="Stretch"
             AutomationProperties.Name="SolutionList" />
 
-        <!--  Chessboard Placeholder  -->
+        <!-- Chessboard -->
         <ContentControl
             x:Name="ChessboardPlaceholder"
             Grid.Row="1"
@@ -65,7 +65,7 @@
             VerticalAlignment="Stretch"
             AutomationProperties.Name="ChessboardPlaceholder" />
 
-        <!--  Start of Input / Output Panel  -->
+        <!-- Start of Input / Output Panel -->
         <Grid
             Grid.Row="1"
             Grid.Column="2"
@@ -78,7 +78,7 @@
                 <RowDefinition Height="*" MinHeight="100" />
             </Grid.RowDefinitions>
 
-            <!--  Input Panel  -->
+            <!-- Input Panel -->
             <ContentControl
                 x:Name="InputPanelPlaceHolder"
                 Grid.Row="0"
@@ -96,7 +96,6 @@
                 Grid.Row="2"
                 AutomationProperties.Name="SimulationPanelPlaceholder" />
 
-            <!--  Status Panel (Removed)  -->
         </Grid>
         <!--  End of Input / Output Panel  -->
 

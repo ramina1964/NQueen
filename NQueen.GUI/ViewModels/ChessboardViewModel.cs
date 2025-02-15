@@ -63,7 +63,8 @@ public class ChessboardViewModel : ObservableObject
             .ForEach(sq => Squares.Add(sq));
     }
 
-    private void ClearImages() =>
+    private void ClearImages()
+    {
         Squares
             .ToList()
             .ForEach(sq =>
@@ -71,6 +72,7 @@ public class ChessboardViewModel : ObservableObject
                 sq.ImagePath = null;
                 sq.IsOffscreen = true;
             });
+    }
 
     private static SolidColorBrush FindColor(Position pos)
     {

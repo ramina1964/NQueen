@@ -19,14 +19,11 @@ public partial class DispatchCommands(
 
     public Dictionary<string, string> AvailableCommands { get; set; }
 
-    public bool ProcessCommand(string key, string value) =>
-        _commandProcessor.ProcessCommand(key, value, this);
+    public bool ProcessCommand(string key, string value) => _commandProcessor.ProcessCommand(key, value, this);
 
-    public void ProcessCommandsFromArgs(string[] args) =>
-        _commandProcessor.ProcessCommandsFromArgs(args, this);
+    public void ProcessCommandsFromArgs(string[] args) => _commandProcessor.ProcessCommandsFromArgs(args, this);
 
-    public void ProcessCommandsInteractively() =>
-        _commandProcessor.ProcessCommandsInteractively(this);
+    public void ProcessCommandsInteractively() => _commandProcessor.ProcessCommandsInteractively(this);
 
     public void InitCommands()
     {
@@ -64,8 +61,7 @@ public partial class DispatchCommands(
         }
     }
 
-    public void WriteLineColored(ConsoleColor color, string message) =>
-        _consoleUtils.WriteLineColored(color, message);
+    public void WriteLineColored(ConsoleColor color, string message) => _consoleUtils.WriteLineColored(color, message);
 
     public void RunSolver()
     {
@@ -157,14 +153,14 @@ public partial class DispatchCommands(
         var (isValid, size) = DispatchUtils.CheckBoardSize(value, SolutionMode);
         if (isValid)
             BoardSize = size;
-        
+
         return isValid;
     }
 
     public string GetRequiredCommand()
     {
         var cmd = Commands.Where(e => !e.Value).Select(e => e.Key).FirstOrDefault();
-        
+
         return cmd ?? "";
     }
 

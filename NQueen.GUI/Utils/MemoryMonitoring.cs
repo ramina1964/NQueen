@@ -22,8 +22,10 @@ public class MemoryMonitoring
         return value.ToString("N", numberFormat);
     }
 
-    private static double RoundToNearestTen(double value) =>
-        Math.Round(value / 10) * 10;
+    private static double RoundToNearestTen(double value)
+    {
+        return Math.Round(value / 10) * 10;
+    }
 
     private const double MB = 1024.0 * 1024.0;
 }
