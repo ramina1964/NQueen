@@ -48,6 +48,7 @@ public static class SolutionHelper
             : solutionMode == SolutionMode.Unique
             ? GetSolutionSizeUnique(boardSize)
             : GetSolutionSizeAll(boardSize);
+    }
 
     public static string SolutionTitle(SolutionMode solutionMode) => solutionMode switch
     {

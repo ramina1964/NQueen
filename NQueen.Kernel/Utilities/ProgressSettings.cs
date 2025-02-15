@@ -9,4 +9,5 @@ public static class ProgressSettings
         : boardSize <= BoardSettings.MediumBoardSizeForUniqueSolutions
         ? 1_000 :
         100_000;
+    }
 }
