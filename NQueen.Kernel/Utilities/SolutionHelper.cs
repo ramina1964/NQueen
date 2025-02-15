@@ -43,12 +43,14 @@ public static class SolutionHelper
         };
     }
 
-    public static int FindSolutionSize(byte boardSize, SolutionMode solutionMode) =>
-        solutionMode == SolutionMode.Single
+    public static int FindSolutionSize(byte boardSize, SolutionMode solutionMode)
+    {
+        return solutionMode == SolutionMode.Single
             ? 1
             : solutionMode == SolutionMode.Unique
             ? GetSolutionSizeUnique(boardSize)
             : GetSolutionSizeAll(boardSize);
+    }
 
     public static string SolutionTitle(SolutionMode solutionMode)
     {
@@ -80,8 +82,9 @@ public static class SolutionHelper
     }
 
     #region PrivateMembers
-    private static int GetSolutionSizeUnique(byte boardSize) =>
-        boardSize switch
+    private static int GetSolutionSizeUnique(byte boardSize)
+    {
+        return boardSize switch
         {
             1 => 1,
             2 => 0,
@@ -102,9 +105,11 @@ public static class SolutionHelper
             17 => 11977939,
             _ => throw new ArgumentOutOfRangeException(Messages.SizeTooLargeForUniqueSolutionsMsg)
         };
+    }
 
-    private static int GetSolutionSizeAll(byte boardSize) =>
-        boardSize switch
+    private static int GetSolutionSizeAll(byte boardSize)
+    {
+        return boardSize switch
         {
             1 => 1,
             2 => 0,
@@ -125,6 +130,7 @@ public static class SolutionHelper
             17 => 95815104,
             _ => throw new ArgumentOutOfRangeException(Messages.SizeTooLargeForAllSolutionsMsg)
         };
+    }
     #endregion PrivateMembers
 }
 

@@ -9,10 +9,10 @@ public partial class TestBase(ISolverBackEnd sut)
     public static List<byte[]> GetExpectedSolutions(byte boardSize, SolutionMode solutionMode)
     {
         return solutionMode == SolutionMode.Single
-               ? new List<byte[]>(GetExpectedSingleSolution(boardSize))
+               ? [.. GetExpectedSingleSolution(boardSize)]
                : solutionMode == SolutionMode.Unique
-               ? new List<byte[]>(GetExpectedUniqueSolutions(boardSize))
-               : new List<byte[]>(GetExpectedAllSolutions(boardSize));
+               ? [.. GetExpectedUniqueSolutions(boardSize)]
+               : [.. GetExpectedAllSolutions(boardSize)];
     }
 
     public List<byte[]> GetActualSolutions(byte boardSize, SolutionMode solutionMode)

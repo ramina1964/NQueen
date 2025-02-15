@@ -1,6 +1,4 @@
-﻿using NQueen.Kernel.Events;
-
-namespace NQueen.Kernel.Interfaces;
+﻿namespace NQueen.Kernel.Interfaces;
 
 public interface ISolverUI
 {

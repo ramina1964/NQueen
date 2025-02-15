@@ -16,7 +16,7 @@ public class SimulationResults
         {
             BoardSize = (byte)sol.Positions.Count;
             NoOfSolutions = enumerable.Count;
-            Solutions = new List<Solution>(enumerable);
+            Solutions = [.. enumerable];
         }
     }
 

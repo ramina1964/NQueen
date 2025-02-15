@@ -8,7 +8,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         _validator = validator ?? throw new ArgumentNullException(nameof(validator));
         CommandManager = commandManager ?? throw new ArgumentNullException(nameof(commandManager));
         CommandManager.Initialize(this);
-        ObservableSolutions = new ObservableCollection<Solution>();
+        ObservableSolutions = [];
 
         _eventManager = new EventManager(this);
         Initialize();
@@ -215,7 +215,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         NoOfSolutions = "0";
         ElapsedTimeInSec = $"{0}";
         MemoryUsage = "0";
-        Chessboard?.CreateSquares(BoardSize, new List<SquareViewModel>());
+        Chessboard?.CreateSquares(BoardSize, []);
     }
 
     public void UpdateButtonFunctionality()
@@ -293,7 +293,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             WindowHeight = boardDimension
         };
 
-        Chessboard.CreateSquares(BoardSize, new List<SquareViewModel>());
+        Chessboard.CreateSquares(BoardSize, []);
 
         IsIdle = true;
         IsSimulating = false;
@@ -377,11 +377,16 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         UpdateButtonFunctionality();
     }
 
-    public override bool Equals(object obj) => obj is MainViewModel model &&
+    public override bool Equals(object obj)
+    {
+        return obj is MainViewModel model &&
                EqualityComparer<InputViewModel>.Default.Equals(InputViewModel, model.InputViewModel);
+    }
 
-    public override int GetHashCode() =>
-        HashCode.Combine(InputViewModel);
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(InputViewModel);
+    }
 
     private readonly EventManager _eventManager;
     private ICommandManager _commandManager;

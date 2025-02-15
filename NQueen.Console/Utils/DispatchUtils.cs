@@ -93,14 +93,7 @@ public static class DispatchUtils
             var rowPlace = queens[col];
             for (int row = 0; row < size; row++)
             {
-                if (row == rowPlace)
-                {
-                    arr[row, col] = col == size - 1 ? $"|{whiteQueen}|" : $"|{whiteQueen}";
-                }
-                else
-                {
-                    arr[row, col] = col == size - 1 ? "|-|" : "|-";
-                }
+                arr[row, col] = row == rowPlace ? col == size - 1 ? $"|{whiteQueen}|" : $"|{whiteQueen}" : col == size - 1 ? "|-|" : "|-";
             }
         }
 

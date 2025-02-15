@@ -14,17 +14,16 @@
     mc:Ignorable="d">
 
     <UserControl.Resources>
-        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-        <converters:StringToByteConverter x:Key="StringToByteConverter"/>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </UserControl.Resources>
 
     <StackPanel>
-        <!-- Error Message TextBlock -->
+        <!--  Error Message TextBlock  -->
         <TextBlock
-            Text="{Binding InputViewModel.ErrorMessage}"
+            Margin="0,0,0,10"
             Foreground="Red"
-            Visibility="{Binding InputViewModel.IsErrorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
-            Margin="0,0,0,10" />
+            Text="{Binding InputViewModel.ErrorMessage}"
+            Visibility="{Binding InputViewModel.IsErrorVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
         <GroupBox
             HorizontalAlignment="Stretch"
@@ -66,12 +65,9 @@
                     Margin="5,2"
                     AutomationProperties.Name="Board Size"
                     IsEnabled="{Binding IsInInputMode}"
+                    LostFocus="TxtBoardSize_LostFocus"
                     Style="{StaticResource TextBoxNumericalStyle}"
-                    LostFocus="TxtBoardSize_LostFocus">
-                    <TextBox.Text>
-                        <Binding Path="BoardSize" UpdateSourceTrigger="LostFocus" Mode="TwoWay" ValidatesOnDataErrors="False" ValidatesOnExceptions="True" Converter="{StaticResource StringToByteConverter}" />
-                    </TextBox.Text>
-                </TextBox>
+                    Text="{Binding BoardSize, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
 
                 <Label
                     Grid.Row="1"

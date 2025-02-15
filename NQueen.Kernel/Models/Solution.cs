@@ -23,7 +23,10 @@ public class Solution
 
     public string Details { get; set; }
 
-    public sealed override string ToString() => $"No. {Id}";
+    public sealed override string ToString()
+    {
+        return $"No. {Id}";
+    }
     #endregion PublicProperties
 
     #region PrivateMembers
