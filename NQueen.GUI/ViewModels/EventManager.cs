@@ -1,29 +1,25 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public class EventManager
+public class EventManager(MainViewModel mainViewModel)
 {
-    public EventManager(MainViewModel mainViewModel)
-    {
-        _mainViewModel = mainViewModel;
-    }
-
     public void SubscribeToSimulationEvents()
     {
-        _mainViewModel.Solver.ProgressValueChanged += OnProgressValueChanged;
-        _mainViewModel.Solver.QueenPlaced += OnQueenPlaced;
-        _mainViewModel.Solver.SolutionFound += OnSolutionFound;
+        mainViewModel.Solver.ProgressValueChanged += OnProgressValueChanged;
+        mainViewModel.Solver.QueenPlaced += OnQueenPlaced;
+        mainViewModel.Solver.SolutionFound += OnSolutionFound;
     }
 
     public void UnsubscribeFromSimulationEvents()
     {
-        _mainViewModel.Solver.ProgressValueChanged -= OnProgressValueChanged;
-        _mainViewModel.Solver.QueenPlaced -= OnQueenPlaced;
-        _mainViewModel.Solver.SolutionFound -= OnSolutionFound;
+        mainViewModel.Solver.ProgressValueChanged -= OnProgressValueChanged;
+        mainViewModel.Solver.QueenPlaced -= OnQueenPlaced;
+        mainViewModel.Solver.SolutionFound -= OnSolutionFound;
     }
 
     private void OnProgressValueChanged(object sender, ProgressValueChangedEventArgs e)
     {
-        _mainViewModel.ProgressValue = e.Value;
+        mainViewModel.ProgressValue = e.Value;
+        mainViewModel.ProgressLabel = $"{e.Value} %";
     }
 
     private void OnQueenPlaced(object sender, QueenPlacedEventArgs e)
@@ -33,31 +29,31 @@ public class EventManager
             .QueenPositions.Where(q => q < BoardSettings.ByteMaxValue)
             .Select((item, index) => new Position((byte)index, item)).ToList();
 
-        _mainViewModel.Chessboard?.PlaceQueens(positions);
+        mainViewModel.Chessboard?.PlaceQueens(positions);
     }
 
     private void OnSolutionFound(object sender, SolutionFoundEventArgs e)
     {
-        var id = _mainViewModel.ObservableSolutions.Count + 1;
+        var id = mainViewModel.ObservableSolutions.Count + 1;
         var sol = new Solution(e.Solution, id);
 
         // Update the total number of solutions
-        _mainViewModel.NoOfSolutions = $"{int.Parse(_mainViewModel.NoOfSolutions.Replace(" ", "").Replace(",", "")) + 1,0:N0}";
+        mainViewModel.NoOfSolutions = $"{int.Parse(mainViewModel.NoOfSolutions.Replace(" ", "").Replace(",", "")) + 1,0:N0}";
 
         // Limit the number of solutions shown in ObservableSolutions
         Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
         {
-            if (_mainViewModel.ObservableSolutions.Count >= SolutionHelper.MaxNoOfSolutionsInOutput)
+            if (mainViewModel.ObservableSolutions.Count >= SolutionHelper.MaxNoOfSolutionsInOutput)
             {
-                _mainViewModel.ObservableSolutions.RemoveAt(0);
+                mainViewModel.ObservableSolutions.RemoveAt(0);
             }
-            if (_mainViewModel.ObservableSolutions.Any(s => s.Id == sol.Id) == false)
+            if (mainViewModel.ObservableSolutions.Any(s => s.Id == sol.Id) == false)
             {
-                _mainViewModel.ObservableSolutions.Add(sol);
+                mainViewModel.ObservableSolutions.Add(sol);
             }
         }));
 
-        _mainViewModel.SelectedSolution = sol;
+        mainViewModel.SelectedSolution = sol;
     }
 
     // Partial Methods
@@ -66,7 +62,7 @@ public class EventManager
     {
         if (value != null)
         {
-            _mainViewModel.Chessboard?.PlaceQueens(value.Positions);
+            mainViewModel.Chessboard?.PlaceQueens(value.Positions);
 
             // Call DisplaySolution on ChessboardUserControl
             Application.Current.Dispatcher.Invoke(() =>
@@ -82,78 +78,78 @@ public class EventManager
 
     public void OnProgressValueChanged(double value)
     {
-        _mainViewModel.ProgressLabel = $"{value} %";
+        mainViewModel.ProgressLabel = $"{value} %";
     }
 
     public void OnProgressVisibilityChanged(Visibility value)
     {
-        _mainViewModel.IsProgressBarOffscreen = value != Visibility.Visible;
+        mainViewModel.IsProgressBarOffscreen = value != Visibility.Visible;
     }
 
     public void OnProgressLabelVisibilityChanged(Visibility value)
     {
-        _mainViewModel.IsProgressLabelOffscreen = value != Visibility.Visible;
+        mainViewModel.IsProgressLabelOffscreen = value != Visibility.Visible;
     }
 
     public void OnDelayInMillisecondsChanged(int value)
     {
-        _mainViewModel.Solver.DelayInMilliseconds = value;
+        mainViewModel.Solver.DelayInMilliseconds = value;
     }
 
     public void OnSolutionModeChanged(SolutionMode value)
     {
-        if (_mainViewModel.Solver == null)
+        if (mainViewModel.Solver == null)
         {
             return;
         }
 
-        _mainViewModel.SolutionTitle = (value == SolutionMode.Single)
+        mainViewModel.SolutionTitle = (value == SolutionMode.Single)
             ? $"Solution"
             : $"Solutions (Max: {SolutionHelper.MaxNoOfSolutionsInOutput})";
 
-        _mainViewModel.IsValid = _mainViewModel.InputViewModel.Validate(_mainViewModel).IsValid;
+        mainViewModel.IsValid = mainViewModel.InputViewModel.Validate(mainViewModel).IsValid;
 
-        if (_mainViewModel.IsValid == false)
+        if (mainViewModel.IsValid == false)
         {
-            _mainViewModel.IsIdle = false;
-            _mainViewModel.IsSimulating = false;
-            _mainViewModel.IsOutputReady = false;
+            mainViewModel.IsIdle = false;
+            mainViewModel.IsSimulating = false;
+            mainViewModel.IsOutputReady = false;
             return;
         }
 
-        _mainViewModel.IsIdle = true;
-        _mainViewModel.IsSimulating = false;
-        _mainViewModel.UpdateGui();
+        mainViewModel.IsIdle = true;
+        mainViewModel.IsSimulating = false;
+        mainViewModel.UpdateGui();
     }
 
     public void OnDisplayModeChanged(DisplayMode value)
     {
-        _mainViewModel.IsValid = _mainViewModel.InputViewModel.Validate(_mainViewModel).IsValid;
+        mainViewModel.IsValid = mainViewModel.InputViewModel.Validate(mainViewModel).IsValid;
 
-        if (_mainViewModel.IsValid)
+        if (mainViewModel.IsValid)
         {
-            _mainViewModel.IsIdle = true;
-            _mainViewModel.IsVisualized = value == DisplayMode.Visualize;
-            _mainViewModel.UpdateGui();
+            mainViewModel.IsIdle = true;
+            mainViewModel.IsVisualized = value == DisplayMode.Visualize;
+            mainViewModel.UpdateGui();
         }
     }
 
     public void OnBoardSizeChanged(byte value)
     {
-        _mainViewModel.IsValid = _mainViewModel.InputViewModel.Validate(_mainViewModel).IsValid;
+        mainViewModel.IsValid = mainViewModel.InputViewModel.Validate(mainViewModel).IsValid;
 
-        if (_mainViewModel.IsValid == false)
+        if (mainViewModel.IsValid == false)
         {
-            _mainViewModel.IsIdle = false;
-            _mainViewModel.IsSimulating = false;
+            mainViewModel.IsIdle = false;
+            mainViewModel.IsSimulating = false;
         }
         else
         {
-            _mainViewModel.IsIdle = true;
-            _mainViewModel.IsSimulating = false;
-            _mainViewModel.IsOutputReady = false;
-            _mainViewModel.UpdateButtonFunctionality();
-            _mainViewModel.UpdateGui();
+            mainViewModel.IsIdle = true;
+            mainViewModel.IsSimulating = false;
+            mainViewModel.IsOutputReady = false;
+            mainViewModel.UpdateButtonFunctionality();
+            mainViewModel.UpdateGui();
         }
     }
 
@@ -161,24 +157,23 @@ public class EventManager
 
     public void OnIsSimulatingChanged(bool value)
     {
-        _mainViewModel.UpdateButtonFunctionality();
+        mainViewModel.UpdateButtonFunctionality();
     }
 
     public void OnIsInInputModeChanged(bool value)
     {
-        _mainViewModel.UpdateButtonFunctionality();
+        mainViewModel.UpdateButtonFunctionality();
     }
 
     public void OnIsIdleChanged(bool value)
     {
-        _mainViewModel.UpdateButtonFunctionality();
+        mainViewModel.UpdateButtonFunctionality();
     }
 
     public void OnIsOutputReadyChanged(bool value)
     {
-        _mainViewModel.UpdateButtonFunctionality();
+        mainViewModel.UpdateButtonFunctionality();
     }
-    #endregion Partial Methods
 
-    private readonly MainViewModel _mainViewModel;
+    #endregion Partial Methods
 }
