@@ -215,7 +215,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         NoOfSolutions = "0";
         ElapsedTimeInSec = $"{0}";
         MemoryUsage = "0";
-        Chessboard?.CreateSquares(BoardSize, []);
+        Chessboard?.CreateSquares(BoardSize, new List<SquareViewModel>());
     }
 
     public void UpdateButtonFunctionality()
@@ -293,7 +293,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             WindowHeight = boardDimension
         };
 
-        Chessboard.CreateSquares(BoardSize, []);
+        Chessboard.CreateSquares(BoardSize, new List<SquareViewModel>());
 
         IsIdle = true;
         IsSimulating = false;

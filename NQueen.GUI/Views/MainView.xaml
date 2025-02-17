@@ -18,6 +18,10 @@
     WindowState="Normal"
     mc:Ignorable="d">
 
+    <Window.Resources>
+        <converter:BoardSizeConverter x:Key="BoardSizeConverter" />
+    </Window.Resources>
+
     <!--  Start of Outer Grid  -->
     <Grid
         Margin="5"

@@ -66,8 +66,9 @@
                     AutomationProperties.Name="Board Size"
                     IsEnabled="{Binding IsInInputMode}"
                     LostFocus="TxtBoardSize_LostFocus"
-                    Style="{StaticResource TextBoxNumericalStyle}"
-                    Text="{Binding BoardSize, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                    HorizontalContentAlignment="Right"
+                    VerticalContentAlignment="Center"
+                    Text="{Binding BoardSize, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource BoardSizeConverter}}" />
 
                 <Label
                     Grid.Row="1"
