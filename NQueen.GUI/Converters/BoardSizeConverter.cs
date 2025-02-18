@@ -19,17 +19,17 @@ public class BoardSizeConverter : IValueConverter
             {
                 if (intResult < byte.MinValue || intResult > byte.MaxValue)
                 {
-                    SetErrorMessage("Board size must be between 1 and 255.");
+                    SetErrorMessage(Messages.InvalidByteError);
                 }
                 else
                 {
-                    SetErrorMessage("Please enter a valid number between 1 and 255.");
+                    SetErrorMessage(Messages.InvalidByteError);
                 }
                 return DependencyProperty.UnsetValue;
             }
             else
             {
-                SetErrorMessage("Please enter a valid number between 1 and 255.");
+                SetErrorMessage(Messages.InvalidByteError);
                 return DependencyProperty.UnsetValue;
             }
         }

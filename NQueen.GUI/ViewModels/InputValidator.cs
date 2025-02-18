@@ -20,17 +20,17 @@ public class InputValidator : AbstractValidator<MainViewModel>
         _ = RuleFor(vm => vm.BoardSize)
             .Must(boardSize => boardSize <= BoardSettings.MaxBoardSizeForSingleSolution)
             .When(vm => vm.SolutionMode == SolutionMode.Single)
-            .WithMessage(_ => Messages.SizeTooLargeForSingleSolutionMsg);
+            .WithMessage(_ => Messages.SingleSizeOutOfRangeMsg);
 
         _ = RuleFor(vm => vm.BoardSize)
             .Must(boardSize => boardSize <= BoardSettings.MaxBoardSizeForUniqueSolutions)
             .When(vm => vm.SolutionMode == SolutionMode.Unique)
-            .WithMessage(_ => Messages.SizeTooLargeForUniqueSolutionsMsg);
+            .WithMessage(_ => Messages.UniqueSizeOutOfRangeMsg);
 
         _ = RuleFor(vm => vm.BoardSize)
             .Must(boardSize => boardSize <= BoardSettings.MaxBoardSizeForAllSolutions)
             .When(vm => vm.SolutionMode == SolutionMode.All)
-            .WithMessage(_ => Messages.SizeTooLargeForAllSolutionsMsg);
+            .WithMessage(_ => Messages.AllSizeOutOfRangeMsg);
     }
 
     public static bool IsBoardSizeFormattedCorrectly(string boardSize)

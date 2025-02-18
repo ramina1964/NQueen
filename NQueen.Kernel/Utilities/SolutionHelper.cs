@@ -98,7 +98,7 @@ public static class SolutionHelper
             15 => 285053,
             16 => 1846955,
             17 => 11977939,
-            _ => throw new ArgumentOutOfRangeException(Messages.SizeTooLargeForUniqueSolutionsMsg)
+            _ => throw new ArgumentOutOfRangeException(Messages.UniqueSizeOutOfRangeMsg)
         };
 
     private static int GetSolutionSizeAll(byte boardSize) =>
@@ -121,7 +121,7 @@ public static class SolutionHelper
             15 => 2279184,
             16 => 14772512,
             17 => 95815104,
-            _ => throw new ArgumentOutOfRangeException(Messages.SizeTooLargeForAllSolutionsMsg)
+            _ => throw new ArgumentOutOfRangeException(Messages.AllSizeOutOfRangeMsg)
         };
     #endregion PrivateMembers
 }

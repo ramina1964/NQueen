@@ -2,7 +2,7 @@
 
 public static class Messages
 {
-    public const string InvalidByteError = "Board size must be a positive whole number.";
+    public const string InvalidByteError = "Board size must be a whole number inside [1 and 255].";
     public const string NoSolutionMessage = "No Solutions found. Try a larger board size!";
     public const string ValueNullOrWhiteSpaceMsg =
         "Board size can not be null, empty or contain exclusively spaces.";
@@ -10,12 +10,12 @@ public static class Messages
     public static string SizeTooSmallMsg =>
         $"Board size must be greater than or equal to {BoardSettings.MinBoardSize}.";
 
-    public static string SizeTooLargeForSingleSolutionMsg =>
-        $"Board size for single solution must not exceed {BoardSettings.MaxBoardSizeForSingleSolution}.";
+    public static string SingleSizeOutOfRangeMsg =>
+        $"Single Solutions' board size must be inside [1, {BoardSettings.MaxBoardSizeForSingleSolution}].";
 
-    public static string SizeTooLargeForUniqueSolutionsMsg =>
-        $"Board size for unique solutions must not exceed {BoardSettings.MaxBoardSizeForUniqueSolutions}.";
+    public static string UniqueSizeOutOfRangeMsg =>
+        $"Unique Solutions' board size must be inside [1, {BoardSettings.MaxBoardSizeForUniqueSolutions}].";
 
-    public static string SizeTooLargeForAllSolutionsMsg =>
-        $"Board size for all solutions must not exceed {BoardSettings.MaxBoardSizeForAllSolutions}.";
+    public static string AllSizeOutOfRangeMsg =>
+        $"All Solutions' board size must be inside [1, {BoardSettings.MaxBoardSizeForAllSolutions}].";
 }

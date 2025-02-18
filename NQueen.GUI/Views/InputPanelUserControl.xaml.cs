@@ -9,14 +9,12 @@ public partial class InputPanelUserControl : UserControl
         DataContext = _mainViewModel;
     }
 
-    private readonly MainViewModel _mainViewModel;
-
     private void TxtBoardSize_LostFocus(object sender, RoutedEventArgs e)
     {
         if (sender is TextBox textBox)
         {
             // Validate the input string format
-            if (!InputValidator.IsBoardSizeFormattedCorrectly(textBox.Text))
+            if (InputValidator.IsBoardSizeFormattedCorrectly(textBox.Text) == false)
             {
                 _mainViewModel.InputViewModel.ErrorMessage = Messages.InvalidByteError;
                 _mainViewModel.InputViewModel.IsErrorVisible = true;
@@ -41,4 +39,6 @@ public partial class InputPanelUserControl : UserControl
             _mainViewModel.IsInputValid = validationResult.IsValid;
         }
     }
+    
+    private readonly MainViewModel _mainViewModel;
 }
