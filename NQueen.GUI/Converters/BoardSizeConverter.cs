@@ -11,26 +11,21 @@ public class BoardSizeConverter : IValueConverter
     {
         if (value is string input)
         {
-            if (byte.TryParse(input, out byte result))
+            switch (input)
             {
-                return result;
-            }
-            else if (int.TryParse(input, out int intResult))
-            {
-                if (intResult < byte.MinValue || intResult > byte.MaxValue)
-                {
+                case string _ when byte.TryParse(input, out byte byteResult):
+                    return byteResult;
+
+                case string _ when int.TryParse(input, out int intResult):
+                    if (intResult < byte.MinValue || intResult > byte.MaxValue)
+                    {
+                        SetErrorMessage(Messages.InvalidByteError);
+                    }
+                    return DependencyProperty.UnsetValue;
+
+                default:
                     SetErrorMessage(Messages.InvalidByteError);
-                }
-                else
-                {
-                    SetErrorMessage(Messages.InvalidByteError);
-                }
-                return DependencyProperty.UnsetValue;
-            }
-            else
-            {
-                SetErrorMessage(Messages.InvalidByteError);
-                return DependencyProperty.UnsetValue;
+                    return DependencyProperty.UnsetValue;
             }
         }
         return DependencyProperty.UnsetValue;

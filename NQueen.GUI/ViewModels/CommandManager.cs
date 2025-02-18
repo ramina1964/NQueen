@@ -69,7 +69,7 @@ public class CommandManager : ICommandManager
         return _mainViewModel != null && _mainViewModel.IsOutputReady;
     }
 
-    private void NotifyCommands()
+    public void NotifyCommands()
     {
         SimulateCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();

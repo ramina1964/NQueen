@@ -114,13 +114,19 @@ public class EventManager(MainViewModel mainViewModel)
             mainViewModel.IsIdle = false;
             mainViewModel.IsSimulating = false;
             mainViewModel.IsOutputReady = false;
+            mainViewModel.InputViewModel.ErrorMessage = mainViewModel.InputViewModel.Validate(mainViewModel).Errors.FirstOrDefault()?.ErrorMessage;
+            mainViewModel.InputViewModel.IsErrorVisible = true;
+            mainViewModel.CommandManager.SimulateCommand.NotifyCanExecuteChanged();
             return;
         }
 
         mainViewModel.IsIdle = true;
         mainViewModel.IsSimulating = false;
+        mainViewModel.InputViewModel.IsErrorVisible = false;
         mainViewModel.UpdateGui();
+        mainViewModel.CommandManager.SimulateCommand.NotifyCanExecuteChanged();
     }
+
 
     public void OnDisplayModeChanged(DisplayMode value)
     {

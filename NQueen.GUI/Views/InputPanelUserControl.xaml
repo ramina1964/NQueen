@@ -11,7 +11,8 @@
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
     d:DesignHeight="450"
     d:DesignWidth="800"
-    mc:Ignorable="d">
+    mc:Ignorable="d"
+    DataContext="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext}">
 
     <UserControl.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
@@ -23,7 +24,8 @@
             Margin="0,0,0,10"
             Foreground="Red"
             Text="{Binding InputViewModel.ErrorMessage}"
-            Visibility="{Binding InputViewModel.IsErrorVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            Visibility="{Binding InputViewModel.IsErrorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+            AutomationProperties.Name="Error Message" />
 
         <GroupBox
             HorizontalAlignment="Stretch"
@@ -33,7 +35,8 @@
             Background="Bisque"
             BorderBrush="Black"
             BorderThickness="1"
-            Header="Input">
+            Header="Input"
+            AutomationProperties.Name="Input Group">
 
             <Grid
                 Margin="5"
@@ -56,7 +59,8 @@
                     Grid.Column="0"
                     Margin="5,2"
                     Content="Board Size"
-                    Style="{StaticResource LabelStyle}" />
+                    Style="{StaticResource LabelStyle}"
+                    AutomationProperties.Name="Board Size Label" />
 
                 <TextBox
                     x:Name="TxtBoardSize"
@@ -68,14 +72,16 @@
                     LostFocus="TxtBoardSize_LostFocus"
                     HorizontalContentAlignment="Right"
                     VerticalContentAlignment="Center"
-                    Text="{Binding BoardSize, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource BoardSizeConverter}}" />
+                    Text="{Binding BoardSize, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource BoardSizeConverter}}"
+                    TabIndex="0" />
 
                 <Label
                     Grid.Row="1"
                     Grid.Column="0"
                     Margin="5,2"
                     Content="Solution Mode"
-                    Style="{StaticResource LabelStyle}" />
+                    Style="{StaticResource LabelStyle}"
+                    AutomationProperties.Name="Solution Mode Label" />
 
                 <ComboBox
                     x:Name="CmbSolutionMode"
@@ -87,14 +93,16 @@
                     IsEnabled="{Binding IsInInputMode}"
                     ItemsSource="{Binding SolutionModeList, Mode=TwoWay}"
                     SelectedItem="{Binding SolutionMode}"
-                    Style="{StaticResource ComboBoxStyle}" />
+                    Style="{StaticResource ComboBoxStyle}"
+                    TabIndex="1" />
 
                 <Label
                     Grid.Row="2"
                     Grid.Column="0"
                     Margin="5,2"
                     Content="Display Mode"
-                    Style="{StaticResource LabelStyle}" />
+                    Style="{StaticResource LabelStyle}"
+                    AutomationProperties.Name="Display Mode Label" />
 
                 <ComboBox
                     x:Name="CmbDisplayMode"
@@ -106,14 +114,16 @@
                     IsEnabled="{Binding IsInInputMode}"
                     ItemsSource="{Binding DisplayModeList, Mode=TwoWay}"
                     SelectedItem="{Binding DisplayMode}"
-                    Style="{StaticResource ComboBoxStyle}" />
+                    Style="{StaticResource ComboBoxStyle}"
+                    TabIndex="2" />
 
                 <Label
                     Grid.Row="3"
                     Grid.Column="0"
                     Margin="5,2"
                     Content="Delay in Milisec"
-                    Style="{StaticResource LabelStyle}" />
+                    Style="{StaticResource LabelStyle}"
+                    AutomationProperties.Name="Delay in Milisec Label" />
 
                 <Slider
                     x:Name="SldDelayInMilliseconds"
@@ -126,7 +136,8 @@
                     Maximum="3000"
                     Minimum="10"
                     Style="{StaticResource SliderStyle}"
-                    Value="{Binding DelayInMilliseconds}" />
+                    Value="{Binding DelayInMilliseconds}"
+                    TabIndex="3" />
             </Grid>
         </GroupBox>
     </StackPanel>
