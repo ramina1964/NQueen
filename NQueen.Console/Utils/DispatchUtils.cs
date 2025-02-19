@@ -62,19 +62,19 @@ public static class DispatchUtils
             return (false, 0);
         }
 
-        if (solutionMode == SolutionMode.Single && size > BoardSettings.MaxBoardSizeForSingleSolution)
+        if (solutionMode == SolutionMode.Single && size > BoardSettings.MaxBoardSizeInSingleSolution)
         {
             HelpCommands.ShowExitError(Messages.SingleSizeOutOfRangeMsg);
             return (false, 0);
         }
 
-        if (solutionMode == SolutionMode.Unique && size > BoardSettings.MaxBoardSizeForUniqueSolutions)
+        if (solutionMode == SolutionMode.Unique && size > BoardSettings.MaxBoardSizeInUniqueSolutions)
         {
             HelpCommands.ShowExitError(Messages.UniqueSizeOutOfRangeMsg);
             return (false, 0);
         }
 
-        if (solutionMode == SolutionMode.All && size > BoardSettings.MaxBoardSizeForAllSolutions)
+        if (solutionMode == SolutionMode.All && size > BoardSettings.MaxBoardSizeInAllSolutions)
         {
             HelpCommands.ShowExitError(Messages.AllSizeOutOfRangeMsg);
             return (false, 0);

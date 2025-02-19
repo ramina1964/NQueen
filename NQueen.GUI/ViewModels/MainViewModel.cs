@@ -87,25 +87,25 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     private InputViewModel _inputViewModel;
 
     [ObservableProperty]
-    private double progressValue;
+    private double _progressValue;
 
     [ObservableProperty]
-    private string progressLabel;
+    private string _progressLabel;
 
     [ObservableProperty]
-    private Visibility progressVisibility;
+    private Visibility _progressVisibility;
 
     [ObservableProperty]
-    private Visibility progressLabelVisibility;
+    private Visibility _progressLabelVisibility;
 
     [ObservableProperty]
-    private bool isProgressBarOffscreen;
+    private bool _isProgressBarOffscreen;
 
     [ObservableProperty]
-    private bool isProgressLabelOffscreen;
+    private bool _isProgressLabelOffscreen;
 
     [ObservableProperty]
-    private IEnumerable<SolutionMode> solutionModeList =
+    private IEnumerable<SolutionMode> _solutionModeList =
         Enum.GetValues<SolutionMode>().Cast<SolutionMode>();
 
     [ObservableProperty]
@@ -113,73 +113,73 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         Enum.GetValues<DisplayMode>().Cast<DisplayMode>();
 
     [ObservableProperty]
-    private bool isVisualized;
+    private bool _isVisualized;
 
     [ObservableProperty]
-    private int delayInMilliseconds;
+    private int _delayInMilliseconds;
 
     [ObservableProperty]
     private static SimulationResults simulationResults;
 
     [ObservableProperty]
-    public ObservableCollection<Solution> observableSolutions;
+    public ObservableCollection<Solution> _observableSolutions;
 
     [ObservableProperty]
-    private Solution selectedSolution;
+    private Solution _selectedSolution;
 
     [ObservableProperty]
-    private SolutionMode solutionMode;
+    private SolutionMode _solutionMode;
 
     [ObservableProperty]
-    private DisplayMode displayMode;
+    private DisplayMode _displayMode;
 
     [ObservableProperty]
-    private byte boardSize;
+    private byte _boardSize;
 
     [ObservableProperty]
-    private bool isValid;
+    private bool _isValid;
 
     [ObservableProperty]
-    private string solutionTitle;
+    private string _solutionTitle;
 
     [ObservableProperty]
-    private string noOfSolutions;
+    private string _noOfSolutions;
 
     [ObservableProperty]
-    private string memoryUsage;
+    private string _memoryUsage;
 
     [ObservableProperty]
-    public ChessboardViewModel chessboard;
+    public ChessboardViewModel _chessboard;
 
     [ObservableProperty]
-    private string elapsedTimeInSec;
+    private string _elapsedTimeInSec;
 
     [ObservableProperty]
-    private bool isSimulating;
+    private bool _isSimulating;
 
     [ObservableProperty]
-    private bool isInInputMode;
+    private bool _isInInputMode;
 
     [ObservableProperty]
-    private bool isSingleRunning;
+    private bool _isSingleRunning;
 
     [ObservableProperty]
-    private bool isIdle;
+    private bool _isIdle;
 
     [ObservableProperty]
-    private bool isOutputReady;
+    private bool _isOutputReady;
 
     [ObservableProperty]
-    private bool hasValidationError;
+    private bool _hasValidationError;
 
     [ObservableProperty]
-    private string validationError;
+    private string _validationError;
 
     [ObservableProperty]
-    private bool isInputValid;
+    private bool _isInputValid;
 
     [ObservableProperty]
-    private bool isSimulateButtonEnabled;
+    private bool _isSimulateButtonEnabled;
 
     public string ResultTitle => SolutionHelper.SolutionTitle(SolutionMode);
 

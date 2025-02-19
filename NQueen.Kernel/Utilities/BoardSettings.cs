@@ -6,10 +6,10 @@ public static class BoardSettings
     public const byte DefaultBoardSize = 8;
     public const byte MinBoardSize = 1;
 
-    public const byte MaxBoardSizeForSingleSolution = 37;
-    public const byte MaxBoardSizeForUniqueSolutions = 17;
-    public const byte MaxBoardSizeForAllSolutions = 17;
+    public const byte MaxBoardSizeInSingleSolution = 37;
+    public const byte MaxBoardSizeInUniqueSolutions = 17;
+    public const byte MaxBoardSizeInAllSolutions = 17;
 
-    public const byte SmallBoardSizeForUniqueSolutions = 10;
-    public const byte MediumBoardSizeForUniqueSolutions = 15;
+    public const byte SmallBoardSizeInUniqueSolutions = 10;
+    public const byte MediumBoardSizeInUniqueSolutions = 15;
 }
