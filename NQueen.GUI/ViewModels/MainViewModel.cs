@@ -183,6 +183,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 
     public string ResultTitle => SolutionHelper.SolutionTitle(SolutionMode);
 
+    public void UpdateSolutionTitle()
+    {
+        SolutionTitle = ResultTitle;
+    }
+
     public readonly ISolver Solver;
 
     private CancellationTokenSource CancelationTokenSource { get; set; }
@@ -332,8 +337,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
                EqualityComparer<InputViewModel>.Default.Equals(InputViewModel, model.InputViewModel);
     }
 
-    public override int GetHashCode() =>
-        HashCode.Combine(InputViewModel);
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(InputViewModel);
+    }
 
     private readonly EventManager _eventManager;
     private ICommandManager _commandManager;

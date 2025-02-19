@@ -161,7 +161,7 @@ public partial class DispatchCommands(
     {
         var cmd = Commands.Where(e => !e.Value).Select(e => e.Key).FirstOrDefault();
 
-        return cmd ?? "";
+        return cmd ?? string.Empty;
     }
 
     #endregion PrivateMethods

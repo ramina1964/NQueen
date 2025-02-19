@@ -21,7 +21,7 @@ public class EventManager(MainViewModel mainViewModel)
         var validationResult = mainViewModel.InputViewModel.Validate(mainViewModel);
         mainViewModel.IsValid = validationResult.IsValid;
 
-        if (mainViewModel.IsValid == false)
+        if (!mainViewModel.IsValid)
         {
             mainViewModel.IsIdle = false;
             mainViewModel.IsSimulating = false;
@@ -120,6 +120,7 @@ public class EventManager(MainViewModel mainViewModel)
         }));
 
         mainViewModel.SelectedSolution = sol;
+        mainViewModel.UpdateSolutionTitle();
     }
 
     public void OnDisplayModeChanged()
@@ -127,4 +128,6 @@ public class EventManager(MainViewModel mainViewModel)
         mainViewModel.InputViewModel.Validate(mainViewModel);
         mainViewModel.UpdateButtonFunctionality();
     }
+
+    private readonly MainViewModel mainViewModel = mainViewModel;
 }
