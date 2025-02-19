@@ -11,11 +11,11 @@ public static class Messages
         $"Board size must be greater than or equal to {BoardSettings.MinBoardSize}.";
 
     public static string SingleSizeOutOfRangeMsg =>
-        $"Single Solutions' board size must be inside [1, {BoardSettings.MaxBoardSizeForSingleSolution}].";
+        $"Board size for Single Solutions must be inside [1, {BoardSettings.MaxBoardSizeInSingleSolution}].";
 
     public static string UniqueSizeOutOfRangeMsg =>
-        $"Unique Solutions' board size must be inside [1, {BoardSettings.MaxBoardSizeForUniqueSolutions}].";
+        $"Board size for Unique Solutions must be inside [1, {BoardSettings.MaxBoardSizeInUniqueSolutions}].";
 
     public static string AllSizeOutOfRangeMsg =>
-        $"All Solutions' board size must be inside [1, {BoardSettings.MaxBoardSizeForAllSolutions}].";
+        $"Board size for All Solutions must be inside [1, {BoardSettings.MaxBoardSizeInAllSolutions}].";
 }

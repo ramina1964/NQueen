@@ -4,7 +4,7 @@ public class ChessboardViewModel : ObservableObject
 {
     public ChessboardViewModel()
     {
-        Squares = new ObservableCollection<SquareViewModel>();
+        Squares = [];
         QueenImagePath = Constants.QueenImagePath;
     }
 
@@ -18,6 +18,8 @@ public class ChessboardViewModel : ObservableObject
 
     public void PlaceQueens(IEnumerable<Position> positions)
     {
+        if (positions == null) return;
+
         // Clear board
         ClearImages();
 
@@ -26,6 +28,7 @@ public class ChessboardViewModel : ObservableObject
         {
             var square = Squares.FirstOrDefault(sq => pos.RowNo == sq.Position.RowNo
                 && pos.ColumnNo == sq.Position.ColumnNo);
+
             if (square != null)
             {
                 square.ImagePath = QueenImagePath;
@@ -33,6 +36,7 @@ public class ChessboardViewModel : ObservableObject
             }
         }
     }
+
 
     public void CreateSquares(byte boardSize, IEnumerable<SquareViewModel> squares)
     {

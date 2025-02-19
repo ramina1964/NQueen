@@ -40,18 +40,18 @@ public static class HelpCommands
 
     public static readonly string NQueen_Help_Board_Size =
         @$"  Board Size   - Whole Numbers in the following Ranges:
-                [1, {BoardSettings.MaxBoardSizeForSingleSolution}] for 'Single',
-                [1, {BoardSettings.MaxBoardSizeForUniqueSolutions}] for 'Unique',
-                [1, {BoardSettings.MaxBoardSizeForAllSolutions}] for 'All' Solutions";
+                [1, {BoardSettings.MaxBoardSizeInSingleSolution}] for 'Single',
+                [1, {BoardSettings.MaxBoardSizeInUniqueSolutions}] for 'Unique',
+                [1, {BoardSettings.MaxBoardSizeInAllSolutions}] for 'All' Solutions";
 
     public static readonly string NQueen_Solution_Mode =
         @" Values one of the following: 0 - 'Single', 1 - 'Unique', or 2 - 'All'";
 
     public static readonly string NQUEEN_BOARDSIZE =
         @$" Whole Numbers in the Range:
-                [1, {BoardSettings.MaxBoardSizeForSingleSolution}] for 'Single',
-                [1, {BoardSettings.MaxBoardSizeForUniqueSolutions}] for 'Unique',
-                [1, {BoardSettings.MaxBoardSizeForAllSolutions}] for 'All' Solutions";
+                [1, {BoardSettings.MaxBoardSizeInSingleSolution}] for 'Single',
+                [1, {BoardSettings.MaxBoardSizeInUniqueSolutions}] for 'Unique',
+                [1, {BoardSettings.MaxBoardSizeInAllSolutions}] for 'All' Solutions";
 
     private static void DumpAllHelp()
     {

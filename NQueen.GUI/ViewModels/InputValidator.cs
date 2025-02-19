@@ -18,17 +18,17 @@ public class InputValidator : AbstractValidator<MainViewModel>
             .WithMessage(_ => Messages.SizeTooSmallMsg);
 
         _ = RuleFor(vm => vm.BoardSize)
-            .Must(boardSize => boardSize <= BoardSettings.MaxBoardSizeForSingleSolution)
+            .Must(boardSize => boardSize <= BoardSettings.MaxBoardSizeInSingleSolution)
             .When(vm => vm.SolutionMode == SolutionMode.Single)
             .WithMessage(_ => Messages.SingleSizeOutOfRangeMsg);
 
         _ = RuleFor(vm => vm.BoardSize)
-            .Must(boardSize => boardSize <= BoardSettings.MaxBoardSizeForUniqueSolutions)
+            .Must(boardSize => boardSize <= BoardSettings.MaxBoardSizeInUniqueSolutions)
             .When(vm => vm.SolutionMode == SolutionMode.Unique)
             .WithMessage(_ => Messages.UniqueSizeOutOfRangeMsg);
 
         _ = RuleFor(vm => vm.BoardSize)
-            .Must(boardSize => boardSize <= BoardSettings.MaxBoardSizeForAllSolutions)
+            .Must(boardSize => boardSize <= BoardSettings.MaxBoardSizeInAllSolutions)
             .When(vm => vm.SolutionMode == SolutionMode.All)
             .WithMessage(_ => Messages.AllSizeOutOfRangeMsg);
     }

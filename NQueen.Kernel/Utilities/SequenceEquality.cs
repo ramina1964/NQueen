@@ -5,11 +5,8 @@ public class SequenceEquality<T> : IEqualityComparer<IEnumerable<T>>
     // Constant related to hash table
     public const int HashConstant = 37;
 
-    public bool Equals(IEnumerable<T> x, IEnumerable<T> y)
-    {
-        return x.SequenceEqual(y);
-    }
+    public bool Equals(IEnumerable<T> x, IEnumerable<T> y) => x.SequenceEqual(y);
 
-    public int GetHashCode(IEnumerable<T> seq) => seq.Aggregate(1234567, (current, elem) =>
-                                                           current * HashConstant + elem.GetHashCode());
+    public int GetHashCode(IEnumerable<T> seq) =>
+        seq.Aggregate(1234567, (current, elem) => current * HashConstant + elem.GetHashCode());
 }

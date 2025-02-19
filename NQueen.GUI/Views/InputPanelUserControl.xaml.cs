@@ -39,6 +39,6 @@ public partial class InputPanelUserControl : UserControl
             _mainViewModel.IsInputValid = validationResult.IsValid;
         }
     }
-    
+
     private readonly MainViewModel _mainViewModel;
 }

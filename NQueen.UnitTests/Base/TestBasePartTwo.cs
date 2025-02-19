@@ -3,20 +3,11 @@
 public partial class TestBase
 {
     #region PrivateAttributes
-    private static List<byte[]> GetExpectedSingleSolution(byte boardSize)
-    {
-        return _expectedSingleSolutions[boardSize];
-    }
+    private static List<byte[]> GetExpectedSingleSolution(byte boardSize) => _expectedSingleSolutions[boardSize];
 
-    private static List<byte[]> GetExpectedUniqueSolutions(byte boardSize)
-    {
-        return _expectedUniqueSolutions[boardSize];
-    }
+    private static List<byte[]> GetExpectedUniqueSolutions(byte boardSize) => _expectedUniqueSolutions[boardSize];
 
-    private static List<byte[]> GetExpectedAllSolutions(byte boardSize)
-    {
-        return _expectedAllSolutions[boardSize];
-    }
+    private static List<byte[]> GetExpectedAllSolutions(byte boardSize) => _expectedAllSolutions[boardSize];
 
     private static readonly Dictionary<byte, List<byte[]>> _expectedSingleSolutions = new()
     {
