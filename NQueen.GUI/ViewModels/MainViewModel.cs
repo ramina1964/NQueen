@@ -187,7 +187,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 
     private CancellationTokenSource CancelationTokenSource { get; set; }
 
-    private void Initialize(byte boardSize = BoardSettings.DefaultBoardSize,
+    public void Initialize(byte boardSize = BoardSettings.DefaultBoardSize,
         SolutionMode solutionMode = SolutionHelper.DefaultSolutionMode,
         DisplayMode displayMode = SolutionHelper.DefaultDisplayMode)
     {
@@ -301,65 +301,18 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 
     partial void OnBoardSizeChanged(byte value)
     {
-        // Validate the new board size
-        var validationResult = InputViewModel.Validate(this);
-
-        if (validationResult.IsValid == false)
-        {
-            // Handle validation failure (e.g., display an error message)
-            ValidationError = validationResult.Errors.First().ErrorMessage;
-            HasValidationError = true;
-            IsValid = false;
-            IsInputValid = false;
-            UpdateButtonFunctionality();
-            return;
-        }
-
-        // Clear validation error if validation passes
-        ValidationError = string.Empty;
-        HasValidationError = false;
-        IsValid = true;
-        IsInputValid = true;
-
-        // Proceed with initialization and GUI update
-        Initialize(value, SolutionMode, DisplayMode);
-        UpdateGui();
-        UpdateButtonFunctionality();
-    }
-
-    partial void OnSolutionModeChanged(SolutionMode oldValue, SolutionMode newValue)
-    {
-        // Validate the board size again when the solution mode changes
-        var validationResult = InputViewModel.Validate(this);
-
-        if (!validationResult.IsValid)
-        {
-            // Handle validation failure (e.g., display an error message)
-            ValidationError = validationResult.Errors.First().ErrorMessage;
-            HasValidationError = true;
-            IsValid = false;
-            IsInputValid = false;
-            UpdateButtonFunctionality();
-            return;
-        }
-
-        // Clear validation error if validation passes
-        ValidationError = string.Empty;
-        HasValidationError = false;
-        IsValid = true;
-        IsInputValid = true;
-
-        // If validation passes, proceed with initialization and GUI update
-        Initialize(BoardSize, newValue, DisplayMode);
-        UpdateGui();
-        UpdateButtonFunctionality();
-    }
-
-    partial void OnDisplayModeChanged(DisplayMode oldValue, DisplayMode newValue)
-    {
+        _eventManager.OnBoardSizeChanged();
         Validate();
-        UpdateButtonFunctionality();
     }
+
+    partial void OnSolutionModeChanged(SolutionMode value)
+    {
+        _eventManager.OnSolutionModeChanged(value);
+        Validate();
+    }
+
+    partial void OnDisplayModeChanged(DisplayMode oldValue, DisplayMode newValue) =>
+        _eventManager.OnDisplayModeChanged();
 
     partial void OnSelectedSolutionChanged(Solution oldValue, Solution newValue) =>
         Chessboard?.PlaceQueens(newValue?.Positions);
@@ -369,6 +322,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         var validationResult = InputViewModel.Validate(this);
         IsValid = validationResult.IsValid;
         IsInputValid = validationResult.IsValid;
+        IsSimulateButtonEnabled = validationResult.IsValid;
         UpdateButtonFunctionality();
     }
 
@@ -378,10 +332,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
                EqualityComparer<InputViewModel>.Default.Equals(InputViewModel, model.InputViewModel);
     }
 
-    public override int GetHashCode()
-    {
-        return HashCode.Combine(InputViewModel);
-    }
+    public override int GetHashCode() =>
+        HashCode.Combine(InputViewModel);
 
     private readonly EventManager _eventManager;
     private ICommandManager _commandManager;

@@ -5,7 +5,7 @@ public class SimulationResults
     public SimulationResults(IEnumerable<Solution> solutions)
     {
         Debug.Assert(solutions != null, "allSolutions != null");
-        var enumerable = solutions as IList<Solution> ?? solutions.ToList();
+        var enumerable = solutions as IList<Solution> ?? [.. solutions];
         var sol = enumerable.FirstOrDefault();
         if (sol == null)
         {

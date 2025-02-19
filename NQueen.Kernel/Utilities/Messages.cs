@@ -2,20 +2,20 @@
 
 public static class Messages
 {
-    public const string InvalidByteError = "Board size must be a whole number inside [1 and 255].";
+    public const string InvalidByteError = "Enter board size inside: [1, 255].";
     public const string NoSolutionMessage = "No Solutions found. Try a larger board size!";
     public const string ValueNullOrWhiteSpaceMsg =
-        "Board size can not be null, empty or contain exclusively spaces.";
+        "Board size: Not null, Empty or Exclusively White Spaces.";
 
     public static string SizeTooSmallMsg =>
-        $"Board size must be greater than or equal to {BoardSettings.MinBoardSize}.";
+        $"Enter board size inside: Board Size >= {BoardSettings.MinBoardSize}";
 
     public static string SingleSizeOutOfRangeMsg =>
-        $"Board size for Single Solutions must be inside [1, {BoardSettings.MaxBoardSizeInSingleSolution}].";
+        $"Enter board size inside: [1, {BoardSettings.MaxBoardSizeInSingleSolution}].";
 
     public static string UniqueSizeOutOfRangeMsg =>
-        $"Board size for Unique Solutions must be inside [1, {BoardSettings.MaxBoardSizeInUniqueSolutions}].";
+        $"Enter board size inside: [1, {BoardSettings.MaxBoardSizeInUniqueSolutions}].";
 
     public static string AllSizeOutOfRangeMsg =>
-        $"Board size for All Solutions must be inside [1, {BoardSettings.MaxBoardSizeInAllSolutions}].";
+        $"Enter board size inside: [1, {BoardSettings.MaxBoardSizeInAllSolutions}].";
 }

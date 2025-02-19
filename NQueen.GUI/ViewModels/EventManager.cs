@@ -16,6 +16,72 @@ public class EventManager(MainViewModel mainViewModel)
         mainViewModel.Solver.SolutionFound -= OnSolutionFound;
     }
 
+    public void OnBoardSizeChanged()
+    {
+        var validationResult = mainViewModel.InputViewModel.Validate(mainViewModel);
+        mainViewModel.IsValid = validationResult.IsValid;
+
+        if (mainViewModel.IsValid == false)
+        {
+            mainViewModel.IsIdle = false;
+            mainViewModel.IsSimulating = false;
+            mainViewModel.IsSimulateButtonEnabled = false;
+            mainViewModel.ValidationError = validationResult.Errors.First().ErrorMessage;
+            mainViewModel.HasValidationError = true;
+            mainViewModel.InputViewModel.ErrorMessage = validationResult.Errors.First().ErrorMessage;
+            mainViewModel.InputViewModel.IsErrorVisible = true;
+        }
+        else
+        {
+            mainViewModel.IsIdle = true;
+            mainViewModel.IsSimulating = false;
+            mainViewModel.IsOutputReady = false;
+            mainViewModel.IsSimulateButtonEnabled = true;
+            mainViewModel.ValidationError = string.Empty;
+            mainViewModel.HasValidationError = false;
+            mainViewModel.InputViewModel.ErrorMessage = string.Empty;
+            mainViewModel.InputViewModel.IsErrorVisible = false;
+            mainViewModel.UpdateButtonFunctionality();
+            mainViewModel.UpdateGui();
+        }
+    }
+
+    public void OnSolutionModeChanged(SolutionMode value)
+    {
+        mainViewModel.SolutionMode = value;
+        var validationResult = mainViewModel.InputViewModel.Validate(mainViewModel);
+
+        if (validationResult.IsValid == false)
+        {
+            mainViewModel.ValidationError = validationResult.Errors.First().ErrorMessage;
+            mainViewModel.HasValidationError = true;
+            mainViewModel.IsValid = false;
+            mainViewModel.IsInputValid = false;
+            mainViewModel.IsSimulateButtonEnabled = false;
+            mainViewModel.InputViewModel.ErrorMessage = validationResult.Errors.First().ErrorMessage;
+            mainViewModel.InputViewModel.IsErrorVisible = true;
+            mainViewModel.UpdateButtonFunctionality();
+            return;
+        }
+
+        mainViewModel.ValidationError = string.Empty;
+        mainViewModel.HasValidationError = false;
+        mainViewModel.IsValid = true;
+        mainViewModel.IsInputValid = true;
+        mainViewModel.IsSimulateButtonEnabled = true;
+        mainViewModel.InputViewModel.ErrorMessage = string.Empty;
+        mainViewModel.InputViewModel.IsErrorVisible = false;
+
+        mainViewModel.Initialize(mainViewModel.BoardSize, value, mainViewModel.DisplayMode);
+        mainViewModel.UpdateButtonFunctionality();
+
+        // Only update the GUI if the board size is valid
+        if (mainViewModel.IsValid)
+        {
+            mainViewModel.UpdateGui();
+        }
+    }
+
     private void OnProgressValueChanged(object sender, ProgressValueChangedEventArgs e)
     {
         mainViewModel.ProgressValue = e.Value;
@@ -56,130 +122,9 @@ public class EventManager(MainViewModel mainViewModel)
         mainViewModel.SelectedSolution = sol;
     }
 
-    // Partial Methods
-    #region Partial Methods
-    public void OnSelectedSolutionChanged(Solution value)
+    public void OnDisplayModeChanged()
     {
-        if (value != null)
-        {
-            mainViewModel.Chessboard?.PlaceQueens(value.Positions);
-
-            // Call DisplaySolution on ChessboardUserControl
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                if (Application.Current.MainWindow is MainView mainView)
-                {
-                    var chessboardUserControl = mainView.FindName("ChessboardControl") as ChessboardUserControl;
-                    chessboardUserControl?.DisplaySolution(value.Positions);
-                }
-            });
-        }
-    }
-
-    public void OnProgressValueChanged(double value)
-    {
-        mainViewModel.ProgressLabel = $"{value} %";
-    }
-
-    public void OnProgressVisibilityChanged(Visibility value)
-    {
-        mainViewModel.IsProgressBarOffscreen = value != Visibility.Visible;
-    }
-
-    public void OnProgressLabelVisibilityChanged(Visibility value)
-    {
-        mainViewModel.IsProgressLabelOffscreen = value != Visibility.Visible;
-    }
-
-    public void OnDelayInMillisecondsChanged(int value)
-    {
-        mainViewModel.Solver.DelayInMilliseconds = value;
-    }
-
-    public void OnSolutionModeChanged(SolutionMode value)
-    {
-        if (mainViewModel.Solver == null)
-        {
-            return;
-        }
-
-        mainViewModel.SolutionTitle = (value == SolutionMode.Single)
-            ? $"Solution"
-            : $"Solutions (Max: {SolutionHelper.MaxNoOfSolutionsInOutput})";
-
-        mainViewModel.IsValid = mainViewModel.InputViewModel.Validate(mainViewModel).IsValid;
-
-        if (mainViewModel.IsValid == false)
-        {
-            mainViewModel.IsIdle = false;
-            mainViewModel.IsSimulating = false;
-            mainViewModel.IsOutputReady = false;
-            mainViewModel.InputViewModel.ErrorMessage = mainViewModel.InputViewModel.Validate(mainViewModel).Errors.FirstOrDefault()?.ErrorMessage;
-            mainViewModel.InputViewModel.IsErrorVisible = true;
-            mainViewModel.CommandManager.SimulateCommand.NotifyCanExecuteChanged();
-            return;
-        }
-
-        mainViewModel.IsIdle = true;
-        mainViewModel.IsSimulating = false;
-        mainViewModel.InputViewModel.IsErrorVisible = false;
-        mainViewModel.UpdateGui();
-        mainViewModel.CommandManager.SimulateCommand.NotifyCanExecuteChanged();
-    }
-
-
-    public void OnDisplayModeChanged(DisplayMode value)
-    {
-        mainViewModel.IsValid = mainViewModel.InputViewModel.Validate(mainViewModel).IsValid;
-
-        if (mainViewModel.IsValid)
-        {
-            mainViewModel.IsIdle = true;
-            mainViewModel.IsVisualized = value == DisplayMode.Visualize;
-            mainViewModel.UpdateGui();
-        }
-    }
-
-    public void OnBoardSizeChanged(byte value)
-    {
-        mainViewModel.IsValid = mainViewModel.InputViewModel.Validate(mainViewModel).IsValid;
-
-        if (mainViewModel.IsValid == false)
-        {
-            mainViewModel.IsIdle = false;
-            mainViewModel.IsSimulating = false;
-        }
-        else
-        {
-            mainViewModel.IsIdle = true;
-            mainViewModel.IsSimulating = false;
-            mainViewModel.IsOutputReady = false;
-            mainViewModel.UpdateButtonFunctionality();
-            mainViewModel.UpdateGui();
-        }
-    }
-
-    public void OnNoOfSolutionsChanged(string value) { }
-
-    public void OnIsSimulatingChanged(bool value)
-    {
+        mainViewModel.InputViewModel.Validate(mainViewModel);
         mainViewModel.UpdateButtonFunctionality();
     }
-
-    public void OnIsInInputModeChanged(bool value)
-    {
-        mainViewModel.UpdateButtonFunctionality();
-    }
-
-    public void OnIsIdleChanged(bool value)
-    {
-        mainViewModel.UpdateButtonFunctionality();
-    }
-
-    public void OnIsOutputReadyChanged(bool value)
-    {
-        mainViewModel.UpdateButtonFunctionality();
-    }
-
-    #endregion Partial Methods
 }

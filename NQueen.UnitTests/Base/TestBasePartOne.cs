@@ -12,12 +12,11 @@ public partial class TestBase(ISolverBackEnd sut)
                ? [.. GetExpectedUniqueSolutions(boardSize)]
                : [.. GetExpectedAllSolutions(boardSize)];
 
-    public List<byte[]> GetActualSolutions(byte boardSize, SolutionMode solutionMode) => Sut
+    public List<byte[]> GetActualSolutions(byte boardSize, SolutionMode solutionMode) => [.. Sut
                .GetResultsAsync(boardSize, solutionMode)
                .Result
                .Solutions
-               .Select(sol => sol.QueenPositions)
-               .ToList();
+               .Select(sol => sol.QueenPositions)];
 
     protected readonly ISolverBackEnd Sut = sut
         ?? throw new ArgumentNullException(nameof(sut));

@@ -66,7 +66,7 @@ public class Solution
         return sb.ToString();
     }
 
-    private static List<Position> SetPositions(IEnumerable<byte> queenPositions) => queenPositions.Select((item, index) =>
-                                                                                             new Position((byte)index, item)).ToList();
+    private static List<Position> SetPositions(IEnumerable<byte> queenPositions) =>
+        [.. queenPositions.Select((item, index) => new Position((byte)index, item))];
     #endregion PrivateMembers
 }

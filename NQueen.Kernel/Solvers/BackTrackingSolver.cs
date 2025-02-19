@@ -128,7 +128,7 @@ public class BackTrackingSolver : ISolver, IDisposable
         BoardSize = boardSize;
         _cancelationTokenSource = new CancellationTokenSource();
         HalfBoardSize = GetHalfSize();
-        QueenPositions = Enumerable.Repeat(BoardSettings.ByteMaxValue, BoardSize).ToArray();
+        QueenPositions = [.. Enumerable.Repeat(BoardSettings.ByteMaxValue, BoardSize)];
         Solutions = new HashSet<byte[]>(new SequenceEquality<byte>());
     }
 
