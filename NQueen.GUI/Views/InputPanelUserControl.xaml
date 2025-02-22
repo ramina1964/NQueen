@@ -25,7 +25,7 @@
             Foreground="Red"
             Text="{Binding InputViewModel.ErrorMessage}"
             Visibility="{Binding InputViewModel.IsErrorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
-            AutomationProperties.Name="Error Message" />
+            AutomationProperties.Name="errorMessageTextBlock" />
 
         <GroupBox
             HorizontalAlignment="Stretch"
@@ -36,7 +36,7 @@
             BorderBrush="Black"
             BorderThickness="1"
             Header="Input"
-            AutomationProperties.Name="Input Group">
+            AutomationProperties.Name="inputGroupBox">
 
             <Grid
                 Margin="5"
@@ -60,14 +60,14 @@
                     Margin="5,2"
                     Content="Board Size"
                     Style="{StaticResource LabelStyle}"
-                    AutomationProperties.Name="Board Size Label" />
+                    AutomationProperties.Name="boardSizeLabel" />
 
                 <TextBox
-                    x:Name="TxtBoardSize"
+                    x:Name="txtBoardSize"
                     Grid.Row="0"
                     Grid.Column="1"
                     Margin="5,2"
-                    AutomationProperties.Name="Board Size"
+                    AutomationProperties.Name="boardSizeTextBox"
                     IsEnabled="{Binding IsInInputMode}"
                     LostFocus="TxtBoardSize_LostFocus"
                     HorizontalContentAlignment="Right"
@@ -81,15 +81,15 @@
                     Margin="5,2"
                     Content="Solution Mode"
                     Style="{StaticResource LabelStyle}"
-                    AutomationProperties.Name="Solution Mode Label" />
+                    AutomationProperties.Name="solutionModeLabel" />
 
                 <ComboBox
-                    x:Name="CmbSolutionMode"
+                    x:Name="cmbSolutionMode"
                     Grid.Row="1"
                     Grid.Column="1"
                     Height="{x:Static utils:Dimensions.ComboBoxHeight}"
                     Margin="5,2"
-                    AutomationProperties.Name="Solution Mode"
+                    AutomationProperties.Name="solutionModeComboBox"
                     IsEnabled="{Binding IsInInputMode}"
                     ItemsSource="{Binding SolutionModeList, Mode=TwoWay}"
                     SelectedItem="{Binding SolutionMode}"
@@ -102,15 +102,15 @@
                     Margin="5,2"
                     Content="Display Mode"
                     Style="{StaticResource LabelStyle}"
-                    AutomationProperties.Name="Display Mode Label" />
+                    AutomationProperties.Name="displayModeLabel" />
 
                 <ComboBox
-                    x:Name="CmbDisplayMode"
+                    x:Name="cmbDisplayMode"
                     Grid.Row="2"
                     Grid.Column="1"
                     Height="{x:Static utils:Dimensions.ComboBoxHeight}"
                     Margin="5,2"
-                    AutomationProperties.Name="Display Mode"
+                    AutomationProperties.Name="displayModeComboBox"
                     IsEnabled="{Binding IsInInputMode}"
                     ItemsSource="{Binding DisplayModeList, Mode=TwoWay}"
                     SelectedItem="{Binding DisplayMode}"
@@ -123,15 +123,15 @@
                     Margin="5,2"
                     Content="Delay in Milisec"
                     Style="{StaticResource LabelStyle}"
-                    AutomationProperties.Name="Delay in Milisec Label" />
+                    AutomationProperties.Name="delayInMillisecondsLabel" />
 
                 <Slider
-                    x:Name="SldDelayInMilliseconds"
+                    x:Name="sldDelayInMilliseconds"
                     Grid.Row="3"
                     Grid.Column="1"
                     Height="25"
                     Margin="5"
-                    AutomationProperties.Name="Delay in Milisec"
+                    AutomationProperties.Name="delayInMillisecondsSlider"
                     IsEnabled="{Binding IsVisualized}"
                     Maximum="3000"
                     Minimum="10"

@@ -2,10 +2,11 @@
 
 public partial class InputPanelUserControl : UserControl
 {
+
     public InputPanelUserControl(MainViewModel mainViewModel)
     {
         InitializeComponent();
-        _mainViewModel = mainViewModel;
+        _mainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
         DataContext = _mainViewModel;
     }
 
@@ -14,7 +15,7 @@ public partial class InputPanelUserControl : UserControl
         if (sender is TextBox textBox)
         {
             // Validate the input string format
-            if (InputValidator.IsBoardSizeFormattedCorrectly(textBox.Text) == false)
+            if (!InputValidator.IsBoardSizeFormattedCorrectly(textBox.Text))
             {
                 _mainViewModel.InputViewModel.ErrorMessage = Messages.InvalidByteError;
                 _mainViewModel.InputViewModel.IsErrorVisible = true;

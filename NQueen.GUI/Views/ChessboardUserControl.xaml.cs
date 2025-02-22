@@ -5,8 +5,8 @@ public partial class ChessboardUserControl : UserControl
     public ChessboardUserControl(MainViewModel mainViewModel)
     {
         InitializeComponent();
-        DataContext = mainViewModel
-            ?? throw new ArgumentNullException(nameof(mainViewModel));
+        _mainViewModel = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
+        DataContext = _mainViewModel;
     }
 
     public void DisplaySolution(List<Position> positions)
@@ -23,4 +23,6 @@ public partial class ChessboardUserControl : UserControl
 
         chessboardViewModel.PlaceQueens(positions);
     }
+
+    private readonly MainViewModel _mainViewModel;
 }
