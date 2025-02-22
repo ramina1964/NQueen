@@ -8,7 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:utils="clr-namespace:NQueen.Kernel.Utilities;assembly=NQueen.Kernel"
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
-    x:Name="ChessboardControl"
+    x:Name="chessboardControl"
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
     AutomationProperties.Name="ChessboardControl"
     mc:Ignorable="d">
@@ -18,7 +18,7 @@
     </UserControl.Resources>
 
     <Grid
-        x:Name="ChessboardGrid"
+        x:Name="chessboardGrid"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         AutomationProperties.Name="ChessboardGrid">
@@ -27,7 +27,7 @@
         </Grid.RowDefinitions>
 
         <ItemsControl
-            x:Name="ChessboardItemsControl"
+            x:Name="chessboardItemsControl"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             AutomationProperties.Name="ChessboardItemsControl"
@@ -41,13 +41,13 @@
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <Border
-                        x:Name="ChessboardSquareBorder"
+                        x:Name="chessboardSquareBorder"
                         Width="{Binding Width}"
                         Height="{Binding Height}"
                         AutomationProperties.Name="ChessboardSquareBorder"
                         Background="{Binding Color}">
                         <Image
-                            x:Name="ChessboardSquareImage"
+                            x:Name="chessboardSquareImage"
                             Width="{Binding Width}"
                             Height="{Binding Height}"
                             helpers:AutomationPropertiesHelper.IsOffscreen="{Binding IsOffscreen}"
