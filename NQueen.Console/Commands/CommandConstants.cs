@@ -13,6 +13,8 @@ public static class CommandConst
 
     public const string InvalidCommand = "Invalid command. Please try again.";
     public const string CommandEmptyError = "Command key cannot be empty.";
+    
+    // Todo: Remove or change this property.
     public const string InvalidBoardSize = "Invalid Board Size. Please Try again.";
     public const string InvalidSolutionMode = "Invalid Solution Mode. Please try 0, 1, or 2.";
 

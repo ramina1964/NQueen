@@ -47,10 +47,10 @@ public static class DispatchUtils
         return board;
     }
 
-    public static (bool isValid, byte boardSize) CheckBoardSize(
+    public static (bool isValid, int boardSize) CheckBoardSize(
         string value, SolutionMode solutionMode)
     {
-        if (byte.TryParse(value, out byte size) == false)
+        if (int.TryParse(value, out int size) == false)
         {
             HelpCommands.ShowExitError(CommandConst.InvalidBoardSize);
             return (false, 0);

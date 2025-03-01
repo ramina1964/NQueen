@@ -13,7 +13,7 @@ public class BoardSizeConverter : IValueConverter
         {
             switch (input)
             {
-                case string _ when byte.TryParse(input, out byte byteResult):
+                case string _ when int.TryParse(input, out int byteResult):
                     return byteResult;
 
                 case string _ when int.TryParse(input, out int intResult):
@@ -31,7 +31,7 @@ public class BoardSizeConverter : IValueConverter
         return DependencyProperty.UnsetValue;
     }
 
-    private void SetErrorMessage(string message)
+    private static void SetErrorMessage(string message)
     {
         if (Application.Current.MainWindow.DataContext is MainViewModel mainViewModel)
         {

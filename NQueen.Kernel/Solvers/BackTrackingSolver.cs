@@ -55,7 +55,7 @@ public class BackTrackingSolver : ISolver, IDisposable
     }
 
     public async Task<SimulationResults> GetResultsAsync(
-        byte boardSize,
+        int boardSize,
         SolutionMode solutionMode,
         DisplayMode displayMode = DisplayMode.Hide)
     {
@@ -82,11 +82,11 @@ public class BackTrackingSolver : ISolver, IDisposable
     #region PublicProperties
     public ISolutionManager SolutionManager { get; }
 
-    public byte BoardSize { get; set; }
+    public int BoardSize { get; set; }
 
     public int NoOfSolutions => Solutions.Count;
 
-    public byte HalfBoardSize { get; set; }
+    public int HalfBoardSize { get; set; }
 
     public byte[] QueenPositions { get; set; }
 
@@ -95,7 +95,7 @@ public class BackTrackingSolver : ISolver, IDisposable
     #endregion PublicProperties
 
     #region PublicMethods
-    public byte GetHalfSize() => (byte)(BoardSize % 2 == 0 ? BoardSize / 2 : BoardSize / 2 + 1);
+    public int GetHalfSize() => BoardSize % 2 == 0 ? BoardSize / 2 : BoardSize / 2 + 1;
 
     public void OnProgressChanged(object sender, ProgressValueChangedEventArgs e) => ProgressValueChanged?.Invoke(this, e);
 
@@ -123,7 +123,7 @@ public class BackTrackingSolver : ISolver, IDisposable
     #endregion
 
     #region PrivateMethods
-    private void Initialize(byte boardSize = BoardSettings.DefaultBoardSize)
+    private void Initialize(int boardSize = BoardSettings.DefaultBoardSize)
     {
         BoardSize = boardSize;
         _cancelationTokenSource = new CancellationTokenSource();

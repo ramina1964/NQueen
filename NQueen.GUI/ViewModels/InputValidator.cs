@@ -33,6 +33,7 @@ public class InputValidator : AbstractValidator<MainViewModel>
             .WithMessage(_ => Messages.AllSizeOutOfRangeMsg);
     }
 
+    // Todo: Remove or change this property.
     public static bool IsBoardSizeFormattedCorrectly(string boardSize)
     {
         return byte.TryParse(boardSize, out byte result) &&

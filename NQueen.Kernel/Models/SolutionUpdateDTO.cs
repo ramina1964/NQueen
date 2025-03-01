@@ -2,7 +2,7 @@
 
 public class SolutionUpdateDTO
 {
-    public byte BoardSize { get; set; }
+    public int BoardSize { get; set; }
 
     public SolutionMode SolutionMode { get; set; }
 

@@ -11,8 +11,8 @@
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
     d:DesignHeight="450"
     d:DesignWidth="800"
-    mc:Ignorable="d"
-    DataContext="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext}">
+    DataContext="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext}"
+    mc:Ignorable="d">
 
     <UserControl.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
@@ -21,13 +21,14 @@
     <StackPanel>
         <!--  Error Message TextBlock  -->
         <TextBlock
+            Name="ErrorMessage"
             Margin="0,0,0,10"
             Foreground="Red"
             Text="{Binding InputViewModel.ErrorMessage}"
-            Visibility="{Binding InputViewModel.IsErrorVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
-            AutomationProperties.Name="Error Message" />
+            Visibility="{Binding InputViewModel.IsErrorVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
         <GroupBox
+            x:Name="InputGroup"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             HorizontalContentAlignment="Left"
@@ -35,8 +36,7 @@
             Background="Bisque"
             BorderBrush="Black"
             BorderThickness="1"
-            Header="Input"
-            AutomationProperties.Name="Input Group">
+            Header="Input">
 
             <Grid
                 Margin="5"
@@ -55,33 +55,33 @@
                 </Grid.ColumnDefinitions>
 
                 <Label
+                    x:Name="BoardSizeLabel"
                     Grid.Row="0"
                     Grid.Column="0"
                     Margin="5,2"
                     Content="Board Size"
-                    Style="{StaticResource LabelStyle}"
-                    AutomationProperties.Name="Board Size Label" />
+                    Style="{StaticResource LabelStyle}" />
 
                 <TextBox
                     x:Name="TxtBoardSize"
                     Grid.Row="0"
                     Grid.Column="1"
                     Margin="5,2"
-                    AutomationProperties.Name="Board Size"
-                    IsEnabled="{Binding IsInInputMode}"
-                    LostFocus="TxtBoardSize_LostFocus"
                     HorizontalContentAlignment="Right"
                     VerticalContentAlignment="Center"
+                    IsEnabled="{Binding IsInInputMode}"
+                    LostFocus="TxtBoardSize_LostFocus"
+                    TabIndex="0"
                     Text="{Binding BoardSize, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource BoardSizeConverter}}"
-                    TabIndex="0" />
+                    AutomationProperties.Name="Board Size" />
 
                 <Label
+                    x:Name="SolutionModeLabel"
                     Grid.Row="1"
                     Grid.Column="0"
                     Margin="5,2"
                     Content="Solution Mode"
-                    Style="{StaticResource LabelStyle}"
-                    AutomationProperties.Name="Solution Mode Label" />
+                    Style="{StaticResource LabelStyle}" />
 
                 <ComboBox
                     x:Name="CmbSolutionMode"
@@ -89,20 +89,20 @@
                     Grid.Column="1"
                     Height="{x:Static utils:Dimensions.ComboBoxHeight}"
                     Margin="5,2"
-                    AutomationProperties.Name="Solution Mode"
                     IsEnabled="{Binding IsInInputMode}"
                     ItemsSource="{Binding SolutionModeList, Mode=TwoWay}"
                     SelectedItem="{Binding SolutionMode}"
                     Style="{StaticResource ComboBoxStyle}"
-                    TabIndex="1" />
+                    TabIndex="1"
+                    AutomationProperties.Name="Solution Mode" />
 
                 <Label
+                    x:Name="DisplayModeLabel"
                     Grid.Row="2"
                     Grid.Column="0"
                     Margin="5,2"
                     Content="Display Mode"
-                    Style="{StaticResource LabelStyle}"
-                    AutomationProperties.Name="Display Mode Label" />
+                    Style="{StaticResource LabelStyle}" />
 
                 <ComboBox
                     x:Name="CmbDisplayMode"
@@ -110,20 +110,20 @@
                     Grid.Column="1"
                     Height="{x:Static utils:Dimensions.ComboBoxHeight}"
                     Margin="5,2"
-                    AutomationProperties.Name="Display Mode"
                     IsEnabled="{Binding IsInInputMode}"
                     ItemsSource="{Binding DisplayModeList, Mode=TwoWay}"
                     SelectedItem="{Binding DisplayMode}"
                     Style="{StaticResource ComboBoxStyle}"
-                    TabIndex="2" />
+                    TabIndex="2"
+                    AutomationProperties.Name="Display Mode" />
 
                 <Label
+                    x:Name="DelayInMilisecLabel"
                     Grid.Row="3"
                     Grid.Column="0"
                     Margin="5,2"
                     Content="Delay in Milisec"
-                    Style="{StaticResource LabelStyle}"
-                    AutomationProperties.Name="Delay in Milisec Label" />
+                    Style="{StaticResource LabelStyle}" />
 
                 <Slider
                     x:Name="SldDelayInMilliseconds"
@@ -131,13 +131,12 @@
                     Grid.Column="1"
                     Height="25"
                     Margin="5"
-                    AutomationProperties.Name="Delay in Milisec"
                     IsEnabled="{Binding IsVisualized}"
                     Maximum="3000"
                     Minimum="10"
                     Style="{StaticResource SliderStyle}"
-                    Value="{Binding DelayInMilliseconds}"
-                    TabIndex="3" />
+                    TabIndex="3"
+                    Value="{Binding DelayInMilliseconds}" />
             </Grid>
         </GroupBox>
     </StackPanel>

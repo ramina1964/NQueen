@@ -43,7 +43,7 @@
 
         <!--  Selected Solution -->
         <view:SelectedSolutionUserControl
-            x:Name="SelectedSolutionUserControl"
+            x:Name="SelectedSolution"
             Grid.Row="0"
             Grid.Column="0"
             Grid.ColumnSpan="3"
@@ -52,7 +52,7 @@
 
         <!-- Solution List -->
         <view:SolutionListUserControl
-            x:Name="SolutionListUserControl"
+            x:Name="SolutionList"
             Grid.Row="1"
             Grid.Column="0"
             Margin="5,5,0,5"
@@ -61,7 +61,7 @@
 
         <!-- Chessboard -->
         <ContentControl
-            x:Name="ChessboardPlaceholder"
+            x:Name="Chessboard"
             Grid.Row="1"
             Grid.Column="1"
             Margin="0,5"
@@ -84,19 +84,19 @@
 
             <!-- Input Panel -->
             <ContentControl
-                x:Name="InputPanelPlaceHolder"
+                x:Name="InputPanel"
                 Grid.Row="0"
                 AutomationProperties.Name="InputPanelPlaceholder" />
 
             <!--  Solution Summary Panel  -->
             <view:SolutionSummaryUserControl
-                x:Name="SolutionSummaryUserControl"
+                x:Name="SolutionSummary"
                 Grid.Row="1"
                 AutomationProperties.Name="SolutionSummaryPanel" />
 
             <!--  Simulation Panel  -->
             <ContentControl
-                x:Name="SimulationPanelPlaceHolder"
+                x:Name="SimulationPanel"
                 Grid.Row="2"
                 AutomationProperties.Name="SimulationPanelPlaceholder" />
 

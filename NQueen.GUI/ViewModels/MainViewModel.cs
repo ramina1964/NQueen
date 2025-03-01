@@ -134,7 +134,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     private DisplayMode _displayMode;
 
     [ObservableProperty]
-    private byte _boardSize;
+    private int _boardSize;
 
     [ObservableProperty]
     private bool _isValid;
@@ -187,7 +187,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 
     private CancellationTokenSource CancelationTokenSource { get; set; }
 
-    public void Initialize(byte boardSize = BoardSettings.DefaultBoardSize,
+    public void Initialize(int boardSize = BoardSettings.DefaultBoardSize,
         SolutionMode solutionMode = SolutionHelper.DefaultSolutionMode,
         DisplayMode displayMode = SolutionHelper.DefaultDisplayMode)
     {
@@ -215,7 +215,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         NoOfSolutions = "0";
         ElapsedTimeInSec = $"{0}";
         MemoryUsage = "0";
-        Chessboard?.CreateSquares(BoardSize, []);
+        Chessboard?.CreateSquares((byte)BoardSize, []);
     }
 
     public void UpdateButtonFunctionality()
@@ -293,13 +293,13 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             WindowHeight = boardDimension
         };
 
-        Chessboard.CreateSquares(BoardSize, []);
+        Chessboard.CreateSquares((byte)BoardSize, []);
 
         IsIdle = true;
         IsSimulating = false;
     }
 
-    partial void OnBoardSizeChanged(byte value)
+    partial void OnBoardSizeChanged(int value)
     {
         _eventManager.OnBoardSizeChanged();
         Validate();

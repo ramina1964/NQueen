@@ -20,7 +20,7 @@ public class SimulationResults
         }
     }
 
-    public byte BoardSize { get; set; }
+    public int BoardSize { get; set; }
 
     public int NoOfSolutions { get; set; }
 
