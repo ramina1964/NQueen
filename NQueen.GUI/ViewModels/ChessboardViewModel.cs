@@ -10,7 +10,7 @@ public class ChessboardViewModel : ObservableObject
 
     public string QueenImagePath { get; }
 
-    public ObservableCollection<SquareViewModel> Squares { get; set; } = new();
+    public ObservableCollection<SquareViewModel> Squares { get; set; }
 
     public double WindowWidth { get; set; }
 
@@ -33,11 +33,6 @@ public class ChessboardViewModel : ObservableObject
             {
                 square.ImagePath = QueenImagePath;
                 square.IsOffscreen = false;
-                square.BoundingRectangle = new Rect(
-                    square.Position.ColumnNo * square.Width,
-                    square.Position.RowNo * square.Height,
-                    square.Width,
-                    square.Height);
             }
         }
     }
@@ -59,34 +54,33 @@ public class ChessboardViewModel : ObservableObject
             for (byte j = 0; j < boardSize; j++)
             {
                 var pos = new Position(i, j);
-                var square = new SquareViewModel(pos, FindColor(pos), width, height)
+                var square = new SquareViewModel(pos, FindColor(pos))
                 {
                     ImagePath = null,
-                    IsOffscreen = true,
-                    BoundingRectangle = new Rect(j * width, i * height, width, height)
+                    Height = height,
+                    Width = width,
+                    IsOffscreen = true
                 };
 
                 sqList.Add(square);
             }
         }
 
-        Squares = new ObservableCollection<SquareViewModel>(sqList
+        sqList
             .OrderByDescending(sq => sq.Position.ColumnNo)
-            .ThenBy(sq => sq.Position.RowNo).ToList());
+            .ThenBy(sq => sq.Position.RowNo).ToList()
+            .ForEach(sq => Squares.Add(sq));
     }
 
     private void ClearImages()
     {
-        foreach (var sq in Squares)
-        {
-            sq.ImagePath = null;
-            sq.IsOffscreen = true;
-            sq.BoundingRectangle = new Rect(
-                sq.Position.ColumnNo * sq.Width,
-                sq.Position.RowNo * sq.Height,
-                sq.Width,
-                sq.Height);
-        }
+        Squares
+            .ToList()
+            .ForEach(sq =>
+            {
+                sq.ImagePath = null;
+                sq.IsOffscreen = true;
+            });
     }
 
     private static SolidColorBrush FindColor(Position pos)

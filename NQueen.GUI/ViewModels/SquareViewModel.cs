@@ -1,29 +1,10 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public class SquareViewModel : ObservableObject
+public class SquareViewModel(Position pos, Brush color) : ObservableObject
 {
-    public SquareViewModel(Position pos, Brush color, double width, double height)
-    {
-        Position = pos;
-        Color = color;
-        Width = width;
-        Height = height;
-        BoundingRectangle = new Rect(
-            Position.ColumnNo * Width,
-            Position.RowNo * Height,
-            Width,
-            Height);
-    }
+    public Brush Color { get; set; } = color;
 
-    public Rect BoundingRectangle
-    {
-        get => _boundingRectangle;
-        set => SetProperty(ref _boundingRectangle, value);
-    }
-
-    public Brush Color { get; set; }
-
-    public Position Position { get; set; }
+    public Position Position { get; set; } = pos;
 
     public double Width
     {
@@ -49,11 +30,13 @@ public class SquareViewModel : ObservableObject
         set => SetProperty(ref _isOffscreen, value);
     }
 
-    public override string ToString() => $"{Position.RowNo}, {Position.ColumnNo}";
+    public override string ToString()
+    {
+        return $"{Position.RowNo}, {Position.ColumnNo}";
+    }
 
     private double _width;
     private double _height;
     private string _imagePath;
     private bool _isOffscreen;
-    private Rect _boundingRectangle;
 }
