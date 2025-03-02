@@ -1,42 +1,37 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public class SquareViewModel(Position pos, Brush color) : ObservableObject
+public partial class SquareViewModel : ObservableObject
 {
-    public Brush Color { get; set; } = color;
-
-    public Position Position { get; set; } = pos;
-
-    public double Width
+    public SquareViewModel(Position pos, Brush color)
     {
-        get => _width;
-        set => SetProperty(ref _width, value);
+        Position = pos;
+        Color = color;
     }
 
-    public double Height
-    {
-        get => _height;
-        set => SetProperty(ref _height, value);
-    }
+    [ObservableProperty]
+    private Brush _color;
 
-    public string ImagePath
-    {
-        get => _imagePath;
-        set => SetProperty(ref _imagePath, value);
-    }
+    [ObservableProperty]
+    private Position _position;
 
-    public bool IsOffscreen
-    {
-        get => _isOffscreen;
-        set => SetProperty(ref _isOffscreen, value);
-    }
+    [ObservableProperty]
+    private double _width;
 
+    [ObservableProperty]
+    private double _height;
+
+    [ObservableProperty]
+    private string _imagePath;
+
+    [ObservableProperty]
+    private bool _isOffscreen;
+
+    public Rect BoundingRectangle => new(0, 0, Width, Height);
+
+    // Todo: This property is not uses. Consider removing/refactoring.
     public override string ToString()
     {
         return $"{Position.RowNo}, {Position.ColumnNo}";
     }
-
-    private double _width;
-    private double _height;
-    private string _imagePath;
-    private bool _isOffscreen;
 }
+
