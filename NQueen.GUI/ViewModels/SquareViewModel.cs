@@ -28,7 +28,7 @@ public partial class SquareViewModel : ObservableObject
 
     public Rect BoundingRectangle => new(0, 0, Width, Height);
 
-    // Todo: This property is not uses. Consider removing/refactoring.
+    // Todo: This property is not used. Consider removing/refactoring.
     public override string ToString()
     {
         return $"{Position.RowNo}, {Position.ColumnNo}";
