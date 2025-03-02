@@ -4,11 +4,12 @@ public class NullImageConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return value ?? DependencyProperty.UnsetValue;
+        var imagePath = value as string;
+        return string.IsNullOrEmpty(imagePath) ? parameter as string : imagePath;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return Binding.DoNothing;
+        throw new NotImplementedException();
     }
 }

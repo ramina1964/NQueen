@@ -6,6 +6,7 @@ public partial class SquareViewModel : ObservableObject
     {
         Position = pos;
         Color = color;
+        UpdateBoundingRectangle();
     }
 
     [ObservableProperty]
@@ -26,12 +27,33 @@ public partial class SquareViewModel : ObservableObject
     [ObservableProperty]
     private bool _isOffscreen;
 
-    public Rect BoundingRectangle => new(0, 0, Width, Height);
+    public Rect BoundingRectangle { get; private set; }
 
-    // Todo: This property is not used. Consider removing/refactoring.
+    partial void OnWidthChanged(double value)
+    {
+        UpdateBoundingRectangle();
+    }
+
+    partial void OnHeightChanged(double value)
+    {
+        UpdateBoundingRectangle();
+    }
+
+    private void UpdateBoundingRectangle()
+    {
+        if (Width > 0 && Height > 0)
+        {
+            BoundingRectangle = new Rect(0, 0, Width, Height);
+        }
+        else
+        {
+            BoundingRectangle = Rect.Empty;
+        }
+        OnPropertyChanged(nameof(BoundingRectangle));
+    }
+
     public override string ToString()
     {
         return $"{Position.RowNo}, {Position.ColumnNo}";
     }
 }
-
