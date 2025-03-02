@@ -21,5 +21,24 @@ public partial class ChessboardUserControl : UserControl
             return;
 
         chessboardViewModel.PlaceQueens(positions);
+
+        // Set BoundingRectangle and IsOffscreen for each square
+        foreach (var square in chessboardViewModel.Squares)
+        {
+            var boundingRect = new Rect(
+                square.Position.ColumnNo * square.Width,
+                square.Position.RowNo * square.Height,
+                square.Width,
+                square.Height);
+
+            square.BoundingRectangle = boundingRect;
+
+            // Determine if the square is off-screen
+            square.IsOffscreen =
+                boundingRect.Right < 0 ||
+                boundingRect.Bottom < 0 ||
+                boundingRect.Left > chessboardViewModel.WindowWidth ||
+                boundingRect.Top > chessboardViewModel.WindowHeight;
+        }
     }
 }

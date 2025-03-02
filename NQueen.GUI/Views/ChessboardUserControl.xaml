@@ -53,7 +53,8 @@
                             helpers:AutomationPropertiesHelper.IsOffscreen="{Binding IsOffscreen}"
                             AutomationProperties.Name="ChessboardSquareImage"
                             Source="{Binding ImagePath, Converter={StaticResource NullImageConverter}}"
-                            Stretch="Uniform" />
+                            Stretch="Uniform"
+                            Tag="{Binding BoundingRectangle}" />
                     </Border>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
