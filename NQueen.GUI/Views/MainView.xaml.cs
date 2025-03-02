@@ -6,8 +6,11 @@ public partial class MainView : Window, IDisposable
     {
         InitializeComponent();
         Loaded += MainView_Loaded;
-        MainViewModel = mainViewModel;
-        _serviceProvider = serviceProvider;
+        MainViewModel = mainViewModel
+            ?? throw new ArgumentNullException(nameof(mainViewModel));
+
+        _serviceProvider = serviceProvider ??
+            throw new ArgumentNullException(nameof(serviceProvider));
 
         // Resolve and add ChessboardUserControl to the MainView
         var chessboardUserControl = new ChessboardUserControl(MainViewModel);
@@ -33,12 +36,7 @@ public partial class MainView : Window, IDisposable
     protected override void OnClosing(CancelEventArgs e)
     {
         base.OnClosing(e);
-
-        if (_disposed == false)
-        {
-            Dispose(true);
-            _disposed = true;
-        }
+        Dispose();
     }
 
     protected virtual void Dispose(bool disposing)
@@ -49,27 +47,27 @@ public partial class MainView : Window, IDisposable
         if (disposing)
         {
             // Dispose of any managed resources
-            if (MainViewModel != null)
-            {
-                MainViewModel.Dispose();
+            MainViewModel?.Dispose();
 
-                // Unsubscribe from the Loaded event
-                Loaded -= MainView_Loaded;
-            }
+            // Unsubscribe from the Loaded event
+            Loaded -= MainView_Loaded;
         }
 
         // Clean up any unmanaged resources here
+
         _disposed = true;
     }
 
     private void MainView_Loaded(object sender, RoutedEventArgs e)
     {
-        var board = Chessboard.Content as ChessboardUserControl;
-        var size = (int)Math.Min(board.ActualWidth, board.ActualHeight);
-        board.Width = size;
-        board.Height = size;
-        MainViewModel.SetChessboard(size);
-        DataContext = MainViewModel;
+        if (Chessboard.Content is ChessboardUserControl board)
+        {
+            var size = (int)Math.Min(board.ActualWidth, board.ActualHeight);
+            board.Width = size;
+            board.Height = size;
+            MainViewModel.SetChessboard(size);
+            DataContext = MainViewModel;
+        }
     }
 
     private bool _disposed = false;
