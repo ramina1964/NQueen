@@ -9,7 +9,7 @@
     xmlns:utils="clr-namespace:NQueen.Kernel.Utilities;assembly=NQueen.Kernel"
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
     x:Name="ChessboardControl"
-    d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
+    d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel, IsDesignTimeCreatable=True}"
     AutomationProperties.Name="ChessboardControl"
     mc:Ignorable="d">
 
