@@ -18,7 +18,7 @@ public partial class InputPanelUserControl : UserControl
             {
                 _mainViewModel.InputViewModel.ErrorMessage = Messages.InvalidByteError;
                 _mainViewModel.InputViewModel.IsErrorVisible = true;
-                _mainViewModel.IsInputValid = false;
+                _mainViewModel.IsValid = false;
                 return;
             }
 
@@ -36,7 +36,7 @@ public partial class InputPanelUserControl : UserControl
             }
 
             // Update the state of the "Simulate" button
-            _mainViewModel.IsInputValid = validationResult.IsValid;
+            _mainViewModel.IsValid = validationResult.IsValid;
         }
     }
 

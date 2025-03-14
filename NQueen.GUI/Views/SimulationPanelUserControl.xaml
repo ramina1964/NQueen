@@ -56,7 +56,7 @@
                 Command="{Binding CommandManager.SimulateCommand}"
                 Content="Simulate"
                 IsDefault="True"
-                IsEnabled="{Binding IsInputValid}"
+                IsEnabled="{Binding IsValid}"
                 Style="{StaticResource ButtonStyle}" />
 
             <ProgressBar

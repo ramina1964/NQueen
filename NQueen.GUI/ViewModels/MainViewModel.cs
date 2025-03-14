@@ -176,9 +176,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     private string _validationError;
 
     [ObservableProperty]
-    private bool _isInputValid;
-
-    [ObservableProperty]
     private bool _isSimulateButtonEnabled;
 
     public string ResultTitle => SolutionHelper.SolutionTitle(SolutionMode);
@@ -210,12 +207,16 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 
     public void UpdateGui()
     {
-        ObservableSolutions.Clear();
-        Chessboard?.Squares.Clear();
-        NoOfSolutions = "0";
-        ElapsedTimeInSec = $"{0}";
-        MemoryUsage = "0";
-        Chessboard?.CreateSquares((byte)BoardSize, []);
+        // Validate board size before updating the GUI
+        if (IsBoardSizeValid(BoardSize, SolutionMode))
+        {
+            ObservableSolutions.Clear();
+            Chessboard?.Squares.Clear();
+            NoOfSolutions = "0";
+            ElapsedTimeInSec = $"{0}";
+            MemoryUsage = "0";
+            Chessboard?.CreateSquares((byte)BoardSize, []);
+        }
     }
 
     public void UpdateButtonFunctionality()
@@ -287,16 +288,20 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 
     public void SetChessboard(double boardDimension)
     {
-        Chessboard = new ChessboardViewModel
+        // Validate board size before setting the chessboard
+        if (IsBoardSizeValid(BoardSize, SolutionMode))
         {
-            WindowWidth = boardDimension,
-            WindowHeight = boardDimension
-        };
+            Chessboard = new ChessboardViewModel
+            {
+                WindowWidth = boardDimension,
+                WindowHeight = boardDimension
+            };
 
-        Chessboard.CreateSquares((byte)BoardSize, []);
+            Chessboard.CreateSquares((byte)BoardSize, []);
 
-        IsIdle = true;
-        IsSimulating = false;
+            IsIdle = true;
+            IsSimulating = false;
+        }
     }
 
     partial void OnBoardSizeChanged(int value)
@@ -321,7 +326,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     {
         var validationResult = InputViewModel.Validate(this);
         IsValid = validationResult.IsValid;
-        IsInputValid = validationResult.IsValid;
         IsSimulateButtonEnabled = validationResult.IsValid;
         UpdateButtonFunctionality();
     }
@@ -339,4 +343,14 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     private ICommandManager _commandManager;
     private readonly InputValidator _validator;
     private bool _disposed;
+
+    private bool IsBoardSizeValid(int boardSize, SolutionMode solutionMode)
+    {
+        return boardSize >= BoardSettings.MinBoardSize &&
+               boardSize <= BoardSettings.ByteMaxValue &&
+               (solutionMode != SolutionMode.Single || boardSize <= BoardSettings.MaxBoardSizeInSingleSolution) &&
+               (solutionMode != SolutionMode.Unique || boardSize <= BoardSettings.MaxBoardSizeInUniqueSolutions) &&
+               (solutionMode != SolutionMode.All || boardSize <= BoardSettings.MaxBoardSizeInAllSolutions);
+    }
 }
+
