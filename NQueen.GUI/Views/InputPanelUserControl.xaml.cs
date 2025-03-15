@@ -18,7 +18,6 @@ public partial class InputPanelUserControl : UserControl
             {
                 _mainViewModel.InputViewModel.ErrorMessage = Messages.BoardSizeFormatError;
                 _mainViewModel.InputViewModel.IsErrorVisible = true;
-                _mainViewModel.IsValid = false;
                 return;
             }
 
