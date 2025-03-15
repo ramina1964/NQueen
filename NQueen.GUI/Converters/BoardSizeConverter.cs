@@ -19,12 +19,12 @@ public class BoardSizeConverter : IValueConverter
                 case string _ when int.TryParse(input, out int intResult):
                     if (intResult < byte.MinValue || intResult > byte.MaxValue)
                     {
-                        SetErrorMessage(Messages.InvalidByteError);
+                        SetErrorMessage(Messages.BoardSizeFormatError);
                     }
                     return DependencyProperty.UnsetValue;
 
                 default:
-                    SetErrorMessage(Messages.InvalidByteError);
+                    SetErrorMessage(Messages.BoardSizeFormatError);
                     return DependencyProperty.UnsetValue;
             }
         }

@@ -16,7 +16,7 @@ public partial class InputPanelUserControl : UserControl
             // Validate the input string format
             if (InputValidator.IsBoardSizeFormattedCorrectly(textBox.Text) == false)
             {
-                _mainViewModel.InputViewModel.ErrorMessage = Messages.InvalidByteError;
+                _mainViewModel.InputViewModel.ErrorMessage = Messages.BoardSizeFormatError;
                 _mainViewModel.InputViewModel.IsErrorVisible = true;
                 _mainViewModel.IsValid = false;
                 return;
