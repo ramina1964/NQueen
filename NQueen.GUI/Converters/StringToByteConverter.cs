@@ -15,6 +15,6 @@ public class StringToByteConverter : IValueConverter
         }
 
         // Return a default value or handle the invalid input case
-        return DependencyProperty.UnsetValue;
+        return 0; // Default to 0 if the input is invalid
     }
 }

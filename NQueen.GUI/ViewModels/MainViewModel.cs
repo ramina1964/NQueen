@@ -306,14 +306,20 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 
     partial void OnBoardSizeChanged(int value)
     {
-        _eventManager.OnBoardSizeChanged();
         Validate();
+        if (IsValid)
+        {
+            _eventManager.OnBoardSizeChanged();
+        }
     }
 
     partial void OnSolutionModeChanged(SolutionMode value)
     {
-        _eventManager.OnSolutionModeChanged(value);
         Validate();
+        if (IsValid)
+        {
+            _eventManager.OnSolutionModeChanged(value);
+        }
     }
 
     partial void OnDisplayModeChanged(DisplayMode oldValue, DisplayMode newValue) =>
@@ -353,4 +359,3 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
                (solutionMode != SolutionMode.All || boardSize <= BoardSettings.MaxBoardSizeInAllSolutions);
     }
 }
-

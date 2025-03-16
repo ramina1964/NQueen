@@ -24,4 +24,3 @@ public partial class ChessboardUserControl : UserControl
         chessboardViewModel.PlaceQueens(positions);
     }
 }
- 
