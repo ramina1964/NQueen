@@ -350,7 +350,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     private readonly InputValidator _validator;
     private bool _disposed;
 
-    private bool IsBoardSizeValid(int boardSize, SolutionMode solutionMode)
+    private static bool IsBoardSizeValid(int boardSize, SolutionMode solutionMode)
     {
         return boardSize >= BoardSettings.MinBoardSize &&
                boardSize <= BoardSettings.ByteMaxValue &&

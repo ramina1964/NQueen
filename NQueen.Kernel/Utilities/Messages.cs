@@ -2,7 +2,6 @@
 
 public static class Messages
 {
-    public const string SizeFormatError = "Enter a positive whole number.";
     public const string SizeOutOfRangeError = "Enter board size inside: [1, 255].";
     public const string NoSolutionMessage = "No Solutions found. Try a larger board size!";
     public const string ValueNullOrWhiteSpaceMsg =

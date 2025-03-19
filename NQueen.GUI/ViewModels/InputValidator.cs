@@ -11,11 +11,11 @@ public class InputValidator : AbstractValidator<MainViewModel>
     {
         RuleFor(vm => vm.BoardSize)
             .Must(boardSize => IsBoardSizeFormattedCorrectly(boardSize.ToString()))
-            .WithMessage(_ => Messages.SizeFormatError);
+            .WithMessage(_ => Messages.SizeOutOfRangeError);
 
         RuleFor(vm => vm.BoardSize)
             .Must(boardSize => boardSize >= BoardSettings.MinBoardSize)
-            .WithMessage(_ => Messages.SizeFormatError);
+            .WithMessage(_ => Messages.SizeOutOfRangeError);
 
         RuleFor(vm => vm.BoardSize)
             .Must(boardSize => boardSize <= BoardSettings.MaxBoardSizeInSingleSolution)

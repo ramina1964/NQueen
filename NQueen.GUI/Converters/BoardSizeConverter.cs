@@ -24,7 +24,7 @@ public class BoardSizeConverter : IValueConverter
             }
 
             // Here is input an invalid integer.
-            SetErrorMessage(Messages.SizeFormatError);
+            SetErrorMessage(Messages.SizeOutOfRangeError);
             return DependencyProperty.UnsetValue;
         }
 
