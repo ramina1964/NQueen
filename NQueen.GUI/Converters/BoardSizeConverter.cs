@@ -2,32 +2,32 @@
 
 public class BoardSizeConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-    {
-        return value.ToString();
-    }
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        value.ToString();
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is string input)
         {
-            switch (input)
+            //  Check if 'input' is a valid integer
+            if (int.TryParse(input, out int intResult))
             {
-                case string _ when int.TryParse(input, out int byteResult):
-                    return byteResult;
+                // Check if 'intResult' is within the valid range
+                if (intResult >= BoardSettings.MinBoardSize && intResult <= BoardSettings.ByteMaxValue)
+                {
+                    return intResult;
+                }
 
-                case string _ when int.TryParse(input, out int intResult):
-                    if (intResult < byte.MinValue || intResult > byte.MaxValue)
-                    {
-                        SetErrorMessage(Messages.SizeOutOfRangeError);
-                    }
-                    return DependencyProperty.UnsetValue;
-
-                default:
-                    SetErrorMessage(Messages.SizeFormatError);
-                    return DependencyProperty.UnsetValue;
+                // Here is intResult out of range.
+                SetErrorMessage(Messages.SizeOutOfRangeError);
+                return DependencyProperty.UnsetValue;
             }
+
+            // Here is input an invalid integer.
+            SetErrorMessage(Messages.SizeFormatError);
+            return DependencyProperty.UnsetValue;
         }
+
         return DependencyProperty.UnsetValue;
     }
 
