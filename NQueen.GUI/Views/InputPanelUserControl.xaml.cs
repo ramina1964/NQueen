@@ -15,7 +15,7 @@ public partial class InputPanelUserControl : UserControl
         {
             if (InputValidator.IsBoardSizeFormattedCorrectly(textBox.Text) == false)
             {
-                _mainViewModel.InputViewModel.ErrorMessage = Messages.BoardSizeFormatError;
+                _mainViewModel.InputViewModel.ErrorMessage = Messages.SizeFormatError;
                 _mainViewModel.InputViewModel.IsErrorVisible = true;
                 _mainViewModel.IsValid = false;
                 _mainViewModel.IsSimulateButtonEnabled = false;
