@@ -2,13 +2,14 @@
 
 public static class Messages
 {
-    public const string BoardSizeFormatError = "Board size must be a positive integer.";
+    public const string SizeFormatError = "Enter a positive whole number.";
+    public const string SizeOutOfRangeError = "Enter board size inside: [1, 255].";
     public const string NoSolutionMessage = "No Solutions found. Try a larger board size!";
     public const string ValueNullOrWhiteSpaceMsg =
-        "Board size: Must be not null, empty or exclusively White Spaces.";
+        "Board size: Must not be null, empty or exclusively white space.";
 
     public static string SingleSizeOutOfRangeMsg =>
-        $"Enter Board Size for 'Single Solution's' inside: [1, {BoardSettings.MaxBoardSizeInSingleSolution}].";
+        $"Enter Board Size for 'Single Solution' inside: [1, {BoardSettings.MaxBoardSizeInSingleSolution}].";
 
     public static string UniqueSizeOutOfRangeMsg =>
         $"Enter Board Size for 'Unique Solutions' inside: [1, {BoardSettings.MaxBoardSizeInUniqueSolutions}].";
