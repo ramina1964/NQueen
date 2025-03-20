@@ -15,7 +15,7 @@ public sealed partial class InputViewModel(InputValidator validator) : Observabl
 
     [ObservableProperty]
     private bool isErrorVisible;
-    
+
     private readonly InputValidator _validator = validator ??
         throw new ArgumentNullException(nameof(validator));
 }

@@ -56,7 +56,7 @@ public class EventManager(MainViewModel mainViewModel) : IEventManager
         _mainViewModel.SolutionMode = value;
         var validationResult = _mainViewModel.InputViewModel.Validate(_mainViewModel);
 
-        if (validationResult.IsValid == false )
+        if (validationResult.IsValid == false)
         {
             _mainViewModel.ValidationError = validationResult.Errors.First().ErrorMessage;
             _mainViewModel.HasValidationError = true;
