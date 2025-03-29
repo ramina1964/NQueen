@@ -1,6 +1,6 @@
 ﻿namespace NQueen.Kernel.Events;
 
-public class SolutionFoundEventArgs(byte[] solution) : EventArgs
+public class SolutionFoundEventArgs(int[] solution) : EventArgs
 {
-    public byte[] Solution { get; } = solution;
+    public int[] Solution { get; } = solution;
 }

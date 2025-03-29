@@ -14,7 +14,7 @@ public class SimulationResults
         }
         else
         {
-            BoardSize = (byte)sol.Positions.Count;
+            BoardSize = sol.Positions.Count;
             NoOfSolutions = enumerable.Count;
             Solutions = [.. enumerable];
         }

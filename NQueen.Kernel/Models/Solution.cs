@@ -2,7 +2,7 @@
 
 public class Solution
 {
-    public Solution(byte[] queenPositions, int? id = null)
+    public Solution(int[] queenPositions, int? id = null)
     {
         BoardSize = queenPositions.Length;
         Id = id;
@@ -19,7 +19,7 @@ public class Solution
 
     public string Name { get; set; }
 
-    public byte[] QueenPositions { get; }
+    public int[] QueenPositions { get; }
 
     public string Details { get; set; }
 
@@ -66,7 +66,7 @@ public class Solution
         return sb.ToString();
     }
 
-    private static List<Position> SetPositions(IEnumerable<byte> queenPositions) =>
-        [.. queenPositions.Select((item, index) => new Position((byte)index, item))];
+    private static List<Position> SetPositions(IEnumerable<int> queenPositions) =>
+        [.. queenPositions.Select((item, index) => new Position(index, item))];
     #endregion PrivateMembers
 }

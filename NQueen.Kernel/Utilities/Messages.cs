@@ -2,7 +2,7 @@
 
 public static class Messages
 {
-    public const string SizeOutOfRangeError = "Enter board size inside: [1, 255].";
+    public static string SizeOutOfRangeError = $"Enter board size inside: [1, {BoardSettings.MaxBoardSize}].";
     public const string NoSolutionMessage = "No Solutions found. Try a larger board size!";
     public const string ValueNullOrWhiteSpaceMsg =
         "Board size: Must not be null, empty or exclusively white space.";

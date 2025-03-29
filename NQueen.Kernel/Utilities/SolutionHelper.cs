@@ -6,44 +6,44 @@ public static class SolutionHelper
     public const SolutionMode DefaultSolutionMode = SolutionMode.Unique;
     public const DisplayMode DefaultDisplayMode = DisplayMode.Hide;
     public const int MaxNoOfSolutionsInOutput = 50;
-    public const byte RelativeFactor = 8;
+    public const int RelativeFactor = 8;
 
-    public static HashSet<byte[]> GetSymmetricalSolutions(byte[] solution)
+    public static HashSet<int[]> GetSymmetricalSolutions(int[] solution)
     {
-        byte boardSize = (byte)solution.Length;
+        var boardSize = solution.Length;
 
-        byte[] symmetricalToMidHorizontal = new byte[boardSize];
-        var symmetricalToMidVertical = new byte[boardSize];
-        var symmetricalToMainDiag = new byte[boardSize];
-        var symmetricalToBiDiag = new byte[boardSize];
-        var rotatedCounter90 = new byte[boardSize];
-        var rotatedCounter180 = new byte[boardSize];
-        var rotatedCounter270 = new byte[boardSize];
+        var symmetricalToMidHorizontal = new int[boardSize];
+        var symmetricalToMidVertical = new int[boardSize];
+        var symmetricalToMainDiagonal = new int[boardSize];
+        var symmetricalToBiDiagonal = new int[boardSize];
+        var rotatedCounter90 = new int[boardSize];
+        var rotatedCounter180 = new int[boardSize];
+        var rotatedCounter270 = new int[boardSize];
 
-        for (byte j = 0; j < boardSize; j++)
+        for (var j = 0; j < boardSize; j++)
         {
-            byte index1 = (byte)(boardSize - j - 1);
-            byte index2 = (byte)(boardSize - solution[j] - 1);
+            var rowIndex = boardSize - j - 1;
+            var colIndex = boardSize - solution[j] - 1;
 
-            symmetricalToMidHorizontal[index1] = solution[j];
-            rotatedCounter90[index2] = symmetricalToMainDiag[solution[j]] = j;
-            rotatedCounter180[index1] = symmetricalToMidVertical[j] = index2;
-            rotatedCounter270[solution[j]] = symmetricalToBiDiag[index2] = index1;
+            symmetricalToMidHorizontal[rowIndex] = solution[j];
+            rotatedCounter90[colIndex] = symmetricalToMainDiagonal[solution[j]] = j;
+            rotatedCounter180[rowIndex] = symmetricalToMidVertical[j] = colIndex;
+            rotatedCounter270[solution[j]] = symmetricalToBiDiagonal[colIndex] = rowIndex;
         }
 
-        return new HashSet<byte[]>(new SequenceEquality<byte>())
+        return new HashSet<int[]>(new SequenceEquality<int>())
         {
             symmetricalToMidVertical,
             symmetricalToMidHorizontal,
-            symmetricalToMainDiag,
-            symmetricalToBiDiag,
+            symmetricalToMainDiagonal,
+            symmetricalToBiDiagonal,
             rotatedCounter90,
             rotatedCounter180,
             rotatedCounter270,
         };
     }
 
-    public static int FindSolutionSize(byte boardSize, SolutionMode solutionMode) =>
+    public static int FindSolutionSize(int boardSize, SolutionMode solutionMode) =>
         solutionMode == SolutionMode.Single
             ? 1
             : solutionMode == SolutionMode.Unique
@@ -78,7 +78,7 @@ public static class SolutionHelper
     }
 
     #region PrivateMembers
-    private static int GetSolutionSizeUnique(byte boardSize) =>
+    private static int GetSolutionSizeUnique(int boardSize) =>
         boardSize switch
         {
             1 => 1,
@@ -101,7 +101,7 @@ public static class SolutionHelper
             _ => throw new ArgumentOutOfRangeException(Messages.UniqueSizeOutOfRangeMsg)
         };
 
-    private static int GetSolutionSizeAll(byte boardSize) =>
+    private static int GetSolutionSizeAll(int boardSize) =>
         boardSize switch
         {
             1 => 1,
@@ -125,4 +125,3 @@ public static class SolutionHelper
         };
     #endregion PrivateMembers
 }
-

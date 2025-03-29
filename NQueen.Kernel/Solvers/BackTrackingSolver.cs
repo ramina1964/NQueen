@@ -4,7 +4,7 @@ public class BackTrackingSolver : ISolver, IDisposable
 {
     public BackTrackingSolver(
         ISolutionManager solutionManager,
-        byte boardSize = BoardSettings.DefaultBoardSize)
+        int boardSize = BoardSettings.DefaultBoardSize)
     {
         Initialize(boardSize);
         SolutionManager = solutionManager
@@ -88,7 +88,7 @@ public class BackTrackingSolver : ISolver, IDisposable
 
     public int HalfBoardSize { get; set; }
 
-    public byte[] QueenPositions { get; set; }
+    public int[] QueenPositions { get; set; }
 
     public int SolutionCountPerUpdate =>
         ProgressSettings.SolutionCountPerUpdate(BoardSize);
@@ -119,7 +119,7 @@ public class BackTrackingSolver : ISolver, IDisposable
 
     public DisplayMode DisplayMode { get; set; }
 
-    public HashSet<byte[]> Solutions { get; set; }
+    public HashSet<int[]> Solutions { get; set; }
     #endregion
 
     #region PrivateMethods
@@ -128,8 +128,8 @@ public class BackTrackingSolver : ISolver, IDisposable
         BoardSize = boardSize;
         _cancelationTokenSource = new CancellationTokenSource();
         HalfBoardSize = GetHalfSize();
-        QueenPositions = [.. Enumerable.Repeat(BoardSettings.ByteMaxValue, BoardSize)];
-        Solutions = new HashSet<byte[]>(new SequenceEquality<byte>());
+        QueenPositions = [.. Enumerable.Repeat(-1, BoardSize).ToArray()];
+        Solutions = new HashSet<int[]>(new SequenceEquality<int>());
     }
 
     private async Task<IEnumerable<Solution>> SolveNQueenProblem()
@@ -155,9 +155,9 @@ public class BackTrackingSolver : ISolver, IDisposable
         return Solutions.Select((s, index) => new Solution(s, index + 1));
     }
 
-    private async Task FindSingleOrUniqueSolutions(byte colNo, SolutionMode solutionMode)
+    private async Task FindSingleOrUniqueSolutions(int colNo, SolutionMode solutionMode)
     {
-        while (colNo != BoardSettings.ByteMaxValue)
+        while (colNo != BoardSettings.IntMaxValue)
         {
             if (IsSolverCanceled)
                 return;
@@ -174,7 +174,7 @@ public class BackTrackingSolver : ISolver, IDisposable
                     BoardSize = BoardSize,
                     SolutionMode = SolutionMode,
                     Solutions = Solutions,
-                    QueenPositions = (byte[])QueenPositions.Clone()
+                    QueenPositions = (int[])QueenPositions.Clone()
                 };
                 SolutionManager.UpdateSolutions(updateDTO);
                 return;
@@ -188,9 +188,12 @@ public class BackTrackingSolver : ISolver, IDisposable
                 continue;
             }
 
+            if (colNo < 0)
+                return;
+
             QueenPositions[colNo] = FindQueenPosition(colNo);
 
-            if (QueenPositions[colNo] == BoardSettings.ByteMaxValue)
+            if (QueenPositions[colNo] == -1)
             {
                 colNo--;
                 continue;
@@ -206,7 +209,7 @@ public class BackTrackingSolver : ISolver, IDisposable
         }
     }
 
-    private async Task FindAllSolutions(byte colNo)
+    private async Task FindAllSolutions(int colNo)
     {
         await FindSingleOrUniqueSolutions(colNo, SolutionMode.Unique);
 
@@ -233,27 +236,46 @@ public class BackTrackingSolver : ISolver, IDisposable
             SolutionFound?.Invoke(this, new SolutionFoundEventArgs(QueenPositions));
     }
 
-    private byte FindQueenPosition(byte colNo)
+    private int FindQueenPosition(int colNo)
     {
-        colNo = (byte)Math.Min(colNo, BoardSize - 1);
-        for (byte pos = (byte)(QueenPositions[colNo] + 1); pos < BoardSize; pos++)
+        //if (colNo < 0 || colNo >= QueenPositions.Length)
+        //{
+        //    throw new IndexOutOfRangeException($"colNo {colNo} is out of bounds for QueenPositions array.");
+        //}
+
+        colNo = Math.Min(colNo, BoardSize - 1);
+        var startPos = QueenPositions[colNo] + 1;
+
+        if (startPos >= BoardSize)
+        {
+            return -1;
+        }
+
+        for (var pos = startPos; pos < BoardSize; pos++)
         {
             if (IsValidPosition(colNo, pos))
                 return pos;
         }
 
-        return BoardSettings.ByteMaxValue;
+        // Ensure -1 is returned if no valid position is found
+        return -1;
     }
 
-    private bool IsValidPosition(byte colNo, byte pos)
+    private bool IsValidPosition(int colNo, int pos)
     {
         for (int j = 0; j < colNo; j++)
         {
-            int lhs = Math.Abs(pos - QueenPositions[j]);
-            int rhs = Math.Abs(colNo - j);
+            //if (QueenPositions[j] == -1) // Check for invalid value
+            //    return false;
+
+            int diff = pos - QueenPositions[j];
+            if (diff == int.MinValue) return false; // Handle the special case
+            var lhs = Math.Abs(diff);
+            var rhs = Math.Abs(colNo - j);
             if (lhs == 0 || lhs == rhs)
                 return false;
         }
+
         return true;
     }
 
@@ -270,7 +292,7 @@ public class BackTrackingSolver : ISolver, IDisposable
             BoardSize = BoardSize,
             SolutionMode = SolutionMode,
             Solutions = Solutions,
-            QueenPositions = (byte[])QueenPositions.Clone()
+            QueenPositions = (int[])QueenPositions.Clone()
         };
         SolutionManager.UpdateSolutions(updateDTO);
     }

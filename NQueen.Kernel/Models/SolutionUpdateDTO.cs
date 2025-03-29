@@ -6,9 +6,9 @@ public class SolutionUpdateDTO
 
     public SolutionMode SolutionMode { get; set; }
 
-    public byte[] QueenPositions { get; set; }
+    public int[] QueenPositions { get; set; }
 
-    public HashSet<byte[]> Solutions { get; set; }
+    public HashSet<int[]> Solutions { get; set; }
 
     public int NoOfSolution => Solutions.Count;
 }

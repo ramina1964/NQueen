@@ -30,7 +30,7 @@ public static class DispatchUtils
         return (new string(option), n);
     }
 
-    public static string CreateChessBoard(byte[] queens)
+    public static string CreateChessBoard(int[] queens)
     {
         var arr = ChessBoardHelper(queens, WhiteQueen);
         var size = queens.Length;
@@ -83,20 +83,22 @@ public static class DispatchUtils
         return (true, size);
     }
 
-    private static string[,] ChessBoardHelper(byte[] queens, char whiteQueen)
+    private static string[,] ChessBoardHelper(int[] queens, char whiteQueen)
     {
         var size = queens.Length;
-        string[,] arr = new string[size, size];
+        string[,] array = new string[size, size];
 
-        for (int col = 0; col < size; col++)
+        for (var col = 0; col < size; col++)
         {
             var rowPlace = queens[col];
-            for (int row = 0; row < size; row++)
+            for (var row = 0; row < size; row++)
             {
-                arr[row, col] = row == rowPlace ? col == size - 1 ? $"|{whiteQueen}|" : $"|{whiteQueen}" : col == size - 1 ? "|-|" : "|-";
+                array[row, col] = row == rowPlace ? col == size - 1
+                    ? $"|{whiteQueen}|"
+                    : $"|{whiteQueen}" : col == size - 1 ? "|-|" : "|-";
             }
         }
 
-        return arr;
+        return array;
     }
 }

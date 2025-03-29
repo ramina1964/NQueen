@@ -8,7 +8,7 @@ public static class CommandConst
 
     public const string Help = "Help";
     public const string Exit = "Exit";
-    public const string DisplayMode = "displaymode";
+    public const string DisplayMode = "Display Mode";
     public const string Delay = "Delay";
 
     public const string InvalidCommand = "Invalid command. Please try again.";

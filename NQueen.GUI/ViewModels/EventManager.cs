@@ -44,10 +44,8 @@ public class EventManager(MainViewModel mainViewModel) : IEventManager
             _mainViewModel.UpdateButtonFunctionality();
 
             // Only update the GUI if the board size is within the valid range
-            if (_mainViewModel.BoardSize >= BoardSettings.MinBoardSize && _mainViewModel.BoardSize <= BoardSettings.ByteMaxValue)
-            {
+            if (IsBoardSizeInRange)
                 _mainViewModel.UpdateGui();
-            }
         }
     }
 
@@ -79,10 +77,8 @@ public class EventManager(MainViewModel mainViewModel) : IEventManager
         _mainViewModel.UpdateButtonFunctionality();
 
         // Only update the GUI if the board size is within the valid range
-        if (_mainViewModel.BoardSize >= BoardSettings.MinBoardSize && _mainViewModel.BoardSize <= BoardSettings.ByteMaxValue)
-        {
+        if (IsBoardSizeInRange)
             _mainViewModel.UpdateGui();
-        }
     }
 
     private void OnProgressValueChanged(object sender, ProgressValueChangedEventArgs e)
@@ -95,8 +91,8 @@ public class EventManager(MainViewModel mainViewModel) : IEventManager
     {
         var sol = new Solution(e.Solution, 1);
         var positions = sol
-            .QueenPositions.Where(q => q < BoardSettings.ByteMaxValue)
-            .Select((item, index) => new Position((byte)index, item)).ToList();
+            .QueenPositions.Where(q => q < BoardSettings.IntMaxValue)
+            .Select((item, index) => new Position(index, item)).ToList();
 
         _mainViewModel.Chessboard?.PlaceQueens(positions);
     }
@@ -132,4 +128,8 @@ public class EventManager(MainViewModel mainViewModel) : IEventManager
     }
 
     private readonly MainViewModel _mainViewModel = mainViewModel;
+
+    private bool IsBoardSizeInRange =>
+        _mainViewModel.BoardSize >= BoardSettings.MinBoardSize &&
+        _mainViewModel.BoardSize <= BoardSettings.MaxBoardSize;
 }

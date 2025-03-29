@@ -79,7 +79,7 @@ public partial class MainView : Window, IDisposable
 
             // Update the squares with the new dimensions
             viewModel.Chessboard.CreateSquares(
-                (byte)viewModel.BoardSize,
+                viewModel.BoardSize,
                 viewModel.Chessboard.Squares,
                 e.NewSize.Width,
                 e.NewSize.Height);

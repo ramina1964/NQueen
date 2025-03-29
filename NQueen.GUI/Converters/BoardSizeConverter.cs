@@ -9,21 +9,17 @@ public class BoardSizeConverter : IValueConverter
     {
         if (value is string input)
         {
-            //  Check if 'input' is a valid integer
             if (int.TryParse(input, out int intResult))
             {
-                // Check if 'intResult' is within the valid range
-                if (intResult >= BoardSettings.MinBoardSize && intResult <= BoardSettings.ByteMaxValue)
+                if (intResult >= BoardSettings.MinBoardSize && intResult <= BoardSettings.MaxBoardSize)
                 {
                     return intResult;
                 }
 
-                // Here is intResult out of range.
                 SetErrorMessage(Messages.SizeOutOfRangeError);
                 return DependencyProperty.UnsetValue;
             }
 
-            // Here is input an invalid integer.
             SetErrorMessage(Messages.SizeOutOfRangeError);
             return DependencyProperty.UnsetValue;
         }

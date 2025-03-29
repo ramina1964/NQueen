@@ -13,6 +13,7 @@ public class SolutionManager(SolutionUpdateDTO dto) : ISolutionManager
         {
             solutionUpdateDTO.Solutions.Add(queenPositions);
             SolutionsUpdated?.Invoke(solutionUpdateDTO);
+            
             return;
         }
 
@@ -25,6 +26,7 @@ public class SolutionManager(SolutionUpdateDTO dto) : ISolutionManager
         {
             solutionUpdateDTO.Solutions.UnionWith(symmetricalSolutions);
             SolutionsUpdated?.Invoke(solutionUpdateDTO);
+            
             return;
         }
 

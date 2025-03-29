@@ -9,7 +9,7 @@ public static class BoardSettings
     public const int SmallBoardSizeInUniqueSolutions = 10;
     public const int MediumBoardSizeInUniqueSolutions = 15;
 
-    public const byte ByteMaxValue = byte.MaxValue;
+    public const int IntMaxValue = int.MaxValue;
     public const int DefaultBoardSize = 8;
     public const int MinBoardSize = 1;
     public const int MaxBoardSize = MaxBoardSizeInSingleSolution;

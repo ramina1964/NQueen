@@ -38,7 +38,7 @@ public class ChessboardViewModel : ObservableObject
     }
 
     public void CreateSquares(
-        byte boardSize,
+        int boardSize,
         IEnumerable<SquareViewModel> squares,
         double availableWidth,
         double availableHeight)
@@ -53,9 +53,9 @@ public class ChessboardViewModel : ObservableObject
         var height = availableHeight / boardSize;
 
         var sqList = squares.ToList();
-        for (byte i = 0; i < boardSize; i++)
+        for (var i = 0; i < boardSize; i++)
         {
-            for (byte j = 0; j < boardSize; j++)
+            for (var j = 0; j < boardSize; j++)
             {
                 var pos = new Position(i, j);
                 var square = new SquareViewModel(pos, FindColor(pos))

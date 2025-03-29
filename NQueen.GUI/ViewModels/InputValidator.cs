@@ -36,6 +36,6 @@ public class InputValidator : AbstractValidator<MainViewModel>
     public static bool IsBoardSizeFormattedCorrectly(string boardSize)
     {
         return int.TryParse(boardSize, out int result) &&
-               result >= BoardSettings.MinBoardSize && result <= BoardSettings.ByteMaxValue;
+               result >= BoardSettings.MinBoardSize && result <= BoardSettings.IntMaxValue;
     }
 }

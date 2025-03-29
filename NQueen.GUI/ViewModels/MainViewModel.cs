@@ -217,7 +217,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             MemoryUsage = "0";
 
             // Assuming the available width and height are equal to the window dimensions
-            Chessboard?.CreateSquares((byte)BoardSize, new List<SquareViewModel>(), Chessboard.WindowWidth, Chessboard.WindowHeight);
+            Chessboard?.CreateSquares(BoardSize, [], Chessboard.WindowWidth, Chessboard.WindowHeight);
         }
     }
 
@@ -290,7 +290,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 
     public void SetChessboard(double boardDimension)
     {
-        // Validate board size before setting the chessboard
         if (IsBoardSizeValid(BoardSize, SolutionMode))
         {
             Chessboard = new ChessboardViewModel
@@ -299,8 +298,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
                 WindowHeight = boardDimension
             };
 
-            // Assuming the available width and height are equal to the board dimension
-            Chessboard.CreateSquares((byte)BoardSize, new List<SquareViewModel>(), boardDimension, boardDimension);
+            Chessboard.CreateSquares(BoardSize, [], boardDimension, boardDimension);
 
             IsIdle = true;
             IsSimulating = false;
@@ -351,7 +349,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     private static bool IsBoardSizeValid(int boardSize, SolutionMode solutionMode)
     {
         return boardSize >= BoardSettings.MinBoardSize &&
-               boardSize <= BoardSettings.ByteMaxValue &&
+               boardSize <= BoardSettings.MaxBoardSize &&
                (solutionMode != SolutionMode.Single || boardSize <= BoardSettings.MaxBoardSizeInSingleSolution) &&
                (solutionMode != SolutionMode.Unique || boardSize <= BoardSettings.MaxBoardSizeInUniqueSolutions) &&
                (solutionMode != SolutionMode.All || boardSize <= BoardSettings.MaxBoardSizeInAllSolutions);
