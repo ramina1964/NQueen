@@ -215,7 +215,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             NoOfSolutions = "0";
             ElapsedTimeInSec = $"{0}";
             MemoryUsage = "0";
-            Chessboard?.CreateSquares((byte)BoardSize, new List<SquareViewModel>());
+
+            // Assuming the available width and height are equal to the window dimensions
+            Chessboard?.CreateSquares((byte)BoardSize, new List<SquareViewModel>(), Chessboard.WindowWidth, Chessboard.WindowHeight);
         }
     }
 
@@ -297,7 +299,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
                 WindowHeight = boardDimension
             };
 
-            Chessboard.CreateSquares((byte)BoardSize, new List<SquareViewModel>());
+            // Assuming the available width and height are equal to the board dimension
+            Chessboard.CreateSquares((byte)BoardSize, new List<SquareViewModel>(), boardDimension, boardDimension);
 
             IsIdle = true;
             IsSimulating = false;
@@ -345,11 +348,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     public override int GetHashCode() =>
         HashCode.Combine(InputViewModel);
 
-    private readonly EventManager _eventManager;
-    private ICommandManager _commandManager;
-    private readonly InputValidator _validator;
-    private bool _disposed;
-
     private static bool IsBoardSizeValid(int boardSize, SolutionMode solutionMode)
     {
         return boardSize >= BoardSettings.MinBoardSize &&
@@ -358,4 +356,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
                (solutionMode != SolutionMode.Unique || boardSize <= BoardSettings.MaxBoardSizeInUniqueSolutions) &&
                (solutionMode != SolutionMode.All || boardSize <= BoardSettings.MaxBoardSizeInAllSolutions);
     }
+
+    private readonly EventManager _eventManager;
+    private ICommandManager _commandManager;
+    private readonly InputValidator _validator;
+    private bool _disposed;
 }

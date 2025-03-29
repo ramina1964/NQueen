@@ -70,6 +70,22 @@ public partial class MainView : Window, IDisposable
         }
     }
 
+    private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is MainViewModel viewModel && viewModel.Chessboard != null)
+        {
+            viewModel.Chessboard.WindowWidth = e.NewSize.Width;
+            viewModel.Chessboard.WindowHeight = e.NewSize.Height;
+
+            // Update the squares with the new dimensions
+            viewModel.Chessboard.CreateSquares(
+                (byte)viewModel.BoardSize,
+                viewModel.Chessboard.Squares,
+                e.NewSize.Width,
+                e.NewSize.Height);
+        }
+    }
+
     private bool _disposed = false;
     private readonly IServiceProvider _serviceProvider;
 }

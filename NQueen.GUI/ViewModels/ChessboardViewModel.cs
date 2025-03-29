@@ -4,7 +4,7 @@ public class ChessboardViewModel : ObservableObject
 {
     public ChessboardViewModel()
     {
-        Squares = new ObservableCollection<SquareViewModel>();
+        Squares = [];
         QueenImagePath = Constants.QueenImagePath;
     }
 
@@ -37,16 +37,20 @@ public class ChessboardViewModel : ObservableObject
         }
     }
 
-    public void CreateSquares(byte boardSize, IEnumerable<SquareViewModel> squares)
+    public void CreateSquares(
+        byte boardSize,
+        IEnumerable<SquareViewModel> squares,
+        double availableWidth,
+        double availableHeight)
     {
-        if (boardSize < BoardSettings.MinBoardSize || boardSize > BoardSettings.ByteMaxValue)
+        if (boardSize < BoardSettings.MinBoardSize || boardSize > BoardSettings.MaxBoardSize)
         {
             // Handle invalid board size
             return;
         }
 
-        var width = WindowWidth / boardSize;
-        var height = WindowHeight / boardSize;
+        var width = availableWidth / boardSize;
+        var height = availableHeight / boardSize;
 
         var sqList = squares.ToList();
         for (byte i = 0; i < boardSize; i++)
@@ -71,6 +75,7 @@ public class ChessboardViewModel : ObservableObject
             .ThenBy(sq => sq.Position.RowNo).ToList()
             .ForEach(sq => Squares.Add(sq));
     }
+
 
     private void ClearImages()
     {

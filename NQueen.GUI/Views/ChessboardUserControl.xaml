@@ -13,40 +13,41 @@
     AutomationProperties.Name="ChessboardControl"
     mc:Ignorable="d">
 
-    <UserControl.Resources>
-        <local:NullImageConverter x:Key="NullImageConverter" />
-    </UserControl.Resources>
+    <Viewbox Stretch="Uniform">
+        <Viewbox.Resources>
+            <local:NullImageConverter x:Key="NullImageConverter" />
+        </Viewbox.Resources>
 
-    <Grid
+        <Grid
         x:Name="ChessboardGrid"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         AutomationProperties.Name="ChessboardGrid">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-        <ItemsControl
+            <ItemsControl
             x:Name="ChessboardItemsControl"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             AutomationProperties.Name="ChessboardItemsControl"
             ItemsSource="{Binding Chessboard.Squares}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <UniformGrid Columns="{Binding BoardSize, FallbackValue=1}" Rows="{Binding BoardSize, FallbackValue=1}" />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="{Binding BoardSize, FallbackValue=8}" Rows="{Binding BoardSize, FallbackValue=8}" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
 
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Border
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border
                         x:Name="ChessboardSquareBorder"
                         Width="{Binding Width}"
                         Height="{Binding Height}"
                         AutomationProperties.Name="ChessboardSquareBorder"
                         Background="{Binding Color}">
-                        <Image
+                            <Image
                             x:Name="ChessboardSquareImage"
                             Width="{Binding Width}"
                             Height="{Binding Height}"
@@ -54,9 +55,10 @@
                             AutomationProperties.Name="ChessboardSquareImage"
                             Source="{Binding ImagePath, Converter={StaticResource NullImageConverter}}"
                             Stretch="Uniform" />
-                    </Border>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-    </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
+    </Viewbox>
 </UserControl>
