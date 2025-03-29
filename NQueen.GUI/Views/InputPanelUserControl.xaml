@@ -16,7 +16,7 @@
 
     <UserControl.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-        <converters:BoardSizeConverter x:Key="BoardSizeConverter" />
+        <converters:StringToIntConverter x:Key="StringToIntConverter" />
         <Style x:Key="ErrorTextBoxStyle" TargetType="TextBox">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding InputViewModel.IsErrorVisible}" Value="True">
@@ -81,7 +81,7 @@
                     IsEnabled="{Binding IsInInputMode}"
                     LostFocus="TxtBoardSize_LostFocus"
                     TabIndex="0"
-                    Text="{Binding BoardSize, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource BoardSizeConverter}}"
+                    Text="{Binding BoardSize, Mode=TwoWay, UpdateSourceTrigger=LostFocus, Converter={StaticResource StringToIntConverter}}"
                     Style="{StaticResource ErrorTextBoxStyle}"
                     AutomationProperties.Name="Board Size" />
 

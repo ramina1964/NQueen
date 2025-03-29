@@ -20,7 +20,7 @@
     mc:Ignorable="d">
 
     <Window.Resources>
-        <converter:BoardSizeConverter x:Key="BoardSizeConverter" />
+        <converter:StringToIntConverter x:Key="StringToIntConverter" />
     </Window.Resources>
 
     <!--  Start of Outer Grid  -->

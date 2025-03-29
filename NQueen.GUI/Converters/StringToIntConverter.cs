@@ -1,6 +1,6 @@
 ﻿namespace NQueen.GUI.Converters;
 
-public class BoardSizeConverter : IValueConverter
+public class StringToIntConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
         value.ToString();
@@ -12,9 +12,7 @@ public class BoardSizeConverter : IValueConverter
             if (int.TryParse(input, out int intResult))
             {
                 if (intResult >= BoardSettings.MinBoardSize && intResult <= BoardSettings.MaxBoardSize)
-                {
                     return intResult;
-                }
 
                 SetErrorMessage(Messages.SizeOutOfRangeError);
                 return DependencyProperty.UnsetValue;
