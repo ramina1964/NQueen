@@ -29,10 +29,4 @@ public class InputValidator : AbstractValidator<MainViewModel>
             .When(vm => vm.SolutionMode == SolutionMode.All)
             .WithMessage(_ => Messages.AllSizeOutOfRangeMsg);
     }
-
-    public static bool IsBoardSizeFormattedCorrectly(string boardSize)
-    {
-        return int.TryParse(boardSize, out int result) &&
-               result >= BoardSettings.MinBoardSize && result <= BoardSettings.IntMaxValue;
-    }
 }

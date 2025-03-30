@@ -91,7 +91,7 @@ public class EventManager(MainViewModel mainViewModel) : IEventManager
     {
         var sol = new Solution(e.Solution, 1);
         var positions = sol
-            .QueenPositions.Where(q => q < BoardSettings.IntMaxValue)
+            .QueenPositions.Where(q => q < _mainViewModel.BoardSize)
             .Select((item, index) => new Position(index, item)).ToList();
 
         _mainViewModel.Chessboard?.PlaceQueens(positions);

@@ -157,7 +157,7 @@ public class BackTrackingSolver : ISolver, IDisposable
 
     private async Task FindSingleOrUniqueSolutions(int colNo, SolutionMode solutionMode)
     {
-        while (colNo != BoardSettings.IntMaxValue)
+        while (colNo != BoardSettings.MaxBoardSize)
         {
             if (IsSolverCanceled)
                 return;
@@ -238,11 +238,6 @@ public class BackTrackingSolver : ISolver, IDisposable
 
     private int FindQueenPosition(int colNo)
     {
-        //if (colNo < 0 || colNo >= QueenPositions.Length)
-        //{
-        //    throw new IndexOutOfRangeException($"colNo {colNo} is out of bounds for QueenPositions array.");
-        //}
-
         colNo = Math.Min(colNo, BoardSize - 1);
         var startPos = QueenPositions[colNo] + 1;
 
@@ -265,9 +260,6 @@ public class BackTrackingSolver : ISolver, IDisposable
     {
         for (int j = 0; j < colNo; j++)
         {
-            //if (QueenPositions[j] == -1) // Check for invalid value
-            //    return false;
-
             int diff = pos - QueenPositions[j];
             if (diff == int.MinValue) return false; // Handle the special case
             var lhs = Math.Abs(diff);
