@@ -165,27 +165,19 @@ public class BackTrackingSolver : ISolver, IDisposable
             if (QueenPositions[0] == HalfBoardSize)
                 return;
 
-            if (colNo == BoardSize && solutionMode == SolutionMode.Single)
+            if (colNo == BoardSize)
             {
-                UpdateSolutions();
-                NotifySolutionFound();
-                var updateDTO = new SolutionUpdateDTO
+                if (solutionMode == SolutionMode.Single)
                 {
-                    BoardSize = BoardSize,
-                    SolutionMode = SolutionMode,
-                    Solutions = Solutions,
-                    QueenPositions = (int[])QueenPositions.Clone()
-                };
-                SolutionManager.UpdateSolutions(updateDTO);
-                return;
-            }
-
-            else if (colNo == BoardSize && solutionMode == SolutionMode.Unique)
-            {
-                UpdateSolutions();
-                NotifySolutionFound();
-                colNo--;
-                continue;
+                    UpdateAndNotifySolution();
+                    return;
+                }
+                else if (solutionMode == SolutionMode.Unique)
+                {
+                    UpdateAndNotifySolution();
+                    colNo--;
+                    continue;
+                }
             }
 
             if (colNo < 0)
@@ -213,7 +205,7 @@ public class BackTrackingSolver : ISolver, IDisposable
     {
         await FindSingleOrUniqueSolutions(colNo, SolutionMode.Unique);
 
-        foreach (var solution in Solutions.ToList())
+        foreach (var solution in CloneSolutions())
         {
             var updateDTO = new SolutionUpdateDTO
             {
@@ -226,6 +218,15 @@ public class BackTrackingSolver : ISolver, IDisposable
             SolutionManager.UpdateSolutions(updateDTO);
         }
     }
+
+    private void UpdateAndNotifySolution()
+    {
+        UpdateSolutions();
+        NotifySolutionFound();
+    }
+
+    private List<int[]> CloneSolutions() =>
+        Solutions.Select(solution => (int[])solution.Clone()).ToList();
 
     private void NotifySolutionFound()
     {
