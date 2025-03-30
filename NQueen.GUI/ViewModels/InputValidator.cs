@@ -2,15 +2,12 @@
 
 public class InputValidator : AbstractValidator<MainViewModel>
 {
-    public InputValidator()
-    {
-        ValidationRules();
-    }
+    public InputValidator() => ValidationRules();
 
     private void ValidationRules()
     {
         RuleFor(vm => vm.BoardSize)
-            .Must(boardSize => IsBoardSizeFormattedCorrectly(boardSize.ToString()))
+            .Must(boardSize => ValidationHelper.IsBoardSizeFormattedCorrectly(boardSize.ToString()))
             .WithMessage(_ => Messages.SizeOutOfRangeError);
 
         RuleFor(vm => vm.BoardSize)

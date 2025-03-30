@@ -44,7 +44,7 @@ public class EventManager(MainViewModel mainViewModel) : IEventManager
             _mainViewModel.UpdateButtonFunctionality();
 
             // Only update the GUI if the board size is within the valid range
-            if (IsBoardSizeInRange)
+            if (ValidationHelper.IsBoardSizeFormattedCorrectly(BoardSize))
                 _mainViewModel.UpdateGui();
         }
     }
@@ -77,7 +77,7 @@ public class EventManager(MainViewModel mainViewModel) : IEventManager
         _mainViewModel.UpdateButtonFunctionality();
 
         // Only update the GUI if the board size is within the valid range
-        if (IsBoardSizeInRange)
+        if (ValidationHelper.IsBoardSizeFormattedCorrectly(BoardSize))
             _mainViewModel.UpdateGui();
     }
 
@@ -129,7 +129,5 @@ public class EventManager(MainViewModel mainViewModel) : IEventManager
 
     private readonly MainViewModel _mainViewModel = mainViewModel;
 
-    private bool IsBoardSizeInRange =>
-        _mainViewModel.BoardSize >= BoardSettings.MinBoardSize &&
-        _mainViewModel.BoardSize <= BoardSettings.MaxBoardSize;
+    private string BoardSize => _mainViewModel.BoardSize.ToString();
 }
