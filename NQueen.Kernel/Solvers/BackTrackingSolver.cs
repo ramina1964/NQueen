@@ -201,6 +201,9 @@ public class BackTrackingSolver : ISolver, IDisposable
         }
     }
 
+    private List<int[]> CloneSolutions() =>
+        Solutions.Select(solution => (int[])solution.Clone()).ToList();
+
     private async Task FindAllSolutions(int colNo)
     {
         await FindSingleOrUniqueSolutions(colNo, SolutionMode.Unique);
@@ -224,9 +227,6 @@ public class BackTrackingSolver : ISolver, IDisposable
         UpdateSolutions();
         NotifySolutionFound();
     }
-
-    private List<int[]> CloneSolutions() =>
-        Solutions.Select(solution => (int[])solution.Clone()).ToList();
 
     private void NotifySolutionFound()
     {
