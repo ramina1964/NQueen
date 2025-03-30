@@ -13,11 +13,19 @@ public partial class TestBase(ISolverBackEnd sut)
             ? [.. GetExpectedUniqueSolutions(boardSize)]
             : [.. GetExpectedAllSolutions(boardSize)];
 
-    public List<int[]> GetActualSolutions(int boardSize, SolutionMode solutionMode) => [.. Sut
-               .GetResultsAsync(boardSize, solutionMode)
-               .Result
-               .Solutions
-               .Select(sol => sol.QueenPositions)];
+    protected async Task<List<int[]>> GetActualSolutionsAsync(int boardSize, SolutionMode solutionMode)
+    {
+        try
+        {
+            var results = await Sut.GetResultsAsync(boardSize, solutionMode);
+            return results.Solutions.Select(sol => sol.QueenPositions).ToList();
+        }
+        catch (Exception ex)
+        {
+            // Handle or log the exception as needed
+            throw new InvalidOperationException("Failed to get actual solutions.", ex);
+        }
+    }
 
     protected readonly ISolverBackEnd Sut = sut
         ?? throw new ArgumentNullException(nameof(sut));
