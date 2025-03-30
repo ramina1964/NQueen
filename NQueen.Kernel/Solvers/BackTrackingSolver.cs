@@ -157,7 +157,7 @@ public class BackTrackingSolver : ISolver, IDisposable
 
     private async Task FindSingleOrUniqueSolutions(int colNo, SolutionMode solutionMode)
     {
-        while (colNo != BoardSettings.IntMaxValue)
+        while (colNo != BoardSettings.MaxBoardSize)
         {
             if (IsSolverCanceled)
                 return;
