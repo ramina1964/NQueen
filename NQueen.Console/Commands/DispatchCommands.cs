@@ -129,7 +129,7 @@ public partial class DispatchCommands(
 
         if (int.TryParse(value, out int userChoice) == false)
         {
-            HelpCommands.ShowExitError(CommandConst.InvalidBoardSize);
+            HelpCommands.ShowExitError(Messages.SizeOutOfRangeError);
             return false;
         }
 
