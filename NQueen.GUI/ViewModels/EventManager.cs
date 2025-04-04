@@ -1,5 +1,6 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
+// Todo: Consider using WeakReferenceMessenger from Toolkit.MVVM instead of this class and its interface
 public class EventManager(MainViewModel mainViewModel) : IEventManager
 {
     public void SubscribeToSimulationEvents()
