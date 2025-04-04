@@ -1,6 +1,5 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-// Todo: Implement INotifyDataErrorInfo instead of IDataErrorInfo here
 public sealed partial class MainViewModel : ObservableObject, IDisposable, IDataErrorInfo
 {
     public MainViewModel(ISolver solver, ICommandManager commandManager, InputValidator validator)
@@ -87,6 +86,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     [ObservableProperty]
     private InputViewModel _inputViewModel;
 
+    // Todo: Find out how to notify ProgressLabel when this property changes 
     [ObservableProperty]
     private double _progressValue;
 
