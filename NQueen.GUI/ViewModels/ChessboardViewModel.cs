@@ -4,7 +4,7 @@ public class ChessboardViewModel : ObservableObject
 {
     public ChessboardViewModel()
     {
-        Squares = [];
+        Squares = new ObservableCollection<SquareViewModel>();
         QueenImagePath = Constants.QueenImagePath;
     }
 
@@ -75,7 +75,6 @@ public class ChessboardViewModel : ObservableObject
             .ThenBy(sq => sq.Position.RowNo).ToList()
             .ForEach(sq => Squares.Add(sq));
     }
-
 
     private void ClearImages()
     {

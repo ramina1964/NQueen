@@ -5,8 +5,17 @@ public partial class ChessboardUserControl : UserControl
     public ChessboardUserControl(MainViewModel mainViewModel)
     {
         InitializeComponent();
-        DataContext = mainViewModel ??
-            throw new ArgumentNullException(nameof(mainViewModel));
+        DataContext = mainViewModel ?? throw new ArgumentNullException(nameof(mainViewModel));
+        SizeChanged += ChessboardUserControl_SizeChanged;
+    }
+
+    private void ChessboardUserControl_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is MainViewModel mainViewModel && mainViewModel.Chessboard != null)
+        {
+            var size = Dimensions.ChessboardSquareSize(ActualWidth, ActualHeight, mainViewModel.BoardSize);
+            mainViewModel.SetChessboard(size);
+        }
     }
 
     public void DisplaySolution(List<Position> positions)

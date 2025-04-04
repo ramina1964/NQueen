@@ -6,6 +6,7 @@ public partial class MainView : Window, IDisposable
     {
         InitializeComponent();
         Loaded += MainView_Loaded;
+        SizeChanged += Window_SizeChanged;
         MainViewModel = mainViewModel
             ?? throw new ArgumentNullException(nameof(mainViewModel));
 
@@ -51,6 +52,7 @@ public partial class MainView : Window, IDisposable
 
             // Unsubscribe from the Loaded event
             Loaded -= MainView_Loaded;
+            SizeChanged -= Window_SizeChanged;
         }
 
         // Clean up any unmanaged resources here
@@ -62,9 +64,7 @@ public partial class MainView : Window, IDisposable
     {
         if (Chessboard.Content is ChessboardUserControl board)
         {
-            var size = (int)Math.Min(board.ActualWidth, board.ActualHeight);
-            board.Width = size;
-            board.Height = size;
+            var size = Dimensions.ChessboardSquareSize(board.ActualWidth, board.ActualHeight, MainViewModel.BoardSize);
             MainViewModel.SetChessboard(size);
             DataContext = MainViewModel;
         }
