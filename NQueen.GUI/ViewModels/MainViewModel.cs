@@ -1,5 +1,6 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
+// Todo: Implement INotifyDataErrorInfo instead of IDataErrorInfo here
 public sealed partial class MainViewModel : ObservableObject, IDisposable, IDataErrorInfo
 {
     public MainViewModel(ISolver solver, ICommandManager commandManager, InputValidator validator)
