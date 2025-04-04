@@ -1,5 +1,6 @@
 ﻿namespace NQueen.GUI.Views;
 
+// Todo: Use ValueConverter from CommunityToolkit.Mvvm, instead
 public partial class InputPanelUserControl : UserControl
 {
     public InputPanelUserControl(MainViewModel mainViewModel)

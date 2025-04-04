@@ -1,5 +1,6 @@
 ﻿namespace NQueen.GUI.Converters;
 
+// Todo: Use ValueConverter from CommunityToolkit.Mvvm, instead
 public class NullImageConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

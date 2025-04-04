@@ -1,5 +1,6 @@
 ﻿namespace NQueen.GUI.Converters;
 
+// Todo: Use ValueConverter from CommunityToolkit.Mvvm, instead
 public class NegativeConverter : MarkupExtension, IValueConverter
 {
     public NegativeConverter() : base() { }

@@ -1,5 +1,6 @@
 ﻿namespace NQueen.GUI.Converters;
 
+// Todo: Use ValueConverter from CommunityToolkit.Mvvm, instead
 [ValueConversion(typeof(string), typeof(string))]
 public class RatioConverter : MarkupExtension, IValueConverter
 {

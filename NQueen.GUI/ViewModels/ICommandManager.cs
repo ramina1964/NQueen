@@ -1,5 +1,7 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
+
+// Todo: Consider adding ICommand from CommunityToolkit.Mvvm
 public interface ICommandManager
 {
     IAsyncRelayCommand SimulateCommand { get; }
