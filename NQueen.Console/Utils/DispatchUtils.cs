@@ -52,7 +52,7 @@ public static class DispatchUtils
     {
         if (int.TryParse(value, out int size) == false)
         {
-            HelpCommands.ShowExitError(CommandConst.InvalidBoardSize);
+            HelpCommands.ShowExitError(Messages.AllSizeOutOfRangeMsg);
             return (false, 0);
         }
 
