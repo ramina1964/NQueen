@@ -18,7 +18,7 @@ public partial class App : Application
         mainView.Show();
     }
 
-    private void ConfigureServices(IServiceCollection services)
+    private static void ConfigureServices(IServiceCollection services)
     {
         // Register the services related to the NQueen.GUI project
         services.AddSingleton<ICommandManager, CommandManager>();

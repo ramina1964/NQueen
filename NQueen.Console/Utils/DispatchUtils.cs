@@ -52,11 +52,7 @@ public static class DispatchUtils
     {
         if (int.TryParse(value, out int size) == false)
         {
-<<<<<<< HEAD
             HelpCommands.ShowExitError(Messages.AllSizeOutOfRangeMsg);
-=======
-            HelpCommands.ShowExitError(CommandConst.SizeTooLargeForAllSolutions);
->>>>>>> d55b1a3bd4e45f249bd14aefeeae9613b65a0525
             return (false, 0);
         }
 
