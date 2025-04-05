@@ -51,38 +51,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         _disposed = true;
     }
 
-    public string this[string columnName]
-    {
-        get
-        {
-            var validationFailure = InputViewModel
-                .Validate(this)
-                .Errors
-                .FirstOrDefault(item => item.PropertyName == columnName);
-
-            return validationFailure == null
-                   ? string.Empty
-                   : validationFailure.ErrorMessage;
-        }
-    }
-
-    public string Error
-    {
-        get
-        {
-            var results = InputViewModel.Validate(this);
-            if (results == null || results.Errors.Count == 0)
-            { return string.Empty; }
-
-            var errors = string
-                .Join(Environment.NewLine, results.Errors
-                .Select(x => x.ErrorMessage)
-                .ToArray());
-
-            return errors;
-        }
-    }
-
     [ObservableProperty]
     private InputViewModel _inputViewModel;
 
@@ -109,7 +77,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
         Enum.GetValues<SolutionMode>().Cast<SolutionMode>();
 
     [ObservableProperty]
-    private IEnumerable<DisplayMode> displayModeList =
+    private IEnumerable<DisplayMode> _displayModeList =
         Enum.GetValues<DisplayMode>().Cast<DisplayMode>();
 
     [ObservableProperty]
@@ -119,7 +87,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     private int _delayInMilliseconds;
 
     [ObservableProperty]
-    private static SimulationResults simulationResults;
+    private static SimulationResults _simulationResults;
 
     [ObservableProperty]
     public ObservableCollection<Solution> _observableSolutions;
@@ -331,10 +299,42 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
 
     private void Validate()
     {
-        var validationResult = InputViewModel.Validate(this);
+        var validationResult = InputViewModel.Validate(Solver, CommandManager, this);
         IsValid = validationResult.IsValid;
         IsSimulateButtonEnabled = validationResult.IsValid;
         UpdateButtonFunctionality();
+    }
+
+    public string this[string columnName]
+    {
+        get
+        {
+            var validationFailure = InputViewModel
+                .Validate(Solver, CommandManager, this) // Pass 'this' as the third argument
+                .Errors
+                .FirstOrDefault(item => item.PropertyName == columnName);
+
+            return validationFailure == null
+                   ? string.Empty
+                   : validationFailure.ErrorMessage;
+        }
+    }
+
+    public string Error
+    {
+        get
+        {
+            var results = InputViewModel.Validate(Solver, CommandManager, this); // Pass 'this' as the third argument
+            if (results == null || results.Errors.Count == 0)
+            { return string.Empty; }
+
+            var errors = string
+                .Join(Environment.NewLine, results.Errors
+                .Select(x => x.ErrorMessage)
+                .ToArray());
+
+            return errors;
+        }
     }
 
     public override bool Equals(object obj)
@@ -355,8 +355,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
                (solutionMode != SolutionMode.All || boardSize <= BoardSettings.MaxBoardSizeInAllSolutions);
     }
 
-    private readonly EventManager _eventManager;
+    private EventManager _eventManager;
     private ICommandManager _commandManager;
-    private readonly InputValidator _validator;
+    private InputValidator _validator;
     private bool _disposed;
 }

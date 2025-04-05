@@ -19,7 +19,10 @@ public partial class InputPanelUserControl : UserControl
                 BindingExpression binding = textBox.GetBindingExpression(TextBox.TextProperty);
                 binding?.UpdateSource();
 
-                var validationResult = _mainViewModel.InputViewModel.Validate(_mainViewModel);
+                var validationResult = _mainViewModel.InputViewModel.Validate(
+                    _mainViewModel.Solver,
+                    _mainViewModel.CommandManager,
+                    _mainViewModel);
 
                 if (validationResult.IsValid)
                 {

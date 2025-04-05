@@ -2,13 +2,20 @@
 
 public sealed partial class InputViewModel(InputValidator validator) : ObservableObject
 {
-    public FluentValidationResult Validate(MainViewModel mainViewModel)
+    public FluentValidationResult Validate(
+        ISolver solver,
+        ICommandManager commandManager,
+        MainViewModel mainViewModel)
     {
-        var result = _validator.Validate(mainViewModel);
+        var context = new ValidationContext<MainViewModel>(mainViewModel);
+        var result = _validator.Validate(context);
         ErrorMessage = result.IsValid ? string.Empty : result.Errors.First().ErrorMessage;
-        IsErrorVisible = result.IsValid == false;
+        IsErrorVisible = !result.IsValid;
         return result;
     }
+
+    [ObservableProperty]
+    private string _boardSizeInput;
 
     [ObservableProperty]
     private string _errorMessage;

@@ -19,9 +19,11 @@ public class EventManager(MainViewModel mainViewModel) : IEventManager
 
     public void OnBoardSizeChanged()
     {
-        var validationResult = _mainViewModel.InputViewModel.Validate(_mainViewModel);
-        _mainViewModel.IsValid = validationResult.IsValid;
+        var validationResult = _mainViewModel.InputViewModel.Validate(
+            _mainViewModel.Solver,
+            _mainViewModel.CommandManager, _mainViewModel);
 
+        _mainViewModel.IsValid = validationResult.IsValid;
         if (_mainViewModel.IsValid == false)
         {
             _mainViewModel.IsIdle = false;
@@ -53,7 +55,7 @@ public class EventManager(MainViewModel mainViewModel) : IEventManager
     public void OnSolutionModeChanged(SolutionMode value)
     {
         _mainViewModel.SolutionMode = value;
-        var validationResult = _mainViewModel.InputViewModel.Validate(_mainViewModel);
+        var validationResult = _mainViewModel.InputViewModel.Validate(_mainViewModel.Solver, _mainViewModel.CommandManager, _mainViewModel);
 
         if (validationResult.IsValid == false)
         {
@@ -124,9 +126,14 @@ public class EventManager(MainViewModel mainViewModel) : IEventManager
 
     public void OnDisplayModeChanged()
     {
-        _mainViewModel.InputViewModel.Validate(_mainViewModel);
+        _mainViewModel.InputViewModel.Validate(
+            _mainViewModel.Solver,
+            _mainViewModel.CommandManager,
+            _mainViewModel);
+
         _mainViewModel.UpdateButtonFunctionality();
     }
+
 
     private readonly MainViewModel _mainViewModel = mainViewModel;
 
