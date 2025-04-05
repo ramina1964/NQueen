@@ -56,7 +56,6 @@ public partial class MainView : Window, IDisposable
         }
 
         // Clean up any unmanaged resources here
-
         _disposed = true;
     }
 

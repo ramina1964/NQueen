@@ -1,20 +1,24 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-// Todo: Consider using WeakReferenceMessenger from Toolkit.MVVM instead of this class and its interface
 public class EventManager(MainViewModel mainViewModel) : IEventManager
 {
     public void SubscribeToSimulationEvents()
     {
-        _mainViewModel.Solver.ProgressValueChanged += OnProgressValueChanged;
-        _mainViewModel.Solver.QueenPlaced += OnQueenPlaced;
-        _mainViewModel.Solver.SolutionFound += OnSolutionFound;
+        WeakReferenceMessenger.Default.Unregister<ProgressValueChangedMessage>(this);
+        WeakReferenceMessenger.Default.Register<ProgressValueChangedMessage>(this, OnProgressValueChanged);
+
+        WeakReferenceMessenger.Default.Unregister<QueenPlacedMessage>(this);
+        WeakReferenceMessenger.Default.Register<QueenPlacedMessage>(this, OnQueenPlaced);
+
+        WeakReferenceMessenger.Default.Unregister<SolutionFoundMessage>(this);
+        WeakReferenceMessenger.Default.Register<SolutionFoundMessage>(this, OnSolutionFound);
     }
 
     public void UnsubscribeFromSimulationEvents()
     {
-        _mainViewModel.Solver.ProgressValueChanged -= OnProgressValueChanged;
-        _mainViewModel.Solver.QueenPlaced -= OnQueenPlaced;
-        _mainViewModel.Solver.SolutionFound -= OnSolutionFound;
+        WeakReferenceMessenger.Default.Unregister<ProgressValueChangedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<QueenPlacedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<SolutionFoundMessage>(this);
     }
 
     public void OnBoardSizeChanged()
@@ -24,7 +28,7 @@ public class EventManager(MainViewModel mainViewModel) : IEventManager
             _mainViewModel.CommandManager, _mainViewModel);
 
         _mainViewModel.IsValid = validationResult.IsValid;
-        if (_mainViewModel.IsValid == false)
+        if (!_mainViewModel.IsValid)
         {
             _mainViewModel.IsIdle = false;
             _mainViewModel.IsSimulating = false;
@@ -46,7 +50,6 @@ public class EventManager(MainViewModel mainViewModel) : IEventManager
             _mainViewModel.InputViewModel.IsErrorVisible = false;
             _mainViewModel.UpdateButtonFunctionality();
 
-            // Only update the GUI if the board size is within the valid range
             if (ValidationHelper.IsBoardSizeFormattedCorrectly(BoardSize))
                 _mainViewModel.UpdateGui();
         }
@@ -57,7 +60,7 @@ public class EventManager(MainViewModel mainViewModel) : IEventManager
         _mainViewModel.SolutionMode = value;
         var validationResult = _mainViewModel.InputViewModel.Validate(_mainViewModel.Solver, _mainViewModel.CommandManager, _mainViewModel);
 
-        if (validationResult.IsValid == false)
+        if (!validationResult.IsValid)
         {
             _mainViewModel.ValidationError = validationResult.Errors.First().ErrorMessage;
             _mainViewModel.HasValidationError = true;
@@ -79,20 +82,19 @@ public class EventManager(MainViewModel mainViewModel) : IEventManager
         _mainViewModel.Initialize(_mainViewModel.BoardSize, value, _mainViewModel.DisplayMode);
         _mainViewModel.UpdateButtonFunctionality();
 
-        // Only update the GUI if the board size is within the valid range
         if (ValidationHelper.IsBoardSizeFormattedCorrectly(BoardSize))
             _mainViewModel.UpdateGui();
     }
 
-    private void OnProgressValueChanged(object sender, ProgressValueChangedEventArgs e)
+    private void OnProgressValueChanged(object recipient, ProgressValueChangedMessage message)
     {
-        _mainViewModel.ProgressValue = e.Value;
-        _mainViewModel.ProgressLabel = $"{e.Value} %";
+        _mainViewModel.ProgressValue = message.Value;
+        _mainViewModel.ProgressLabel = $"{message.Value} %";
     }
 
-    private void OnQueenPlaced(object sender, QueenPlacedEventArgs e)
+    private void OnQueenPlaced(object recipient, QueenPlacedMessage message)
     {
-        var sol = new Solution(e.Solution, 1);
+        var sol = new Solution(message.Value, 1);
         var positions = sol
             .QueenPositions.Where(q => q < _mainViewModel.BoardSize)
             .Select((item, index) => new Position(index, item)).ToList();
@@ -100,22 +102,20 @@ public class EventManager(MainViewModel mainViewModel) : IEventManager
         _mainViewModel.Chessboard?.PlaceQueens(positions);
     }
 
-    private void OnSolutionFound(object sender, SolutionFoundEventArgs e)
+    private void OnSolutionFound(object recipient, SolutionFoundMessage message)
     {
         var id = _mainViewModel.ObservableSolutions.Count + 1;
-        var sol = new Solution(e.Solution, id);
+        var sol = new Solution(message.Value, id);
 
-        // Update the total number of solutions
         _mainViewModel.NoOfSolutions = $"{int.Parse(_mainViewModel.NoOfSolutions.Replace(" ", "").Replace(",", "")) + 1,0:N0}";
 
-        // Limit the number of solutions shown in ObservableSolutions
         Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
         {
             if (_mainViewModel.ObservableSolutions.Count >= SolutionHelper.MaxNoOfSolutionsInOutput)
             {
                 _mainViewModel.ObservableSolutions.RemoveAt(0);
             }
-            if (_mainViewModel.ObservableSolutions.Any(s => s.Id == sol.Id) == false)
+            if (_mainViewModel.ObservableSolutions.All(s => s.Id != sol.Id))
             {
                 _mainViewModel.ObservableSolutions.Add(sol);
             }
@@ -134,8 +134,7 @@ public class EventManager(MainViewModel mainViewModel) : IEventManager
         _mainViewModel.UpdateButtonFunctionality();
     }
 
+    private string BoardSize => _mainViewModel.BoardSize.ToString();
 
     private readonly MainViewModel _mainViewModel = mainViewModel;
-
-    private string BoardSize => _mainViewModel.BoardSize.ToString();
 }

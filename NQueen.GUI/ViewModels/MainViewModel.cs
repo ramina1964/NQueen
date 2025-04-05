@@ -1,6 +1,7 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public sealed partial class MainViewModel : ObservableObject, IDisposable, IDataErrorInfo
+public sealed partial class MainViewModel :
+    ObservableObject, INotifyPropertyChanged, INotifyPropertyChanging, IDisposable, IDataErrorInfo
 {
     public MainViewModel(ISolver solver, ICommandManager commandManager, InputValidator validator)
     {
@@ -212,50 +213,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
             ObservableSolutions.Add(s);
     }
 
-    public void ManageSimulationStatus(SimulationStatus simulationStatus)
-    {
-        switch (simulationStatus)
-        {
-            case SimulationStatus.Started:
-                _eventManager.SubscribeToSimulationEvents();
-
-                IsIdle = false;
-                IsInInputMode = false;
-                IsSimulating = true;
-                IsOutputReady = false;
-
-                ProgressVisibility = Visibility.Visible;
-                if (SolutionMode == SolutionMode.Single)
-                {
-                    IsSingleRunning = true;
-                }
-                else
-                {
-                    IsSingleRunning = false;
-                    ProgressLabelVisibility = Visibility.Visible;
-                    ProgressValue = ProgressSettings.StartProgressValue;
-                }
-                break;
-
-            case SimulationStatus.Finished:
-                _eventManager.UnsubscribeFromSimulationEvents();
-
-                IsIdle = true;
-                IsInInputMode = true;
-                IsSimulating = false;
-                IsSingleRunning = false;
-                IsOutputReady = true;
-                ProgressVisibility = Visibility.Hidden;
-                ProgressLabelVisibility = Visibility.Hidden;
-                break;
-        }
-
-        // Notify the commands to re-evaluate their CanExecute state
-        CommandManager.SimulateCommand.NotifyCanExecuteChanged();
-        CommandManager.CancelCommand.NotifyCanExecuteChanged();
-        CommandManager.SaveCommand.NotifyCanExecuteChanged();
-    }
-
     public void SetChessboard(double boardDimension)
     {
         if (IsBoardSizeValid(BoardSize, SolutionMode))
@@ -346,6 +303,55 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     public override int GetHashCode() =>
         HashCode.Combine(InputViewModel);
 
+    public void ManageSimulationStatus(SimulationStatus simulationStatus)
+    {
+        switch (simulationStatus)
+        {
+            case SimulationStatus.Started:
+                _eventManager.SubscribeToSimulationEvents();
+                IsIdle = false;
+                IsInInputMode = false;
+                IsSimulating = true;
+                IsOutputReady = false;
+                ProgressVisibility = Visibility.Visible;
+                if (SolutionMode == SolutionMode.Single)
+                {
+                    IsSingleRunning = true;
+                }
+                else
+                {
+                    IsSingleRunning = false;
+                    ProgressLabelVisibility = Visibility.Visible;
+                    ProgressValue = ProgressSettings.StartProgressValue;
+                }
+                break;
+
+            case SimulationStatus.Finished:
+                _eventManager.UnsubscribeFromSimulationEvents();
+                IsIdle = true;
+                IsInInputMode = true;
+                IsSimulating = false;
+                IsSingleRunning = false;
+                IsOutputReady = true;
+                ProgressVisibility = Visibility.Hidden;
+                ProgressLabelVisibility = Visibility.Hidden;
+                break;
+        }
+
+        CommandManager.SimulateCommand.NotifyCanExecuteChanged();
+        CommandManager.CancelCommand.NotifyCanExecuteChanged();
+        CommandManager.SaveCommand.NotifyCanExecuteChanged();
+    }
+
+    private void OnProgressValueChanged(object sender, ProgressValueChangedEventArgs e) =>
+        WeakReferenceMessenger.Default.Send(new ProgressValueChangedMessage(e.Value));
+
+    private void OnQueenPlaced(object sender, QueenPlacedEventArgs e) =>
+        WeakReferenceMessenger.Default.Send(new QueenPlacedMessage(e.Solution));
+
+    private void OnSolutionFound(object sender, SolutionFoundEventArgs e) =>
+        WeakReferenceMessenger.Default.Send(new SolutionFoundMessage(e.Solution));
+
     private static bool IsBoardSizeValid(int boardSize, SolutionMode solutionMode)
     {
         return boardSize >= BoardSettings.MinBoardSize &&
@@ -355,8 +361,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
                (solutionMode != SolutionMode.All || boardSize <= BoardSettings.MaxBoardSizeInAllSolutions);
     }
 
-    private EventManager _eventManager;
     private ICommandManager _commandManager;
-    private InputValidator _validator;
+    private readonly EventManager _eventManager;
+    private readonly InputValidator _validator;
     private bool _disposed;
 }

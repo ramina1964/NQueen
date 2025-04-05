@@ -45,7 +45,7 @@ public class CommandManager : ICommandManager
     private bool CanSimulate() =>
         _mainViewModel != null && _mainViewModel.IsIdle && _mainViewModel.IsValid;
 
-    private void Cancel() => 
+    private void Cancel() =>
         _mainViewModel.Solver.IsSolverCanceled = true;
 
     private bool CanCancel() =>

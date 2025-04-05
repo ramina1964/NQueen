@@ -8,7 +8,7 @@ public interface IEventManager
 
     void OnBoardSizeChanged();
 
-    void OnSolutionModeChanged(SolutionMode value);
+    void OnSolutionModeChanged(SolutionMode solutionMode);
 
     void OnDisplayModeChanged();
 }
