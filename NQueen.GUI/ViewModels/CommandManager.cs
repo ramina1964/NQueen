@@ -1,6 +1,5 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-// Todo: Consider adding ICommand from CommunityToolkit.Mvvm, instead
 public class CommandManager : ICommandManager
 {
     public CommandManager()
