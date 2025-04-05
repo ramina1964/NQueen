@@ -26,7 +26,9 @@ public class CommandManager : ICommandManager
         _mainViewModel.ManageSimulationStatus(SimulationStatus.Started);
 
         _mainViewModel.UpdateGui();
-        _mainViewModel.SimulationResults = await _mainViewModel.Solver.GetResultsAsync(
+        _mainViewModel.SimulationResults = await _mainViewModel
+            .Solver
+            .GetResultsAsync(
             _mainViewModel.BoardSize, _mainViewModel.SolutionMode, _mainViewModel.DisplayMode);
 
         _mainViewModel.ExtractCorrectNoOfSols();
