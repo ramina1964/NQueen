@@ -1,20 +1,23 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public class ChessboardViewModel : ObservableObject
+public partial class ChessboardViewModel : ObservableObject
 {
     public ChessboardViewModel()
     {
-        Squares = new ObservableCollection<SquareViewModel>();
+        Squares = [];
         QueenImagePath = Constants.QueenImagePath;
     }
 
     public string QueenImagePath { get; }
 
-    public ObservableCollection<SquareViewModel> Squares { get; set; }
+    [ObservableProperty]
+    private ObservableCollection<SquareViewModel> _squares;
 
-    public double WindowWidth { get; set; }
+    [ObservableProperty]
+    private double _windowWidth;
 
-    public double WindowHeight { get; set; }
+    [ObservableProperty]
+    private double _windowHeight;
 
     public void PlaceQueens(IEnumerable<Position> positions)
     {

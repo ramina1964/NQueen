@@ -35,7 +35,7 @@
             ItemsSource="{Binding Chessboard.Squares}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <UniformGrid Columns="{Binding BoardSize, FallbackValue=8}" Rows="{Binding BoardSize, FallbackValue=8}" />
+                        <UniformGrid Columns="{Binding BoardSize}" Rows="{Binding BoardSize}" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
 

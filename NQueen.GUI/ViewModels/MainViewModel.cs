@@ -86,7 +86,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable, IData
     [ObservableProperty]
     private InputViewModel _inputViewModel;
 
-    // Todo: Find out how to notify ProgressLabel when this property changes 
     [ObservableProperty]
     private double _progressValue;
 

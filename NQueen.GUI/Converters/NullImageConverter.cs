@@ -1,12 +1,11 @@
 ﻿namespace NQueen.GUI.Converters;
 
-// Todo: Use ValueConverter from CommunityToolkit.Mvvm, instead
 public class NullImageConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        var imagePath = value as string;
-        return string.IsNullOrEmpty(imagePath) ? parameter as string : imagePath;
+        var stringValue = value as string;
+        return string.IsNullOrEmpty(stringValue) ? parameter as string : stringValue;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
