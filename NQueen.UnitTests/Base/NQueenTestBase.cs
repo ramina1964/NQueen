@@ -3,8 +3,10 @@
 public class NQueenTestBase(ISolverBackEnd sut)
 {
     public List<int[]> ExpectedSolutions { get; set; } = [];
-
     public List<int[]> ActualSolutions { get; set; } = [];
+
+    protected readonly ISolverBackEnd Sut = sut
+        ?? throw new ArgumentNullException(nameof(sut));
 
     public static List<int[]> FetchExpectedSols(int boardSize, SolutionMode solutionMode) =>
         solutionMode switch
@@ -19,8 +21,7 @@ public class NQueenTestBase(ISolverBackEnd sut)
                 ? uniqueSolutions
                 : throw new KeyNotFoundException($"No unique solutions found for board size {boardSize}."),
 
-            SolutionMode.All => ExpectedSolutionData.
-                AllSolutions
+            SolutionMode.All => ExpectedSolutionData.AllSolutions
                 .TryGetValue(boardSize, out var allSolutions)
                 ? allSolutions
                 : throw new KeyNotFoundException($"No all solutions found for board size {boardSize}."),
@@ -32,6 +33,18 @@ public class NQueenTestBase(ISolverBackEnd sut)
         (await Sut.GetResultsAsync(boardSize, solutionMode)).Solutions
             .Select(sol => sol.QueenPositions);
 
-    protected readonly ISolverBackEnd Sut = sut
-        ?? throw new ArgumentNullException(nameof(sut));
+    // Helper method for assertions
+    protected async Task AssertSolutionsAsync(int boardSize, SolutionMode solutionMode)
+    {
+        // Arrange
+        ExpectedSolutions = FetchExpectedSols(boardSize, solutionMode);
+
+        // Act
+        ActualSolutions = (await FetchActualSolsAsync(boardSize, solutionMode)).ToList();
+
+        // Assert
+        Assert.Equal(ExpectedSolutions.Count, ActualSolutions.Count);
+        ActualSolutions.Should().BeEquivalentTo(ExpectedSolutions);
+    }
 }
+
