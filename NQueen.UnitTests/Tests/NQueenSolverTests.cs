@@ -1,3 +1,5 @@
+using NQueen.UnitTests.Base;
+
 namespace NQueen.UnitTests.Tests;
 
 public class NQueenSolverTests(SolverBackEndFixture fixture) :
