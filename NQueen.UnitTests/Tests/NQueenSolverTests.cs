@@ -15,7 +15,7 @@ public class NQueenSolverTests(SolverBackEndFixture fixture) :
     public void SolverShouldNotGenerateAnySolution(int boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        ExpectedSolutions = GetExpectedSolutions(boardSize, solutionMode);
+        ExpectedSolutions = FetchExpectedSolutions(boardSize, solutionMode);
 
         // Act
         ActualSolutions = FetchActualSolutions(boardSize, solutionMode);
@@ -52,7 +52,7 @@ public class NQueenSolverTests(SolverBackEndFixture fixture) :
     public void SolverShouldGenerateOneSingleSolution(int boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        ExpectedSolutions = GetExpectedSolutions(boardSize, solutionMode);
+        ExpectedSolutions = FetchExpectedSolutions(boardSize, solutionMode);
 
         // Act
         ActualSolutions = FetchActualSolutions(boardSize, solutionMode);
@@ -71,7 +71,7 @@ public class NQueenSolverTests(SolverBackEndFixture fixture) :
     public void SolverShouldGenerateCorrectListOfUniqueSolutions(int boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        ExpectedSolutions = GetExpectedSolutions(boardSize, solutionMode);
+        ExpectedSolutions = FetchExpectedSolutions(boardSize, solutionMode);
 
         // Act
         ActualSolutions = FetchActualSolutions(boardSize, solutionMode);
@@ -90,7 +90,7 @@ public class NQueenSolverTests(SolverBackEndFixture fixture) :
     public void SolverShouldGenerateCorrectListOfAllSolutions(int boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        ExpectedSolutions = GetExpectedSolutions(boardSize, solutionMode);
+        ExpectedSolutions = FetchExpectedSolutions(boardSize, solutionMode);
 
         // Act
         ActualSolutions = FetchActualSolutions(boardSize, solutionMode);

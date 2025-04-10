@@ -6,22 +6,32 @@ public class NQueenTestBase(ISolverBackEnd sut)
 
     public List<int[]> ActualSolutions { get; set; } = [];
 
-    public static List<int[]> GetExpectedSolutions(int boardSize, SolutionMode solutionMode)
+    public static List<int[]> FetchExpectedSolutions(int boardSize, SolutionMode solutionMode)
     {
-        return solutionMode == SolutionMode.Single
-               ? [.. GetExpectedSingleSolution(boardSize)]
-               : solutionMode == SolutionMode.Unique
-               ? [.. GetExpectedUniqueSolutions(boardSize)]
-               : [.. GetExpectedAllSolutions(boardSize)];
+        return solutionMode switch
+        {
+            SolutionMode.Single => _expectedSingleSolutions.TryGetValue(boardSize, out var singleSolutions)
+                ? singleSolutions
+                : throw new KeyNotFoundException($"No single solutions found for board size {boardSize}."),
+
+            SolutionMode.Unique => _expectedUniqueSolutions.TryGetValue(boardSize, out var uniqueSolutions)
+                ? uniqueSolutions
+                : throw new KeyNotFoundException($"No unique solutions found for board size {boardSize}."),
+
+            SolutionMode.All => _expectedAllSolutions.TryGetValue(boardSize, out var allSolutions)
+                ? allSolutions
+                : throw new KeyNotFoundException($"No all solutions found for board size {boardSize}."),
+
+            _ => throw new ArgumentOutOfRangeException(nameof(solutionMode), "Invalid solution mode.")
+        };
     }
 
-    public List<int[]> FetchActualSolutions(int boardSize, SolutionMode solutionMode)
+    public async Task<IEnumerable<int[]>> FetchActualSolutionsAsync(
+        int boardSize, SolutionMode solutionMode)
     {
-        return [.. Sut
-               .GetResultsAsync(boardSize, solutionMode)
-               .Result
-               .Solutions
-               .Select(sol => sol.QueenPositions)];
+        var results = await Sut.GetResultsAsync(boardSize, solutionMode);
+        
+        return results.Solutions.Select(sol => sol.QueenPositions);
     }
 
     protected readonly ISolverBackEnd Sut = sut
