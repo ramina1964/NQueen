@@ -2,29 +2,29 @@
 
 public static class Utility
 {
-    public const byte ByteMaxValue = 255;
+    //public const int ByteMaxValue = 255;
 
-    public const byte DefaultBoardSize = 8;
+    public const int DefaultBoardSize = 8;
     public const int DefaultDelayInMilliseconds = 500;
     public const SolutionMode DefaultSolutionMode = SolutionMode.Unique;
     public const DisplayMode DefaultDisplayMode = DisplayMode.Hide;
 
     public const int MaxNoOfSolutionsInOutput = 50;
-    public const byte RelativeFactor = 8;
-    public const byte MinBoardSize = 1;
+    public const int RelativeFactor = 8;
+    public const int MinBoardSize = 1;
 
     public const int SmallBoardSizeForUniqueSolutions = 10;
     public const int MediumBoardSizeForUniqueSolutions = 15;
 
-    public const byte MaxBoardSizeForSingleSolution = 37;
+    public const int MaxBoardSizeForSingleSolution = 37;
 
     // Todo: Set back these constants to 17, if unsuccessful.
-    public const byte MaxBoardSizeForUniqueSolutions = 18;
-    public const byte MaxBoardSizeForAllSolutions = 18;
+    public const int MaxBoardSizeForUniqueSolutions = 18;
+    public const int MaxBoardSizeForAllSolutions = 18;
 
     // This indicates the frequency of progrssbar update based on the board size value.
     // Todo: Use constants here.
-    public static int SolutionCountPerUpdate(byte boardSize) =>
+    public static int SolutionCountPerUpdate(int boardSize) =>
         boardSize <= SmallBoardSizeForUniqueSolutions
         ? 5
         : boardSize <= MediumBoardSizeForUniqueSolutions
@@ -54,22 +54,22 @@ public static class Utility
 
     public const double StartProgressValue = 0;
 
-    public static HashSet<byte[]> GetSymmetricalSolutions(byte[] solution)
+    public static HashSet<int[]> GetSymmetricalSolutions(int[] solution)
     {
-        byte boardSize = (byte)solution.Length;
+        var boardSize = solution.Length;
 
-        byte[] symmetricalToMidHorizontal = new byte[boardSize];
-        var symmetricalToMidVertical = new byte[boardSize];
-        var symmetricalToMainDiag = new byte[boardSize];
-        var symmetricalToBiDiag = new byte[boardSize];
-        var rotatedCounter90 = new byte[boardSize];
-        var rotatedCounter180 = new byte[boardSize];
-        var rotatedCounter270 = new byte[boardSize];
+        var symmetricalToMidHorizontal = new int[boardSize];
+        var symmetricalToMidVertical = new int[boardSize];
+        var symmetricalToMainDiag = new int[boardSize];
+        var symmetricalToBiDiag = new int[boardSize];
+        var rotatedCounter90 = new int[boardSize];
+        var rotatedCounter180 = new int[boardSize];
+        var rotatedCounter270 = new int[boardSize];
 
-        for (byte j = 0; j < boardSize; j++)
+        for (var j = 0; j < boardSize; j++)
         {
-            byte index1 = (byte)(boardSize - j - 1);
-            byte index2 = (byte)(boardSize - solution[j] - 1);
+            var index1 = boardSize - j - 1;
+            var index2 = boardSize - solution[j] - 1;
 
             symmetricalToMidHorizontal[index1] = solution[j];
             rotatedCounter90[index2] = symmetricalToMainDiag[solution[j]] = j;
@@ -77,7 +77,7 @@ public static class Utility
             rotatedCounter270[solution[j]] = symmetricalToBiDiag[index2] = index1;
         }
 
-        return new HashSet<byte[]>(new SequenceEquality<byte>())
+        return new HashSet<int[]>(new SequenceEquality<int>())
         {
             symmetricalToMidVertical,
             symmetricalToMidHorizontal,
@@ -89,7 +89,7 @@ public static class Utility
         };
     }
 
-    public static int FindSolutionSize(byte boardSize, SolutionMode solutionMode) =>
+    public static int FindSolutionSize(int boardSize, SolutionMode solutionMode) =>
         solutionMode == SolutionMode.Single
             ? 1
             : solutionMode == SolutionMode.Unique
@@ -126,7 +126,7 @@ public static class Utility
     }
 
     #region PrivateMembers
-    private static int GetSolutionSizeUnique(byte boardSize) =>
+    private static int GetSolutionSizeUnique(int boardSize) =>
         boardSize switch
         {
             1 => 1,
@@ -149,7 +149,7 @@ public static class Utility
             _ => throw new ArgumentOutOfRangeException(SizeTooLargeForUniqueSolutionsMsg)
         };
 
-    private static int GetSolutionSizeAll(byte boardSize) =>
+    private static int GetSolutionSizeAll(int boardSize) =>
         boardSize switch
         {
             1 => 1,

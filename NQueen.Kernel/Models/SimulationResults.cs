@@ -14,13 +14,13 @@ public class SimulationResults
         }
         else
         {
-            BoardSize = (byte)sol.Positions.Count;
+            BoardSize = sol.Positions.Count;
             NoOfSolutions = enumerable.Count;
-            Solutions = new List<Solution>(enumerable);
+            Solutions = [.. enumerable];
         }
     }
 
-    public byte BoardSize { get; set; }
+    public int BoardSize { get; set; }
 
     public int NoOfSolutions { get; set; }
 

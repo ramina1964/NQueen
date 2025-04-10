@@ -6,11 +6,11 @@ public class InputViewModel : AbstractValidator<MainViewModel>
 
     private void ValidationRules()
     {
-        byte boardSize = Utility.ByteMaxValue;
+        var boardSize = -1;
         _ = RuleFor(vm => vm.BoardSizeText)
             .NotNull().NotEmpty()
             .WithMessage(_ => Utility.ValueNullOrWhiteSpaceMsg)
-            .Must(bst => byte.TryParse(bst, out boardSize))
+            .Must(bst => int.TryParse(bst, out boardSize))
             .WithMessage(_ => Utility.InvalidSByteError)
             .Must(bst => Utility.MinBoardSize <= boardSize)
             .WithMessage(_ => Utility.SizeTooSmallMsg);

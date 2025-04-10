@@ -28,15 +28,15 @@ public class Chessboard : ObservableObject
                      pos.ColumnNo == sq.Position.ColumnNo).ImagePath = QueenImagePath);
     }
 
-    public void CreateSquares(byte boardSize, IEnumerable<SquareViewModel> squares)
+    public void CreateSquares(int boardSize, IEnumerable<SquareViewModel> squares)
     {
         var width = (int)WindowWidth / boardSize;
         var height = width;
 
         var sqList = squares.ToList();
-        for (byte i = 0; i < boardSize; i++)
+        for (var i = 0; i < boardSize; i++)
         {
-            for (byte j = 0; j < boardSize; j++)
+            for (var j = 0; j < boardSize; j++)
             {
                 var pos = new Position(i, j);
                 var square = new SquareViewModel(pos, FindColor(pos))

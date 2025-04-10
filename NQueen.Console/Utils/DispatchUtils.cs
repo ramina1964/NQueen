@@ -30,7 +30,7 @@ public static class DispatchUtils
         return (new string(option), n);
     }
 
-    public static string CreateChessBoard(byte[] queens)
+    public static string CreateChessBoard(int[] queens)
     {
         var arr = ChessBoardHelper(queens, WhiteQueen);
         var size = queens.Length;
@@ -47,10 +47,10 @@ public static class DispatchUtils
         return board;
     }
 
-    public static (bool isValid, byte boardSize) CheckBoardSize(
+    public static (bool isValid, int boardSize) CheckBoardSize(
         string value, SolutionMode solutionMode)
     {
-        if (byte.TryParse(value, out byte size) == false)
+        if (int.TryParse(value, out int size) == false)
         {
             HelpCommands.ShowExitError(CommandConst.InvalidBoardSize);
             return (false, 0);
@@ -83,7 +83,7 @@ public static class DispatchUtils
         return (true, size);
     }
 
-    private static string[,] ChessBoardHelper(byte[] queens, char whiteQueen)
+    private static string[,] ChessBoardHelper(int[] queens, char whiteQueen)
     {
         var size = queens.Length;
         string[,] arr = new string[size, size];
