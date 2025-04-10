@@ -1,5 +1,3 @@
-using NQueen.UnitTests.Base;
-
 namespace NQueen.UnitTests.Tests;
 
 public class NQueenSolverTests(SolverBackEndFixture fixture) :
@@ -15,10 +13,10 @@ public class NQueenSolverTests(SolverBackEndFixture fixture) :
     public async Task SolverShouldNotGenerateAnySolution(int boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        ExpectedSolutions = FetchExpectedSolutions(boardSize, solutionMode);
+        ExpectedSolutions = FetchExpectedSols(boardSize, solutionMode);
 
         // Act
-        ActualSolutions = (await FetchActualSolutionsAsync(boardSize, solutionMode)).ToList();
+        ActualSolutions = (await FetchActualSolsAsync(boardSize, solutionMode)).ToList();
 
         // Assert
         Assert.Equal(ExpectedSolutions.Count, ActualSolutions.Count);
@@ -52,10 +50,10 @@ public class NQueenSolverTests(SolverBackEndFixture fixture) :
     public async Task SolverShouldGenerateOneSingleSolution(int boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        ExpectedSolutions = FetchExpectedSolutions(boardSize, solutionMode);
+        ExpectedSolutions = FetchExpectedSols(boardSize, solutionMode);
 
         // Act
-        ActualSolutions = (await FetchActualSolutionsAsync(boardSize, solutionMode)).ToList();
+        ActualSolutions = [.. (await FetchActualSolsAsync(boardSize, solutionMode))];
 
         // Assert: ExpectedSolutions and a ActualSolutions should contain the same item, regardless of the order of items
         Assert.Equal(ExpectedSolutions.Count, ActualSolutions.Count);
@@ -71,10 +69,10 @@ public class NQueenSolverTests(SolverBackEndFixture fixture) :
     public async Task SolverShouldGenerateCorrectListOfUniqueSolutions(int boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        ExpectedSolutions = FetchExpectedSolutions(boardSize, solutionMode);
+        ExpectedSolutions = FetchExpectedSols(boardSize, solutionMode);
 
         // Act
-        ActualSolutions = (await FetchActualSolutionsAsync(boardSize, solutionMode)).ToList();
+        ActualSolutions = [.. (await FetchActualSolsAsync(boardSize, solutionMode))];
 
         // Assert: ExpectedSolutions and a ActualSolutions should contain the same item, regardless of the order of items
         Assert.Equal(ExpectedSolutions.Count, ActualSolutions.Count);
@@ -90,10 +88,10 @@ public class NQueenSolverTests(SolverBackEndFixture fixture) :
     public async Task SolverShouldGenerateCorrectListOfAllSolutions(int boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        ExpectedSolutions = FetchExpectedSolutions(boardSize, solutionMode);
+        ExpectedSolutions = FetchExpectedSols(boardSize, solutionMode);
 
         // Act
-        ActualSolutions = (await FetchActualSolutionsAsync(boardSize, solutionMode)).ToList();
+        ActualSolutions = [.. (await FetchActualSolsAsync(boardSize, solutionMode))];
 
         // Assert
         Assert.Equal(ExpectedSolutions.Count, ActualSolutions.Count);
