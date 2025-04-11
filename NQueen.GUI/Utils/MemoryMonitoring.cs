@@ -4,7 +4,7 @@ public class MemoryMonitoring
 {
     public static string UpdateMemoryUsage()
     {
-        var currentProcess = System.Diagnostics.Process.GetCurrentProcess();
+        var currentProcess = Process.GetCurrentProcess();
         var memoryUsageInBytes = currentProcess.WorkingSet64;
         var roundedMemoryUsageInMB = RoundToNearestTen(memoryUsageInBytes / MB);
 
