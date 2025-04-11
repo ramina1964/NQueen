@@ -66,7 +66,7 @@
                 Height="30"
                 Margin="5,2"
                 IsEnabled="{Binding IsInInputMode}"
-                ItemsSource="{Binding SolutionModeList, Mode=TwoWay}"
+                ItemsSource="{Binding EnumSolutionModes, Mode=TwoWay}"
                 SelectedItem="{Binding SolutionMode}"
                 Style="{StaticResource ComboBoxStyle}" />
 
@@ -84,7 +84,7 @@
                 Height="30"
                 Margin="5,2"
                 IsEnabled="{Binding IsInInputMode}"
-                ItemsSource="{Binding DisplayModeList, Mode=TwoWay}"
+                ItemsSource="{Binding EnumDisplayModes, Mode=TwoWay}"
                 SelectedItem="{Binding DisplayMode}"
                 Style="{StaticResource ComboBoxStyle}" />
 
