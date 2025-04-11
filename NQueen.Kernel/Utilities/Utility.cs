@@ -1,11 +1,11 @@
 ﻿namespace NQueen.Kernel.Utilities;
 
+// Todo: Bug: Even with 0 as DefaultDelayInMIlliSeconds, simulation stops after the first quuen is placed.
+
 public static class Utility
 {
-    //public const int ByteMaxValue = 255;
-
     public const int DefaultBoardSize = 8;
-    public const int DefaultDelayInMilliseconds = 500;
+    public const int DefaultDelayInMilliseconds = 0;
     public const SolutionMode DefaultSolutionMode = SolutionMode.Unique;
     public const DisplayMode DefaultDisplayMode = DisplayMode.Hide;
 

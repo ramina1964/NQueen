@@ -41,6 +41,8 @@ public sealed partial class MainViewModel
 
     private void SubscribeToSimulationEvents()
     {
+        UnsubscribeFromSimulationEvents();
+
         Solver.ProgressValueChanged += OnProgressValueChanged;
         Solver.QueenPlaced += OnQueenPlaced;
         Solver.SolutionFound += OnSolutionFound;

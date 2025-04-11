@@ -2,19 +2,13 @@
 
 public sealed partial class MainViewModel
 {
-    public IAsyncRelayCommand SimulateCommand { get; set; }
-
-    public RelayCommand CancelCommand { get; set; }
-
-    public RelayCommand SaveCommand { get; set; }
-
-    private bool CanSimulate() => IsIdle && IsValid;
+    private void Simulate()
+    {
+        // Start the simulation asynchronously
+        _ = SimulateAsync();
+    }
 
     private void Cancel() => Solver.IsSolverCanceled = true;
-
-    private bool CanCancel() => IsSimulating;
-
-    private bool CanSave() => IsOutputReady;
 
     private void Save()
     {
@@ -24,6 +18,12 @@ public sealed partial class MainViewModel
         MessageBox.Show(msg);
         IsIdle = true;
     }
+
+    private bool CanSimulate() => IsIdle && IsValid;
+
+    private bool CanCancel() => IsSimulating;
+
+    private bool CanSave() => IsOutputReady;
 
     private void ManageSimulationStatus(SimulationStatus simulationStatus)
     {

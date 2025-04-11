@@ -1,6 +1,5 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-// Todo: Fix a bug where Solution No. in the ListView of the GUI studders, Solution 1, Solution 1, ...
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
     public MainViewModel() : this(new BackTrackingSolver(new SolutionManager()))
@@ -9,15 +8,25 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     public MainViewModel(ISolver solver)
     {
         Solver = solver ?? throw new ArgumentNullException(nameof(solver));
+        InitializeCommands();
 
         ObservableSolutions = [];
         Initialize();
         SubscribeToSimulationEvents();
-
-        SimulateCommand = new AsyncRelayCommand(SimulateAsync, CanSimulate);
-        CancelCommand = new RelayCommand(Cancel, CanCancel);
-        SaveCommand = new RelayCommand(Save, CanSave);
     }
+
+    private void InitializeCommands()
+    {
+        SimulateCommand = new RelayCommand(Simulate, CanSimulate);
+        SaveCommand = new RelayCommand(Save, CanSave);
+        CancelCommand = new RelayCommand(Cancel, CanCancel);
+    }
+
+    public IRelayCommand SimulateCommand { get; private set; }
+
+    public IRelayCommand SaveCommand { get; private set; }
+
+    public IRelayCommand CancelCommand { get; private set; }
 
     public void Dispose()
     {
@@ -49,14 +58,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         SolutionMode solutionMode = Utility.DefaultSolutionMode,
         DisplayMode displayMode = Utility.DefaultDisplayMode)
     {
-        CancelCommand = new RelayCommand(Cancel, CanCancel);
         InputViewModel = new InputViewModel { ClassLevelCascadeMode = CascadeMode.Stop };
-
-        SimulateCommand = new AsyncRelayCommand(SimulateAsync,
-            AsyncRelayCommandOptions.AllowConcurrentExecutions);
-
-        SaveCommand = new RelayCommand(Save, CanSave);
-
         BoardSize = boardSize;
         SolutionMode = solutionMode;
         DisplayMode = displayMode;
@@ -85,9 +87,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     private void UpdateButtonFunctionality()
     {
-        SimulateCommand.NotifyCanExecuteChanged();
-        CancelCommand.NotifyCanExecuteChanged();
-        SaveCommand.NotifyCanExecuteChanged();
+        SimulateCommand?.NotifyCanExecuteChanged();
+        CancelCommand?.NotifyCanExecuteChanged();
+        SaveCommand?.NotifyCanExecuteChanged();
     }
 
     private void ExtractCorrectNoOfSols()
