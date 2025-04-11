@@ -2,56 +2,70 @@
 
 public sealed partial class MainViewModel
 {
-    private void OnProgressValueChanged(object sender, ProgressValueChangedEventArgs e) =>
-        ProgressValue = e.Value;
-
-    private void OnQueenPlaced(object sender, QueenPlacedEventArgs e)
+    private void OnProgressValueChanged(ProgressValueChangedMessage message)
     {
-        var sol = new Solution([.. e.Solution], 1);
-        var positions = sol
-            .QueenPositions.Where(q => q < BoardSize)
-            .Select((item, index) => new Position(index, item)).ToList();
+        ProgressValue = message.Value;
+    }
+
+    private void OnQueenPlaced(QueenPlacedMessage message)
+    {
+        var positions = message.Solution
+            .Take(BoardSize)
+            .Select((queenPosition, rowIndex) => new Position(rowIndex, queenPosition))
+            .ToList();
 
         Chessboard.PlaceQueens(positions);
     }
 
-    private void OnSolutionFound(object sender, SolutionFoundEventArgs e)
+    private void OnSolutionFound(SolutionFoundMessage message)
     {
-        var id = ObservableSolutions.Count + 1;
-        var sol = new Solution(e.Solution, id);
+        var solutionId = ObservableSolutions.Count + 1;
+        var newSolution = new Solution(message.Solution, solutionId);
 
-        // Update the total number of solutions
+        UpdateSolutionCount();
+        AddSolutionToObservable(newSolution);
+        SelectedSolution = newSolution;
+    }
+
+    private void UpdateSolutionCount()
+    {
         NoOfSolutions = $"{int.Parse(NoOfSolutions) + 1,0:N0}";
+    }
 
-        // Limit the number of solutions shown in ObservableSolutions
+    private void AddSolutionToObservable(Solution solution)
+    {
         Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
         {
             if (ObservableSolutions.Count >= Utility.MaxNoOfSolutionsInOutput)
             {
                 ObservableSolutions.RemoveAt(0);
             }
-            if (!ObservableSolutions.Any(s => s.Id == sol.Id))
+
+            if (!ObservableSolutions.Any(existingSolution => existingSolution.Id == solution.Id))
             {
-                ObservableSolutions.Add(sol);
+                ObservableSolutions.Add(solution);
             }
         }));
-
-        SelectedSolution = sol;
     }
 
     private void SubscribeToSimulationEvents()
     {
         UnsubscribeFromSimulationEvents();
 
-        Solver.ProgressValueChanged += OnProgressValueChanged;
-        Solver.QueenPlaced += OnQueenPlaced;
-        Solver.SolutionFound += OnSolutionFound;
+        WeakReferenceMessenger.Default.Register<ProgressValueChangedMessage>(this, (r, m) =>
+            OnProgressValueChanged(m));
+
+        WeakReferenceMessenger.Default.Register<QueenPlacedMessage>(this, (r, m) =>
+            OnQueenPlaced(m));
+
+        WeakReferenceMessenger.Default.Register<SolutionFoundMessage>(this, (r, m) =>
+            OnSolutionFound(m));
     }
 
     private void UnsubscribeFromSimulationEvents()
     {
-        Solver.ProgressValueChanged -= OnProgressValueChanged;
-        Solver.QueenPlaced -= OnQueenPlaced;
-        Solver.SolutionFound -= OnSolutionFound;
+        WeakReferenceMessenger.Default.Unregister<ProgressValueChangedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<QueenPlacedMessage>(this);
+        WeakReferenceMessenger.Default.Unregister<SolutionFoundMessage>(this);
     }
 }
