@@ -1,0 +1,98 @@
+﻿Here’s the complete refactoring plan, formatted with checkboxes for easy tracking:
+
+---
+
+# Refactoring Plan for NQueen.GUI Project
+
+## Goals
+- [ ] Utilize more capabilities from **CommunityToolkit.Mvvm**.
+- [ ] Use more descriptive names for classes and methods.
+- [ ] Adhere to the **Single Responsibility Principle (SRP)**.
+
+---
+
+## Steps
+
+### 1. Refactor ViewModels
+- [ ] Replace `ObservableObject` with `[ObservableProperty]` in all view models:
+  - [ ] `MainViewModel`
+  - [ ] `SquareViewModel`
+  - [ ] `InputViewModel`
+- [ ] Replace manual commands with `[RelayCommand]` in `MainViewModel`:
+  - [ ] `SimulateCommand`
+  - [ ] `CancelCommand`
+  - [ ] `SaveCommand`
+- [ ] Use `ObservableValidator` for validation in `MainViewModel`:
+  - [ ] Replace `IDataErrorInfo` with `ObservableValidator`.
+  - [ ] Migrate validation logic from `InputViewModel` to `MainViewModel` using `[Required]` and `[Range]` attributes.
+
+---
+
+### 2. Refactor Views
+- [ ] Ensure each view focuses only on its specific UI logic:
+  - [ ] `ChessboardUserControl`
+  - [ ] `InputPanelUserControl`
+  - [ ] `SelectedSolutionUserControl`
+  - [ ] `SimulationPanelUserControl`
+  - [ ] `SolutionListUserControl`
+  - [ ] `SolutionSummaryUserControl`
+- [ ] Use dependency injection to provide view models to views:
+  - [ ] Inject `MainViewModel` into `MainView`.
+  - [ ] Inject `InputViewModel` into `InputPanelUserControl`.
+- [ ] Move any shared logic to helper classes or services.
+
+---
+
+### 3. Refactor Converters
+- [ ] Simplify and consolidate converters:
+  - [ ] `BooleanToVisibilityConverter`
+  - [ ] `NegativeConverter`
+  - [ ] `NullImageConverter`
+  - [ ] `RatioConverter`
+- [ ] Move view-specific converters to the same namespace as the view.
+
+---
+
+### 4. Refactor ChessboardGrid
+- [ ] Ensure `ChessboardGrid` adheres to SRP:
+  - [ ] Move grid creation logic to a dedicated `ChessboardGridBuilder` class.
+  - [ ] Decouple `ChessboardGrid` from `SquareViewModel` and `Position`.
+- [ ] Use XAML for grid layout instead of dynamically creating it in code.
+
+---
+
+### 5. Rename Classes and Methods
+- [ ] Rename classes for clarity:
+  - [ ] `MainViewModel` → `NQueenSolverViewModel`
+  - [ ] `InputViewModel` → `SolverInputViewModel`
+  - [ ] `SquareViewModel` → `ChessboardSquareViewModel`
+- [ ] Rename methods for clarity:
+  - [ ] `UpdateGui` → `ResetChessboardAndSolutions`
+  - [ ] `ExtractCorrectNoOfSols` → `FilterAndDisplaySolutions`
+
+---
+
+### 6. Write Tests
+- [ ] Write unit tests for refactored view models:
+  - [ ] `MainViewModel` with mocked dependencies.
+  - [ ] `InputViewModel` for validation logic.
+- [ ] Write integration tests for views and view models:
+  - [ ] Test interaction between `MainView` and `MainViewModel`.
+  - [ ] Test `ChessboardUserControl` with `Chessboard`.
+
+---
+
+### 7. General Cleanup
+- [ ] Remove unused code and comments.
+- [ ] Fix all TODOs in the codebase:
+  - [ ] Add `AutomationProperties.Name` to active UI elements in `MainView.xaml`.
+  - [ ] Fix WPF bounding errors in `MainView.xaml`.
+
+---
+
+### Progress Tracking
+- [ ] Regularly update this document as tasks are completed or new tasks are added.
+
+---
+
+This plan is now ready for use in your `Refactoring Plan.txt` file. Let me know if you need further adjustments or help with any specific step!
