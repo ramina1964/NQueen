@@ -207,7 +207,7 @@ public sealed partial class MainViewModel
                 IsIdle = true;
                 IsSimulating = false;
                 IsOutputReady = false;
-                SetProperty(ref _boardSize, byte.Parse(value));
+                SetProperty(ref _boardSize, int.Parse(value));
                 OnPropertyChanged(nameof(BoardSize));
 
                 UpdateButtonFunctionality();
@@ -216,9 +216,9 @@ public sealed partial class MainViewModel
         }
     }
 
-    private byte _boardSize;
+    private int _boardSize;
 
-    public byte BoardSize
+    public int BoardSize
     {
         get => _boardSize;
         set => SetProperty(ref _boardSize, value);
