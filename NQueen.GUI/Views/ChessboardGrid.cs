@@ -1,5 +1,7 @@
 ﻿namespace NQueen.GUI.Views;
 
+// Todo: Merge the class with Chessboard to incorporate a visual appealing and dynamic board resizing.
+// Remember to use the available area for window width and height. Then remove this class.
 public class ChessboardGrid(int size) : Grid
 {
     public static int WindowHeight => 500;
@@ -16,7 +18,6 @@ public class ChessboardGrid(int size) : Grid
 
     public int HeightBorder => (WindowHeight - 50) / Size;
 
-    // Test of dynamic grid written in code - no Xaml
     public void CreateGrid()
     {
         GridLength width = new(WidthBorder);
