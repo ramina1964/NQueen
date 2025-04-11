@@ -1,5 +1,7 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
+// Todo: Throws exception in PlaceQueens(), see below:
+// System.InvalidOperationException: 'Sequence contains no matching element.
 public class Chessboard : ObservableObject
 {
     public Chessboard()
