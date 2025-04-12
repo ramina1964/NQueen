@@ -8,7 +8,15 @@ public sealed partial class MainViewModel
         _ = SimulateAsync();
     }
 
-    private void Cancel() => Solver.IsSolverCanceled = true;
+    private void Cancel()
+    {
+        if (IsSimulating)
+        {
+            CancelationTokenSource?.Cancel();
+            Solver.IsSolverCanceled = true;
+            IsSimulating = false;
+        }
+    }
 
     private void Save()
     {
