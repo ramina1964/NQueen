@@ -72,6 +72,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         DelayInMilliseconds = SimulationSettings.DefaultDelayInMilliseconds;
         ProgressVisibility = Visibility.Hidden;
         ProgressLabelVisibility = Visibility.Hidden;
+
+        // Initialize the chessboard
+        Chessboard = new Chessboard();
     }
 
     private void UpdateGui()
