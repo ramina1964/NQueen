@@ -1,8 +1,6 @@
 ﻿namespace NQueen.GUI.Views;
 
-/// <summary>
-/// Interaction logic for SolutionListUserControl.xaml
-/// </summary>
+// Todo: Bug: The solution list is not wide enough for its title.
 public partial class SolutionListUserControl : UserControl
 {
     public SolutionListUserControl()

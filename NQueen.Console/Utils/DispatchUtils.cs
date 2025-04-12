@@ -62,21 +62,21 @@ public static class DispatchUtils
             return (false, 0);
         }
 
-        if (solutionMode == SolutionMode.Single && size > Utility.MaxBoardSizeForSingleSolution)
+        if (solutionMode == SolutionMode.Single && size > BoardSettings.MaxSizeForSingleMode)
         {
-            HelpCommands.ShowExitError(Utility.SizeTooLargeForSingleSolutionMsg);
+            HelpCommands.ShowExitError(Messages.SizeTooLargeForSingleSolutionMsg);
             return (false, 0);
         }
 
-        if (solutionMode == SolutionMode.Unique && size > Utility.MaxBoardSizeForUniqueSolutions)
+        if (solutionMode == SolutionMode.Unique && size > BoardSettings.MaxSizeForUniqueMode)
         {
-            HelpCommands.ShowExitError(Utility.SizeTooLargeForUniqueSolutionsMsg);
+            HelpCommands.ShowExitError(Messages.SizeTooLargeForUniqueSolutionsMsg);
             return (false, 0);
         }
 
-        if (solutionMode == SolutionMode.All && size > Utility.MaxBoardSizeForAllSolutions)
+        if (solutionMode == SolutionMode.All && size > BoardSettings.MaxSizeForAllMode)
         {
-            HelpCommands.ShowExitError(Utility.SizeTooLargeForAllSolutionsMsg);
+            HelpCommands.ShowExitError(Messages.SizeTooLargeForAllSolutionsMsg);
             return (false, 0);
         }
 

@@ -36,7 +36,7 @@ public sealed partial class MainViewModel
     {
         Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
         {
-            if (ObservableSolutions.Count >= Utility.MaxNoOfSolutionsInOutput)
+            if (ObservableSolutions.Count >= SimulationSettings.MaxNoOfSolutionsInOutput)
             {
                 ObservableSolutions.RemoveAt(0);
             }

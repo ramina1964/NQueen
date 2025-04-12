@@ -83,14 +83,14 @@ public sealed partial class MainViewModel : ObservableObject
 
         SolutionTitle = (value == SolutionMode.Single)
             ? $"Solution"
-            : $"Solutions (Max: {Utility.MaxNoOfSolutionsInOutput})";
+            : $"Solutions (Max: {SimulationSettings.MaxNoOfSolutionsInOutput})";
 
         OnPropertyChanged(nameof(BoardSizeText));
         OnPropertyChanged(nameof(SolutionTitle));
 
         IsValid = InputViewModel.Validate(this).IsValid;
 
-        if (!IsValid)
+        if (IsValid == false)
         {
             IsIdle = false;
             IsSimulating = false;
@@ -175,7 +175,7 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _memoryUsage;
 
-    public string ResultTitle => Utility.SolutionTitle(SolutionMode);
+    public string ResultTitle => SolverHelper.SolutionTitle(SolutionMode);
 
     public Chessboard Chessboard { get; set; }
 

@@ -4,7 +4,7 @@ public class BackTrackingSolver : ISolver, IDisposable
 {
     public BackTrackingSolver(
         ISolutionManager solutionManager,
-        int boardSize = Utility.DefaultBoardSize)
+        int boardSize = BoardSettings.DefaultBoardSize)
     {
         Initialize(boardSize);
         SolutionManager = solutionManager
@@ -99,7 +99,7 @@ public class BackTrackingSolver : ISolver, IDisposable
     public int[] QueenPositions { get; set; }
 
     public int SolutionCountPerUpdate =>
-        Utility.SolutionCountPerUpdate(BoardSize);
+        SimulationSettings.SolutionCountPerUpdate(BoardSize);
     #endregion PublicProperties
 
     #region PublicMethods
@@ -133,7 +133,7 @@ public class BackTrackingSolver : ISolver, IDisposable
     #endregion
 
     #region PrivateMethods
-    private void Initialize(int boardSize = Utility.DefaultBoardSize)
+    private void Initialize(int boardSize = BoardSettings.DefaultBoardSize)
     {
         BoardSize = boardSize;
         _cancelationTokenSource = new CancellationTokenSource();

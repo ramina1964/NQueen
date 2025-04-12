@@ -51,7 +51,7 @@ public class ResultPresentation
         const int prefixLength = 8;
         const int counterPlaces = prefixLength - 28;
 
-        var title = Utility.SolutionTitle(solutionMode, NoOfSolutions);
+        var title = SolverHelper.SolutionTitle(solutionMode, NoOfSolutions);
         var sb = new StringBuilder().AppendLine(title);
 
         for (var index = 0; index < NoOfSolutionsInOutput; index++)

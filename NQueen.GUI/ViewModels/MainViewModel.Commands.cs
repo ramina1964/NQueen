@@ -46,7 +46,7 @@ public sealed partial class MainViewModel
                 {
                     IsSingleRunning = false;
                     ProgressLabelVisibility = Visibility.Visible;
-                    ProgressValue = Utility.StartProgressValue;
+                    ProgressValue = SolverHelper.StartProgressValue;
                 }
                 break;
 

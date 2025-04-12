@@ -22,7 +22,7 @@ public class SolutionManager : ISolutionManager
 
         // For each solution find all symmetrical counterparts, i.e., a list of maximum
         // eight items including the solution itself.
-        var symmetricalSolutions = Utility.GetSymmetricalSolutions(queenPositions);
+        var symmetricalSolutions = SolverHelper.GetSymmetricalSolutions(queenPositions);
 
         // For SolutionMode.All: Add this solution and all its symmetrical counterparts to the Solutions.
         if (solutionUpdateDTO.SolutionMode == SolutionMode.All)

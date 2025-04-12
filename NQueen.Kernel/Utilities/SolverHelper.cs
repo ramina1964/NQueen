@@ -2,56 +2,8 @@
 
 // Todo: Bug: Even with 0 as DefaultDelayInMIlliSeconds, simulation stops after the first quuen is placed.
 
-public static class Utility
+public static class SolverHelper
 {
-    public const int DefaultBoardSize = 8;
-    public const int DefaultDelayInMilliseconds = 0;
-    public const SolutionMode DefaultSolutionMode = SolutionMode.Unique;
-    public const DisplayMode DefaultDisplayMode = DisplayMode.Hide;
-
-    public const int MaxNoOfSolutionsInOutput = 50;
-    public const int RelativeFactor = 8;
-    public const int MinBoardSize = 1;
-
-    public const int SmallBoardSizeForUniqueSolutions = 10;
-    public const int MediumBoardSizeForUniqueSolutions = 15;
-
-    public const int MaxBoardSizeForSingleSolution = 37;
-
-    // Todo: Set back these constants to 17, if unsuccessful.
-    public const int MaxBoardSizeForUniqueSolutions = 18;
-    public const int MaxBoardSizeForAllSolutions = 18;
-
-    // This indicates the frequency of progrssbar update based on the board size value.
-    // Todo: Use constants here.
-    public static int SolutionCountPerUpdate(int boardSize) =>
-        boardSize <= SmallBoardSizeForUniqueSolutions
-        ? 5
-        : boardSize <= MediumBoardSizeForUniqueSolutions
-        ? 1_000 :
-        100_000;
-
-    public const string InvalidSByteError =
-        "Board size must be a valid integer.";
-
-    public const string NoSolutionMessage =
-        "No Solutions found. Try a larger board size!";
-
-    public const string ValueNullOrWhiteSpaceMsg =
-        "Board size can not be null, empty or contain exclusively spaces.";
-
-    public static string SizeTooSmallMsg =>
-        $"Board size must be greater than or equal to {MinBoardSize}.";
-
-    public static string SizeTooLargeForSingleSolutionMsg =>
-        $"Board size for single solution must not exceed {MaxBoardSizeForSingleSolution}.";
-
-    public static string SizeTooLargeForUniqueSolutionsMsg =>
-        $"Board size for unique solutions must not exceed {MaxBoardSizeForUniqueSolutions}.";
-
-    public static string SizeTooLargeForAllSolutionsMsg =>
-        $"Board size for all solutions must not exceed {MaxBoardSizeForAllSolutions}.";
-
     public const double StartProgressValue = 0;
 
     public static HashSet<int[]> GetSymmetricalSolutions(int[] solution)
@@ -96,23 +48,19 @@ public static class Utility
             ? GetSolutionSizeUnique(boardSize)
             : GetSolutionSizeAll(boardSize);
 
-    public static string SolutionTitle(SolutionMode solutionMode)
-    {
-        return solutionMode switch
-        {
-            SolutionMode.Single => "No. of Solutions",
-            SolutionMode.Unique => $"No. of Unique Solutions",
-            SolutionMode.All => $"No. of All Solutions",
-            _ => throw new MissingFieldException("Non-Existent Enum Value!"),
-        };
-    }
+    public static string SolutionTitle(SolutionMode solutionMode) =>
+        (solutionMode == SolutionMode.Single)
+                ? $"Solution"
+                : solutionMode == SolutionMode.Unique
+                ? $"Unique Solutions (Max: {SimulationSettings.MaxNoOfSolutionsInOutput})"
+                : $"All Solutions (Max: {SimulationSettings.MaxNoOfSolutionsInOutput})";
 
     public static string SolutionTitle(SolutionMode solutionMode, int noOfSolutions)
     {
         if (solutionMode == SolutionMode.Single)
         { return "Solution:"; }
 
-        if (noOfSolutions <= MaxNoOfSolutionsInOutput)
+        if (noOfSolutions <= SimulationSettings.MaxNoOfSolutionsInOutput)
         {
             return solutionMode == SolutionMode.All
              ? $"List of All Solutions (Included Symmetrical Ones):"
@@ -121,8 +69,8 @@ public static class Utility
 
         // Here is: NoOfSolutions > MaxNoOfSolutionsInOutput
         return solutionMode == SolutionMode.All
-            ? $"List of First {MaxNoOfSolutionsInOutput} Solution(s), May Include Symmetrical Ones:"
-            : $"List of First {MaxNoOfSolutionsInOutput} Unique Solution(s), Excluded Symmetrical Ones:";
+            ? $"List of First {SimulationSettings.MaxNoOfSolutionsInOutput} Solution(s), May Include Symmetrical Ones:"
+            : $"List of First {SimulationSettings.MaxNoOfSolutionsInOutput} Unique Solution(s), Excluded Symmetrical Ones:";
     }
 
     #region PrivateMembers
@@ -146,7 +94,7 @@ public static class Utility
             15 => 285053,
             16 => 1846955,
             17 => 11977939,
-            _ => throw new ArgumentOutOfRangeException(SizeTooLargeForUniqueSolutionsMsg)
+            _ => throw new ArgumentOutOfRangeException(Messages.SizeTooLargeForUniqueSolutionsMsg)
         };
 
     private static int GetSolutionSizeAll(int boardSize) =>
@@ -169,7 +117,7 @@ public static class Utility
             15 => 2279184,
             16 => 14772512,
             17 => 95815104,
-            _ => throw new ArgumentOutOfRangeException(SizeTooLargeForAllSolutionsMsg)
+            _ => throw new ArgumentOutOfRangeException(Messages.SizeTooLargeForAllSolutionsMsg)
         };
     #endregion PrivateMembers
 }
