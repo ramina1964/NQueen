@@ -1,7 +1,14 @@
-﻿namespace NQueen.GUI.ViewModels;
+﻿#nullable enable
+
+namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel
 {
+    /// <summary>
+    /// Event triggered when the simulation is completed.
+    /// </summary>
+    public event EventHandler? SimulationCompleted;
+
     private void OnProgressValueChanged(ProgressValueChangedMessage message)
     {
         ProgressValue = message.Value;
@@ -68,4 +75,14 @@ public sealed partial class MainViewModel
         WeakReferenceMessenger.Default.Unregister<QueenPlacedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<SolutionFoundMessage>(this);
     }
+
+    /// <summary>
+    /// Invokes the SimulationCompleted event when the simulation finishes.
+    /// </summary>
+    private void OnSimulationCompleted()
+    {
+        SimulationCompleted?.Invoke(this, EventArgs.Empty);
+    }
 }
+
+#nullable restore

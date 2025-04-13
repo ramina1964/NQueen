@@ -38,8 +38,10 @@ public sealed partial class MainViewModel
         switch (simulationStatus)
         {
             case SimulationStatus.Started:
+                // Subscribe to simulation events
                 SubscribeToSimulationEvents();
 
+                // Update state for simulation start
                 IsIdle = false;
                 IsInInputMode = false;
                 IsSimulating = true;
@@ -47,10 +49,10 @@ public sealed partial class MainViewModel
 
                 ProgressVisibility = Visibility.Visible;
                 if (SolutionMode == SolutionMode.Single)
+                {
                     IsSingleRunning = true;
-
-                // If SolutionMode.Unique || SolutionMode.All
-                else if (IsSimulating)
+                }
+                else if (IsSimulating) // For SolutionMode.Unique or SolutionMode.All
                 {
                     IsSingleRunning = false;
                     ProgressLabelVisibility = Visibility.Visible;
@@ -59,8 +61,10 @@ public sealed partial class MainViewModel
                 break;
 
             case SimulationStatus.Finished:
+                // Unsubscribe from simulation events
                 UnsubscribeFromSimulationEvents();
 
+                // Update state for simulation finish
                 IsIdle = true;
                 IsInInputMode = true;
                 IsSimulating = false;
@@ -68,6 +72,9 @@ public sealed partial class MainViewModel
                 IsOutputReady = true;
                 ProgressVisibility = Visibility.Hidden;
                 ProgressLabelVisibility = Visibility.Hidden;
+
+                // Trigger the SimulationCompleted event
+                OnSimulationCompleted();
                 break;
         }
 
