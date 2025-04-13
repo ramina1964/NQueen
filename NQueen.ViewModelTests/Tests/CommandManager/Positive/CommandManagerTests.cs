@@ -3,9 +3,11 @@
 public class CommandManagerTests
 {
     [Theory]
-    [InlineData("12", SolutionMode.All, DisplayMode.Hide)]
+    [InlineData("1", SolutionMode.Single, DisplayMode.Hide)]
     [InlineData("4", SolutionMode.Unique, DisplayMode.Visualize)]
-    [InlineData("8", SolutionMode.Single, DisplayMode.Hide)]
+    [InlineData("8", SolutionMode.Single, DisplayMode.Visualize)]
+    [InlineData("12", SolutionMode.All, DisplayMode.Hide)]
+    [InlineData("16", SolutionMode.Single, DisplayMode.Hide)]
     public async Task SimulateCommand_ShouldUpdateSimulationResults(
         string boardSizeText, SolutionMode solutionMode, DisplayMode displayMode)
     {
@@ -14,7 +16,6 @@ public class CommandManagerTests
         _mainViewModel = new MainViewModel(new BackTrackingSolver(new SolutionManager()))
         {
             BoardSizeText = boardSizeText,
-            BoardSize = int.Parse(boardSizeText, CultureInfo.InvariantCulture),
             SolutionMode = solutionMode,
             DisplayMode = displayMode
         };
