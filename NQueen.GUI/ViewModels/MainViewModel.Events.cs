@@ -27,7 +27,7 @@ public sealed partial class MainViewModel
 
     private void OnQueenPlaced(QueenPlacedMessage message)
     {
-        Application.Current.Dispatcher.Invoke(() =>
+        _uiDispatcher?.Invoke(() =>
         {
             Debug.WriteLine("[OnQueenPlaced] Received QueenPlacedMessage.");
             var positions = message.Solution

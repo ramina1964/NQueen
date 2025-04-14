@@ -1,4 +1,6 @@
-﻿namespace NQueen.GUI.ViewModels;
+﻿#nullable enable
+
+namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
@@ -8,11 +10,18 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     public MainViewModel(ISolver solver)
     {
         Solver = solver ?? throw new ArgumentNullException(nameof(solver));
-        InitializeCommands();
+
+        // Initialize commands directly
+        SimulateCommand = new RelayCommand(Simulate, CanSimulate);
+        SaveCommand = new RelayCommand(Save, CanSave);
+        CancelCommand = new RelayCommand(Cancel, CanCancel);
 
         ObservableSolutions = [];
         Initialize();
         SubscribeToSimulationEvents();
+
+        // Initialize the dispatcher
+        _uiDispatcher = Application.Current?.Dispatcher;
     }
 
     private void InitializeCommands()
@@ -148,7 +157,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             ExtractCorrectNoOfSols();
             NoOfSolutions = $"{SimulationResults.NoOfSolutions,0:N0}";
             ElapsedTimeInSec = $"{SimulationResults.ElapsedTimeInSec,0:N1}";
-            SelectedSolution = ObservableSolutions.FirstOrDefault();
+
+            // Fix for CS7036: Provide the required arguments for the Solution constructor.  
+            SelectedSolution = ObservableSolutions.FirstOrDefault() ?? new Solution([], null);
 
             // Debugging output
             Console.WriteLine($"NoOfSolutions: {NoOfSolutions}, ElapsedTimeInSec: {ElapsedTimeInSec}");
@@ -165,4 +176,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             ManageSimulationStatus(SimulationStatus.Finished);
         }
     }
+
+    private readonly Dispatcher? _uiDispatcher;
 }
+
+#nullable restore

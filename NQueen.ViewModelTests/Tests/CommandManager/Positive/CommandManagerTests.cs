@@ -1,5 +1,6 @@
 ﻿namespace NQueen.ViewModelTests.Tests.CommandManager.Positive;
 
+[Collection("Serial Test Collection")]
 public class CommandManagerTests
 {
     [Theory]
@@ -17,7 +18,9 @@ public class CommandManagerTests
         {
             BoardSizeText = boardSizeText,
             SolutionMode = solutionMode,
-            DisplayMode = displayMode
+            DisplayMode = displayMode,
+            Chessboard = new Chessboard(),
+            SimulationResults = new SimulationResults([])
         };
 
         // Subscribe to the SimulationCompleted event
