@@ -38,10 +38,12 @@ public sealed partial class MainViewModel : ObservableObject
     private bool _isProgressLabelOffscreen;
 
     [ObservableProperty]
-    private IEnumerable<SolutionMode> _enumSolutionModes = Enum.GetValues<SolutionMode>().Cast<SolutionMode>();
+    private IEnumerable<SolutionMode> _enumSolutionModes =
+        Enum.GetValues<SolutionMode>().Cast<SolutionMode>();
 
     [ObservableProperty]
-    private IEnumerable<DisplayMode> _enumDisplayModes = Enum.GetValues<DisplayMode>().Cast<DisplayMode>();
+    private IEnumerable<DisplayMode> _enumDisplayModes =
+        Enum.GetValues<DisplayMode>().Cast<DisplayMode>();
 
     [ObservableProperty]
     private bool _isVisualized;
@@ -51,7 +53,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnDelayInMillisecondsChanged(int value)
     {
-        Solver.DelayInMilliseconds = value;
+        if (Solver != null)
+            Solver.DelayInMilliseconds = value;
     }
 
     [ObservableProperty]

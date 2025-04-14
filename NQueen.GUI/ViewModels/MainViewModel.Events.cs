@@ -1,7 +1,5 @@
 ﻿#nullable enable
 
-using NQueen.Kernel.Events;
-
 namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel
@@ -40,8 +38,9 @@ public sealed partial class MainViewModel
             Chessboard.PlaceQueens(positions);
 
             // Update the progress label
-            ProgressLabel = $"Queen placed on row {positions.Count}.";
-            OnPropertyChanged(nameof(ProgressLabel)); // Notify the UI about the change
+            var progressPercentage = message.Value > 0 ? $"{message.Value} %" : string.Empty;
+            ProgressLabel = progressPercentage;
+            OnPropertyChanged(nameof(ProgressLabel));
         });
     }
 
@@ -136,9 +135,6 @@ public sealed partial class MainViewModel
         WeakReferenceMessenger.Default.Unregister<SolutionFoundMessage>(this);
     }
 
-    /// <summary>
-    /// Invokes the SimulationCompleted event when the simulation finishes.
-    /// </summary>
     private void OnSimulationCompleted()
     {
         SimulationCompleted?.Invoke(this, EventArgs.Empty);
@@ -153,7 +149,7 @@ public sealed partial class MainViewModel
     private void OnQueenPlacedEvent(object? sender, QueenPlacedEventArgs e)
     {
         Debug.WriteLine("[OnQueenPlacedEvent] Backend event received.");
-        WeakReferenceMessenger.Default.Send(new QueenPlacedMessage(e.Solution));
+        WeakReferenceMessenger.Default.Send(new QueenPlacedMessage(e.Solution, 0));
     }
 
     private void OnSolutionFoundEvent(object? sender, SolutionFoundEventArgs e)

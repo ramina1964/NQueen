@@ -66,11 +66,10 @@ public class Solution
         return sb.ToString();
     }
 
-    private static List<Position> SetPositions(IEnumerable<int> queenPositions)
+    private static List<Position> SetPositions(int[] queenPositions)
     {
-        return queenPositions.Select(static (item, index) =>
-            new Position(index, item)).ToList();
+        return queenPositions.Select((column, row) =>
+            new Position(row, column)).ToList();
     }
-      
     #endregion PrivateMembers
 }

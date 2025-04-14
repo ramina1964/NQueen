@@ -5,10 +5,10 @@ global using FluentValidation;
 global using Microsoft.Extensions.DependencyInjection;
 global using NQueen.GUI.Infrastructure;
 global using NQueen.GUI.Messaging;
-global using NQueen.GUI.Utils;
 global using NQueen.GUI.ViewModels;
 global using NQueen.GUI.Views;
 global using NQueen.Kernel.Enums;
+global using NQueen.Kernel.Events;
 global using NQueen.Kernel.Interfaces;
 global using NQueen.Kernel.Models;
 global using NQueen.Kernel.Services;
@@ -30,3 +30,5 @@ global using System.Windows.Data;
 global using System.Windows.Markup;
 global using System.Windows.Media;
 global using System.Windows.Threading;
+
+

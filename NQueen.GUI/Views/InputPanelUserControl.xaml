@@ -4,12 +4,17 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:NQueen.GUI.Views"
+    xmlns:converters="clr-namespace:NQueen.GUI.Converters"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <converters:DisplayModeToEnabledConverter x:Key="DisplayModeToEnabledConverter" />
+    </UserControl.Resources>
 
     <GroupBox
         Grid.Row="0"
@@ -96,15 +101,17 @@
                 Style="{StaticResource LabelStyle}" />
 
             <Slider
+                x:Name="DelaySlider"
                 Grid.Row="3"
                 Grid.Column="1"
                 Height="25"
                 Margin="5"
-                IsEnabled="{Binding IsVisualized}"
+                IsEnabled="{Binding DisplayMode, Converter={StaticResource DisplayModeToEnabledConverter},
+                    ConverterParameter=Visualize}"
                 Maximum="3000"
                 Minimum="10"
                 Style="{StaticResource SliderStyle}"
-                Value="{Binding DelayInMilliseconds}" />
+                Value="{Binding DelayInMilliseconds, Mode=TwoWay}" />
         </Grid>
     </GroupBox>
 </UserControl>

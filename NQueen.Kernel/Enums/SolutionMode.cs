@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-
-namespace NQueen.Kernel.Enums;
+﻿namespace NQueen.Kernel.Enums;
 
 public enum SolutionMode
 {

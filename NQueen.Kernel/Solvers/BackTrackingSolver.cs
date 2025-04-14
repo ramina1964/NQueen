@@ -257,7 +257,15 @@ public class BackTrackingSolver : ISolver, IDisposable
         for (int pos = (QueenPositions[colNo] + 1); pos < BoardSize; pos++)
         {
             if (IsValidPosition(colNo, pos))
+            {
+                // Introduce delay if DisplayMode is Visualize
+                if (DisplayMode == DisplayMode.Visualize && DelayInMilliseconds > 0)
+                {
+                    Task.Delay(DelayInMilliseconds).Wait();
+                }
+
                 return pos;
+            }
         }
 
         return -1;
