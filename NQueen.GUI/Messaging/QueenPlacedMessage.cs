@@ -1,11 +1,6 @@
 ﻿namespace NQueen.GUI.Messaging;
 
-public class QueenPlacedMessage
+public class QueenPlacedMessage(int[] solution)
 {
-    public int[] Solution { get; }
-
-    public QueenPlacedMessage(int[] solution)
-    {
-        Solution = solution;
-    }
+    public int[] Solution { get; } = solution;
 }

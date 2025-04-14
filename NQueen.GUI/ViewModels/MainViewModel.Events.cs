@@ -11,7 +11,11 @@ public sealed partial class MainViewModel
 
     private void OnProgressValueChanged(ProgressValueChangedMessage message)
     {
-        ProgressValue = message.Value;
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            Debug.WriteLine($"[OnProgressValueChanged] Received ProgressValue: {message.Value}");
+            ProgressValue = message.Value;
+        });
     }
 
     private void OnQueenPlaced(QueenPlacedMessage message)
@@ -59,18 +63,29 @@ public sealed partial class MainViewModel
     {
         UnsubscribeFromSimulationEvents();
 
+        Debug.WriteLine("[SubscribeToSimulationEvents] Subscribing to simulation events...");
         WeakReferenceMessenger.Default.Register<ProgressValueChangedMessage>(this, (r, m) =>
-            OnProgressValueChanged(m));
+        {
+            Debug.WriteLine("[SubscribeToSimulationEvents] ProgressValueChangedMessage received.");
+            OnProgressValueChanged(m);
+        });
 
         WeakReferenceMessenger.Default.Register<QueenPlacedMessage>(this, (r, m) =>
-            OnQueenPlaced(m));
+        {
+            Debug.WriteLine("[SubscribeToSimulationEvents] QueenPlacedMessage received.");
+            OnQueenPlaced(m);
+        });
 
         WeakReferenceMessenger.Default.Register<SolutionFoundMessage>(this, (r, m) =>
-            OnSolutionFound(m));
+        {
+            Debug.WriteLine("[SubscribeToSimulationEvents] SolutionFoundMessage received.");
+            OnSolutionFound(m);
+        });
     }
 
     private void UnsubscribeFromSimulationEvents()
     {
+        Debug.WriteLine("[UnsubscribeFromSimulationEvents] Unsubscribing from simulation events...");
         WeakReferenceMessenger.Default.Unregister<ProgressValueChangedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<QueenPlacedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<SolutionFoundMessage>(this);

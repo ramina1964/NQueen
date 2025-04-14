@@ -24,10 +24,19 @@ public class Chessboard : ObservableObject
         ClearImages();
 
         // Place queens
-        positions
-            .ToList()
-            .ForEach(pos => Squares.First(sq => pos.RowNo == sq.Position.RowNo &&
-                     pos.ColumnNo == sq.Position.ColumnNo).ImagePath = QueenImagePath);
+        foreach (var pos in positions)
+        {
+            try
+            {
+                var square = Squares.First(sq => pos.RowNo == sq.Position.RowNo &&
+                                                 pos.ColumnNo == sq.Position.ColumnNo);
+                square.ImagePath = QueenImagePath;
+            }
+            catch (InvalidOperationException ex)
+            {
+                Debug.WriteLine($"Error in PlaceQueens: No matching square found for position ({pos.RowNo}, {pos.ColumnNo}). Exception: {ex.Message}");
+            }
+        }
     }
 
     public void CreateSquares(int boardSize, IEnumerable<SquareViewModel> squares)

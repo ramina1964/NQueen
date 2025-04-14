@@ -79,8 +79,6 @@ public sealed partial class MainViewModel
         }
 
         // Notify the commands to re-evaluate their CanExecute state
-        SimulateCommand.NotifyCanExecuteChanged();
-        CancelCommand.NotifyCanExecuteChanged();
-        SaveCommand.NotifyCanExecuteChanged();
+        UpdateButtonFunctionality();
     }
 }

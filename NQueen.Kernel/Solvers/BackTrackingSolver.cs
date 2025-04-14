@@ -171,31 +171,30 @@ public class BackTrackingSolver : ISolver, IDisposable
         while (colNo != -1)
         {
             if (IsSolverCanceled)
+            {
+                Debug.WriteLine("[FindSingleOrUniqueSolutions] Solver canceled.");
                 return;
+            }
 
             if (QueenPositions[0] == HalfBoardSize)
+            {
+                Debug.WriteLine("[FindSingleOrUniqueSolutions] HalfBoardSize reached. Exiting.");
                 return;
+            }
 
             if (colNo == BoardSize && solutionMode == SolutionMode.Single)
             {
+                Debug.WriteLine("[FindSingleOrUniqueSolutions] Solution found for Single mode.");
                 UpdateSolutions();
                 NotifySolutionFound();
-                var updateDTO = new SolutionUpdateDTO
-                {
-                    BoardSize = BoardSize,
-                    SolutionMode = SolutionMode,
-                    Solutions = Solutions,
-                    QueenPositions = (int[])QueenPositions.Clone()
-                };
-                SolutionManager.UpdateSolutions(updateDTO);
                 return;
             }
 
             else if (colNo == BoardSize && solutionMode == SolutionMode.Unique)
             {
+                Debug.WriteLine("[FindSingleOrUniqueSolutions] Solution found for Unique mode.");
                 UpdateSolutions();
                 NotifySolutionFound();
-
                 colNo--;
                 continue;
             }
@@ -238,11 +237,18 @@ public class BackTrackingSolver : ISolver, IDisposable
 
     private void NotifySolutionFound()
     {
+        Debug.WriteLine($"[NotifySolutionFound] Called. NoOfSolutions: {NoOfSolutions}, SolutionCountPerUpdate: {SolutionCountPerUpdate}");
+
         if (NoOfSolutions % SolutionCountPerUpdate == 0)
+        {
+            Debug.WriteLine("[NotifySolutionFound] Triggering NotifyProgressChanged.");
             NotifyProgressChanged();
+        }
 
         if (DisplayMode == DisplayMode.Visualize)
+        {
             SolutionFound?.Invoke(this, new SolutionFoundEventArgs(QueenPositions));
+        }
     }
 
     private int FindQueenPosition(int colNo)
@@ -272,8 +278,8 @@ public class BackTrackingSolver : ISolver, IDisposable
     private void NotifyProgressChanged()
     {
         ProgressValue = Math.Round(100.0 * QueenPositions[0] / HalfBoardSize, 1);
+        Debug.WriteLine($"[NotifyProgressChanged] ProgressValue updated to: {ProgressValue}");
         ProgressValueChanged?.Invoke(this, new ProgressValueChangedEventArgs(ProgressValue));
-        //OnProgressChanged(this, new ProgressValueChangedEventArgs(ProgressValue));
     }
 
     private void UpdateSolutions()
