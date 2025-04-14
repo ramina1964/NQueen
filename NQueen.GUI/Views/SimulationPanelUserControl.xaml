@@ -84,6 +84,7 @@
                 Content="{Binding ProgressLabel}"
                 Style="{StaticResource LabelStyle}"
                 Visibility="{Binding ProgressLabelVisibility}" />
+
         </Grid>
     </GroupBox>
 </UserControl>

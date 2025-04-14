@@ -13,7 +13,7 @@ public class Solution
     }
 
     #region PublicProperties
-    public List<Position> Positions;
+    public List<Position> Positions { get; set; }
 
     public int? Id { get; }
 
@@ -68,8 +68,9 @@ public class Solution
 
     private static List<Position> SetPositions(IEnumerable<int> queenPositions)
     {
-        return [.. queenPositions.Select((item, index) =>
-            new Position(index, item))];
+        return queenPositions.Select(static (item, index) =>
+            new Position(index, item)).ToList();
     }
+      
     #endregion PrivateMembers
 }
