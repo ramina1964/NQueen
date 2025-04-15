@@ -4,12 +4,17 @@ namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
-    public MainViewModel() : this(new BackTrackingSolver(new SolutionManager()))
+    public MainViewModel(IDispatcher uiDispatcher) :
+        this(new BackTrackingSolver(new SolutionManager()), uiDispatcher)
     { }
 
-    public MainViewModel(ISolver solver)
+    public MainViewModel(ISolver solver, IDispatcher dispatcher)
     {
-        Solver = solver ?? throw new ArgumentNullException(nameof(solver));
+        _uiDispatcher = dispatcher
+            ?? throw new ArgumentNullException(nameof(dispatcher));
+        
+        Solver = solver ??
+            throw new ArgumentNullException(nameof(solver));
 
         // Initialize commands directly
         SimulateCommand = new RelayCommand(Simulate, CanSimulate);
@@ -19,9 +24,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         ObservableSolutions = [];
         Initialize();
         SubscribeToSimulationEvents();
-
-        // Initialize the dispatcher
-        _uiDispatcher = Application.Current?.Dispatcher;
     }
 
     private void InitializeCommands()
@@ -84,7 +86,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         ProgressLabelVisibility = Visibility.Hidden;
 
         // Initialize the chessboard
-        Chessboard = new Chessboard();
+        Chessboard = new Chessboard(_uiDispatcher);
     }
 
     private void UpdateGui()
@@ -177,7 +179,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         }
     }
 
-    private readonly Dispatcher? _uiDispatcher;
+    private readonly IDispatcher _uiDispatcher;
 }
 
 #nullable restore

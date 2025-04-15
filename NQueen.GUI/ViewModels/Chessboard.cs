@@ -4,8 +4,11 @@
 // System.InvalidOperationException: 'Sequence contains no matching element.
 public class Chessboard : ObservableObject
 {
-    public Chessboard()
+    public Chessboard(IDispatcher uiDispatcher)
     {
+        _uiDispatcher = uiDispatcher
+            ?? throw new ArgumentNullException(nameof(uiDispatcher));
+
         Squares = [];
         QueenImagePath = @"..\..\Images\WhiteQueen.png";
     }
@@ -80,4 +83,6 @@ public class Chessboard : ObservableObject
 
         return new SolidColorBrush(col);
     }
+
+    private readonly IDispatcher _uiDispatcher;
 }

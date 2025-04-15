@@ -9,6 +9,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Tests\Negative\**" />
+	  <EmbeddedResource Remove="Tests\Negative\**" />
+	  <None Remove="Tests\Negative\**" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="FluentAssertions" Version="8.2.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
@@ -29,10 +35,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\NQueen.Kernel\NQueen.Kernel.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Tests\Negative\" />
 	</ItemGroup>
 
 </Project>

@@ -6,7 +6,10 @@ public static class ServiceCollectionExtensions
     {
         var services = new ServiceCollection();
 
-        // Register shared services
+        // IDispatcher for WPF
+        services.AddSingleton<IDispatcher, WpfDispatcher>();
+
+        // Shared NQueen-Related Services
         services.AddNQueenServices();
 
         // Register specific services, i.e., views and view models
@@ -18,6 +21,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainView>();
 
+        // Build the service provider
         return services.BuildServiceProvider();
     }
 }

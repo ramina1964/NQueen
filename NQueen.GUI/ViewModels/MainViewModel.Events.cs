@@ -4,14 +4,11 @@ namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel
 {
-    /// <summary>
-    /// Event triggered when the simulation is completed.
-    /// </summary>
     public event EventHandler? SimulationCompleted;
 
     private void OnProgressValueChanged(ProgressValueChangedMessage message)
     {
-        Application.Current.Dispatcher.Invoke(() =>
+        _uiDispatcher.Invoke(() =>
         {
             Debug.WriteLine($"[OnProgressValueChanged] Received ProgressValue: {message.Value}");
             ProgressValue = message.Value;
@@ -21,13 +18,12 @@ public sealed partial class MainViewModel
 
             // Update the progress label to show the percentage of work completed
             ProgressLabel = $"{scaledValue:P1}";
-            OnPropertyChanged(nameof(ProgressLabel));
         });
     }
 
     private void OnQueenPlaced(QueenPlacedMessage message)
     {
-        _uiDispatcher?.Invoke(() =>
+        _uiDispatcher.Invoke(() =>
         {
             Debug.WriteLine("[OnQueenPlaced] Received QueenPlacedMessage.");
             var positions = message.Solution
@@ -46,7 +42,7 @@ public sealed partial class MainViewModel
 
     private void OnSolutionFound(SolutionFoundMessage message)
     {
-        Application.Current.Dispatcher.Invoke(() =>
+        _uiDispatcher.Invoke(() =>
         {
             Debug.WriteLine("[OnSolutionFound] Received SolutionFoundMessage.");
             var solutionId = ObservableSolutions.Count + 1;
@@ -58,7 +54,7 @@ public sealed partial class MainViewModel
 
             // Update the progress label
             ProgressLabel = $"Solution {solutionId} found.";
-            OnPropertyChanged(nameof(ProgressLabel)); // Notify the UI about the change
+            OnPropertyChanged(nameof(ProgressLabel));
         });
     }
 
@@ -69,7 +65,7 @@ public sealed partial class MainViewModel
 
     private void AddSolutionToObservable(Solution solution)
     {
-        Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
+        _uiDispatcher.BeginInvoke(() =>
         {
             if (ObservableSolutions.Count >= SimulationSettings.MaxNoOfSolutionsInOutput)
             {
@@ -80,7 +76,7 @@ public sealed partial class MainViewModel
             {
                 ObservableSolutions.Add(solution);
             }
-        }));
+        });
     }
 
     private void SubscribeToSimulationEvents()

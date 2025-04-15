@@ -185,7 +185,12 @@ public sealed partial class MainViewModel : ObservableObject
     public void SetChessboard(double boardDimension)
     {
         BoardSizeText = BoardSize.ToString();
-        Chessboard = new Chessboard { WindowWidth = boardDimension, WindowHeight = boardDimension };
+        Chessboard = new Chessboard(_uiDispatcher)
+        {
+            WindowWidth = boardDimension,
+            WindowHeight = boardDimension
+        };
+
         Chessboard.CreateSquares(BoardSize, []);
 
         IsIdle = true;

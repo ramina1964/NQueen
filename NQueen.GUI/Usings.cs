@@ -3,7 +3,9 @@ global using CommunityToolkit.Mvvm.Input;
 global using CommunityToolkit.Mvvm.Messaging;
 global using FluentValidation;
 global using Microsoft.Extensions.DependencyInjection;
+global using NQueen.GUI.Configuration;
 global using NQueen.GUI.Infrastructure;
+global using NQueen.GUI.Interfaces;
 global using NQueen.GUI.Messaging;
 global using NQueen.GUI.ViewModels;
 global using NQueen.GUI.Views;
@@ -30,5 +32,3 @@ global using System.Windows.Data;
 global using System.Windows.Markup;
 global using System.Windows.Media;
 global using System.Windows.Threading;
-
-
