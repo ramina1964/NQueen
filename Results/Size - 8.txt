@@ -3,7 +3,7 @@ Sol. No. 1                   (0, 0), (1, 1), (2, 2), (3, 3)
 
 
 Summary of Results:
-Date and Time                14/04/2025 01:14:23
+Date and Time                15/04/2025 14:38:43
 BoardSize                                      8
 No. of Unique Solutions                        1
 Elapsed Time (s)                             0.5

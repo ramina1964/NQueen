@@ -33,7 +33,7 @@ public class CommandManagerTests
         // Assert
         var noOfSolutions = _mainViewModel.SimulationResults.NoOfSolutions;
         _mainViewModel.BoardSizeText.Should().Be(boardSizeText);
-        noOfSolutions.Should().BeGreaterThan(0, SolutionNumberError);
+        noOfSolutions.Should().BeGreaterThan(0, TestConst.SolutionNumberZeroError);
         _mainViewModel.IsSimulating.Should().BeFalse();
     }
 
@@ -84,6 +84,4 @@ public class CommandManagerTests
     }
 
     private MainViewModel _mainViewModel = null!;
-    private const string SolutionNumberError =
-        "The simulation should produce at least one solution";
 }

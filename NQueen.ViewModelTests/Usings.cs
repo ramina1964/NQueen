@@ -5,3 +5,4 @@ global using NQueen.Kernel.Models;
 global using NQueen.Kernel.Services;
 global using NQueen.Kernel.Solvers;
 global using System.Windows;
+global using NQueen.ViewModelTests.Setup;

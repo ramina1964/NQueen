@@ -1,5 +1,6 @@
 ﻿namespace NQueen.ViewModelTests.Tests.MainViewModelCase;
 
+[Collection("Serial Test Collection")]
 public class MainViewModelTests
 {
     [Fact]
@@ -7,25 +8,23 @@ public class MainViewModelTests
     {
         // Arrange
         var tcs = new TaskCompletionSource<bool>();
-        var mainViewModel = new MainViewModel(new BackTrackingSolver(new SolutionManager()))
+        var mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()))
         {
             BoardSizeText = "8",
             SolutionMode = SolutionMode.Single,
             DisplayMode = DisplayMode.Visualize
         };
 
-        mainViewModel.SimulationCompleted += (s, e) => tcs.SetResult(true);
+        mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
 
         // Act
-        mainViewModel.SimulateCommand.Execute(null);
+        mainVm.SimulateCommand.Execute(null);
         await tcs.Task;
 
         // Assert
-        mainViewModel.ProgressVisibility.Should().Be(Visibility.Hidden, _progressHiddenError);
-
-        mainViewModel.ProgressValue.Should().BeGreaterThan(0, _progressValueUpdateError);
-
-        mainViewModel.ProgressLabel.Should().NotBeNullOrEmpty(_progressLabelUpdateError);
+        mainVm.ProgressVisibility.Should().Be(Visibility.Hidden, TestConst.ProgressHiddenError);
+        mainVm.ProgressValue.Should().BeGreaterThan(0, TestConst.ProgressValueUpdateError);
+        mainVm.ProgressLabel.Should().NotBeNullOrEmpty(TestConst.ProgressLabelUpdateError);
     }
 
     [Fact]
@@ -33,23 +32,23 @@ public class MainViewModelTests
     {
         // Arrange
         var tcs = new TaskCompletionSource<bool>();
-        var mainViewModel = new MainViewModel(new BackTrackingSolver(new SolutionManager()))
+        var mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()))
         {
             BoardSizeText = "8",
             SolutionMode = SolutionMode.Single,
             DisplayMode = DisplayMode.Visualize
         };
 
-        mainViewModel.SimulationCompleted += (s, e) => tcs.SetResult(true);
+        mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
 
         // Act
-        mainViewModel.SimulateCommand.Execute(null);
+        mainVm.SimulateCommand.Execute(null);
         await tcs.Task;
 
         // Assert
-        mainViewModel.Chessboard.Squares.Should().NotBeEmpty("chessboard squares should be populated");
-        mainViewModel.Chessboard.Squares.Count(sq => !string.IsNullOrEmpty(sq.ImagePath))
-            .Should().Be(8, "8 queens should be placed on the chessboard for an 8x8 board");
+        mainVm.Chessboard.Squares.Should().NotBeEmpty(TestConst.ChessboardNotPopulatedError);
+        mainVm.Chessboard.Squares.Count(sq => !string.IsNullOrEmpty(sq.ImagePath))
+            .Should().Be(8, TestConst.IncorrectQueenPlacementError);
     }
 
     [Fact]
@@ -57,46 +56,46 @@ public class MainViewModelTests
     {
         // Arrange
         var tcs = new TaskCompletionSource<bool>();
-        var mainViewModel = new MainViewModel(new BackTrackingSolver(new SolutionManager()))
+        var mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()))
         {
             BoardSizeText = "8",
             SolutionMode = SolutionMode.Single,
             DisplayMode = DisplayMode.Visualize
         };
 
-        mainViewModel.SimulationCompleted += (s, e) => tcs.SetResult(true);
+        mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
 
         // Act
-        mainViewModel.SimulateCommand.Execute(null);
+        mainVm.SimulateCommand.Execute(null);
         await tcs.Task;
 
         // Assert
-        mainViewModel.ObservableSolutions.Should().NotBeEmpty("solutions should be populated during simulation");
-        mainViewModel.SelectedSolution.Should().NotBeNull("a solution should be selected after simulation");
-        mainViewModel.NoOfSolutions.Should().NotBe("0", "number of solutions should be updated");
+        mainVm.ObservableSolutions.Should().NotBeEmpty();
+        mainVm.SelectedSolution.Should().NotBeNull(TestConst.SolutionNotSelectedError);
+        mainVm.NoOfSolutions.Should().NotBe("0", TestConst.SolutionNumberZeroError);
     }
 
     [Fact]
     public void Cancel_ShouldStopSimulation()
     {
         // Arrange
-        var mainViewModel = new MainViewModel(new BackTrackingSolver(new SolutionManager()))
+        var mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()))
         {
             IsSimulating = true
         };
 
         // Act
-        mainViewModel.CancelCommand.Execute(null);
+        mainVm.CancelCommand.Execute(null);
 
         // Assert
-        mainViewModel.IsSimulating.Should().BeFalse("simulation should stop when cancel is executed");
+        mainVm.IsSimulating.Should().BeFalse(TestConst.SimulationNotStoppedError);
     }
 
     [Fact]
     public void Save_ShouldProcessSimulationResults()
     {
         // Arrange
-        var mainViewModel = new MainViewModel(new BackTrackingSolver(new SolutionManager()))
+        var mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()))
         {
             IsIdle = true
         };
@@ -111,16 +110,12 @@ public class MainViewModelTests
             ElapsedTimeInSec = 0.5
         };
 
-        mainViewModel.SimulationResults = results;
+        mainVm.SimulationResults = results;
 
         // Act
-        mainViewModel.SaveCommand.Execute(null);
+        mainVm.SaveCommand.Execute(null);
 
         // Assert
-        mainViewModel.IsIdle.Should().BeTrue("save command should not affect idle state");
+        mainVm.IsIdle.Should().BeTrue(TestConst.SaveIdleStateError);
     }
-
-    private const string _progressHiddenError = "Progress bar should be hidden after simulation";
-    private const string _progressValueUpdateError = "Progress value should update during simulation";
-    private const string _progressLabelUpdateError = "Progress label should update during simulation";
 }
