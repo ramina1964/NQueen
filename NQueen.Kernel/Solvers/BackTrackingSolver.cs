@@ -104,7 +104,7 @@ public class BackTrackingSolver : ISolver, IDisposable
 
     #region PublicMethods
     public int GetHalfSize() =>
-        (int)(BoardSize % 2 == 0 ? BoardSize / 2 : BoardSize / 2 + 1);
+        BoardSize % 2 == 0 ? BoardSize / 2 : BoardSize / 2 + 1;
 
     public void OnProgressChanged(object sender, ProgressValueChangedEventArgs e) =>
         ProgressValueChanged?.Invoke(this, e);
