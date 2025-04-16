@@ -4,7 +4,7 @@ public static class TestConst
 {
     // Progress-related error messages
     public const string ProgressHiddenError =
-        "Progress bar should be hidden after simulation";
+        "Progress bar should be visible during simulation and hidden after simulation";
 
     public const string ProgressValueUpdateError =
         "Progress value should update during simulation";
