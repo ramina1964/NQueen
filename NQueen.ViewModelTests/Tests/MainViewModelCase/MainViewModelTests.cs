@@ -3,12 +3,18 @@
 [Collection("Serial Test Collection")]
 public class MainViewModelTests
 {
+    public MainViewModelTests()
+    {
+        var serviceProvider = TestHelpers.CreateServiceProvider();
+        _dispatcher = serviceProvider.GetService<IDispatcher>() ?? new TestDispatcher();
+    }
+
     [Fact]
     public async Task Progress_ShouldUpdateDuringSimulation()
     {
         // Arrange
         var tcs = new TaskCompletionSource<bool>();
-        var mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()))
+        var mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()), _dispatcher)
         {
             BoardSizeText = "8",
             SolutionMode = SolutionMode.Single,
@@ -32,7 +38,7 @@ public class MainViewModelTests
     {
         // Arrange
         var tcs = new TaskCompletionSource<bool>();
-        var mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()))
+        var mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()), _dispatcher)
         {
             BoardSizeText = "8",
             SolutionMode = SolutionMode.Single,
@@ -56,7 +62,7 @@ public class MainViewModelTests
     {
         // Arrange
         var tcs = new TaskCompletionSource<bool>();
-        var mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()))
+        var mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()), _dispatcher)
         {
             BoardSizeText = "8",
             SolutionMode = SolutionMode.Single,
@@ -79,7 +85,7 @@ public class MainViewModelTests
     public void Cancel_ShouldStopSimulation()
     {
         // Arrange
-        var mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()))
+        var mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()), _dispatcher)
         {
             IsSimulating = true
         };
@@ -95,7 +101,7 @@ public class MainViewModelTests
     public void Save_ShouldProcessSimulationResults()
     {
         // Arrange
-        var mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()))
+        var mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()), _dispatcher)
         {
             IsIdle = true
         };
@@ -118,4 +124,6 @@ public class MainViewModelTests
         // Assert
         mainVm.IsIdle.Should().BeTrue(TestConst.SaveIdleStateError);
     }
+
+    private readonly IDispatcher _dispatcher;
 }

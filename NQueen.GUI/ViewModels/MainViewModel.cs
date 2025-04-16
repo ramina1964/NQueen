@@ -4,6 +4,7 @@ namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
+    // Todo: Use CreateMainViewModel() to initialize _mainVm
     public MainViewModel(IDispatcher uiDispatcher) :
         this(new BackTrackingSolver(new SolutionManager()), uiDispatcher)
     { }
@@ -12,7 +13,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         _uiDispatcher = dispatcher
             ?? throw new ArgumentNullException(nameof(dispatcher));
-        
+
         Solver = solver ??
             throw new ArgumentNullException(nameof(solver));
 
@@ -26,6 +27,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         SubscribeToSimulationEvents();
     }
 
+    // Consider removing this method.
     private void InitializeCommands()
     {
         SimulateCommand = new RelayCommand(Simulate, CanSimulate);
