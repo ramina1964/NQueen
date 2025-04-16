@@ -187,6 +187,7 @@ public class BackTrackingSolver : ISolver, IDisposable
                 Debug.WriteLine("[FindSingleOrUniqueSolutions] Solution found for Single mode.");
                 UpdateSolutions();
                 NotifySolutionFound();
+                await Task.Delay(DelayInMilliseconds);
                 return;
             }
 
@@ -207,10 +208,11 @@ public class BackTrackingSolver : ISolver, IDisposable
                 continue;
             }
 
-            if (DisplayMode == DisplayMode.Visualize && SolutionMode != SolutionMode.Single)
+            if (DisplayMode == DisplayMode.Visualize)
             {
                 QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(QueenPositions));
-                await Task.Delay(DelayInMilliseconds);
+                if (SolutionMode != SolutionMode.Single)
+                    await Task.Delay(DelayInMilliseconds);
             }
 
             colNo++;
@@ -248,6 +250,7 @@ public class BackTrackingSolver : ISolver, IDisposable
         if (DisplayMode == DisplayMode.Visualize)
         {
             SolutionFound?.Invoke(this, new SolutionFoundEventArgs(QueenPositions));
+            QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(QueenPositions));
         }
     }
 

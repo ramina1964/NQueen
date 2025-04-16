@@ -3,11 +3,17 @@
 [Collection("Serial Test Collection")]
 public class CommandManagerTests
 {
-    // Todo: Use CreateMainViewModel() to initialize _mainVm
     public CommandManagerTests()
     {
         var serviceProvider = TestHelpers.CreateServiceProvider();
         _dispatcher = serviceProvider.GetService<IDispatcher>() ?? new TestDispatcher();
+
+        _mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()), _dispatcher)
+        {
+            BoardSizeText = "8",
+            SolutionMode = SolutionMode.Single,
+            DisplayMode = DisplayMode.Visualize
+        };
     }
 
     [Theory]
@@ -21,16 +27,11 @@ public class CommandManagerTests
     {
         // Arrange
         var tcs = new TaskCompletionSource<bool>();
-        _mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()), _dispatcher)
-        {
-            BoardSizeText = boardSizeText,
-            SolutionMode = solutionMode,
-            DisplayMode = displayMode,
-            Chessboard = new Chessboard(_dispatcher),
-            SimulationResults = new SimulationResults([])
-        };
 
-        // Subscribe to the SimulationCompleted event
+        _mainVm.BoardSizeText = boardSizeText;
+        _mainVm.SolutionMode = solutionMode;
+        _mainVm.DisplayMode = displayMode;
+
         _mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
 
         // Act
@@ -48,11 +49,7 @@ public class CommandManagerTests
     public void CancelCommand_ShouldStopSimulation()
     {
         // Arrange
-        _mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()), _dispatcher)
-        {
-            IsSimulating = true,
-            SimulationResults = new SimulationResults([])
-        };
+        _mainVm.IsSimulating = true;
 
         // Act
         _mainVm.CancelCommand.Execute(null);
@@ -61,25 +58,19 @@ public class CommandManagerTests
         Assert.False(_mainVm.IsSimulating);
     }
 
-    [Fact]
-    public void SaveCommand_ShouldProcessSimulationResults()
+    [Theory]
+    [InlineData("4", SolutionMode.Single, DisplayMode.Hide)]
+    public void SaveCommand_ShouldProcessSimulationResults(
+        string boardSizeText, SolutionMode solutionMode, DisplayMode displayMode)
     {
         // Arrange
-        var results = new SimulationResults(
-            [
-                new([0, 1, 2, 3], 1)
-            ])
-        {
-            BoardSize = 8,
-            NoOfSolutions = 1,
-            ElapsedTimeInSec = 0.5
-        };
+        _mainVm.BoardSizeText = boardSizeText;
+        _mainVm.SolutionMode = solutionMode;
+        _mainVm.DisplayMode = displayMode;
 
-        _mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()), _dispatcher)
-        {
-            SimulationResults = results,
-            IsIdle = true
-        };
+        _mainVm.SimulationResults = new SimulationResults([new([1, 3, 0, 2], 1)]);
+        _mainVm.NoOfSolutions = "1";
+        _mainVm.IsIdle = true;
 
         // Act
         _mainVm.SaveCommand.Execute(null);
@@ -88,6 +79,6 @@ public class CommandManagerTests
         Assert.True(_mainVm.IsIdle);
     }
 
-    private MainViewModel _mainVm = null!;
+    private readonly MainViewModel _mainVm;
     private readonly IDispatcher _dispatcher;
 }

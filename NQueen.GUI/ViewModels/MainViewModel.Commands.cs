@@ -47,17 +47,24 @@ public sealed partial class MainViewModel
 
                 ProgressVisibility = Visibility.Visible;
 
+                Debug.WriteLine($"[ManageSimulationStatus:Started] Initial ProgressVisibility: {ProgressVisibility}");
+                Debug.WriteLine($"[ManageSimulationStatus:Started] Initial IsSingleRunning: {IsSingleRunning}");
+
                 if (SolutionMode == SolutionMode.Single)
                 {
-                    IsSingleRunning = true; // Set indeterminate state
-                    ProgressValue = 0; // Ensure no value is displayed
-                    ProgressLabelVisibility = Visibility.Hidden; // Hide the label
+                    IsSingleRunning = true;
+                    ProgressVisibility = Visibility.Visible;
+                    ProgressLabelVisibility = Visibility.Hidden;
+
+                    Debug.WriteLine($"[ManageSimulationStatus:Started] Updated for Single Mode - IsSingleRunning: {IsSingleRunning}, ProgressVisibility: {ProgressVisibility}");
                 }
                 else
                 {
                     IsSingleRunning = false;
                     ProgressLabelVisibility = Visibility.Visible;
                     ProgressValue = SolverHelper.StartProgressValue;
+
+                    Debug.WriteLine($"[ManageSimulationStatus:Started] Updated for Other Modes - IsSingleRunning: {IsSingleRunning}, ProgressVisibility: {ProgressVisibility}");
                 }
                 break;
 
@@ -71,6 +78,9 @@ public sealed partial class MainViewModel
                 IsOutputReady = true;
                 ProgressVisibility = Visibility.Hidden;
                 ProgressLabelVisibility = Visibility.Hidden;
+
+                Debug.WriteLine($"[ManageSimulationStatus:Finished] Final ProgressVisibility: {ProgressVisibility}");
+                Debug.WriteLine($"[ManageSimulationStatus:Finished] Final IsSingleRunning: {IsSingleRunning}");
 
                 OnSimulationCompleted();
                 break;
