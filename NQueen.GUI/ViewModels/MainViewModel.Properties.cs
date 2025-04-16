@@ -227,6 +227,9 @@ public sealed partial class MainViewModel : ObservableObject
         UpdateButtonFunctionality();
     }
 
+    partial void OnIsSingleRunningChanged(bool value) =>
+        OnPropertyChanged(nameof(IsSingleRunning));
+
     [ObservableProperty]
     private bool _isOutputReady;
 

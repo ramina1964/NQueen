@@ -75,7 +75,7 @@
                 Grid.Row="1"
                 Grid.ColumnSpan="3"
                 Height="30"
-                HorizontalAlignment="Center"
+                HorizontalAlignment="Stretch"
                 VerticalAlignment="Center"
                 HorizontalContentAlignment="Center"
                 VerticalContentAlignment="Center"

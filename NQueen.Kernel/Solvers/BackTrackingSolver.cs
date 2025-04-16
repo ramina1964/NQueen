@@ -207,7 +207,7 @@ public class BackTrackingSolver : ISolver, IDisposable
                 continue;
             }
 
-            if (DisplayMode == DisplayMode.Visualize)
+            if (DisplayMode == DisplayMode.Visualize && SolutionMode != SolutionMode.Single)
             {
                 QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(QueenPositions));
                 await Task.Delay(DelayInMilliseconds);
@@ -285,6 +285,9 @@ public class BackTrackingSolver : ISolver, IDisposable
 
     private void NotifyProgressChanged()
     {
+        if (SolutionMode == SolutionMode.Single)
+            return;
+
         ProgressValue = Math.Round(100.0 * QueenPositions[0] / HalfBoardSize, 1);
         Debug.WriteLine($"[NotifyProgressChanged] ProgressValue updated to: {ProgressValue}");
         ProgressValueChanged?.Invoke(this, new ProgressValueChangedEventArgs(ProgressValue));

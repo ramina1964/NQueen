@@ -38,21 +38,22 @@ public sealed partial class MainViewModel
         switch (simulationStatus)
         {
             case SimulationStatus.Started:
-                // Subscribe to simulation events
                 SubscribeToSimulationEvents();
 
-                // Update state for simulation start
                 IsIdle = false;
                 IsInInputMode = false;
                 IsSimulating = true;
                 IsOutputReady = false;
 
                 ProgressVisibility = Visibility.Visible;
+
                 if (SolutionMode == SolutionMode.Single)
                 {
-                    IsSingleRunning = true;
+                    IsSingleRunning = true; // Set indeterminate state
+                    ProgressValue = 0; // Ensure no value is displayed
+                    ProgressLabelVisibility = Visibility.Hidden; // Hide the label
                 }
-                else if (IsSimulating) // For SolutionMode.Unique or SolutionMode.All
+                else
                 {
                     IsSingleRunning = false;
                     ProgressLabelVisibility = Visibility.Visible;
@@ -61,10 +62,8 @@ public sealed partial class MainViewModel
                 break;
 
             case SimulationStatus.Finished:
-                // Unsubscribe from simulation events
                 UnsubscribeFromSimulationEvents();
 
-                // Update state for simulation finish
                 IsIdle = true;
                 IsInInputMode = true;
                 IsSimulating = false;
@@ -73,12 +72,10 @@ public sealed partial class MainViewModel
                 ProgressVisibility = Visibility.Hidden;
                 ProgressLabelVisibility = Visibility.Hidden;
 
-                // Trigger the SimulationCompleted event
                 OnSimulationCompleted();
                 break;
         }
 
-        // Notify the commands to re-evaluate their CanExecute state
         UpdateButtonFunctionality();
     }
 }
