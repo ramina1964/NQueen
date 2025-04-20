@@ -4,62 +4,48 @@ public sealed partial class MainViewModel
 {
     public event EventHandler? SimulationCompleted;
 
-    private void OnProgressValueChanged(ProgressValueChangedMessage message)
-    {
-        _uiDispatcher.Invoke(() =>
-        {
-            Debug.WriteLine($"[OnProgressValueChanged] Received ProgressValue: {message.Value}");
-            ProgressValue = message.Value;
-
-            // Correct the scaling if ProgressValue is in the range 0-100
-            var scaledValue = message.Value > 1 ? message.Value / 100 : message.Value;
-
-            // Update the progress label to show the percentage of work completed
-            ProgressLabel = $"{scaledValue:P1}";
-        });
-    }
+    private void OnProgressValueChanged(ProgressValueChangedMessage message) =>
+        UpdateProgress(message.Value, $"{message.Value} %");
 
     private void OnQueenPlaced(QueenPlacedMessage message)
     {
-        _uiDispatcher.Invoke(() =>
-        {
-            Debug.WriteLine("[OnQueenPlaced] Received QueenPlacedMessage.");
-            var positions = message.Solution
-                .Take(BoardSize)
-                .Select((queenPosition, rowIndex) => new Position(rowIndex, queenPosition))
-                .ToList();
+        var positions = message.Solution
+            .Take(BoardSize)
+            .Select((queenPosition, rowIndex) => new Position(rowIndex, queenPosition))
+            .ToList();
 
-            Chessboard.PlaceQueens(positions);
-
-            // Update the progress label
-            var progressPercentage = message.Value > 0 ? $"{message.Value} %" : string.Empty;
-            ProgressLabel = progressPercentage;
-            OnPropertyChanged(nameof(ProgressLabel));
-        });
+        Chessboard.PlaceQueens(positions);
+        UpdateProgress(message.Value, $"{message.Value} %");
     }
 
     private void OnSolutionFound(SolutionFoundMessage message)
     {
+        var solutionId = ObservableSolutions.Count + 1;
+        var newSolution = new Solution(message.Solution, solutionId);
+
+        UpdateSolutionCount();
+        AddSolutionToObservable(newSolution);
+        SelectedSolution = newSolution;
+
+        UpdateProgress(0, $"Solution {solutionId} found.");
+    }
+
+    private void UpdateProgress(double value, string label)
+    {
+        // Constrain the progress value between 0 and 100
+        value = Math.Clamp(value, 0, 100);
+
         _uiDispatcher.Invoke(() =>
         {
-            Debug.WriteLine("[OnSolutionFound] Received SolutionFoundMessage.");
-            var solutionId = ObservableSolutions.Count + 1;
-            var newSolution = new Solution(message.Solution, solutionId);
-
-            UpdateSolutionCount();
-            AddSolutionToObservable(newSolution);
-            SelectedSolution = newSolution;
-
-            // Update the progress label
-            ProgressLabel = $"Solution {solutionId} found.";
+            // Normalize to the interval [0.0, 1.0]
+            ProgressValue = value / 100.0;
+            ProgressLabel = label;
             OnPropertyChanged(nameof(ProgressLabel));
         });
     }
 
-    private void UpdateSolutionCount()
-    {
+    private void UpdateSolutionCount() =>
         NoOfSolutions = $"{int.Parse(NoOfSolutions) + 1,0:N0}";
-    }
 
     private void AddSolutionToObservable(Solution solution)
     {

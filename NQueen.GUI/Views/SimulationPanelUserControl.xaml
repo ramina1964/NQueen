@@ -65,6 +65,8 @@
                 HorizontalAlignment="Stretch"
                 AutomationProperties.Name="SimulationProgress"
                 IsIndeterminate="{Binding IsSingleRunning}"
+                Minimum="0"
+                Maximum="1"
                 Style="{StaticResource ProgressBarStyle}"
                 Visibility="{Binding ProgressVisibility}"
                 Value="{Binding ProgressValue}" />
