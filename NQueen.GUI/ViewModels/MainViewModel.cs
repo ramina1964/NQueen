@@ -150,6 +150,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             NoOfSolutions = $"{SimulationResults.NoOfSolutions,0:N0}";
             ElapsedTimeInSec = $"{SimulationResults.ElapsedTimeInSec,0:N1}";
             SelectedSolution = ObservableSolutions.FirstOrDefault() ?? new Solution([], null);
+            MemoryUsage = MemoryMonitoring.UpdateMemoryUsage();
 
             Debug.WriteLine("[SimulateAsync] Simulation completed successfully.");
         }

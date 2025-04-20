@@ -10,7 +10,7 @@ public class BackTrackingSolver : ISolver, IDisposable
         SolutionManager = solutionManager
             ?? throw new ArgumentNullException(nameof(solutionManager));
         
-        QueenPositions = Enumerable.Repeat(-1, boardSize).ToArray();
+        QueenPositions = [.. Enumerable.Repeat(-1, boardSize)];
         _cancelationTokenSource = new CancellationTokenSource();
     }
 
