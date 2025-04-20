@@ -6,7 +6,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
     public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
 
-    public bool HasErrors => _errors.Any();
+    public bool HasErrors => _errors.Count != 0;
 
     public IEnumerable GetErrors(string? propertyName)
     {

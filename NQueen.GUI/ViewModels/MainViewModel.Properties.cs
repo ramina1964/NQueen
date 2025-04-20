@@ -9,7 +9,7 @@ public sealed partial class MainViewModel : ObservableObject
     private double _progressValue;
 
     [ObservableProperty]
-    private string _progressLabel;
+    private string _progressLabel = string.Empty;
 
     [ObservableProperty]
     private Visibility _progressVisibility;
@@ -58,13 +58,13 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private static SimulationResults _simulationResults;
+    private static SimulationResults _simulationResults = null!;
 
     [ObservableProperty]
-    private ObservableCollection<Solution> _observableSolutions = new();
+    private ObservableCollection<Solution> _observableSolutions = [];
 
     [ObservableProperty]
-    private Solution _selectedSolution;
+    private Solution _selectedSolution = new([], null);
 
     partial void OnSelectedSolutionChanged(Solution value)
     {
@@ -136,27 +136,27 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private string _boardSizeText;
+    private string _boardSizeText = string.Empty;
 
     [ObservableProperty]
-    private int _boardSize;
+    private int _boardSize = BoardSettings.DefaultBoardSize;
 
     [ObservableProperty]
-    private bool _isValid;
+    private bool _isValid = false;
 
     [ObservableProperty]
-    private string _solutionTitle;
+    private string _solutionTitle = string.Empty;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ResultTitle))]
-    private string _noOfSolutions;
+    private string _noOfSolutions ="0";
 
     [ObservableProperty]
-    private string _memoryUsage;
+    private string _memoryUsage = "0";
 
     public string ResultTitle => SolverHelper.SolutionTitle(SolutionMode);
 
-    public Chessboard Chessboard { get; set; }
+    public Chessboard Chessboard { get; set; } = null!;
 
     public void SetChessboard(double boardDimension)
     {
@@ -174,7 +174,7 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private string _elapsedTimeInSec;
+    private string _elapsedTimeInSec = string.Empty;
 
     [ObservableProperty]
     private bool _isSimulating;

@@ -1,10 +1,7 @@
-﻿#nullable enable
-
-namespace NQueen.GUI.ViewModels;
+﻿namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
-    // Todo: Use CreateMainViewModel() to initialize _mainVm
     public MainViewModel(IDispatcher uiDispatcher) :
         this(new BackTrackingSolver(new SolutionManager()), uiDispatcher)
     { }
@@ -14,15 +11,18 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _uiDispatcher = dispatcher
             ?? throw new ArgumentNullException(nameof(dispatcher));
 
-        Solver = solver ??
-            throw new ArgumentNullException(nameof(solver));
+        Solver = solver
+            ?? throw new ArgumentNullException(nameof(solver));
+
+        // Initialize non-nullable properties
+        InputViewModel = new InputViewModel { ClassLevelCascadeMode = CascadeMode.Stop };
+        CancelationTokenSource = new CancellationTokenSource();
 
         // Initialize commands directly
         SimulateCommand = new RelayCommand(Simulate, CanSimulate);
         SaveCommand = new RelayCommand(Save, CanSave);
         CancelCommand = new RelayCommand(Cancel, CanCancel);
 
-        ObservableSolutions = [];
         Initialize();
         SubscribeToSimulationEvents();
     }
@@ -48,7 +48,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         {
             // Dispose managed resources
             CancelationTokenSource?.Dispose();
-            CancelationTokenSource = null;
+            CancelationTokenSource = null!;
 
             // Clear collections
             ObservableSolutions.Clear();
@@ -168,4 +168,3 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private readonly IDispatcher _uiDispatcher;
 }
 
-#nullable restore

@@ -21,5 +21,5 @@ public partial class App : Application
         base.OnExit(e);
     }
 
-    private IServiceProvider _serviceProvider;
+    private IServiceProvider _serviceProvider = null!;
 }

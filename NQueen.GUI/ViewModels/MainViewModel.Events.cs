@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-namespace NQueen.GUI.ViewModels;
+﻿namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel
 {
@@ -152,5 +150,3 @@ public sealed partial class MainViewModel
         WeakReferenceMessenger.Default.Send(new SolutionFoundMessage(e.Solution));
     }
 }
-
-#nullable restore

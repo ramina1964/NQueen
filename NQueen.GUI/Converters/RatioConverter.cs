@@ -24,5 +24,5 @@ public class RatioConverter : MarkupExtension, IValueConverter
     public override object ProvideValue(IServiceProvider serviceProvider) =>
         _instance ??= new RatioConverter();
 
-    private static RatioConverter _instance;
+    private static RatioConverter _instance = null!;
 }

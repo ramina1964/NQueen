@@ -64,12 +64,16 @@ public partial class MainView : Window, IDisposable
 
     private void MainView_Loaded(object sender, RoutedEventArgs e)
     {
-        var board = chessboardPlaceholder.Content as ChessboardUserControl;
-        var size = (int)Math.Min(board.ActualWidth, board.ActualHeight);
-        board.Width = size;
-        board.Height = size;
-        MainViewModel.SetChessboard(size);
-        DataContext = MainViewModel;
+        if (chessboardPlaceholder.Content is not ChessboardUserControl board)
+            throw new InvalidOperationException("chessboardPlaceholder.Content is not a ChessboardUserControl.");
+        else
+        {
+            var size = (int)Math.Min(board.ActualWidth, board.ActualHeight);
+            board.Width = size;
+            board.Height = size;
+            MainViewModel.SetChessboard(size);
+            DataContext = MainViewModel;
+        }
     }
 
     private bool _disposed = false;
