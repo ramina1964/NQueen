@@ -8,9 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Tests\CommandManager\Negative\**" />
-    <EmbeddedResource Remove="Tests\CommandManager\Negative\**" />
-    <None Remove="Tests\CommandManager\Negative\**" />
+    <Compile Remove="BackTrackingSolverTests\CommandManagerTests\Negative\**" />
+    <EmbeddedResource Remove="BackTrackingSolverTests\CommandManagerTests\Negative\**" />
+    <None Remove="BackTrackingSolverTests\CommandManagerTests\Negative\**" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,6 +1,6 @@
-﻿namespace NQueen.UnitTests.Tests.Positive;
+﻿namespace NQueen.UnitTests.Tests.NQueenSolverTests;
 
-public class NQueenSolverNegativeTests(SolverBackEndFixture fixture) :
+public class NegativeTests(SolverBackEndFixture fixture) :
     NQueenTestBase(fixture.Sut), IClassFixture<SolverBackEndFixture>
 {
     [Theory]

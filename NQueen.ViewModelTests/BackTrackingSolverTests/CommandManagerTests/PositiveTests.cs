@@ -1,9 +1,9 @@
-﻿namespace NQueen.ViewModelTests.Tests.CommandManager.Positive;
+﻿namespace NQueen.ViewModelTests.BackTrackingSolverTests.CommandManager;
 
 [Collection("Serial Test Collection")]
-public class CommandManagerTests
+public class PositiveTests
 {
-    public CommandManagerTests()
+    public PositiveTests()
     {
         var serviceProvider = TestHelpers.CreateServiceProvider();
         _dispatcher = serviceProvider.GetService<IDispatcher>() ?? new TestDispatcher();
