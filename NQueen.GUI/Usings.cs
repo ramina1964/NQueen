@@ -17,6 +17,7 @@ global using NQueen.Kernel.Services;
 global using NQueen.Kernel.Solvers;
 global using NQueen.Kernel.Utilities;
 global using System;
+global using System.Collections;
 global using System.Collections.Generic;
 global using System.Collections.ObjectModel;
 global using System.ComponentModel;
@@ -32,3 +33,4 @@ global using System.Windows.Data;
 global using System.Windows.Markup;
 global using System.Windows.Media;
 global using System.Windows.Threading;
+

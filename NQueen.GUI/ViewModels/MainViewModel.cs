@@ -27,14 +27,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         SubscribeToSimulationEvents();
     }
 
-    // Consider removing this method.
-    private void InitializeCommands()
-    {
-        SimulateCommand = new RelayCommand(Simulate, CanSimulate);
-        SaveCommand = new RelayCommand(Save, CanSave);
-        CancelCommand = new RelayCommand(Cancel, CanCancel);
-    }
-
     public IRelayCommand SimulateCommand { get; private set; }
 
     public IRelayCommand SaveCommand { get; private set; }

@@ -88,6 +88,9 @@ public sealed partial class MainViewModel : ObservableObject
             ? $"Solution"
             : $"Solutions (Max: {SimulationSettings.MaxNoOfSolutionsInOutput})";
 
+        // Trigger validation for BoardSizeText
+        ValidateProperty(nameof(BoardSizeText));
+
         OnPropertyChanged(nameof(BoardSizeText));
         OnPropertyChanged(nameof(SolutionTitle));
 
@@ -134,33 +137,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private string _boardSizeText;
-
-    partial void OnBoardSizeTextChanged(string value)
-    {
-        IsValid = InputViewModel.Validate(this).IsValid;
-
-        if (!IsValid)
-        {
-            IsIdle = false;
-            IsSimulating = false;
-        }
-        else
-        {
-            IsIdle = true;
-            IsSimulating = false;
-            IsOutputReady = false;
-
-            // Update the BoardSize property
-            BoardSize = int.Parse(value);
-
-            // Notify that BoardSize has changed
-            OnPropertyChanged(nameof(BoardSize));
-
-            // Update the UI
-            UpdateButtonFunctionality();
-            UpdateGui();
-        }
-    }
 
     [ObservableProperty]
     private int _boardSize;
