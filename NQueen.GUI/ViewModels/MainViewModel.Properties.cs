@@ -6,7 +6,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ProgressLabel))]
-    private double _progressValue;
+    private double _progressValue = 0;
 
     [ObservableProperty]
     private string _progressLabel = string.Empty;
@@ -18,18 +18,14 @@ public sealed partial class MainViewModel : ObservableObject
     {
         IsProgressBarOffscreen = value != Visibility.Visible;
         if (DisplayMode == DisplayMode.Visualize)
-        {
             OnPropertyChanged(nameof(ProgressLabel));
-        }
     }
 
     [ObservableProperty]
     private Visibility _progressLabelVisibility;
 
-    partial void OnProgressLabelVisibilityChanged(Visibility value)
-    {
+    partial void OnProgressLabelVisibilityChanged(Visibility value) =>
         IsProgressLabelOffscreen = value != Visibility.Visible;
-    }
 
     [ObservableProperty]
     private bool _isProgressBarOffscreen;
@@ -69,9 +65,7 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnSelectedSolutionChanged(Solution value)
     {
         if (value != null)
-        {
             Chessboard.PlaceQueens(value.Positions);
-        }
     }
 
     [ObservableProperty]
@@ -80,9 +74,7 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnSolutionModeChanged(SolutionMode value)
     {
         if (Solver == null)
-        {
             return;
-        }
 
         SolutionTitle = (value == SolutionMode.Single)
             ? $"Solution"
@@ -106,7 +98,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         IsIdle = true;
         IsSimulating = false;
-        UpdateGui();
+        ResetUiState();
     }
 
     [ObservableProperty]
@@ -115,12 +107,10 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnDisplayModeChanged(DisplayMode value)
     {
         if (Solver == null)
-        {
             return;
-        }
 
         IsValid = InputViewModel.Validate(this).IsValid;
-        if (!IsValid)
+        if (IsValid == false)
         {
             IsIdle = false;
             IsSimulating = false;
@@ -132,7 +122,7 @@ public sealed partial class MainViewModel : ObservableObject
         IsSimulating = false;
         IsOutputReady = false;
         OnPropertyChanged(nameof(BoardSizeText));
-        UpdateGui();
+        ResetUiState();
     }
 
     [ObservableProperty]
@@ -154,7 +144,7 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _memoryUsage = "0";
 
-    public string ResultTitle => SolverHelper.SolutionTitle(SolutionMode);
+    public string ResultTitle => SolverHelper.UpdateSolutionTitle(SolutionMode);
 
     public Chessboard Chessboard { get; set; } = null!;
 
@@ -179,18 +169,14 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isSimulating;
 
-    partial void OnIsSimulatingChanged(bool value)
-    {
-        UpdateButtonFunctionality();
-    }
+    partial void OnIsSimulatingChanged(bool value) =>
+        RefreshCommandStates();
 
     [ObservableProperty]
     private bool _isInInputMode;
 
-    partial void OnIsInInputModeChanged(bool value)
-    {
-        UpdateButtonFunctionality();
-    }
+    partial void OnIsInInputModeChanged(bool value) =>
+        RefreshCommandStates();
 
     [ObservableProperty]
     private bool _isSingleRunning;
@@ -198,10 +184,8 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isIdle;
 
-    partial void OnIsIdleChanged(bool value)
-    {
-        UpdateButtonFunctionality();
-    }
+    partial void OnIsIdleChanged(bool value) =>
+        RefreshCommandStates();
 
     partial void OnIsSingleRunningChanged(bool value) =>
         OnPropertyChanged(nameof(IsSingleRunning));
@@ -209,10 +193,8 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isOutputReady;
 
-    partial void OnIsOutputReadyChanged(bool value)
-    {
-        UpdateButtonFunctionality();
-    }
+    partial void OnIsOutputReadyChanged(bool value) =>
+        RefreshCommandStates();
 
     private bool _disposed;
 

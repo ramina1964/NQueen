@@ -48,7 +48,7 @@ public static class SolverHelper
             ? GetSolutionSizeUnique(boardSize)
             : GetSolutionSizeAll(boardSize);
 
-    public static string SolutionTitle(SolutionMode solutionMode) =>
+    public static string UpdateSolutionTitle(SolutionMode solutionMode) =>
         (solutionMode == SolutionMode.Single)
                 ? $"Solution"
                 : solutionMode == SolutionMode.Unique

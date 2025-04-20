@@ -44,12 +44,9 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         OnErrorsChanged(propertyName);
     }
 
-    private void OnErrorsChanged(string propertyName)
-    {
+    private void OnErrorsChanged(string propertyName) =>
         ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
-    }
 
-    // Example usage: Call this method in property setters or partial methods
     partial void OnBoardSizeTextChanged(string value)
     {
         ValidateProperty(nameof(BoardSizeText));
@@ -67,8 +64,8 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
             OnPropertyChanged(nameof(BoardSize));
 
             // Update the UI
-            UpdateButtonFunctionality();
-            UpdateGui();
+            RefreshCommandStates();
+            ResetUiState();
         }
         else
         {

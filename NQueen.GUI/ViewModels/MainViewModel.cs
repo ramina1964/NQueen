@@ -83,7 +83,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         Chessboard = new Chessboard(_uiDispatcher);
     }
 
-    private void UpdateGui()
+    private void ResetUiState()
     {
         ObservableSolutions.Clear();
         Chessboard?.Squares.Clear();
@@ -94,7 +94,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         Chessboard?.CreateSquares(BoardSize, []);
     }
 
-    private void UpdateButtonFunctionality()
+    private void RefreshCommandStates()
     {
         SimulateCommand?.NotifyCanExecuteChanged();
         CancelCommand?.NotifyCanExecuteChanged();
@@ -137,7 +137,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             Debug.WriteLine("[SimulateAsync] Starting simulation...");
             ManageSimulationStatus(SimulationStatus.Started);
 
-            UpdateGui();
+            ResetUiState();
 
             SimulationResults = await Solver.GetResultsAsync(BoardSize, SolutionMode, DisplayMode);
 

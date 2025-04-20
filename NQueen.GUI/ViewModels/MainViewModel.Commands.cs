@@ -86,6 +86,6 @@ public sealed partial class MainViewModel
                 break;
         }
 
-        UpdateButtonFunctionality();
+        RefreshCommandStates();
     }
 }
