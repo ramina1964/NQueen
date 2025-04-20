@@ -58,7 +58,7 @@ public class CommandProcessor(IConsoleUtils consoleUtils) : ICommandProcessor
 
             dispatchCommands.WriteLineColored(ConsoleColor.Cyan, $"Enter a {required} ");
             Console.WriteLine($"\t{dispatchCommands.AvailableCommands[required]}");
-            var userInput = Console.ReadLine().Trim().ToLower();
+            var userInput = Console.ReadLine()?.Trim().ToLower() ?? string.Empty;
 
             if (userInput.Equals("help") || userInput.Equals("-h"))
                 HelpCommands.ProcessHelpCommand(userInput);

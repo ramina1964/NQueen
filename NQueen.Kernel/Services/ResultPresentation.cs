@@ -31,7 +31,14 @@ public class ResultPresentation
 
     public string Write2File(SolutionMode solutionMode)
     {
-        var dir = new DirectoryInfo(Environment.CurrentDirectory).Parent.Parent.Parent.Parent;
+        var currentDirectory = Environment.CurrentDirectory;
+        var dir = new DirectoryInfo(currentDirectory)?.Parent?.Parent?.Parent?.Parent;
+
+        if (dir == null)
+        {
+            throw new InvalidOperationException("Unable to determine the target directory. Ensure the directory structure is correct.");
+        }
+
         var fileName = $"Size - {BoardSize}.txt";
         var subFolder = Path.Combine(dir.FullName, "Results");
         var filePath = Path.Combine(subFolder, fileName);

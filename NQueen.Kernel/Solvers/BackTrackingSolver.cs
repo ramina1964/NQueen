@@ -9,6 +9,9 @@ public class BackTrackingSolver : ISolver, IDisposable
         Initialize(boardSize);
         SolutionManager = solutionManager
             ?? throw new ArgumentNullException(nameof(solutionManager));
+        
+        QueenPositions = Enumerable.Repeat(-1, boardSize).ToArray();
+        _cancelationTokenSource = new CancellationTokenSource();
     }
 
     #region IDisposable Implementation
@@ -37,9 +40,9 @@ public class BackTrackingSolver : ISolver, IDisposable
     private void CleanupResources()
     {
         // Unsubscribe event handlers
-        QueenPlaced = null;
-        SolutionFound = null;
-        ProgressValueChanged = null;
+        QueenPlaced = null!;
+        SolutionFound = null!;
+        ProgressValueChanged = null!;
 
         // Clear collections
         Solutions?.Clear();
@@ -80,11 +83,11 @@ public class BackTrackingSolver : ISolver, IDisposable
 
     public double ProgressValue { get; set; }
 
-    public event EventHandler<QueenPlacedEventArgs> QueenPlaced;
+    public event EventHandler<QueenPlacedEventArgs> QueenPlaced = delegate { };
 
-    public event EventHandler<SolutionFoundEventArgs> SolutionFound;
+    public event EventHandler<SolutionFoundEventArgs> SolutionFound = delegate { };
 
-    public event EventHandler<ProgressValueChangedEventArgs> ProgressValueChanged;
+    public event EventHandler<ProgressValueChangedEventArgs> ProgressValueChanged = delegate { };
     #endregion ISolverUI
 
     #region PublicProperties
@@ -129,7 +132,7 @@ public class BackTrackingSolver : ISolver, IDisposable
 
     public DisplayMode DisplayMode { get; set; }
 
-    public HashSet<int[]> Solutions { get; set; }
+    public HashSet<int[]> Solutions { get; set; } = [];
     #endregion
 
     #region PrivateMethods

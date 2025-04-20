@@ -15,9 +15,9 @@ public partial class DispatchCommands(
 
     public bool IsAllSolution => SolutionMode == SolutionMode.All;
 
-    public Dictionary<string, bool> Commands { get; set; }
+    public Dictionary<string, bool> Commands { get; set; } = [];
 
-    public Dictionary<string, string> AvailableCommands { get; set; }
+    public Dictionary<string, string> AvailableCommands { get; set; } = [];
 
     public bool ProcessCommand(string key, string value) =>
         _commandProcessor.ProcessCommand(key, value, this);
@@ -76,7 +76,7 @@ public partial class DispatchCommands(
         {
             Console.WriteLine(CommandConst.RunAgainPrompt);
             Console.WriteLine(CommandConst.YesOrNoPrompt);
-            var runAgainAnswer = Console.ReadLine().Trim().ToLower();
+            var runAgainAnswer = Console.ReadLine()?.Trim().ToLower() ?? string.Empty;
             if (runAgainAnswer.Equals("yes") || runAgainAnswer.Equals("y"))
             {
                 Console.WriteLine();
@@ -117,8 +117,37 @@ public partial class DispatchCommands(
             : "\nFirst Solution Found - Numbers in parentheses: Column No. and Row No., Starting from the Lower Left Corner:";
 
         _consoleUtils.WriteLineColored(ConsoleColor.Blue, solutionTitle);
-        _consoleUtils.WriteLineColored(ConsoleColor.Yellow, example.Details);
-        var board = DispatchUtils.CreateChessBoard(example.QueenPositions);
+
+        if (example != null)
+        {
+            _consoleUtils.WriteLineColored(ConsoleColor.Yellow, example.Details);
+        }
+        else
+        {
+            _consoleUtils.WriteLineColored(ConsoleColor.Red, "No example solution available.");
+        }
+
+        var example2 = simulationResult.Solutions.FirstOrDefault();
+        if (example2 == null)
+        {
+            _consoleUtils.WriteLineColored(ConsoleColor.Red, "No example solution available.");
+            return true; // Exit early if no solution is available
+        }
+
+        var example3 = simulationResult.Solutions.FirstOrDefault();
+        if (example3 == null)
+        {
+            _consoleUtils.WriteLineColored(ConsoleColor.Red, "No example solution available.");
+            return true; // Exit early if no solution is available
+        }
+
+        var board = DispatchUtils.CreateChessBoard(example3.QueenPositions ?? []);
+
+
+        _consoleUtils.WriteLineColored(ConsoleColor.Blue, CommandConst.DrawFirstSolution);
+
+        _consoleUtils.WriteLineColored(ConsoleColor.Gray, CommandConst.SetDefaultFonts);
+        Console.WriteLine(board);
         _consoleUtils.WriteLineColored(ConsoleColor.Blue, CommandConst.DrawFirstSolution);
 
         _consoleUtils.WriteLineColored(ConsoleColor.Gray, CommandConst.SetDefaultFonts);

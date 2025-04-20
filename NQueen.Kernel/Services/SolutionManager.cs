@@ -2,9 +2,22 @@
 
 public class SolutionManager : ISolutionManager
 {
-    public SolutionManager() { }
+    public SolutionManager()
+    {
+        // Initialize with an empty delegate to avoid null.
+        SolutionsUpdated = _ => { };
 
-    public SolutionManager(SolutionUpdateDTO dto) => UpdateDTO = dto;
+        // Initialize with a default instance.
+        UpdateDTO = new SolutionUpdateDTO();
+    }
+
+    public SolutionManager(SolutionUpdateDTO dto)
+    {
+        // Initialize with an empty delegate to avoid null.
+        SolutionsUpdated = _ => { };
+
+        UpdateDTO = dto ?? throw new ArgumentNullException(nameof(dto));
+    }
 
     public event Action<SolutionUpdateDTO> SolutionsUpdated;
 
