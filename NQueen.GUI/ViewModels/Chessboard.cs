@@ -1,21 +1,31 @@
-﻿namespace NQueen.GUI.ViewModels;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
-public class Chessboard(IDispatcher uiDispatcher) : ObservableObject
+namespace NQueen.GUI.ViewModels;
+
+public partial class Chessboard : ObservableObject
 {
     public string QueenImagePath { get; } = @"..\..\Images\WhiteQueen.png";
 
-    public ObservableCollection<SquareViewModel> Squares { get; set; } = [];
+    [ObservableProperty]
+    private ObservableCollection<SquareViewModel> squares = new();
 
-    public double WindowWidth { get; set; }
+    [ObservableProperty]
+    private double windowWidth;
 
-    public double WindowHeight { get; set; }
+    [ObservableProperty]
+    private double windowHeight;
+
+    private readonly IDispatcher _uiDispatcher;
+
+    public Chessboard(IDispatcher uiDispatcher)
+    {
+        _uiDispatcher = uiDispatcher ?? throw new ArgumentNullException(nameof(uiDispatcher));
+    }
 
     public void PlaceQueens(IEnumerable<Position> positions)
     {
-        // Clear board
         ClearImages();
 
-        // Place queens
         foreach (var pos in positions)
         {
             try
@@ -31,12 +41,12 @@ public class Chessboard(IDispatcher uiDispatcher) : ObservableObject
         }
     }
 
-    public void CreateSquares(int boardSize, IEnumerable<SquareViewModel> squares)
+    public void CreateSquares(int boardSize)
     {
-        var width = (int)WindowWidth / boardSize;
+        Squares.Clear();
+        var width = WindowWidth / boardSize;
         var height = width;
 
-        var sqList = squares.ToList();
         for (var i = 0; i < boardSize; i++)
         {
             for (var j = 0; j < boardSize; j++)
@@ -49,20 +59,13 @@ public class Chessboard(IDispatcher uiDispatcher) : ObservableObject
                     Width = width,
                 };
 
-                sqList.Add(square);
+                Squares.Add(square);
             }
         }
-
-        sqList
-            .OrderByDescending(sq => sq.Position.ColumnNo)
-            .ThenBy(sq => sq.Position.RowNo).ToList()
-            .ForEach(sq => Squares.Add(sq));
     }
 
     private void ClearImages() =>
-        Squares
-            .ToList()
-            .ForEach(sq => sq.ImagePath = null!);
+        Squares.ToList().ForEach(sq => sq.ImagePath = null!);
 
     private static SolidColorBrush FindColor(Position pos)
     {
@@ -72,7 +75,4 @@ public class Chessboard(IDispatcher uiDispatcher) : ObservableObject
 
         return new SolidColorBrush(col);
     }
-
-    private readonly IDispatcher _uiDispatcher = uiDispatcher
-            ?? throw new ArgumentNullException(nameof(uiDispatcher));
 }
