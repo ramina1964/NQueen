@@ -24,16 +24,16 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
+
             <Label
                 Grid.Row="0"
                 Grid.Column="0"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
-                HorizontalContentAlignment="Stretch"
-                VerticalContentAlignment="Stretch"
                 Content="Locations"
                 Foreground="Purple"
                 Style="{StaticResource LabelStyle}" />
+
             <ScrollViewer
                 Grid.Row="0"
                 Grid.Column="1"
@@ -42,8 +42,6 @@
                 <Label
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch"
-                    HorizontalContentAlignment="Stretch"
-                    VerticalContentAlignment="Stretch"
                     Content="{Binding SelectedSolution.Details}"
                     Foreground="Purple"
                     Style="{StaticResource LabelStyle}" />
