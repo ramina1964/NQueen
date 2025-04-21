@@ -15,11 +15,11 @@ public static class Messages
         $"Board size must be greater than or equal to {BoardSettings.MinSize}.";
 
     public static string SizeTooLargeForSingleSolutionMsg =>
-        $"Board size for single solution must not exceed {BoardSettings.MaxSizeForSingleMode}.";
+        $"Board size for 'Single Solution' must not exceed {BoardSettings.MaxSizeForSingleMode}.";
 
     public static string SizeTooLargeForUniqueSolutionsMsg =>
-        $"Board size for unique solutions must not exceed {BoardSettings.MaxSizeForUniqueMode}.";
+        $"Board size for 'Unique Solutions' must not exceed {BoardSettings.MaxSizeForUniqueMode}.";
 
     public static string SizeTooLargeForAllSolutionsMsg =>
-        $"Board size for all solutions must not exceed {BoardSettings.MaxSizeForAllMode}.";
+        $"Board size for 'All solutions' must not exceed {BoardSettings.MaxSizeForAllMode}.";
 }

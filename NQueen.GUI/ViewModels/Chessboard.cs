@@ -1,21 +1,10 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-// Todo: Throws exception in PlaceQueens(), when DisplayMode is turned on, see below:
-// System.InvalidOperationException: 'Sequence contains no matching element.
-public class Chessboard : ObservableObject
+public class Chessboard(IDispatcher uiDispatcher) : ObservableObject
 {
-    public Chessboard(IDispatcher uiDispatcher)
-    {
-        _uiDispatcher = uiDispatcher
-            ?? throw new ArgumentNullException(nameof(uiDispatcher));
+    public string QueenImagePath { get; } = @"..\..\Images\WhiteQueen.png";
 
-        Squares = [];
-        QueenImagePath = @"..\..\Images\WhiteQueen.png";
-    }
-
-    public string QueenImagePath { get; }
-
-    public ObservableCollection<SquareViewModel> Squares { get; set; }
+    public ObservableCollection<SquareViewModel> Squares { get; set; } = [];
 
     public double WindowWidth { get; set; }
 
@@ -55,7 +44,7 @@ public class Chessboard : ObservableObject
                 var pos = new Position(i, j);
                 var square = new SquareViewModel(pos, FindColor(pos))
                 {
-                    ImagePath = null,
+                    ImagePath = null!,
                     Height = height,
                     Width = width,
                 };
@@ -73,7 +62,7 @@ public class Chessboard : ObservableObject
     private void ClearImages() =>
         Squares
             .ToList()
-            .ForEach(sq => sq.ImagePath = null);
+            .ForEach(sq => sq.ImagePath = null!);
 
     private static SolidColorBrush FindColor(Position pos)
     {
@@ -84,5 +73,6 @@ public class Chessboard : ObservableObject
         return new SolidColorBrush(col);
     }
 
-    private readonly IDispatcher _uiDispatcher;
+    private readonly IDispatcher _uiDispatcher = uiDispatcher
+            ?? throw new ArgumentNullException(nameof(uiDispatcher));
 }
