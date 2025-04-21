@@ -157,7 +157,7 @@ public sealed partial class MainViewModel : ObservableObject
             WindowHeight = boardDimension
         };
 
-        Chessboard.CreateSquares(BoardSize, []);
+        Chessboard.CreateSquares(BoardSize);
 
         IsIdle = true;
         IsSimulating = false;
