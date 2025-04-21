@@ -1,6 +1,6 @@
 ﻿namespace NQueen.Kernel.Utilities;
 
-// Todo: Bug: Even with 0 as DefaultDelayInMIlliSeconds, simulation stops after the first quuen is placed.
+// Todo: Bug Fixing: Queens are placed not with an orderly fashhion.
 
 public static class SolverHelper
 {
