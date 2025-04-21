@@ -21,5 +21,5 @@ public static class Messages
         $"Board size for 'Unique Solutions' must not exceed {BoardSettings.MaxSizeForUniqueMode}.";
 
     public static string SizeTooLargeForAllSolutionsMsg =>
-        $"Board size for 'All solutions' must not exceed {BoardSettings.MaxSizeForAllMode}.";
+        $"Board size for 'All Solutions' must not exceed {BoardSettings.MaxSizeForAllMode}.";
 }

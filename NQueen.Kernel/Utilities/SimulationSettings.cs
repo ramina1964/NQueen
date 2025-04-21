@@ -3,7 +3,7 @@
 public class SimulationSettings
 {
     public const int MaxNoOfSolutionsInOutput = 50;
-    public const int DefaultDelayInMilliseconds = 0;
+    public const int DefaultDelayInMilliseconds = 70;
     public const SolutionMode DefaultSolutionMode = SolutionMode.Unique;
     public const DisplayMode DefaultDisplayMode = DisplayMode.Hide;
 
