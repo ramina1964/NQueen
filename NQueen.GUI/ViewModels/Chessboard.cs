@@ -1,8 +1,6 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿namespace NQueen.GUI.ViewModels;
 
-namespace NQueen.GUI.ViewModels;
-
-public partial class Chessboard : ObservableObject
+public partial class Chessboard(IDispatcher uiDispatcher) : ObservableObject
 {
     public string QueenImagePath { get; } = @"..\..\Images\WhiteQueen.png";
 
@@ -14,13 +12,6 @@ public partial class Chessboard : ObservableObject
 
     [ObservableProperty]
     private double windowHeight;
-
-    private readonly IDispatcher _uiDispatcher;
-
-    public Chessboard(IDispatcher uiDispatcher)
-    {
-        _uiDispatcher = uiDispatcher ?? throw new ArgumentNullException(nameof(uiDispatcher));
-    }
 
     public void PlaceQueens(IEnumerable<Position> positions)
     {
@@ -75,4 +66,7 @@ public partial class Chessboard : ObservableObject
 
         return new SolidColorBrush(col);
     }
+
+    private readonly IDispatcher _uiDispatcher = uiDispatcher
+        ?? throw new ArgumentNullException(nameof(_uiDispatcher));
 }

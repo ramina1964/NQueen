@@ -1,4 +1,4 @@
-﻿namespace NQueen.ViewModelTests.BackTrackingSolverTests.CommandManager;
+﻿namespace NQueen.ViewModelTests.BackTrackingSolverTests.CommandManagerTests;
 
 [Collection("Serial Test Collection")]
 public class PositiveTests
