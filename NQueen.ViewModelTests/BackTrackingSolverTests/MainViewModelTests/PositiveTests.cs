@@ -55,8 +55,8 @@ public class PositiveTests
         await tcs.Task;
 
         // Assert
-        _mainVm.Chessboard.Squares.Should().NotBeEmpty(TestConst.ChessboardNotPopulatedError);
-        _mainVm.Chessboard.Squares.Count(sq => !string.IsNullOrEmpty(sq.ImagePath))
+        _mainVm.ChessboardVm.Squares.Should().NotBeEmpty(TestConst.ChessboardNotPopulatedError);
+        _mainVm.ChessboardVm.Squares.Count(sq => !string.IsNullOrEmpty(sq.ImagePath))
             .Should().Be(8, TestConst.IncorrectQueenPlacementError);
     }
 

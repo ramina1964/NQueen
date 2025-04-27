@@ -1,6 +1,6 @@
-﻿namespace NQueen.GUI.ViewModels;
+﻿namespace NQueen.GUI.Converters;
 
-public class EnumConverter : IValueConverter
+public class EnumDescriptionConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
@@ -10,8 +10,7 @@ public class EnumConverter : IValueConverter
         return GetDescription((Enum)value);
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter,
-        CultureInfo culture) =>
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
         Enum.ToObject(targetType, value);
 
     public static string GetDescription(Enum en)

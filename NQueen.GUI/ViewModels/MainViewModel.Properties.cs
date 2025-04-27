@@ -65,7 +65,7 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnSelectedSolutionChanged(Solution value)
     {
         if (value != null)
-            Chessboard.PlaceQueens(value.Positions);
+            ChessboardVm.PlaceQueens(value.Positions);
     }
 
     [ObservableProperty]
@@ -146,18 +146,18 @@ public sealed partial class MainViewModel : ObservableObject
 
     public string ResultTitle => SolverHelper.UpdateSolutionTitle(SolutionMode);
 
-    public Chessboard Chessboard { get; set; } = null!;
+    public ChessboardViewModel ChessboardVm { get; set; } = null!;
 
     public void SetChessboard(double boardDimension)
     {
         BoardSizeText = BoardSize.ToString();
-        Chessboard = new Chessboard(_uiDispatcher)
+        ChessboardVm = new ChessboardViewModel(_uiDispatcher)
         {
             WindowWidth = boardDimension,
             WindowHeight = boardDimension
         };
 
-        Chessboard.CreateSquares(BoardSize);
+        ChessboardVm.CreateSquares(BoardSize);
 
         IsIdle = true;
         IsSimulating = false;
