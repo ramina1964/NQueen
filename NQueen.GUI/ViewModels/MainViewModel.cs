@@ -52,7 +52,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
             // Clear collections
             ObservableSolutions.Clear();
-            Chessboard?.Squares.Clear();
+            ChessboardVm?.Squares.Clear();
         }
 
         // Dispose unmanaged resources
@@ -80,18 +80,18 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         ProgressLabelVisibility = Visibility.Hidden;
 
         // Initialize the chessboard
-        Chessboard = new Chessboard(_uiDispatcher);
+        ChessboardVm = new ChessboardViewModel(_uiDispatcher);
     }
 
     private void ResetUiState()
     {
         ObservableSolutions.Clear();
-        Chessboard?.Squares.Clear();
+        ChessboardVm?.Squares.Clear();
         BoardSize = int.Parse(BoardSizeText);
         NoOfSolutions = "0";
         ElapsedTimeInSec = $"{0,0:N1}";
         MemoryUsage = "0";
-        Chessboard?.CreateSquares(BoardSize);
+        ChessboardVm?.CreateSquares(BoardSize);
     }
 
     private void RefreshCommandStates()

@@ -14,7 +14,7 @@ public sealed partial class MainViewModel
             .Select((queenPosition, rowIndex) => new Position(rowIndex, queenPosition))
             .ToList();
 
-        Chessboard.PlaceQueens(positions);
+        ChessboardVm.PlaceQueens(positions);
         UpdateProgress(message.Value, $"{message.Value} %");
     }
 

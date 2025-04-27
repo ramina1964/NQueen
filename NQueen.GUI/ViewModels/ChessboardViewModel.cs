@@ -2,26 +2,8 @@
 
 namespace NQueen.GUI.ViewModels;
 
-public partial class Chessboard : ObservableObject
+public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableObject
 {
-    public string QueenImagePath { get; } = @"..\..\Images\WhiteQueen.png";
-
-    [ObservableProperty]
-    private ObservableCollection<SquareViewModel> squares = new();
-
-    [ObservableProperty]
-    private double windowWidth;
-
-    [ObservableProperty]
-    private double windowHeight;
-
-    private readonly IDispatcher _uiDispatcher;
-
-    public Chessboard(IDispatcher uiDispatcher)
-    {
-        _uiDispatcher = uiDispatcher ?? throw new ArgumentNullException(nameof(uiDispatcher));
-    }
-
     public void PlaceQueens(IEnumerable<Position> positions)
     {
         ClearImages();
@@ -40,6 +22,17 @@ public partial class Chessboard : ObservableObject
             }
         }
     }
+
+    public string QueenImagePath { get; } = @"..\..\Images\WhiteQueen.png";
+
+    [ObservableProperty]
+    private ObservableCollection<SquareViewModel> squares = [];
+
+    [ObservableProperty]
+    private double windowWidth;
+
+    [ObservableProperty]
+    private double windowHeight;
 
     public void CreateSquares(int boardSize)
     {
@@ -75,4 +68,7 @@ public partial class Chessboard : ObservableObject
 
         return new SolidColorBrush(col);
     }
+
+    private readonly IDispatcher _uiDispatcher = uiDispatcher
+        ?? throw new ArgumentNullException(nameof(_uiDispatcher));
 }
