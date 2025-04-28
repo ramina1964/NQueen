@@ -19,32 +19,6 @@ public class PositiveTests
         };
     }
 
-    // Todo: Find out why this method hangs on await tcs.Task.
-    //[InlineData("4", SolutionMode.Single, DisplayMode.Visualize)]
-    //[Theory]
-    //[InlineData("8", SolutionMode.Unique, DisplayMode.Visualize)]
-    //public async Task Progress_ShouldUpdateDuringSimulation(
-    //    string boardSizeText, SolutionMode solutionMode, DisplayMode displayMode)
-    //{
-    //    // Arrange
-    //    var tcs = new TaskCompletionSource<bool>();
-
-    //    _mainVm.BoardSizeText = boardSizeText;
-    //    _mainVm.SolutionMode = solutionMode;
-    //    _mainVm.DisplayMode = displayMode;
-
-    //    _mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
-
-    //    // Act
-    //    _mainVm.SimulateCommand.Execute(null);
-    //    await tcs.Task;
-
-    //    // Assert
-    //    _mainVm.ProgressVisibility.Should().Be(Visibility.Visible, TestConst.ProgressHiddenError);
-    //    _mainVm.IsSingleRunning.Should().BeTrue("Progress bar should be indeterminate in Single mode.");
-    //    _mainVm.ProgressLabel.Should().NotBeNullOrEmpty(TestConst.ProgressLabelUpdateError);
-    //}
-
     [Fact]
     public async Task Chessboard_ShouldUpdateQueenPlacements()
     {
@@ -95,26 +69,35 @@ public class PositiveTests
     }
 
     [Theory]
-    [InlineData("4", SolutionMode.Single, DisplayMode.Visualize)]
-    public void Save_ShouldProcessSimulationResults(
+    [InlineData("4", SolutionMode.Single, DisplayMode.Hide)]
+    [InlineData("4", SolutionMode.Unique, DisplayMode.Hide)]
+    [InlineData("8", SolutionMode.Single, DisplayMode.Hide)]
+    [InlineData("8", SolutionMode.Unique, DisplayMode.Hide)]
+    [InlineData("8", SolutionMode.All, DisplayMode.Hide)]
+    [InlineData("12", SolutionMode.Unique, DisplayMode.Hide)]
+    [InlineData("12", SolutionMode.All, DisplayMode.Hide)]
+    public async Task Save_ShouldProcessSimulationResults(
         string boardSizeText, SolutionMode solutionMode, DisplayMode displayMode)
     {
         // Arrange
         var mockSaveFileDialogService = new MockSaveFileDialogService();
+        var solver = new BackTrackingSolver(new SolutionManager());
         var mainVm = new MainViewModel(
-            new BackTrackingSolver(new SolutionManager()),
+            solver,
             new TestDispatcher(),
             mockSaveFileDialogService)
         {
             BoardSizeText = boardSizeText,
             SolutionMode = solutionMode,
             DisplayMode = displayMode,
-            SimulationResults = new SimulationResults([new([1, 3, 0, 2], 1)]),
             IsIdle = true,
         };
 
-        // Simulation results
-        mainVm.NoOfSolutions = mainVm.SimulationResults.Solutions.ToList().Count.ToString();
+        // Dynamically calculate simulation results
+        var boardSize = int.Parse(boardSizeText);
+        var simulationResults = await solver.GetResultsAsync(boardSize, solutionMode, displayMode);
+        mainVm.SimulationResults = simulationResults;
+        mainVm.NoOfSolutions = simulationResults.Solutions.Count().ToString();
 
         // Act
         mainVm.SaveCommand.Execute(null);
@@ -126,20 +109,28 @@ public class PositiveTests
         // Validate the presence of key information
         var savedContent = mockSaveFileDialogService.SavedContent!;
 
-        savedContent.Should().Contain("Board Size: ",
-            "The board size label should be included in the saved content.");
-
-        savedContent.Should().Contain("Number of Solutions: ",
-            "The solutions label should be included in the saved content.");
-
-        savedContent.Should().Contain("Elapsed Time: ",
-            "The elapsed time label should be included in the saved content.");
-
-        // Validate the correctness of specific values
+        savedContent.Should().Contain("Board Size: ", "The board size label should be included in the saved content.");
+        savedContent.Should().Contain("Number of Solutions: ", "The solutions label should be included in the saved content.");
+        savedContent.Should().Contain("Elapsed Time: ", "The elapsed time label should be included in the saved content.");
         savedContent.Should().Contain(boardSizeText, "The board size value should be correct.");
+        savedContent.Should().Contain(simulationResults.Solutions.Count().ToString(), "The number of solutions value should be correct.");
+    }
 
-        savedContent.Should().Contain("1",
-          "The number of solutions value should be correct.");
+    [Fact]
+    public async Task Visualization_ShouldUpdateDuringSimulation()
+    {
+        // Arrange
+        var tcs = new TaskCompletionSource<bool>();
+        _mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
+
+        // Act
+        _mainVm.SimulateCommand.Execute(null);
+        await tcs.Task;
+
+        // Assert
+        _mainVm.ChessboardVm.Squares.Should().NotBeEmpty("The chessboard should be populated.");
+        _mainVm.ChessboardVm.Squares.Count(sq => !string.IsNullOrEmpty(sq.ImagePath))
+            .Should().Be(8, "There should be 8 queens placed on the board.");
     }
 
     private readonly IDispatcher _dispatcher;
