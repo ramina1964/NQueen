@@ -20,11 +20,29 @@ public sealed partial class MainViewModel
 
     private void Save()
     {
-        var results = new ResultPresentation(SimulationResults);
-        var filePath = results.Write2File(SolutionMode);
-        var msg = $"Successfully wrote results to: {filePath}";
-        MessageBox.Show(msg);
-        IsIdle = true;
+        // Use the save file dialog service to get the file path
+        var filePath = _saveFileService.ShowSaveFileDialog();
+        if (string.IsNullOrEmpty(filePath))
+        {
+            Debug.WriteLine("[Save] Save operation canceled by the user.");
+            return;
+        }
+
+        try
+        {
+            // Generate the content to save
+            var content = GenerateSaveContent();
+
+            // Save the content using the service
+            _saveFileService.SaveContent(content);
+
+            Debug.WriteLine($"[Save] Content saved successfully to: {filePath}");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Save] Error during save operation: {ex.Message}");
+            throw;
+        }
     }
 
     private bool CanSimulate() => IsIdle && IsValid;
@@ -87,5 +105,20 @@ public sealed partial class MainViewModel
         }
 
         RefreshCommandStates();
+    }
+
+    private string GenerateSaveContent()
+    {
+        // Generate the content to save (e.g., solutions, settings, etc.)
+        StringBuilder sb = new();
+        sb.AppendLine($"Board Size: {BoardSize}");
+        sb.AppendLine($"Number of Solutions: {NoOfSolutions}");
+        sb.AppendLine($"Elapsed Time: {ElapsedTimeInSec} seconds");
+        sb.AppendLine("Solutions:");
+        foreach (var solution in ObservableSolutions)
+            sb.AppendLine(solution.ToString());
+        
+        sb.AppendLine($"Memory Usage: {MemoryUsage} bytes");
+        return sb.ToString();
     }
 }

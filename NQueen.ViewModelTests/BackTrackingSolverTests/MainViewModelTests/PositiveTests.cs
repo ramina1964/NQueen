@@ -8,7 +8,10 @@ public class PositiveTests
         var serviceProvider = TestHelpers.CreateServiceProvider();
         _dispatcher = serviceProvider.GetService<IDispatcher>() ?? new TestDispatcher();
 
-        _mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()), _dispatcher)
+        _mainVm = new MainViewModel(
+            new BackTrackingSolver(new SolutionManager()),
+            _dispatcher,
+            new MockSaveFileDialogService())
         {
             BoardSizeText = "8",
             SolutionMode = SolutionMode.Single,
@@ -93,26 +96,41 @@ public class PositiveTests
 
     //[Theory]
     //[InlineData("4", SolutionMode.Unique, DisplayMode.Visualize)]
-    //public async Task Save_ShouldProcessSimulationResults(
+    //[InlineData("8", SolutionMode.Single, DisplayMode.Visualize)]
+    //public void Save_ShouldProcessSimulationResults(
     //    string boardSizeText, SolutionMode solutionMode, DisplayMode displayMode)
     //{
     //    // Arrange
-    //    var tcs = new TaskCompletionSource<bool>();
-
-    //    _mainVm.BoardSizeText = boardSizeText;
-    //    _mainVm.SolutionMode = solutionMode;
-    //    _mainVm.DisplayMode = displayMode;
-    //    _mainVm.IsIdle = true;
-    //    _mainVm.SimulationResults = new SimulationResults([new([1, 3, 0, 2], 1)]);
-
-    //    _mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
+    //    var mockSaveFileDialogService = new MockSaveFileDialogService();
+    //    var mainVm = new MainViewModel(
+    //        new BackTrackingSolver(new SolutionManager()),
+    //        new TestDispatcher(),
+    //        mockSaveFileDialogService)
+    //    {
+    //        BoardSizeText = boardSizeText,
+    //        SolutionMode = solutionMode,
+    //        DisplayMode = displayMode,
+    //        IsIdle = true,
+    //        SimulationResults = new SimulationResults([new([1, 3, 0, 2], 1)])
+    //    };
 
     //    // Act
-    //    _mainVm.SaveCommand.Execute(null);
-    //    await tcs.Task;
+    //    mainVm.SaveCommand.Execute(null);
 
     //    // Assert
-    //    _mainVm.IsIdle.Should().BeTrue(TestConst.SaveIdleStateError);
+    //    mockSaveFileDialogService.WasCalled.Should().BeTrue("The save file dialog should be shown.");
+    //    mockSaveFileDialogService.SavedContent.Should().NotBeNullOrEmpty("The content should be saved.");
+
+    //    // Validate the presence of key information
+    //    var savedContent = mockSaveFileDialogService.SavedContent!;
+    //    savedContent.Should().Contain("Date & Time", "The date and time should be included in the saved content.");
+    //    savedContent.Should().Contain("BoardSize", "The board size label should be included in the saved content.");
+    //    savedContent.Should().Contain("No. of Solutions", "The solutions label should be included in the saved content.");
+    //    savedContent.Should().Contain("Elapsed Time", "The elapsed time label should be included in the saved content.");
+
+    //    // Validate the correctness of specific values
+    //    savedContent.Should().Contain(boardSizeText, "The board size value should be correct.");
+    //    savedContent.Should().Contain("1", "The number of solutions value should be correct.");
     //}
 
     private readonly IDispatcher _dispatcher;

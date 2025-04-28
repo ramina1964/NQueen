@@ -4,7 +4,7 @@ public static class TestHelpers
 {
     // Use the test-specific service registration
     public static IServiceProvider CreateServiceProvider() =>
-        ServiceCollectionExtensions.InitializeForTests();
+        TestServiceCollectionExtensions.InitializeForTests();
 
     public static MainViewModel CreateMainViewModel(
         int boardSize = 8,
@@ -12,7 +12,10 @@ public static class TestHelpers
         DisplayMode displayMode = DisplayMode.Hide,
         SimulationResults? simulationResults = null)
     {
-        return new MainViewModel(new BackTrackingSolver(new SolutionManager()), new TestDispatcher())
+        return new MainViewModel(
+            new BackTrackingSolver(new SolutionManager()),
+            new TestDispatcher(),
+            new MockSaveFileDialogService())
         {
             BoardSizeText = boardSize.ToString(),
             SolutionMode = solutionMode,

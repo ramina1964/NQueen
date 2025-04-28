@@ -8,7 +8,10 @@ public class PositiveTests
         var serviceProvider = TestHelpers.CreateServiceProvider();
         _dispatcher = serviceProvider.GetService<IDispatcher>() ?? new TestDispatcher();
 
-        _mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()), _dispatcher)
+        _mainVm = new MainViewModel(
+            new BackTrackingSolver(new SolutionManager()),
+            _dispatcher,
+            new MockSaveFileDialogService())
         {
             BoardSizeText = "8",
             SolutionMode = SolutionMode.Single,

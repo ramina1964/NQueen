@@ -1,13 +1,14 @@
-﻿namespace NQueen.GUI.Infrastructure;
+﻿namespace NQueen.ViewModelTests.Setup;
 
-public static class ServiceCollectionExtensions
+public static class TestServiceCollectionExtensions
 {
-    public static IServiceProvider Initialize()
+    public static IServiceProvider InitializeForTests()
     {
         var services = new ServiceCollection();
 
-        // IDispatcher for WPF
-        services.AddSingleton<IDispatcher, WpfDispatcher>();
+        // Override IDispatcher with TestDispatcher for tests
+        services.AddSingleton<IDispatcher, TestDispatcher>();
+        services.AddSingleton<ISaveFileDialogService, MockSaveFileDialogService>();
 
         // Shared NQueen-Related Services
         services.AddNQueenServices();
