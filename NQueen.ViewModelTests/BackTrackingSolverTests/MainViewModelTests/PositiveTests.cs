@@ -94,44 +94,53 @@ public class PositiveTests
         _mainVm.IsSimulating.Should().BeFalse(TestConst.SimulationNotStoppedError);
     }
 
-    //[Theory]
-    //[InlineData("4", SolutionMode.Unique, DisplayMode.Visualize)]
-    //[InlineData("8", SolutionMode.Single, DisplayMode.Visualize)]
-    //public void Save_ShouldProcessSimulationResults(
-    //    string boardSizeText, SolutionMode solutionMode, DisplayMode displayMode)
-    //{
-    //    // Arrange
-    //    var mockSaveFileDialogService = new MockSaveFileDialogService();
-    //    var mainVm = new MainViewModel(
-    //        new BackTrackingSolver(new SolutionManager()),
-    //        new TestDispatcher(),
-    //        mockSaveFileDialogService)
-    //    {
-    //        BoardSizeText = boardSizeText,
-    //        SolutionMode = solutionMode,
-    //        DisplayMode = displayMode,
-    //        IsIdle = true,
-    //        SimulationResults = new SimulationResults([new([1, 3, 0, 2], 1)])
-    //    };
+    [Theory]
+    [InlineData("4", SolutionMode.Single, DisplayMode.Visualize)]
+    public void Save_ShouldProcessSimulationResults(
+        string boardSizeText, SolutionMode solutionMode, DisplayMode displayMode)
+    {
+        // Arrange
+        var mockSaveFileDialogService = new MockSaveFileDialogService();
+        var mainVm = new MainViewModel(
+            new BackTrackingSolver(new SolutionManager()),
+            new TestDispatcher(),
+            mockSaveFileDialogService)
+        {
+            BoardSizeText = boardSizeText,
+            SolutionMode = solutionMode,
+            DisplayMode = displayMode,
+            SimulationResults = new SimulationResults([new([1, 3, 0, 2], 1)]),
+            IsIdle = true,
+        };
 
-    //    // Act
-    //    mainVm.SaveCommand.Execute(null);
+        // Simulation results
+        mainVm.NoOfSolutions = mainVm.SimulationResults.Solutions.ToList().Count.ToString();
 
-    //    // Assert
-    //    mockSaveFileDialogService.WasCalled.Should().BeTrue("The save file dialog should be shown.");
-    //    mockSaveFileDialogService.SavedContent.Should().NotBeNullOrEmpty("The content should be saved.");
+        // Act
+        mainVm.SaveCommand.Execute(null);
 
-    //    // Validate the presence of key information
-    //    var savedContent = mockSaveFileDialogService.SavedContent!;
-    //    savedContent.Should().Contain("Date & Time", "The date and time should be included in the saved content.");
-    //    savedContent.Should().Contain("BoardSize", "The board size label should be included in the saved content.");
-    //    savedContent.Should().Contain("No. of Solutions", "The solutions label should be included in the saved content.");
-    //    savedContent.Should().Contain("Elapsed Time", "The elapsed time label should be included in the saved content.");
+        // Assert
+        mockSaveFileDialogService.WasCalled.Should().BeTrue("The save file dialog should be shown.");
+        mockSaveFileDialogService.SavedContent.Should().NotBeNullOrEmpty("The content should be saved.");
 
-    //    // Validate the correctness of specific values
-    //    savedContent.Should().Contain(boardSizeText, "The board size value should be correct.");
-    //    savedContent.Should().Contain("1", "The number of solutions value should be correct.");
-    //}
+        // Validate the presence of key information
+        var savedContent = mockSaveFileDialogService.SavedContent!;
+
+        savedContent.Should().Contain("Board Size: ",
+            "The board size label should be included in the saved content.");
+
+        savedContent.Should().Contain("Number of Solutions: ",
+            "The solutions label should be included in the saved content.");
+
+        savedContent.Should().Contain("Elapsed Time: ",
+            "The elapsed time label should be included in the saved content.");
+
+        // Validate the correctness of specific values
+        savedContent.Should().Contain(boardSizeText, "The board size value should be correct.");
+
+        savedContent.Should().Contain("1",
+          "The number of solutions value should be correct.");
+    }
 
     private readonly IDispatcher _dispatcher;
     private readonly MainViewModel _mainVm;

@@ -8,7 +8,6 @@ public class SaveFileDialogService : ISaveFileDialogService
         return dialog.ShowDialog() == true ? dialog.FileName : null;
     }
 
-
     public void SaveContent(string content)
     {
         var filePath = ShowSaveFileDialog();
