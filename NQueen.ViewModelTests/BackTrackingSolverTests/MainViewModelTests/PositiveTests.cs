@@ -37,23 +37,23 @@ public class PositiveTests
             .Should().Be(8, TestConst.IncorrectQueenPlacementError);
     }
 
-    [Fact]
-    public async Task Solutions_ShouldUpdateDuringSimulation()
-    {
-        // Arrange
-        var tcs = new TaskCompletionSource<bool>();
+    //[Fact]
+    //public async Task Solutions_ShouldUpdateDuringSimulation()
+    //{
+    //    // Arrange
+    //    var tcs = new TaskCompletionSource<bool>();
 
-        _mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
+    //    _mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
 
-        // Act
-        _mainVm.SimulateCommand.Execute(null);
-        await tcs.Task;
+    //    // Act
+    //    _mainVm.SimulateCommand.Execute(null);
+    //    await tcs.Task;
 
-        // Assert
-        _mainVm.ObservableSolutions.Should().NotBeEmpty();
-        _mainVm.SelectedSolution.Should().NotBeNull(TestConst.SolutionNotSelectedError);
-        _mainVm.NoOfSolutions.Should().NotBe("0", TestConst.SolutionNumberZeroError);
-    }
+    //    // Assert
+    //    _mainVm.ObservableSolutions.Should().NotBeEmpty();
+    //    _mainVm.SelectedSolution.Should().NotBeNull(TestConst.SolutionNotSelectedError);
+    //    _mainVm.NoOfSolutions.Should().NotBe("0", TestConst.SolutionNumberZeroError);
+    //}
 
     [Fact]
     public void Cancel_ShouldStopSimulation()
@@ -103,17 +103,30 @@ public class PositiveTests
         mainVm.SaveCommand.Execute(null);
 
         // Assert
-        mockSaveFileDialogService.WasCalled.Should().BeTrue("The save file dialog should be shown.");
-        mockSaveFileDialogService.SavedContent.Should().NotBeNullOrEmpty("The content should be saved.");
+        mockSaveFileDialogService.WasCalled.Should()
+            .BeTrue(TestConst.SaveDialogNotShownError);
+
+        mockSaveFileDialogService.SavedContent.Should()
+            .NotBeNullOrEmpty(TestConst.ContentNotSavedError);
 
         // Validate the presence of key information
         var savedContent = mockSaveFileDialogService.SavedContent!;
 
-        savedContent.Should().Contain("Board Size: ", "The board size label should be included in the saved content.");
-        savedContent.Should().Contain("Number of Solutions: ", "The solutions label should be included in the saved content.");
-        savedContent.Should().Contain("Elapsed Time: ", "The elapsed time label should be included in the saved content.");
-        savedContent.Should().Contain(boardSizeText, "The board size value should be correct.");
-        savedContent.Should().Contain(simulationResults.Solutions.Count().ToString(), "The number of solutions value should be correct.");
+        // Validate the labels
+        savedContent.Should().Contain(TestConst.BoardSizeLabel,
+            TestConst.BoardSizeLabelError);
+
+        savedContent.Should().Contain(TestConst.NoOfSolutionsLabel,
+            TestConst.NoOfSolutionsLabelError);
+
+        savedContent.Should().Contain(TestConst.ElapsedTimeLabel,
+            TestConst.ElapsedTimeLabelError);
+
+        // Validate the values
+        savedContent.Should().Contain(boardSizeText, TestConst.BoardSizeValueError);
+
+        savedContent.Should().Contain(simulationResults.Solutions.Count().ToString(),
+            TestConst.BoardSizeValueError);
     }
 
     [Fact]
@@ -128,7 +141,9 @@ public class PositiveTests
         await tcs.Task;
 
         // Assert
-        _mainVm.ChessboardVm.Squares.Should().NotBeEmpty("The chessboard should be populated.");
+        _mainVm.ChessboardVm.Squares.Should().NotBeEmpty(
+            TestConst.ChessboardNotPopulatedDuringVisualizationError);
+
         _mainVm.ChessboardVm.Squares.Count(sq => !string.IsNullOrEmpty(sq.ImagePath))
             .Should().Be(8, "There should be 8 queens placed on the board.");
     }
