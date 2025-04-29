@@ -115,8 +115,11 @@ public sealed partial class MainViewModel
         WeakReferenceMessenger.Default.Unregister<SolutionFoundMessage>(this);
     }
 
-    private void OnSimulationCompleted() =>
+    private void OnSimulationCompleted()
+    {
+        UpdateSolutionCount();
         SimulationCompleted?.Invoke(this, EventArgs.Empty);
+    }
 
     private void OnProgressValueChangedEvent(object? sender, ProgressValueChangedEventArgs e)
     {

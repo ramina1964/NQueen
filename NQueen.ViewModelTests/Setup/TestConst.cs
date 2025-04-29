@@ -33,7 +33,7 @@ public static class TestConst
     public const string BoardSizeLabelError =
         "The 'Board Size' label is missing in the saved content.";
 
-    public const string NoOfSolutionsLabelError =
+    public const string NoOfSolsLabelError =
         "The 'Number of Solutions' label is missing in the saved content.";
 
     public const string ElapsedTimeLabelError =
@@ -42,7 +42,7 @@ public static class TestConst
     public const string BoardSizeValueError =
         "The board size value in the saved content is incorrect.";
 
-    public const string NumberOfSolutionsValueIncorrectError =
+    public const string NoOfSolsValueError =
         "The number of solutions value in the saved content is incorrect.";
 
     // Group: Visualization Errors

@@ -37,23 +37,22 @@ public class PositiveTests
             .Should().Be(8, TestConst.IncorrectQueenPlacementError);
     }
 
-    //[Fact]
-    //public async Task Solutions_ShouldUpdateDuringSimulation()
-    //{
-    //    // Arrange
-    //    var tcs = new TaskCompletionSource<bool>();
+    [Fact]
+    public async Task Solutions_ShouldUpdateDuringSimulation()
+    {
+        // Arrange
+        var tcs = new TaskCompletionSource<bool>();
+        _mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
 
-    //    _mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
+        // Act
+        _mainVm.SimulateCommand.Execute(null);
+        await tcs.Task;
 
-    //    // Act
-    //    _mainVm.SimulateCommand.Execute(null);
-    //    await tcs.Task;
-
-    //    // Assert
-    //    _mainVm.ObservableSolutions.Should().NotBeEmpty();
-    //    _mainVm.SelectedSolution.Should().NotBeNull(TestConst.SolutionNotSelectedError);
-    //    _mainVm.NoOfSolutions.Should().NotBe("0", TestConst.SolutionNumberZeroError);
-    //}
+        // Assert
+        _mainVm.ObservableSolutions.Should().NotBeEmpty(TestConst.NoOfSolsValueError);
+        _mainVm.SelectedSolution.Should().NotBeNull(TestConst.SolutionNotSelectedError);
+        _mainVm.NoOfSolutions.Should().NotBe("0", TestConst.SolutionNumberZeroError);
+    }
 
     [Fact]
     public void Cancel_ShouldStopSimulation()
@@ -116,7 +115,7 @@ public class PositiveTests
             TestConst.BoardSizeLabelError);
 
         savedContent.Should().Contain(TestConst.NoOfSolutionsLabel,
-            TestConst.NoOfSolutionsLabelError);
+            TestConst.NoOfSolsLabelError);
 
         savedContent.Should().Contain(TestConst.ElapsedTimeLabel,
             TestConst.ElapsedTimeLabelError);
