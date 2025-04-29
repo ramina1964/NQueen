@@ -69,15 +69,15 @@ public class PositiveTests
     }
 
     [Theory]
-    [InlineData("4", SolutionMode.Single, DisplayMode.Hide)]
-    [InlineData("4", SolutionMode.Unique, DisplayMode.Hide)]
-    [InlineData("8", SolutionMode.Single, DisplayMode.Hide)]
-    [InlineData("8", SolutionMode.Unique, DisplayMode.Hide)]
-    [InlineData("8", SolutionMode.All, DisplayMode.Hide)]
-    [InlineData("12", SolutionMode.Unique, DisplayMode.Hide)]
-    [InlineData("12", SolutionMode.All, DisplayMode.Hide)]
+    [InlineData("4", SolutionMode.Single)]
+    [InlineData("4", SolutionMode.Unique)]
+    [InlineData("8", SolutionMode.Single)]
+    [InlineData("8", SolutionMode.Unique)]
+    [InlineData("8", SolutionMode.All)]
+    [InlineData("12", SolutionMode.Unique)]
+    [InlineData("12", SolutionMode.All)]
     public async Task Save_ShouldProcessSimulationResults(
-        string boardSizeText, SolutionMode solutionMode, DisplayMode displayMode)
+        string boardSizeText, SolutionMode solutionMode)
     {
         // Arrange
         var mockSaveFileDialogService = new MockSaveFileDialogService();
@@ -89,13 +89,12 @@ public class PositiveTests
         {
             BoardSizeText = boardSizeText,
             SolutionMode = solutionMode,
-            DisplayMode = displayMode,
             IsIdle = true,
         };
 
         // Dynamically calculate simulation results
         var boardSize = int.Parse(boardSizeText);
-        var simulationResults = await solver.GetResultsAsync(boardSize, solutionMode, displayMode);
+        var simulationResults = await solver.GetResultsAsync(boardSize, solutionMode);
         mainVm.SimulationResults = simulationResults;
         mainVm.NoOfSolutions = simulationResults.Solutions.Count().ToString();
 
