@@ -1,22 +1,17 @@
 ﻿namespace NQueen.ViewModelTests.BackTrackingSolverTests.MainViewModelTests;
 
-[Collection("Serial Test Collection")]
+[CollectionDefinition("Serial Test Collection", DisableParallelization = true)]
 public class PositiveTests
 {
     public PositiveTests()
     {
         var serviceProvider = TestHelpers.CreateServiceProvider();
-        _dispatcher = serviceProvider.GetService<IDispatcher>() ?? new TestDispatcher();
+        _mainVm = serviceProvider.GetRequiredService<MainViewModel>();
 
-        _mainVm = new MainViewModel(
-            new BackTrackingSolver(new SolutionManager()),
-            _dispatcher,
-            new MockSaveFileDialogService())
-        {
-            BoardSizeText = "8",
-            SolutionMode = SolutionMode.Single,
-            DisplayMode = DisplayMode.Visualize
-        };
+        // Configure the MainViewModel instance
+        _mainVm.BoardSizeText = "8";
+        _mainVm.SolutionMode = SolutionMode.Single;
+        _mainVm.DisplayMode = DisplayMode.Visualize;
     }
 
     [Fact]
@@ -47,6 +42,9 @@ public class PositiveTests
         // Act
         _mainVm.SimulateCommand.Execute(null);
         await tcs.Task;
+
+        // Wait for ObservableSolutions to populate
+        await Task.Delay(100); // Adjust delay as needed
 
         // Assert
         _mainVm.ObservableSolutions.Should().NotBeEmpty(TestConst.NoOfSolsValueError);
@@ -146,6 +144,5 @@ public class PositiveTests
             .Should().Be(8, "There should be 8 queens placed on the board.");
     }
 
-    private readonly IDispatcher _dispatcher;
     private readonly MainViewModel _mainVm;
 }

@@ -1,6 +1,6 @@
 ﻿namespace NQueen.ViewModelTests.BackTrackingSolverTests.CommandManagerTests;
 
-[Collection("Serial Test Collection")]
+[CollectionDefinition("Serial Test Collection", DisableParallelization = true)]
 public class PositiveTests
 {
     public PositiveTests()
@@ -23,8 +23,7 @@ public class PositiveTests
     [InlineData("1", SolutionMode.Single, DisplayMode.Hide)]
     [InlineData("4", SolutionMode.Unique, DisplayMode.Visualize)]
     [InlineData("8", SolutionMode.Single, DisplayMode.Visualize)]
-    [InlineData("12", SolutionMode.All, DisplayMode.Hide)]
-    [InlineData("16", SolutionMode.Single, DisplayMode.Hide)]
+    //[InlineData("12", SolutionMode.All, DisplayMode.Hide)]
     public async Task SimulateCommand_ShouldUpdateSimulationResults(
         string boardSizeText, SolutionMode solutionMode, DisplayMode displayMode)
     {

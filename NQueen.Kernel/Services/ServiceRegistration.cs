@@ -4,7 +4,7 @@ public static class ServiceRegistration
 {
     public static void AddNQueenServices(this IServiceCollection services)
     {
-        services.AddScoped<ISolutionManager, SolutionManager>();
-        services.AddScoped<ISolver, BackTrackingSolver>();
+        services.AddTransient<ISolutionManager, SolutionManager>();
+        services.AddTransient<ISolver, BackTrackingSolver>();
     }
 }
