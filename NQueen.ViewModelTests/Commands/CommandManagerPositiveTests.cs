@@ -1,9 +1,9 @@
-﻿namespace NQueen.ViewModelTests.BackTrackingSolverTests.CommandManagerTests;
+﻿namespace NQueen.ViewModelTests.Commands;
 
 [CollectionDefinition("Serial Test Collection", DisableParallelization = true)]
-public class PositiveTests : IDisposable
+public class CommandManagerPositiveTests : IDisposable
 {
-    public PositiveTests()
+    public CommandManagerPositiveTests()
     {
         _serviceProvider = TestHelpers.CreateServiceProvider();
         _dispatcher = _serviceProvider.GetService<IDispatcher>() ?? new TestDispatcher();

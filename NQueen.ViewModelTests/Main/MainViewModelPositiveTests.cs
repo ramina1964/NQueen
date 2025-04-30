@@ -1,9 +1,9 @@
-﻿namespace NQueen.ViewModelTests.BackTrackingSolverTests.MainViewModelTests;
+﻿namespace NQueen.ViewModelTests.Main;
 
 [CollectionDefinition("Serial Test Collection", DisableParallelization = true)]
-public class PositiveTests : IDisposable
+public class MainViewModelPositiveTests : IDisposable
 {
-    public PositiveTests()
+    public MainViewModelPositiveTests()
     {
         _serviceProvider = TestHelpers.CreateServiceProvider();
         _mainVm = _serviceProvider.GetRequiredService<MainViewModel>();
