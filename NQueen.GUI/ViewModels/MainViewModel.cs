@@ -3,16 +3,19 @@
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
     public MainViewModel(IDispatcher uiDispatcher) :
-        this(new BackTrackingSolver(new SolutionManager()), uiDispatcher)
-    { }
+        this(new BackTrackingSolver(new SolutionManager()), uiDispatcher, new SaveFileDialogService())
+    {}
 
-    public MainViewModel(ISolver solver, IDispatcher dispatcher)
+    public MainViewModel(ISolver solver, IDispatcher dispatcher, ISaveFileDialogService saveFileService)
     {
+        Solver = solver
+            ?? throw new ArgumentNullException(nameof(solver));
+
         _uiDispatcher = dispatcher
             ?? throw new ArgumentNullException(nameof(dispatcher));
 
-        Solver = solver
-            ?? throw new ArgumentNullException(nameof(solver));
+        _saveFileService = saveFileService
+            ?? throw new ArgumentNullException(nameof(saveFileService));
 
         // Initialize non-nullable properties
         InputViewModel = new InputViewModel { ClassLevelCascadeMode = CascadeMode.Stop };
@@ -167,5 +170,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     }
 
     private readonly IDispatcher _uiDispatcher;
+    private readonly ISaveFileDialogService _saveFileService;
 }
 

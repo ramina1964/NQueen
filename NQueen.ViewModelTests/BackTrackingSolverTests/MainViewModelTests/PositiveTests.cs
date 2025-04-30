@@ -1,62 +1,34 @@
 ﻿namespace NQueen.ViewModelTests.BackTrackingSolverTests.MainViewModelTests;
 
-[Collection("Serial Test Collection")]
-public class PositiveTests
+[CollectionDefinition("Serial Test Collection", DisableParallelization = true)]
+public class PositiveTests : IDisposable
 {
     public PositiveTests()
     {
-        var serviceProvider = TestHelpers.CreateServiceProvider();
-        _dispatcher = serviceProvider.GetService<IDispatcher>() ?? new TestDispatcher();
+        _serviceProvider = TestHelpers.CreateServiceProvider();
+        _mainVm = _serviceProvider.GetRequiredService<MainViewModel>();
 
-        _mainVm = new MainViewModel(new BackTrackingSolver(new SolutionManager()), _dispatcher)
-        {
-            BoardSizeText = "8",
-            SolutionMode = SolutionMode.Single,
-            DisplayMode = DisplayMode.Visualize
-        };
+        // Configure the MainViewModel instance
+        _mainVm.BoardSizeText = "8";
+        _mainVm.SolutionMode = SolutionMode.Single;
+        _mainVm.DisplayMode = DisplayMode.Visualize;
     }
-
-    // Todo: Find out why this method hangs on await tcs.Task.
-    //[InlineData("4", SolutionMode.Single, DisplayMode.Visualize)]
-    //[Theory]
-    //[InlineData("8", SolutionMode.Unique, DisplayMode.Visualize)]
-    //public async Task Progress_ShouldUpdateDuringSimulation(
-    //    string boardSizeText, SolutionMode solutionMode, DisplayMode displayMode)
-    //{
-    //    // Arrange
-    //    var tcs = new TaskCompletionSource<bool>();
-
-    //    _mainVm.BoardSizeText = boardSizeText;
-    //    _mainVm.SolutionMode = solutionMode;
-    //    _mainVm.DisplayMode = displayMode;
-
-    //    _mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
-
-    //    // Act
-    //    _mainVm.SimulateCommand.Execute(null);
-    //    await tcs.Task;
-
-    //    // Assert
-    //    _mainVm.ProgressVisibility.Should().Be(Visibility.Visible, TestConst.ProgressHiddenError);
-    //    _mainVm.IsSingleRunning.Should().BeTrue("Progress bar should be indeterminate in Single mode.");
-    //    _mainVm.ProgressLabel.Should().NotBeNullOrEmpty(TestConst.ProgressLabelUpdateError);
-    //}
 
     [Fact]
     public async Task Chessboard_ShouldUpdateQueenPlacements()
     {
         // Arrange
         var tcs = new TaskCompletionSource<bool>();
-
         _mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
 
         // Act
         _mainVm.SimulateCommand.Execute(null);
         await tcs.Task;
+        _mainVm.SimulationCompleted -= (s, e) => tcs.SetResult(true);
 
         // Assert
         _mainVm.ChessboardVm.Squares.Should().NotBeEmpty(TestConst.ChessboardNotPopulatedError);
-        _mainVm.ChessboardVm.Squares.Count(sq => !string.IsNullOrEmpty(sq.ImagePath))
+        _mainVm.ChessboardVm.Squares.Count(sq => string.IsNullOrEmpty(sq.ImagePath) == false)
             .Should().Be(8, TestConst.IncorrectQueenPlacementError);
     }
 
@@ -65,15 +37,19 @@ public class PositiveTests
     {
         // Arrange
         var tcs = new TaskCompletionSource<bool>();
-
         _mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
 
         // Act
         _mainVm.SimulateCommand.Execute(null);
         await tcs.Task;
+        _mainVm.SimulationCompleted -= (s, e) => tcs.SetResult(true);
+
+        // Wait for ObservableSolutions to populate
+        await WaitForConditionAsync(() =>
+            _mainVm.ObservableSolutions.Any(), TimeSpan.FromSeconds(2));
 
         // Assert
-        _mainVm.ObservableSolutions.Should().NotBeEmpty();
+        _mainVm.ObservableSolutions.Should().NotBeEmpty(TestConst.NoOfSolsValueError);
         _mainVm.SelectedSolution.Should().NotBeNull(TestConst.SolutionNotSelectedError);
         _mainVm.NoOfSolutions.Should().NotBe("0", TestConst.SolutionNumberZeroError);
     }
@@ -91,30 +67,104 @@ public class PositiveTests
         _mainVm.IsSimulating.Should().BeFalse(TestConst.SimulationNotStoppedError);
     }
 
-    //[Theory]
-    //[InlineData("4", SolutionMode.Unique, DisplayMode.Visualize)]
-    //public async Task Save_ShouldProcessSimulationResults(
-    //    string boardSizeText, SolutionMode solutionMode, DisplayMode displayMode)
-    //{
-    //    // Arrange
-    //    var tcs = new TaskCompletionSource<bool>();
+    [Theory]
+    [InlineData("4", SolutionMode.Single)]
+    [InlineData("4", SolutionMode.Unique)]
+    [InlineData("8", SolutionMode.Single)]
+    [InlineData("8", SolutionMode.Unique)]
+    [InlineData("8", SolutionMode.All)]
+    [InlineData("12", SolutionMode.Unique)]
+    [InlineData("12", SolutionMode.All)]
+    public async Task Save_ShouldProcessSimulationResults(
+        string boardSizeText, SolutionMode solutionMode)
+    {
+        // Arrange
+        var mockSaveFileDialogService = new MockSaveFileDialogService();
+        var solver = new BackTrackingSolver(new SolutionManager());
+        var mainVm = new MainViewModel(
+            solver,
+            new TestDispatcher(),
+            mockSaveFileDialogService)
+        {
+            BoardSizeText = boardSizeText,
+            SolutionMode = solutionMode,
+            IsIdle = true,
+        };
 
-    //    _mainVm.BoardSizeText = boardSizeText;
-    //    _mainVm.SolutionMode = solutionMode;
-    //    _mainVm.DisplayMode = displayMode;
-    //    _mainVm.IsIdle = true;
-    //    _mainVm.SimulationResults = new SimulationResults([new([1, 3, 0, 2], 1)]);
+        // Dynamically calculate simulation results
+        var boardSize = int.Parse(boardSizeText);
+        var simulationResults = await solver.GetResultsAsync(boardSize, solutionMode);
+        mainVm.SimulationResults = simulationResults;
+        mainVm.NoOfSolutions = simulationResults.Solutions.Count().ToString();
 
-    //    _mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
+        // Act
+        mainVm.SaveCommand.Execute(null);
 
-    //    // Act
-    //    _mainVm.SaveCommand.Execute(null);
-    //    await tcs.Task;
+        // Assert
+        mockSaveFileDialogService.WasCalled.Should()
+            .BeTrue(TestConst.SaveDialogNotShownError);
 
-    //    // Assert
-    //    _mainVm.IsIdle.Should().BeTrue(TestConst.SaveIdleStateError);
-    //}
+        mockSaveFileDialogService.SavedContent.Should()
+            .NotBeNullOrEmpty(TestConst.ContentNotSavedError);
 
-    private readonly IDispatcher _dispatcher;
+        // Validate the presence of key information
+        var savedContent = mockSaveFileDialogService.SavedContent!;
+
+        // Validate the labels
+        savedContent.Should().Contain(TestConst.BoardSizeLabel,
+            TestConst.BoardSizeLabelError);
+
+        savedContent.Should().Contain(TestConst.NoOfSolutionsLabel,
+            TestConst.NoOfSolsLabelError);
+
+        savedContent.Should().Contain(TestConst.ElapsedTimeLabel,
+            TestConst.ElapsedTimeLabelError);
+
+        // Validate the values
+        savedContent.Should().Contain(boardSizeText, TestConst.BoardSizeValueError);
+
+        savedContent.Should().Contain(simulationResults.Solutions.Count().ToString(),
+            TestConst.BoardSizeValueError);
+    }
+
+    [Fact]
+    public async Task Visualization_ShouldUpdateDuringSimulation()
+    {
+        // Arrange
+        var tcs = new TaskCompletionSource<bool>();
+        _mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
+
+        // Act
+        _mainVm.SimulateCommand.Execute(null);
+        await tcs.Task;
+        _mainVm.SimulationCompleted -= (s, e) => tcs.SetResult(true);
+
+        // Assert
+        _mainVm.ChessboardVm.Squares.Should().NotBeEmpty(
+            TestConst.ChessboardNotPopulatedDuringVisualizationError);
+
+        _mainVm.ChessboardVm.Squares.Count(sq => string.IsNullOrEmpty(sq.ImagePath) == false)
+            .Should().Be(8, "There should be 8 queens placed on the board.");
+    }
+
+    public void Dispose()
+    {
+        _mainVm.Dispose();
+        _serviceProvider.Dispose();
+    }
+
+    private static async Task WaitForConditionAsync(Func<bool> condition, TimeSpan timeout)
+    {
+        var start = DateTime.UtcNow;
+        while (condition() == false)
+        {
+            if (DateTime.UtcNow - start > timeout)
+                throw new TimeoutException("Condition was not met within the timeout period.");
+            
+            await Task.Delay(50);
+        }
+    }
+
+    private readonly ServiceProvider _serviceProvider;
     private readonly MainViewModel _mainVm;
 }

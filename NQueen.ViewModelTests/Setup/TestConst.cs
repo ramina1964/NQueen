@@ -2,35 +2,53 @@
 
 public static class TestConst
 {
-    // Progress-related error messages
-    public const string ProgressHiddenError =
-        "Progress bar should be visible during simulation and hidden after simulation";
-
-    public const string ProgressValueUpdateError =
-        "Progress value should update during simulation";
-
-    public const string ProgressLabelUpdateError =
-        "Progress label should update during simulation";
-
-    // Chessboard-related error messages
+    // Group: Chessboard Errors
     public const string ChessboardNotPopulatedError =
-        "Chessboard squares should be populated";
+        "The chessboard was not populated during the simulation.";
 
     public const string IncorrectQueenPlacementError =
-        "8 queens should be placed on the chessboard for an 8x8 board";
+        "The queen placements on the chessboard are incorrect.";
 
-    // Solutions-related error messages
+    // Group: Simulation Errors
     public const string SolutionNotSelectedError =
-        "A solution should be selected after simulation";
+        "No solution was selected after the simulation.";
 
     public const string SolutionNumberZeroError =
-        "Number of solutions should be updated";
+        "The number of solutions should not be zero after the simulation.";
 
-    // Simulation-related error messages
     public const string SimulationNotStoppedError =
-        "Simulation should stop when cancel is executed";
+        "The simulation was not stopped when the cancel command was executed.";
 
-    // Save-related error messages
-    public const string SaveIdleStateError =
-        "Save command should not affect idle state";
+    // Group: Save Command Errors
+    public const string BoardSizeLabel = "Board Size: ";
+    public const string NoOfSolutionsLabel = "Number of Solutions: ";
+    public const string ElapsedTimeLabel = "Elapsed Time: ";
+
+    public const string SaveDialogNotShownError =
+        "The save file dialog was not shown when the save command was executed.";
+
+    public const string ContentNotSavedError =
+        "The content was not saved after the save command was executed.";
+
+    public const string BoardSizeLabelError =
+        "The 'Board Size' label is missing in the saved content.";
+
+    public const string NoOfSolsLabelError =
+        "The 'Number of Solutions' label is missing in the saved content.";
+
+    public const string ElapsedTimeLabelError =
+        "The 'Elapsed Time' label is missing in the saved content.";
+
+    public const string BoardSizeValueError =
+        "The board size value in the saved content is incorrect.";
+
+    public const string NoOfSolsValueError =
+        "The number of solutions value in the saved content is incorrect.";
+
+    // Group: Visualization Errors
+    public const string ChessboardNotPopulatedDuringVisualizationError =
+        "The chessboard was not populated during visualization.";
+
+    public const string IncorrectQueenPlacementDuringVisualizationError =
+        "The queen placements on the chessboard during visualization are incorrect.";
 }

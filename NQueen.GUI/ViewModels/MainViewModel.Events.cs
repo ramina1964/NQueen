@@ -49,17 +49,15 @@ public sealed partial class MainViewModel
 
     private void AddSolutionToObservable(Solution solution)
     {
-        _uiDispatcher.BeginInvoke(() =>
+        if (ObservableSolutions.Any(existingSol => existingSol.Id == solution.Id))
+            return;
+
+        _uiDispatcher.Invoke(() =>
         {
             if (ObservableSolutions.Count >= SimulationSettings.MaxNoOfSolutionsInOutput)
-            {
                 ObservableSolutions.RemoveAt(0);
-            }
 
-            if (!ObservableSolutions.Any(existingSolution => existingSolution.Id == solution.Id))
-            {
-                ObservableSolutions.Add(solution);
-            }
+            ObservableSolutions.Add(solution);
         });
     }
 
@@ -115,8 +113,11 @@ public sealed partial class MainViewModel
         WeakReferenceMessenger.Default.Unregister<SolutionFoundMessage>(this);
     }
 
-    private void OnSimulationCompleted() =>
+    private void OnSimulationCompleted()
+    {
+        UpdateSolutionCount();
         SimulationCompleted?.Invoke(this, EventArgs.Empty);
+    }
 
     private void OnProgressValueChangedEvent(object? sender, ProgressValueChangedEventArgs e)
     {
