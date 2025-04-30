@@ -1,11 +1,11 @@
-namespace NQueen.UnitTests.Tests.NQueenSolverTests;
+namespace NQueen.UnitTests.Tests.NQueenSolver;
 
-public class PositiveTests : IDisposable
+public class NQueenSolverPositiveTests : IDisposable
 {
     private readonly ISolverBackEnd _solverBackEnd;
     private readonly ServiceProvider _serviceProvider;
 
-    public PositiveTests()
+    public NQueenSolverPositiveTests()
     {
         // Initialize a new service provider for each test
         var services = new ServiceCollection();

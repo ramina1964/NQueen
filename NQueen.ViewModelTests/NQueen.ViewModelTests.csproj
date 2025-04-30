@@ -8,9 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Commands\Negative\**" />
-    <EmbeddedResource Remove="Commands\Negative\**" />
-    <None Remove="Commands\Negative\**" />
+    <Compile Remove="Tests\Commands\Negative\**" />
+    <EmbeddedResource Remove="Tests\Commands\Negative\**" />
+    <None Remove="Tests\Commands\Negative\**" />
   </ItemGroup>
 
   <ItemGroup>

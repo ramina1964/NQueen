@@ -1,4 +1,4 @@
-﻿namespace NQueen.ViewModelTests.Commands;
+﻿namespace NQueen.ViewModelTests.Tests.Commands;
 
 [CollectionDefinition("Serial Test Collection", DisableParallelization = true)]
 public class CommandManagerPositiveTests : IDisposable
