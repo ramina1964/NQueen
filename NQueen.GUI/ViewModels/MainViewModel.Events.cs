@@ -115,6 +115,7 @@ public sealed partial class MainViewModel
 
     private void OnSimulationCompleted()
     {
+        Console.WriteLine("SimulationCompleted event triggered.");
         UpdateSolutionCount();
         SimulationCompleted?.Invoke(this, EventArgs.Empty);
     }

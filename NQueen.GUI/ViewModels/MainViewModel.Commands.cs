@@ -2,10 +2,13 @@
 
 public sealed partial class MainViewModel
 {
-    private void Simulate()
+    public void Simulate()
     {
-        // Start the simulation asynchronously
+        Console.WriteLine("SimulateCommand started.");
+        
         _ = SimulateAsync();
+        
+        Console.WriteLine("SimulateCommand completed.");
     }
 
     private void Cancel()
@@ -117,7 +120,7 @@ public sealed partial class MainViewModel
         sb.AppendLine("Solutions:");
         foreach (var solution in ObservableSolutions)
             sb.AppendLine(solution.ToString());
-        
+
         sb.AppendLine($"Memory Usage: {MemoryUsage} bytes");
         return sb.ToString();
     }

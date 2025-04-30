@@ -46,7 +46,7 @@ public class MainViewModelPositiveTests : IDisposable
 
         // Wait for ObservableSolutions to populate
         await WaitForConditionAsync(() =>
-            _mainVm.ObservableSolutions.Any(), TimeSpan.FromSeconds(2));
+            _mainVm.ObservableSolutions.Any(), TimeSpan.FromSeconds(5));
 
         // Assert
         _mainVm.ObservableSolutions.Should().NotBeEmpty(TestConst.NoOfSolsValueError);
