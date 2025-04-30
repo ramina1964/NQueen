@@ -1,8 +1,8 @@
-﻿namespace NQueen.UnitTests.Tests.NQueenSolverTests;
+﻿namespace NQueen.UnitTests.Tests.NQueenSolver;
 
-public class NegativeTests : IDisposable
+public class NQueenSolverNegativeTests : IDisposable
 {
-    public NegativeTests()
+    public NQueenSolverNegativeTests()
     {
         // Initialize the test-specific service provider
         var services = new ServiceCollection();

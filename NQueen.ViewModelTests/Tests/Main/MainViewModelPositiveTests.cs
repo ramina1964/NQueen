@@ -1,4 +1,4 @@
-﻿namespace NQueen.ViewModelTests.Main;
+﻿namespace NQueen.ViewModelTests.Tests.Main;
 
 [CollectionDefinition("Serial Test Collection", DisableParallelization = true)]
 public class MainViewModelPositiveTests : IDisposable

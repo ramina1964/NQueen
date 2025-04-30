@@ -1,16 +1,16 @@
-namespace NQueen.UnitTests.Tests.NQueenSolverTests;
+namespace NQueen.UnitTests.Tests.NQueenSolver;
 
-public class PositiveTests : IDisposable
+public class NQueenSolverPositiveTests : IDisposable
 {
     private readonly ISolverBackEnd _solverBackEnd;
     private readonly ServiceProvider _serviceProvider;
 
-    public PositiveTests()
+    public NQueenSolverPositiveTests()
     {
         // Initialize a new service provider for each test
         var services = new ServiceCollection();
-        services.AddApplicationServices(); // Register application services
-        services.AddTestServices();       // Register test-specific services
+        services.AddApplicationServices();
+        services.AddTestServices();
         _serviceProvider = services.BuildServiceProvider();
 
         // Resolve the ISolverBackEnd dependency
@@ -20,7 +20,8 @@ public class PositiveTests : IDisposable
     [Theory]
     [MemberData(nameof(NQueenTestData.SolverShouldGenerateOneSingleSolutionData),
         MemberType = typeof(NQueenTestData))]
-    public async Task SolverShouldGenerateOneSingleSolution(int boardSize, SolutionMode solutionMode)
+    public async Task SolverShouldGenerateOneSingleSolution(
+        int boardSize, SolutionMode solutionMode)
     {
         // Arrange
         var expectedSolutions = NQueenTestBase.FetchExpectedSols(boardSize, solutionMode);
@@ -42,7 +43,8 @@ public class PositiveTests : IDisposable
     [Theory]
     [MemberData(nameof(NQueenTestData.SolverShouldGenerateCorrectListOfUniqueSolutions),
         MemberType = typeof(NQueenTestData))]
-    public async Task SolverShouldGenerateCorrectListOfUniqueSolutions(int boardSize, SolutionMode solutionMode)
+    public async Task SolverShouldGenerateCorrectListOfUniqueSolutions(
+        int boardSize, SolutionMode solutionMode)
     {
         // Arrange
         var expectedSolutions = NQueenTestBase.FetchExpectedSols(boardSize, solutionMode);
@@ -65,7 +67,8 @@ public class PositiveTests : IDisposable
     [Theory]
     [MemberData(nameof(NQueenTestData.SolverShouldGenerateCorrectListOfAllSolutionsData),
         MemberType = typeof(NQueenTestData))]
-    public async Task SolverShouldGenerateCorrectListOfAllSolutions(int boardSize, SolutionMode solutionMode)
+    public async Task SolverShouldGenerateCorrectListOfAllSolutions(
+        int boardSize, SolutionMode solutionMode)
     {
         // Arrange
         var expectedSolutions = NQueenTestBase.FetchExpectedSols(boardSize, solutionMode);
