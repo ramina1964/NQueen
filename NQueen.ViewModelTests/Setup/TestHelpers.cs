@@ -2,8 +2,7 @@
 
 public static class TestHelpers
 {
-    // Use the test-specific service registration
-    public static IServiceProvider CreateServiceProvider() =>
+    public static ServiceProvider CreateServiceProvider() =>
         TestServiceCollectionExtensions.InitializeForTests();
 
     public static MainViewModel CreateMainViewModel(

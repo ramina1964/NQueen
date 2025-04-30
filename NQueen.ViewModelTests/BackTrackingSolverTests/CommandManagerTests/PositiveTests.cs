@@ -1,12 +1,12 @@
 ﻿namespace NQueen.ViewModelTests.BackTrackingSolverTests.CommandManagerTests;
 
 [CollectionDefinition("Serial Test Collection", DisableParallelization = true)]
-public class PositiveTests
+public class PositiveTests : IDisposable
 {
     public PositiveTests()
     {
-        var serviceProvider = TestHelpers.CreateServiceProvider();
-        _dispatcher = serviceProvider.GetService<IDispatcher>() ?? new TestDispatcher();
+        _serviceProvider = TestHelpers.CreateServiceProvider();
+        _dispatcher = _serviceProvider.GetService<IDispatcher>() ?? new TestDispatcher();
 
         _mainVm = new MainViewModel(
             new BackTrackingSolver(new SolutionManager()),
@@ -23,7 +23,7 @@ public class PositiveTests
     [InlineData("1", SolutionMode.Single, DisplayMode.Hide)]
     [InlineData("4", SolutionMode.Unique, DisplayMode.Visualize)]
     [InlineData("8", SolutionMode.Single, DisplayMode.Visualize)]
-    //[InlineData("12", SolutionMode.All, DisplayMode.Hide)]
+    [InlineData("10", SolutionMode.All, DisplayMode.Hide)]
     public async Task SimulateCommand_ShouldUpdateSimulationResults(
         string boardSizeText, SolutionMode solutionMode, DisplayMode displayMode)
     {
@@ -39,6 +39,7 @@ public class PositiveTests
         // Act
         _mainVm.SimulateCommand.Execute(null);
         await tcs.Task;
+        _mainVm.SimulationCompleted -= (s, e) => tcs.SetResult(true);
 
         // Assert
         var noOfSolutions = _mainVm.SimulationResults.NoOfSolutions;
@@ -81,6 +82,13 @@ public class PositiveTests
         Assert.True(_mainVm.IsIdle);
     }
 
+    public void Dispose()
+    {
+        _mainVm.Dispose();
+        _serviceProvider.Dispose();
+    }
+
     private readonly MainViewModel _mainVm;
+    private readonly ServiceProvider _serviceProvider;
     private readonly IDispatcher _dispatcher;
 }

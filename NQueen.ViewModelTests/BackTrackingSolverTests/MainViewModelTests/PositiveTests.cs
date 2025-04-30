@@ -1,12 +1,12 @@
 ﻿namespace NQueen.ViewModelTests.BackTrackingSolverTests.MainViewModelTests;
 
 [CollectionDefinition("Serial Test Collection", DisableParallelization = true)]
-public class PositiveTests
+public class PositiveTests : IDisposable
 {
     public PositiveTests()
     {
-        var serviceProvider = TestHelpers.CreateServiceProvider();
-        _mainVm = serviceProvider.GetRequiredService<MainViewModel>();
+        _serviceProvider = TestHelpers.CreateServiceProvider();
+        _mainVm = _serviceProvider.GetRequiredService<MainViewModel>();
 
         // Configure the MainViewModel instance
         _mainVm.BoardSizeText = "8";
@@ -19,16 +19,16 @@ public class PositiveTests
     {
         // Arrange
         var tcs = new TaskCompletionSource<bool>();
-
         _mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
 
         // Act
         _mainVm.SimulateCommand.Execute(null);
         await tcs.Task;
+        _mainVm.SimulationCompleted -= (s, e) => tcs.SetResult(true);
 
         // Assert
         _mainVm.ChessboardVm.Squares.Should().NotBeEmpty(TestConst.ChessboardNotPopulatedError);
-        _mainVm.ChessboardVm.Squares.Count(sq => !string.IsNullOrEmpty(sq.ImagePath))
+        _mainVm.ChessboardVm.Squares.Count(sq => string.IsNullOrEmpty(sq.ImagePath) == false)
             .Should().Be(8, TestConst.IncorrectQueenPlacementError);
     }
 
@@ -42,9 +42,11 @@ public class PositiveTests
         // Act
         _mainVm.SimulateCommand.Execute(null);
         await tcs.Task;
+        _mainVm.SimulationCompleted -= (s, e) => tcs.SetResult(true);
 
         // Wait for ObservableSolutions to populate
-        await Task.Delay(100); // Adjust delay as needed
+        await WaitForConditionAsync(() =>
+            _mainVm.ObservableSolutions.Any(), TimeSpan.FromSeconds(2));
 
         // Assert
         _mainVm.ObservableSolutions.Should().NotBeEmpty(TestConst.NoOfSolsValueError);
@@ -135,14 +137,34 @@ public class PositiveTests
         // Act
         _mainVm.SimulateCommand.Execute(null);
         await tcs.Task;
+        _mainVm.SimulationCompleted -= (s, e) => tcs.SetResult(true);
 
         // Assert
         _mainVm.ChessboardVm.Squares.Should().NotBeEmpty(
             TestConst.ChessboardNotPopulatedDuringVisualizationError);
 
-        _mainVm.ChessboardVm.Squares.Count(sq => !string.IsNullOrEmpty(sq.ImagePath))
+        _mainVm.ChessboardVm.Squares.Count(sq => string.IsNullOrEmpty(sq.ImagePath) == false)
             .Should().Be(8, "There should be 8 queens placed on the board.");
     }
 
+    public void Dispose()
+    {
+        _mainVm.Dispose();
+        _serviceProvider.Dispose();
+    }
+
+    private static async Task WaitForConditionAsync(Func<bool> condition, TimeSpan timeout)
+    {
+        var start = DateTime.UtcNow;
+        while (condition() == false)
+        {
+            if (DateTime.UtcNow - start > timeout)
+                throw new TimeoutException("Condition was not met within the timeout period.");
+            
+            await Task.Delay(50);
+        }
+    }
+
+    private readonly ServiceProvider _serviceProvider;
     private readonly MainViewModel _mainVm;
 }

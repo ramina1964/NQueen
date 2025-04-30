@@ -2,13 +2,13 @@
 
 public static class TestServiceCollectionExtensions
 {
-    public static IServiceProvider InitializeForTests()
+    public static ServiceProvider InitializeForTests()
     {
         var services = new ServiceCollection();
 
         // Override IDispatcher with TestDispatcher for tests
-        services.AddSingleton<IDispatcher, TestDispatcher>();
-        services.AddSingleton<ISaveFileDialogService, MockSaveFileDialogService>();
+        services.AddTransient<IDispatcher, TestDispatcher>();
+        services.AddTransient<ISaveFileDialogService, MockSaveFileDialogService>();
 
         // Shared NQueen-Related Services
         services.AddNQueenServices();
@@ -21,6 +21,13 @@ public static class TestServiceCollectionExtensions
 
         services.AddTransient<MainViewModel>();
         services.AddTransient<MainView>();
+
+        // Build the service provider
+        var serviceProvider = services.BuildServiceProvider();
+        
+        // Validate required services
+        serviceProvider.GetRequiredService<MainViewModel>();
+        serviceProvider.GetRequiredService<IDispatcher>();
 
         // Build the service provider
         return services.BuildServiceProvider();
