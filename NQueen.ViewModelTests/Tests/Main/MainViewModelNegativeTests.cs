@@ -14,4 +14,12 @@ public class MainViewModelNegativeTests
         await Assert.ThrowsAsync<ArgumentException>(async () =>
             await solver.Object.GetResultsAsync(-1, SolutionMode.Single, DisplayMode.Visualize));
     }
+
+    [Fact]
+    public void MainViewModel_ShouldThrowException_WhenSolverIsNull()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new MainViewModel(null!, new TestDispatcher(), new MockSaveFileDialogService()));
+    }
 }

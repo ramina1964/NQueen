@@ -1,14 +1,15 @@
 ﻿global using FluentAssertions;
 global using Microsoft.Extensions.DependencyInjection;
+global using Moq;
 global using NQueen.GUI.Configuration;
 global using NQueen.GUI.Interfaces;
 global using NQueen.GUI.ViewModels;
 global using NQueen.GUI.Views;
 global using NQueen.Kernel.Enums;
+global using NQueen.Kernel.Interfaces;
 global using NQueen.Kernel.Models;
 global using NQueen.Kernel.Services;
 global using NQueen.Kernel.Solvers;
 global using NQueen.Kernel.Utilities;
 global using NQueen.ViewModelTests.Setup;
-global using Moq;
-global using NQueen.Kernel.Interfaces;
+global using System.Windows.Threading;
