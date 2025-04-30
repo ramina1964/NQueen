@@ -34,11 +34,9 @@ public class PositiveTests : IDisposable
             .Select(solution => solution.QueenPositions.ToArray())
             .ToList();
 
-        // Assert: Ensure there is exactly one actual solution
-        Assert.Single(actualSolutionsList);
-
-        // Assert: Compare the single expected and actual solution
-        Assert.Equal(expectedSolutions.First(), actualSolutionsList.First());
+        // Check wether 'actualSolutionsList' contains one solution equal to the expected solution
+        actualSolutionsList.Should().ContainSingle()
+            .Which.Should().BeEquivalentTo(expectedSolutions.First());
     }
 
     [Theory]
