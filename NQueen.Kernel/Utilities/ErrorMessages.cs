@@ -1,6 +1,6 @@
 ﻿namespace NQueen.Kernel.Utilities;
 
-public static class Messages
+public static class ErrorMessages
 {
     public const string InvalidSIntegerError =
     "Board size must be a valid integer.";
@@ -22,4 +22,7 @@ public static class Messages
 
     public static string SizeTooLargeForAllSolutionsMsg =>
         $"Board size for 'All Solutions' must not exceed {BoardSettings.MaxSizeForAllMode}.";
+
+    public static string GetTimeoutMessage(TimeSpan timeout) =>
+        $"Condition was not met within the timeout period of {timeout.TotalSeconds} seconds.";
 }

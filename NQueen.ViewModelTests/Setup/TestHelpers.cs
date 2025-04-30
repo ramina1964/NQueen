@@ -14,7 +14,7 @@ public static class TestHelpers
         var serviceProvider = CreateServiceProvider();
         var mainViewModel = serviceProvider.GetRequiredService<MainViewModel>();
 
-        // Configure the MainViewModel instance
+        // Configure the MainViewModel instance through dependency injection
         mainViewModel.BoardSizeText = boardSize.ToString();
         mainViewModel.SolutionMode = solutionMode;
         mainViewModel.DisplayMode = displayMode;

@@ -14,4 +14,11 @@ public class MockSaveFileDialogService : ISaveFileDialogService
 
     public void SaveContent(string content) =>
         SavedContent = content;
+
+    public void Reset()
+    {
+        WasCalled = false;
+        SavedContent = null;
+    }
 }
+

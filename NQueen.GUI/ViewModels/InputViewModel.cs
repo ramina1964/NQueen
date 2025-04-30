@@ -9,25 +9,25 @@ public class InputViewModel : AbstractValidator<MainViewModel>
         var boardSize = -1;
         _ = RuleFor(vm => vm.BoardSizeText)
             .NotNull().NotEmpty()
-            .WithMessage(_ => Messages.ValueNullOrWhiteSpaceMsg)
+            .WithMessage(_ => ErrorMessages.ValueNullOrWhiteSpaceMsg)
             .Must(bst => int.TryParse(bst, out boardSize))
-            .WithMessage(_ => Messages.InvalidSIntegerError)
+            .WithMessage(_ => ErrorMessages.InvalidSIntegerError)
             .Must(bst => BoardSettings.MinSize <= boardSize)
-            .WithMessage(_ => Messages.SizeTooSmallMsg);
+            .WithMessage(_ => ErrorMessages.SizeTooSmallMsg);
 
         _ = RuleFor(vm => vm.BoardSizeText)
             .Must(_ => boardSize <= BoardSettings.MaxSizeForSingleMode)
             .When(vm => vm.SolutionMode == SolutionMode.Single)
-            .WithMessage(_ => Messages.SizeTooLargeForSingleSolutionMsg);
+            .WithMessage(_ => ErrorMessages.SizeTooLargeForSingleSolutionMsg);
 
         _ = RuleFor(vm => vm.BoardSizeText)
             .Must(_ => boardSize <= BoardSettings.MaxSizeForUniqueMode)
             .When(vm => vm.SolutionMode == SolutionMode.Unique)
-            .WithMessage(_ => Messages.SizeTooLargeForUniqueSolutionsMsg);
+            .WithMessage(_ => ErrorMessages.SizeTooLargeForUniqueSolutionsMsg);
 
         _ = RuleFor(vm => vm.BoardSizeText)
             .Must(_ => boardSize <= BoardSettings.MaxSizeForAllMode)
             .When(vm => vm.SolutionMode == SolutionMode.All)
-            .WithMessage(_ => Messages.SizeTooLargeForAllSolutionsMsg);
+            .WithMessage(_ => ErrorMessages.SizeTooLargeForAllSolutionsMsg);
     }
 }

@@ -159,8 +159,8 @@ public class MainViewModelPositiveTests : IDisposable
         while (condition() == false)
         {
             if (DateTime.UtcNow - start > timeout)
-                throw new TimeoutException("Condition was not met within the timeout period.");
-            
+                throw new TimeoutException(ErrorMessages.GetTimeoutMessage(timeout));
+
             await Task.Delay(50);
         }
     }

@@ -22,14 +22,7 @@ public static class TestServiceCollectionExtensions
         services.AddTransient<MainViewModel>();
         services.AddTransient<MainView>();
 
-        // Build the service provider
-        var serviceProvider = services.BuildServiceProvider();
-        
-        // Validate required services
-        serviceProvider.GetRequiredService<MainViewModel>();
-        serviceProvider.GetRequiredService<IDispatcher>();
-
-        // Build the service provider
+        // Build and return the service provider
         return services.BuildServiceProvider();
     }
 }
