@@ -88,9 +88,6 @@ public class NQueenSolverPositiveTests : IDisposable
         );
     }
 
-    public void Dispose()
-    {
-        // Dispose of the service provider to clean up resources
-        _serviceProvider.Dispose();
-    }
+    // Dispose of the service provider to clean up resources
+    public void Dispose() => _serviceProvider.Dispose();
 }
