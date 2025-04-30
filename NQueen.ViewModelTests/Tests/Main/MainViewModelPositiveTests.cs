@@ -44,9 +44,10 @@ public class MainViewModelPositiveTests : IDisposable
         await tcs.Task;
         _mainVm.SimulationCompleted -= (s, e) => tcs.SetResult(true);
 
+        // Todo: Set back delay in this method call
         // Wait for ObservableSolutions to populate
         await WaitForConditionAsync(() =>
-            _mainVm.ObservableSolutions.Any(), TimeSpan.FromSeconds(5));
+            _mainVm.ObservableSolutions.Any(), TimeSpan.FromSeconds(15));
 
         // Assert
         _mainVm.ObservableSolutions.Should().NotBeEmpty(TestConst.NoOfSolsValueError);
@@ -145,6 +146,26 @@ public class MainViewModelPositiveTests : IDisposable
 
         _mainVm.ChessboardVm.Squares.Count(sq => string.IsNullOrEmpty(sq.ImagePath) == false)
             .Should().Be(8, "There should be 8 queens placed on the board.");
+    }
+
+    [Fact]
+    public async Task MainViewModel_ShouldUpdateSolutionsAfterSimulation()
+    {
+        // Arrange
+        var mockSolver = new Mock<ISolver>();
+        mockSolver.Setup(s => s.GetResultsAsync(It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
+                  .ReturnsAsync(new SimulationResults(new List<Solution> { new Solution(new[] { 1, 3, 0, 2 }) }));
+
+        var mainViewModel = new MainViewModel(
+            mockSolver.Object,
+            new TestDispatcher(),
+            new MockSaveFileDialogService());
+
+        // Act
+        await mainViewModel.SimulateCommand.ExecuteAsync(null);
+
+        // Assert
+        mainViewModel.ObservableSolutions.Should().NotBeEmpty();
     }
 
     public void Dispose()

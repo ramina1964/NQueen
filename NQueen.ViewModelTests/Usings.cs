@@ -10,3 +10,5 @@ global using NQueen.Kernel.Services;
 global using NQueen.Kernel.Solvers;
 global using NQueen.Kernel.Utilities;
 global using NQueen.ViewModelTests.Setup;
+global using Moq;
+global using NQueen.Kernel.Interfaces;

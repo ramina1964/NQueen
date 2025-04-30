@@ -2,12 +2,12 @@
 
 public sealed partial class MainViewModel
 {
-    public void Simulate()
+    private async Task Simulate()
     {
         Console.WriteLine("SimulateCommand started.");
-        
-        _ = SimulateAsync();
-        
+
+        await SimulateAsync();
+
         Console.WriteLine("SimulateCommand completed.");
     }
 

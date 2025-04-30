@@ -115,9 +115,10 @@ public sealed partial class MainViewModel
 
     private void OnSimulationCompleted()
     {
-        Console.WriteLine("SimulationCompleted event triggered.");
+        Debug.WriteLine("[OnSimulationCompleted] Event triggered.");
         UpdateSolutionCount();
         SimulationCompleted?.Invoke(this, EventArgs.Empty);
+        Debug.WriteLine("[OnSimulationCompleted] Event handling completed.");
     }
 
     private void OnProgressValueChangedEvent(object? sender, ProgressValueChangedEventArgs e)
