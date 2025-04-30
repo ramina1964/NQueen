@@ -2,9 +2,6 @@ namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 public class NQueenSolverPositiveTests : IDisposable
 {
-    private readonly ISolverBackEnd _solverBackEnd;
-    private readonly ServiceProvider _serviceProvider;
-
     public NQueenSolverPositiveTests()
     {
         // Initialize a new service provider for each test
@@ -90,4 +87,8 @@ public class NQueenSolverPositiveTests : IDisposable
 
     // Dispose of the service provider to clean up resources
     public void Dispose() => _serviceProvider.Dispose();
+    
+    private readonly ISolverBackEnd _solverBackEnd;
+    private readonly ServiceProvider _serviceProvider;
 }
+
