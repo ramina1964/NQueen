@@ -23,11 +23,52 @@ public static class TestHelpers
         return mainViewModel;
     }
 
+    public static MainViewModel CreateMainViewModelWithSimulationResults(
+    string boardSizeText, SolutionMode solutionMode, MockSaveFileDialogService saveFileDialogService)
+    {
+        var solver = new BackTrackingSolver(new SolutionManager());
+        var mainVm = new MainViewModel(solver, new TestDispatcher(), saveFileDialogService)
+        {
+            BoardSizeText = boardSizeText,
+            SolutionMode = solutionMode,
+            IsIdle = true,
+        };
+
+        // Dynamically calculate simulation results
+        var boardSize = int.Parse(boardSizeText);
+        var simulationResults = solver.GetResultsAsync(boardSize, solutionMode).Result;
+        mainVm.SimulationResults = simulationResults;
+        mainVm.NoOfSolutions = simulationResults.Solutions.Count().ToString();
+
+        return mainVm;
+    }
+
     public static Mock<ISolver> CreateMockSolver(IEnumerable<Solution> solutions)
     {
         var mockSolver = new Mock<ISolver>();
         mockSolver.Setup(s => s.GetResultsAsync(It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
                   .ReturnsAsync(new SimulationResults(solutions));
         return mockSolver;
+    }
+
+    public static async Task WaitForSimulationCompletionAsync(MainViewModel mainVm)
+    {
+        var tcs = new TaskCompletionSource<bool>();
+        mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
+        mainVm.SimulateCommand.Execute(null);
+        await tcs.Task;
+        mainVm.SimulationCompleted -= (s, e) => tcs.SetResult(true);
+    }
+
+    public static async Task WaitForConditionAsync(Func<bool> condition, TimeSpan timeout)
+    {
+        var start = DateTime.UtcNow;
+        while (condition() == false)
+        {
+            if (DateTime.UtcNow - start > timeout)
+                throw new TimeoutException(ErrorMessages.GetTimeoutMessage(timeout));
+
+            await Task.Delay(10);
+        }
     }
 }
