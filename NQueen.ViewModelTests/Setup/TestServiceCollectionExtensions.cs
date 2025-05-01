@@ -15,12 +15,8 @@ public static class TestServiceCollectionExtensions
 
         // Register specific services, i.e., views and view models
         services.AddTransient<ChessboardViewModel>();
-        services.AddTransient<ChessboardUserControl>();
-        services.AddTransient<InputPanelUserControl>();
-        services.AddTransient<SimulationPanelUserControl>();
 
         services.AddTransient<MainViewModel>();
-        services.AddTransient<MainView>();
 
         // Build and return the service provider
         return services.BuildServiceProvider();

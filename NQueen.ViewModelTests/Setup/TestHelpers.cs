@@ -22,4 +22,12 @@ public static class TestHelpers
 
         return mainViewModel;
     }
+
+    public static Mock<ISolver> CreateMockSolver(IEnumerable<Solution> solutions)
+    {
+        var mockSolver = new Mock<ISolver>();
+        mockSolver.Setup(s => s.GetResultsAsync(It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
+                  .ReturnsAsync(new SimulationResults(solutions));
+        return mockSolver;
+    }
 }

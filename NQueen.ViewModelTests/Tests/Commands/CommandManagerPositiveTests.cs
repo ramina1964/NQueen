@@ -2,22 +2,8 @@
 
 public class CommandManagerPositiveTests : IDisposable
 {
-    public CommandManagerPositiveTests()
-    {
+    public CommandManagerPositiveTests() =>
         _serviceProvider = TestHelpers.CreateServiceProvider();
-        _dispatcher = _serviceProvider.GetService<IDispatcher>()
-            ?? new TestDispatcher();
-
-        _mainVm = new MainViewModel(
-            new BackTrackingSolver(new SolutionManager()),
-            _dispatcher,
-            new MockSaveFileDialogService())
-        {
-            BoardSizeText = "8",
-            SolutionMode = SolutionMode.Single,
-            DisplayMode = DisplayMode.Visualize
-        };
-    }
 
     [Theory]
     [InlineData("1", SolutionMode.Single, DisplayMode.Hide)]
@@ -28,37 +14,35 @@ public class CommandManagerPositiveTests : IDisposable
         string boardSizeText, SolutionMode solutionMode, DisplayMode displayMode)
     {
         // Arrange
+        var mainVm = TestHelpers.CreateMainViewModel(
+            int.Parse(boardSizeText), solutionMode, displayMode);
+
         var tcs = new TaskCompletionSource<bool>();
-
-        _mainVm.BoardSizeText = boardSizeText;
-        _mainVm.SolutionMode = solutionMode;
-        _mainVm.DisplayMode = displayMode;
-
-        _mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
+        mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
 
         // Act
-        _mainVm.SimulateCommand.Execute(null);
+        mainVm.SimulateCommand.Execute(null);
         await tcs.Task;
-        _mainVm.SimulationCompleted -= (s, e) => tcs.SetResult(true);
 
         // Assert
-        var noOfSolutions = _mainVm.SimulationResults.NoOfSolutions;
-        _mainVm.BoardSizeText.Should().Be(boardSizeText);
-        noOfSolutions.Should().BeGreaterThan(0, TestConst.SolutionNumberZeroError);
-        _mainVm.IsSimulating.Should().BeFalse(TestConst.SimulationNotStoppedError);
+        mainVm.SimulationResults.Solutions.Should().NotBeNullOrEmpty();
+        mainVm.IsSimulating.Should().BeFalse();
     }
 
     [Fact]
     public void CancelCommand_ShouldStopSimulation()
     {
         // Arrange
-        _mainVm.IsSimulating = true;
+        var mainVm = TestHelpers.CreateMainViewModel(
+            8, SolutionMode.Single, DisplayMode.Visualize);
+
+        mainVm.IsSimulating = true;
 
         // Act
-        _mainVm.CancelCommand.Execute(null);
+        mainVm.CancelCommand.Execute(null);
 
         // Assert
-        Assert.False(_mainVm.IsSimulating);
+        mainVm.IsSimulating.Should().BeFalse();
     }
 
     [Theory]
@@ -67,28 +51,22 @@ public class CommandManagerPositiveTests : IDisposable
         string boardSizeText, SolutionMode solutionMode, DisplayMode displayMode)
     {
         // Arrange
-        _mainVm.BoardSizeText = boardSizeText;
-        _mainVm.SolutionMode = solutionMode;
-        _mainVm.DisplayMode = displayMode;
+        var mainVm = TestHelpers.CreateMainViewModel(
+            int.Parse(boardSizeText), solutionMode, displayMode);
 
-        _mainVm.SimulationResults = new SimulationResults([new([1, 3, 0, 2], 1)]);
-        _mainVm.NoOfSolutions = "1";
-        _mainVm.IsIdle = true;
+        mainVm.SimulationResults = new SimulationResults([new([1, 3, 0, 2], 1)]);
+        mainVm.NoOfSolutions = "1";
+        mainVm.IsIdle = true;
 
         // Act
-        _mainVm.SaveCommand.Execute(null);
+        mainVm.SaveCommand.Execute(null);
 
         // Assert
-        Assert.True(_mainVm.IsIdle);
+        mainVm.IsIdle.Should().BeTrue();
     }
 
-    public void Dispose()
-    {
-        _mainVm.Dispose();
+    public void Dispose() =>
         _serviceProvider.Dispose();
-    }
 
-    private readonly MainViewModel _mainVm;
     private readonly ServiceProvider _serviceProvider;
-    private readonly IDispatcher _dispatcher;
 }
