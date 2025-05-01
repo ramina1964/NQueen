@@ -22,6 +22,7 @@ public class NQueenSolverNegativeTests : IDisposable
     {
         // Arrange
         var expectedSolutions = ExpectedSolutionData.SingleSolutions.GetValueOrDefault(boardSize)
+            ?.Select(solution => new Solution(solution)).ToList()
             ?? [];
 
         // Act
@@ -31,7 +32,6 @@ public class NQueenSolverNegativeTests : IDisposable
         Assert.Empty(actualSolutions.Solutions);
     }
 
-    // Dispose of the service provider to clean up resources
     public void Dispose() => _serviceProvider.Dispose();
 
     private readonly ISolverBackEnd _solverBackEnd;

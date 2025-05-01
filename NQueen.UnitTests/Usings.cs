@@ -2,10 +2,10 @@
 global using Microsoft.Extensions.DependencyInjection;
 global using NQueen.Kernel.Enums;
 global using NQueen.Kernel.Interfaces;
+global using NQueen.Kernel.Models;
 global using NQueen.Kernel.Services;
 global using NQueen.Kernel.Solvers;
 global using NQueen.UnitTests.Base;
-global using NQueen.UnitTests.Fixtures;
 global using NQueen.UnitTests.Setup;
 global using System;
 global using System.Collections.Generic;

@@ -2,15 +2,16 @@
 
 public static class NQueenTestData
 {
-    public static IEnumerable<object[]> SolverShouldNotGenerateAnySolutionData =>
-        [
-            [2, SolutionMode.Single],
-            [3, SolutionMode.Single ],
-            [2, SolutionMode.Unique ],
-            [3, SolutionMode.Unique ],
-            [2, SolutionMode.All ],
-            [3, SolutionMode.All ]
-        ];
+    public static TheoryData<int, SolutionMode> SolverShouldNotGenerateAnySolutionData =>
+        new()
+        {
+            { 2, SolutionMode.Single },
+            { 3, SolutionMode.Single },
+            { 2, SolutionMode.Unique },
+            { 3, SolutionMode.Unique },
+            { 2, SolutionMode.All },
+            { 3, SolutionMode.All }
+        };
 
     public static IEnumerable<object[]> SolverShouldGenerateOneSingleSolutionData =>
         [
@@ -59,5 +60,6 @@ public static class NQueenTestData
         [7, SolutionMode.All],
         [8, SolutionMode.All],
     ];
+
 }
 
