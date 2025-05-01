@@ -1,12 +1,12 @@
 ﻿namespace NQueen.ViewModelTests.Tests.Commands;
 
-[CollectionDefinition("Serial Test Collection", DisableParallelization = true)]
 public class CommandManagerPositiveTests : IDisposable
 {
     public CommandManagerPositiveTests()
     {
         _serviceProvider = TestHelpers.CreateServiceProvider();
-        _dispatcher = _serviceProvider.GetService<IDispatcher>() ?? new TestDispatcher();
+        _dispatcher = _serviceProvider.GetService<IDispatcher>()
+            ?? new TestDispatcher();
 
         _mainVm = new MainViewModel(
             new BackTrackingSolver(new SolutionManager()),
@@ -45,7 +45,7 @@ public class CommandManagerPositiveTests : IDisposable
         var noOfSolutions = _mainVm.SimulationResults.NoOfSolutions;
         _mainVm.BoardSizeText.Should().Be(boardSizeText);
         noOfSolutions.Should().BeGreaterThan(0, TestConst.SolutionNumberZeroError);
-        _mainVm.IsSimulating.Should().BeFalse();
+        _mainVm.IsSimulating.Should().BeFalse(TestConst.SimulationNotStoppedError);
     }
 
     [Fact]

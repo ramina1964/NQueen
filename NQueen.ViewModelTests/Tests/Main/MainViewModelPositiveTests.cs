@@ -44,10 +44,9 @@ public class MainViewModelPositiveTests : IDisposable
         await tcs.Task;
         _mainVm.SimulationCompleted -= (s, e) => tcs.SetResult(true);
 
-        // Todo: Set back delay in this method call
         // Wait for ObservableSolutions to populate
         await WaitForConditionAsync(() =>
-            _mainVm.ObservableSolutions.Any(), TimeSpan.FromSeconds(15));
+            _mainVm.ObservableSolutions.Any(), TimeSpan.FromSeconds(5));
 
         // Assert
         _mainVm.ObservableSolutions.Should().NotBeEmpty(TestConst.NoOfSolsValueError);
@@ -182,7 +181,7 @@ public class MainViewModelPositiveTests : IDisposable
             if (DateTime.UtcNow - start > timeout)
                 throw new TimeoutException(ErrorMessages.GetTimeoutMessage(timeout));
 
-            await Task.Delay(50);
+            await Task.Delay(10);
         }
     }
 

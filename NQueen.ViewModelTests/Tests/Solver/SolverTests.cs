@@ -26,7 +26,7 @@ public class SolverTests
         var solver = new Mock<ISolver>();
         solver.Setup(s => s.GetResultsAsync(
                 It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
-            .ReturnsAsync(new SimulationResults(Enumerable.Empty<Solution>()));
+            .ReturnsAsync(new SimulationResults([]));
 
         // Act
         var results = await solver.Object.GetResultsAsync(

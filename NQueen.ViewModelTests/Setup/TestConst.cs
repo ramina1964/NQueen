@@ -17,7 +17,7 @@ public static class TestConst
         "The number of solutions should not be zero after the simulation.";
 
     public const string SimulationNotStoppedError =
-        "The simulation was not stopped when the cancel command was executed.";
+        "The simulation should stop when CancelCommand is executed.";
 
     // Group: Save Command Errors
     public const string BoardSizeLabel = "Board Size: ";
