@@ -1,6 +1,7 @@
 ﻿namespace NQueen.ViewModelTests.Tests.Main;
 
-[CollectionDefinition("Serial Test Collection", DisableParallelization = true)]
+// Todo: Conside removing this attribute and its corresponding class:
+//[CollectionDefinition("Serial Test Collection", DisableParallelization = true)]
 public class MainViewModelPositiveTests : IDisposable
 {
     public MainViewModelPositiveTests() =>
