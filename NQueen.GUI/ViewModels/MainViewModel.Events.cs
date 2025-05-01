@@ -45,7 +45,7 @@ public sealed partial class MainViewModel
     }
 
     private void UpdateSolutionCount() =>
-        NoOfSolutions = $"{int.Parse(NoOfSolutions) + 1,0:N0}";
+        NoOfSolutions = NumericUtility.IncrementFormattedNumber(NoOfSolutions);
 
     private void AddSolutionToObservable(Solution solution)
     {
