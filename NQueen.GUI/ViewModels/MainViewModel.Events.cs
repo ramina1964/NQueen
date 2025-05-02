@@ -1,4 +1,6 @@
-﻿namespace NQueen.GUI.ViewModels;
+﻿using NQueen.Shared.Utils;
+
+namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel
 {
@@ -9,7 +11,9 @@ public sealed partial class MainViewModel
 
     private void OnQueenPlaced(QueenPlacedMessage message)
     {
-        var boardSize = GetBoardSize();
+        // Set the chessboard size, throw an exception if invalid.
+        var boardSize = ParsingUtils.ParseIntOrThrow(BoardSizeText);
+
         var positions = message.Solution
             .Take(boardSize)
             .Select((queenPosition, rowIndex) => new Position(rowIndex, queenPosition))

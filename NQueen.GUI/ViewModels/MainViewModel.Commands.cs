@@ -1,4 +1,6 @@
-﻿namespace NQueen.GUI.ViewModels;
+﻿using NQueen.Shared.Utils;
+
+namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel
 {
@@ -105,7 +107,10 @@ public sealed partial class MainViewModel
     {
         // Generate the content to save (e.g., solutions, settings, etc.)
         StringBuilder sb = new();
-        var boardSize = GetBoardSize();
+
+        // Set the chessboard size, throw an exception if invalid.
+        var boardSize = ParsingUtils.ParseIntOrThrow(BoardSizeText);
+
         sb.AppendLine($"Board Size: {boardSize}");
         sb.AppendLine($"Number of Solutions: {NoOfSolutions}");
         sb.AppendLine($"Elapsed Time: {ElapsedTimeInSec} seconds");

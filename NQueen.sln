@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NQueen.UnitTests", "NQueen.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NQueen.ViewModelTests", "NQueen.ViewModelTests\NQueen.ViewModelTests.csproj", "{588FB5F8-C0A1-4806-AD91-0CC688522905}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NQueen.Shared", "NQueen.Shared\NQueen.Shared.csproj", "{B41B37E1-FCCC-4762-A506-97C68C8A976D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{588FB5F8-C0A1-4806-AD91-0CC688522905}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{588FB5F8-C0A1-4806-AD91-0CC688522905}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{588FB5F8-C0A1-4806-AD91-0CC688522905}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B41B37E1-FCCC-4762-A506-97C68C8A976D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B41B37E1-FCCC-4762-A506-97C68C8A976D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B41B37E1-FCCC-4762-A506-97C68C8A976D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B41B37E1-FCCC-4762-A506-97C68C8A976D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

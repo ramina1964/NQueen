@@ -1,4 +1,6 @@
-﻿namespace NQueen.ConsoleApp.Commands;
+﻿using NQueen.Shared.Utils;
+
+namespace NQueen.ConsoleApp.Commands;
 
 public partial class DispatchCommands(
     ISolver solver,
@@ -160,13 +162,15 @@ public partial class DispatchCommands(
     {
         Console.WriteLine($"Checking SolutionMode with value: {value}");
 
-        if (int.TryParse(value, out int userChoice) == false)
+        var isValidInt = ParsingUtils.TryParseInt(value, out int solutionMode);
+
+        if (isValidInt == false)
         {
-            HelpCommands.ShowExitError(CommandConst.InvalidBoardSize);
+            HelpCommands.ShowExitError(CommandConst.InvalidSolutionMode);
             return false;
         }
 
-        SolutionMode = userChoice switch
+        SolutionMode = solutionMode switch
         {
             0 => SolutionMode.Single,
             1 => SolutionMode.Unique,
@@ -181,13 +185,18 @@ public partial class DispatchCommands(
         return true;
     }
 
+    // Todo: Use InputViewModel logic from NQueen.GUI project. 
     public bool CheckBoardSize(string value)
     {
-        var (isValid, size) = DispatchUtils.CheckBoardSize(value, SolutionMode);
-        if (isValid)
-            BoardSize = size;
-        
-        return isValid;
+        var isValidBoardSize = ParsingUtils.TryParseInt(value, out int size);
+        if (isValidBoardSize == false)
+        {
+            HelpCommands.ShowExitError(CommandConst.InvalidBoardSize);
+            return false;
+        }
+
+        BoardSize = size;
+        return true;
     }
 
     public string GetRequiredCommand()

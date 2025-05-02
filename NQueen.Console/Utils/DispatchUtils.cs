@@ -1,7 +1,10 @@
-﻿namespace NQueen.ConsoleApp.Utils;
+﻿using NQueen.Shared.Utils;
+
+namespace NQueen.ConsoleApp.Utils;
 
 public static class DispatchUtils
 {
+    // Todo: Move this property to NQueen.Shared project.
     public static char WhiteQueen { get; } = '\u2655';
 
     // This is used for enabling dotnet-counters performance utility when you run the application.
@@ -47,40 +50,42 @@ public static class DispatchUtils
         return board;
     }
 
+    // Todo: Use InputViewModel logic from NQueen.GUI project.
     public static (bool isValid, int boardSize) CheckBoardSize(
         string value, SolutionMode solutionMode)
     {
-        if (int.TryParse(value, out int size) == false)
+        var isValidBoardSize = ParsingUtils.TryParseInt(value, out int boardSize);
+        if (isValidBoardSize == false)
         {
             HelpCommands.ShowExitError(CommandConst.InvalidBoardSize);
             return (false, 0);
         }
 
-        if (size < 1)
+        if (boardSize < 1)
         {
             HelpCommands.ShowExitError("BoardSize must be a positive number.");
             return (false, 0);
         }
 
-        if (solutionMode == SolutionMode.Single && size > BoardSettings.MaxSizeForSingleMode)
+        if (solutionMode == SolutionMode.Single && boardSize > BoardSettings.MaxSizeForSingleMode)
         {
             HelpCommands.ShowExitError(ErrorMessages.SizeTooLargeForSingleSolutionMsg);
             return (false, 0);
         }
 
-        if (solutionMode == SolutionMode.Unique && size > BoardSettings.MaxSizeForUniqueMode)
+        if (solutionMode == SolutionMode.Unique && boardSize > BoardSettings.MaxSizeForUniqueMode)
         {
             HelpCommands.ShowExitError(ErrorMessages.SizeTooLargeForUniqueSolutionsMsg);
             return (false, 0);
         }
 
-        if (solutionMode == SolutionMode.All && size > BoardSettings.MaxSizeForAllMode)
+        if (solutionMode == SolutionMode.All && boardSize > BoardSettings.MaxSizeForAllMode)
         {
             HelpCommands.ShowExitError(ErrorMessages.SizeTooLargeForAllSolutionsMsg);
             return (false, 0);
         }
 
-        return (true, size);
+        return (true, boardSize);
     }
 
     private static string[,] ChessBoardHelper(int[] queens, char whiteQueen)

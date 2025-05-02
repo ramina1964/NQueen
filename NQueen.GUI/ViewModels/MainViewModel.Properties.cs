@@ -1,4 +1,6 @@
-﻿namespace NQueen.GUI.ViewModels;
+﻿using NQueen.Shared.Utils;
+
+namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -98,7 +100,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         IsIdle = true;
         IsSimulating = false;
-        ResetUiState();
+        UpdateUiState();
     }
 
     [ObservableProperty]
@@ -122,11 +124,14 @@ public sealed partial class MainViewModel : ObservableObject
         IsSimulating = false;
         IsOutputReady = false;
         OnPropertyChanged(nameof(BoardSizeText));
-        ResetUiState();
+        UpdateUiState();
     }
 
     [ObservableProperty]
     private string _boardSizeText = string.Empty;
+
+    // A computed property that parses the board size from the text input.
+    public int BoardSize => ParsingUtils.ParseIntOrThrow(BoardSizeText);
 
     [ObservableProperty]
     private bool _isValid = false;
@@ -147,7 +152,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     public void SetChessboard(double boardDimension)
     {
-        var boardSize = GetBoardSize();
+        // Set the chessboard size, throw an exception if invalid.
+        var boardSize = ParsingUtils.ParseIntOrThrow(BoardSizeText);
+
         ChessboardVm = new ChessboardViewModel(_uiDispatcher)
         {
             WindowWidth = boardDimension,
