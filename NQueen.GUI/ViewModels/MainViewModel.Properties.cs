@@ -129,9 +129,6 @@ public sealed partial class MainViewModel : ObservableObject
     private string _boardSizeText = string.Empty;
 
     [ObservableProperty]
-    private int _boardSize = BoardSettings.DefaultBoardSize;
-
-    [ObservableProperty]
     private bool _isValid = false;
 
     [ObservableProperty]
@@ -150,14 +147,14 @@ public sealed partial class MainViewModel : ObservableObject
 
     public void SetChessboard(double boardDimension)
     {
-        BoardSizeText = BoardSize.ToString();
+        var boardSize = GetBoardSize();
         ChessboardVm = new ChessboardViewModel(_uiDispatcher)
         {
             WindowWidth = boardDimension,
             WindowHeight = boardDimension
         };
 
-        ChessboardVm.CreateSquares(BoardSize);
+        ChessboardVm.CreateSquares(boardSize);
 
         IsIdle = true;
         IsSimulating = false;

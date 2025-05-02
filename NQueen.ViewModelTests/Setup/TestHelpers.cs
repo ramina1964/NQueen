@@ -24,18 +24,17 @@ public static class TestHelpers
     }
 
     public static MainViewModel CreateMainViewModelWithSimulationResults(
-    string boardSizeText, SolutionMode solutionMode, MockSaveFileDialogService saveFileDialogService)
+        int boardSize, SolutionMode solutionMode, MockSaveFileDialogService saveFileDialogService)
     {
         var solver = new BackTrackingSolver(new SolutionManager());
         var mainVm = new MainViewModel(solver, new TestDispatcher(), saveFileDialogService)
         {
-            BoardSizeText = boardSizeText,
+            BoardSizeText = boardSize.ToString(),
             SolutionMode = solutionMode,
             IsIdle = true,
         };
 
         // Dynamically calculate simulation results
-        var boardSize = int.Parse(boardSizeText);
         var simulationResults = solver.GetResultsAsync(boardSize, solutionMode).Result;
         mainVm.SimulationResults = simulationResults;
         mainVm.NoOfSolutions = simulationResults.Solutions.Count().ToString();

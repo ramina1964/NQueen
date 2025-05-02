@@ -68,7 +68,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         DisplayMode displayMode = SimulationSettings.DefaultDisplayMode)
     {
         InputViewModel = new InputViewModel { ClassLevelCascadeMode = CascadeMode.Stop };
-        BoardSize = boardSize;
         BoardSizeText = boardSize.ToString();
         SolutionMode = solutionMode;
         DisplayMode = displayMode;
@@ -91,11 +90,14 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         ObservableSolutions.Clear();
         ChessboardVm?.Squares.Clear();
-        BoardSize = int.Parse(BoardSizeText);
-        NoOfSolutions = "0";
-        ElapsedTimeInSec = $"{0,0:N1}";
-        MemoryUsage = "0";
-        ChessboardVm?.CreateSquares(BoardSize);
+
+        if (int.TryParse(BoardSizeText, out var boardSize))
+        {
+            NoOfSolutions = "0";
+            ElapsedTimeInSec = $"{0,0:N1}";
+            MemoryUsage = "0";
+            ChessboardVm?.CreateSquares(boardSize);
+        }
     }
 
     private void RefreshCommandStates()
@@ -141,10 +143,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             Debug.WriteLine("[SimulateAsync] Starting simulation...");
             ManageSimulationStatus(SimulationStatus.Started);
 
+            var boardSize = GetBoardSize();
             ResetUiState();
 
             SimulationResults =
-                await Solver.GetResultsAsync(BoardSize, SolutionMode, DisplayMode);
+                await Solver.GetResultsAsync(boardSize, SolutionMode, DisplayMode);
 
             if (SimulationResults == null || !SimulationResults.Solutions.Any())
             {
@@ -170,6 +173,14 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             ManageSimulationStatus(SimulationStatus.Finished);
             Debug.WriteLine("[SimulateAsync] Simulation status set to Finished.");
         }
+    }
+
+    private int GetBoardSize()
+    {
+        if (int.TryParse(BoardSizeText, out var boardSize))
+            return boardSize;
+
+        throw new InvalidOperationException("BoardSizeText is not a valid integer.");
     }
 
     private readonly IDispatcher _uiDispatcher;

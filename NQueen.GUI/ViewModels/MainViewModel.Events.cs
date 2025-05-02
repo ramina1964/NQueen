@@ -9,8 +9,9 @@ public sealed partial class MainViewModel
 
     private void OnQueenPlaced(QueenPlacedMessage message)
     {
+        var boardSize = GetBoardSize();
         var positions = message.Solution
-            .Take(BoardSize)
+            .Take(boardSize)
             .Select((queenPosition, rowIndex) => new Position(rowIndex, queenPosition))
             .ToList();
 

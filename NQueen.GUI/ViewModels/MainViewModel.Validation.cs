@@ -49,28 +49,22 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
     partial void OnBoardSizeTextChanged(string value)
     {
+        // Trigger validation
         ValidateProperty(nameof(BoardSizeText));
 
-        if (!HasErrors)
-        {
-            IsIdle = true;
-            IsSimulating = false;
-            IsOutputReady = false;
+        // Update IsValid state
+        IsValid = InputViewModel.Validate(this).IsValid;
 
-            // Update the BoardSize property
-            BoardSize = int.Parse(value);
-
-            // Notify that BoardSize has changed
-            OnPropertyChanged(nameof(BoardSize));
-
-            // Update the UI
-            RefreshCommandStates();
-            ResetUiState();
-        }
-        else
+        // Disable buttons if invalid
+        if (IsValid == false)
         {
             IsIdle = false;
             IsSimulating = false;
+            IsOutputReady = false;
         }
+        else
+            IsIdle = true;
+
+        RefreshCommandStates();
     }
 }

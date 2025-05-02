@@ -77,20 +77,22 @@ public class MainViewModelPositiveTests : IDisposable
     }
 
     [Theory]
-    [InlineData("8", SolutionMode.All)]
-    [InlineData("4", SolutionMode.Single)]
-    [InlineData("4", SolutionMode.Unique)]
-    [InlineData("8", SolutionMode.Single)]
-    [InlineData("8", SolutionMode.Unique)]
-    [InlineData("12", SolutionMode.Unique)]
-    [InlineData("12", SolutionMode.All)]
+    [InlineData(4, SolutionMode.Single)]
+    [InlineData(4, SolutionMode.Unique)]
+    [InlineData(4, SolutionMode.All)]
+    [InlineData(8, SolutionMode.Single)]
+    [InlineData(8, SolutionMode.Unique)]
+    [InlineData(8, SolutionMode.All)]
+    [InlineData(12, SolutionMode.Single)]
+    [InlineData(12, SolutionMode.Unique)]
+    [InlineData(12, SolutionMode.All)]
     public void Save_ShouldProcessSimulationResults(
-        string boardSizeText, SolutionMode solutionMode)
+        int boardSize, SolutionMode solutionMode)
     {
         // Arrange
         var mockSaveFileDialogService = new MockSaveFileDialogService();
         var mainVm = TestHelpers.CreateMainViewModelWithSimulationResults(
-            boardSizeText, solutionMode, mockSaveFileDialogService);
+            boardSize, solutionMode, mockSaveFileDialogService);
 
         // Act
         mainVm.SaveCommand.Execute(null);
@@ -99,7 +101,7 @@ public class MainViewModelPositiveTests : IDisposable
         mockSaveFileDialogService.WasCalled.Should().BeTrue(TestConst.SaveDialogNotShownError);
 
         AssertionHelpers.AssertSavedContent(
-            mockSaveFileDialogService.SavedContent, boardSizeText, mainVm.SimulationResults);
+            mockSaveFileDialogService.SavedContent, boardSize, mainVm.SimulationResults);
     }
 
     [Fact]

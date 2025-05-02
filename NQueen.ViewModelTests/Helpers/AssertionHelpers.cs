@@ -17,7 +17,7 @@ public static class AssertionHelpers
     }
 
     public static void AssertSavedContent(
-    string? savedContent, string boardSizeText, SimulationResults simulationResults)
+        string? savedContent, int boardSize, SimulationResults simulationResults)
     {
         savedContent.Should().NotBeNullOrEmpty(TestConst.ContentNotSavedError);
 
@@ -32,9 +32,8 @@ public static class AssertionHelpers
             TestConst.ElapsedTimeLabelError);
 
         // Validate the values
-        savedContent.Should().Contain(boardSizeText, TestConst.BoardSizeValueError);
+        savedContent.Should().Contain(boardSize.ToString(), TestConst.BoardSizeValueError);
         savedContent.Should().Contain(simulationResults.Solutions.Count().ToString(),
             TestConst.BoardSizeValueError);
     }
-
 }

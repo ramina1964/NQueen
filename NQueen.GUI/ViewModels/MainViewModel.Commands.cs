@@ -105,7 +105,8 @@ public sealed partial class MainViewModel
     {
         // Generate the content to save (e.g., solutions, settings, etc.)
         StringBuilder sb = new();
-        sb.AppendLine($"Board Size: {BoardSize}");
+        var boardSize = GetBoardSize();
+        sb.AppendLine($"Board Size: {boardSize}");
         sb.AppendLine($"Number of Solutions: {NoOfSolutions}");
         sb.AppendLine($"Elapsed Time: {ElapsedTimeInSec} seconds");
         sb.AppendLine("Solutions:");
