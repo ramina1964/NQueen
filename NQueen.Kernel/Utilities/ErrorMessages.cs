@@ -2,7 +2,7 @@
 
 public static class ErrorMessages
 {
-    public const string InvalidSIntegerError =
+    public const string InvalidIntegerError =
     "Board size must be a valid integer.";
 
     public const string NoSolutionMessage =

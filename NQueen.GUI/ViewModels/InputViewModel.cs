@@ -11,7 +11,7 @@ public class InputViewModel : AbstractValidator<MainViewModel>
             .NotNull().NotEmpty()
             .WithMessage(_ => ErrorMessages.ValueNullOrWhiteSpaceMsg)
             .Must(bst => int.TryParse(bst, out boardSize))
-            .WithMessage(_ => ErrorMessages.InvalidSIntegerError)
+            .WithMessage(_ => ErrorMessages.InvalidIntegerError)
             .Must(bst => BoardSettings.MinSize <= boardSize)
             .WithMessage(_ => ErrorMessages.SizeTooSmallMsg);
 

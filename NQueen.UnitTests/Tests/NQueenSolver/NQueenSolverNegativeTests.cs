@@ -10,8 +10,6 @@ public class NQueenSolverNegativeTests : IDisposable
         services.AddTestServices();
 
         _serviceProvider = services.BuildServiceProvider();
-
-        // Resolve the ISolverBackEnd dependency
         _solverBackEnd = _serviceProvider.GetRequiredService<ISolverBackEnd>();
     }
 
