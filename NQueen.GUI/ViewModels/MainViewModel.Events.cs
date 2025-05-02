@@ -37,7 +37,6 @@ public sealed partial class MainViewModel
 
         _uiDispatcher.Invoke(() =>
         {
-            // Normalize to the interval [0.0, 1.0]
             ProgressValue = value / 100.0;
             ProgressLabel = label;
             OnPropertyChanged(nameof(ProgressLabel));

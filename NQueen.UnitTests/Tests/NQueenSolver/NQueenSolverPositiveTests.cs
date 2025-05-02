@@ -4,13 +4,11 @@ public class NQueenSolverPositiveTests : IDisposable
 {
     public NQueenSolverPositiveTests()
     {
-        // Initialize a new service provider for each test
         var services = new ServiceCollection();
         services.AddApplicationServices();
         services.AddTestServices();
         _serviceProvider = services.BuildServiceProvider();
 
-        // Resolve the ISolverBackEnd dependency
         _solverBackEnd = _serviceProvider.GetRequiredService<ISolverBackEnd>();
     }
 
@@ -26,13 +24,11 @@ public class NQueenSolverPositiveTests : IDisposable
 
         // Act
         var actualSolutions = await _solverBackEnd.GetResultsAsync(boardSize, solutionMode);
-
-        // Convert actualSolutions.Solutions to a list of int[] for comparison
         var actualSolutionsList = actualSolutions.Solutions
             .Select(solution => solution.QueenPositions.ToArray())
             .ToList();
 
-        // Check wether 'actualSolutionsList' contains one solution equal to the expected solution
+        // Assert
         actualSolutionsList.Should().ContainSingle()
             .Which.Should().BeEquivalentTo(expectedSolutions.First());
     }
@@ -48,13 +44,11 @@ public class NQueenSolverPositiveTests : IDisposable
 
         // Act
         var actualSolutions = await _solverBackEnd.GetResultsAsync(boardSize, solutionMode);
-
-        // Convert actualSolutions.Solutions to a list of int[] for comparison
         var actualSolutionsList = actualSolutions.Solutions
             .Select(solution => solution.QueenPositions.ToArray())
             .ToList();
 
-        // Assert: Use order-insensitive comparison
+        // Assert
         Assert.Equal(
             expectedSolutions.OrderBy(solution => string.Join(",", solution)),
             actualSolutionsList.OrderBy(solution => string.Join(",", solution))
@@ -72,20 +66,17 @@ public class NQueenSolverPositiveTests : IDisposable
 
         // Act
         var actualSolutions = await _solverBackEnd.GetResultsAsync(boardSize, solutionMode);
-
-        // Convert actualSolutions.Solutions to a list of int[] for comparison
         var actualSolutionsList = actualSolutions.Solutions
             .Select(solution => solution.QueenPositions.ToArray())
             .ToList();
 
-        // Assert: Use order-insensitive comparison
+        // Assert
         Assert.Equal(
             expectedSolutions.OrderBy(solution => string.Join(",", solution)),
             actualSolutionsList.OrderBy(solution => string.Join(",", solution))
         );
     }
 
-    // Dispose of the service provider to clean up resources
     public void Dispose() => _serviceProvider.Dispose();
     
     private readonly ISolverBackEnd _solverBackEnd;

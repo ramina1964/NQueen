@@ -2,11 +2,12 @@
 
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
-    public MainViewModel(IDispatcher uiDispatcher) :
-        this(new BackTrackingSolver(new SolutionManager()), uiDispatcher, new SaveFileDialogService())
+    public MainViewModel(IDispatcher uiDispatcher) : this(new BackTrackingSolver(
+        new SolutionManager()), uiDispatcher, new SaveFileDialogService())
     { }
 
-    public MainViewModel(ISolver solver, IDispatcher dispatcher, ISaveFileDialogService saveFileService)
+    public MainViewModel(
+        ISolver solver, IDispatcher dispatcher, ISaveFileDialogService saveFileService)
     {
         Solver = solver
             ?? throw new ArgumentNullException(nameof(solver));
@@ -130,7 +131,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             ObservableSolutions.Add(s);
         }
 
-        // If you need to use the concatenated string for some purpose
         _ = sb.ToString();
     }
 
@@ -143,7 +143,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
             ResetUiState();
 
-            SimulationResults = await Solver.GetResultsAsync(BoardSize, SolutionMode, DisplayMode);
+            SimulationResults =
+                await Solver.GetResultsAsync(BoardSize, SolutionMode, DisplayMode);
 
             if (SimulationResults == null || !SimulationResults.Solutions.Any())
             {
@@ -174,4 +175,3 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private readonly IDispatcher _uiDispatcher;
     private readonly ISaveFileDialogService _saveFileService;
 }
-

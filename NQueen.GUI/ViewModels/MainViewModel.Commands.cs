@@ -2,15 +2,6 @@
 
 public sealed partial class MainViewModel
 {
-    private async Task Simulate()
-    {
-        Console.WriteLine("SimulateCommand started.");
-
-        await SimulateAsync();
-
-        Console.WriteLine("SimulateCommand completed.");
-    }
-
     private void Cancel()
     {
         if (IsSimulating)
