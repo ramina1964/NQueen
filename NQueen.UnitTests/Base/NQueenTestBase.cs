@@ -3,6 +3,7 @@
 public class NQueenTestBase(ISolverBackEnd sut)
 {
     public List<int[]> ExpectedSolutions { get; set; } = [];
+
     public List<int[]> ActualSolutions { get; set; } = [];
 
     protected readonly ISolverBackEnd Sut = sut

@@ -2,7 +2,7 @@
 
 public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorInfo
 {
-    private readonly Dictionary<string, List<string>> _errors = new();
+    private readonly Dictionary<string, List<string>> _errors = [];
 
     public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
 
@@ -11,9 +11,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
     public IEnumerable GetErrors(string? propertyName)
     {
         if (string.IsNullOrEmpty(propertyName))
-        {
             return _errors.Values.SelectMany(errors => errors).ToList();
-        }
 
         return _errors.TryGetValue(propertyName, out var propertyErrors)
             ? propertyErrors
@@ -23,10 +21,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
     private void ValidateProperty(string propertyName)
     {
         // Clear existing errors for the property
-        if (_errors.ContainsKey(propertyName))
-        {
-            _errors.Remove(propertyName);
-        }
+        _errors.Remove(propertyName);
 
         // Perform validation using InputViewModel
         var validationResults = InputViewModel.Validate(this);
@@ -35,10 +30,8 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
             .Select(error => error.ErrorMessage)
             .ToList();
 
-        if (propertyErrors.Any())
-        {
+        if (propertyErrors.Count != 0)
             _errors[propertyName] = propertyErrors;
-        }
 
         // Notify that errors have changed for the property
         OnErrorsChanged(propertyName);

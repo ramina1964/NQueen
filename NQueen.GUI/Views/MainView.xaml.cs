@@ -64,6 +64,7 @@ public partial class MainView : Window, IDisposable
         _disposed = true;
     }
 
+    // Todo: Extract the common part of the following two methods into a separate one.
     private void MainView_Loaded(object sender, RoutedEventArgs e)
     {
         if (chessboardPlaceholder.Content is not ChessboardUserControl board)
@@ -90,20 +91,6 @@ public partial class MainView : Window, IDisposable
 
             MainViewModel.SetChessboard(size);
         }
-    }
-
-    private void UpdateChessboardDimensions(ChessboardUserControl board)
-    {
-        var size = (int)Math.Min(board.ActualWidth, board.ActualHeight);
-        board.Width = size;
-        board.Height = size;
-
-        // Update the ChessboardVm dimensions
-        MainViewModel.ChessboardVm.WindowWidth = board.ActualWidth;
-        MainViewModel.ChessboardVm.WindowHeight = board.ActualHeight;
-
-        // Optionally, update the chessboard size in the ViewModel
-        MainViewModel.SetChessboard(size);
     }
 
     private void UpdateChessboardSize(ChessboardUserControl board)
