@@ -148,19 +148,17 @@ public sealed partial class MainViewModel : ObservableObject
 
     public string ResultTitle => SolverHelper.UpdateSolutionTitle(SolutionMode);
 
-    public ChessboardViewModel ChessboardVm { get; set; } = null!;
+    public ChessboardViewModel ChessboardVm { get; set; }
 
     public void SetChessboard(double boardDimension)
     {
         // Set the chessboard size, throw an exception if invalid.
         var boardSize = ParsingUtils.ParseIntOrThrow(BoardSizeText);
 
-        ChessboardVm = new ChessboardViewModel(_uiDispatcher)
-        {
-            WindowWidth = boardDimension,
-            WindowHeight = boardDimension
-        };
+        ChessboardVm.WindowWidth = boardDimension;
+        ChessboardVm.WindowHeight = boardDimension;
 
+        // Update the squares with the new board size
         ChessboardVm.CreateSquares(boardSize);
 
         IsIdle = true;

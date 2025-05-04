@@ -1,7 +1,5 @@
 ﻿namespace NQueen.Kernel.Utilities;
 
-// Todo: Bug Fixing: Queens are placed not with an orderly fashhion.
-
 public static class SolverHelper
 {
     public const double StartProgressValue = 0;
@@ -20,13 +18,17 @@ public static class SolverHelper
 
         for (var j = 0; j < boardSize; j++)
         {
-            var index1 = boardSize - j - 1;
-            var index2 = boardSize - solution[j] - 1;
+            var flippedRowIndex = boardSize - j - 1;
+            var flippedColIndex = boardSize - solution[j] - 1;
 
-            symmetricalToMidHorizontal[index1] = solution[j];
-            rotatedCounter90[index2] = symmetricalToMainDiag[solution[j]] = j;
-            rotatedCounter180[index1] = symmetricalToMidVertical[j] = index2;
-            rotatedCounter270[solution[j]] = symmetricalToBiDiag[index2] = index1;
+            symmetricalToMidHorizontal[flippedRowIndex] = solution[j];
+            rotatedCounter90[flippedColIndex] = symmetricalToMainDiag[solution[j]] = j;
+
+            rotatedCounter180[flippedRowIndex] =
+                symmetricalToMidVertical[j] = flippedColIndex;
+
+            rotatedCounter270[solution[j]] =
+                symmetricalToBiDiag[flippedColIndex] = flippedRowIndex;
         }
 
         return new HashSet<int[]>(new SequenceEquality<int>())
