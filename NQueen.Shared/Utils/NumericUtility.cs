@@ -1,4 +1,4 @@
-﻿namespace NQueen.GUI.Utils;
+﻿namespace NQueen.Shared.Utils;
 
 public class NumericUtility
 {
@@ -18,7 +18,7 @@ public class NumericUtility
                 nameof(formattedNumber));
 
         var parsedNumber = ParseFormattedNumber(formattedNumber);
-        return FormatWithSpaceSeparator(parsedNumber + 1, 0);
+        return FormatWithSpaceSeparator(parsedNumber, 0);
     }
 
     public static int ParseFormattedNumber(string formattedNumber)
