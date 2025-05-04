@@ -45,7 +45,9 @@
             x:Name="chessboardPlaceholder"
             Grid.Row="1"
             Grid.Column="1"
-            Margin="5" />
+            Margin="5"
+            Width="{Binding ChessboardVm.WindowWidth, Mode=TwoWay}"
+            Height="{Binding ChessboardVm.WindowHeight, Mode=TwoWay}" />
 
         <Grid
             Grid.Row="1"

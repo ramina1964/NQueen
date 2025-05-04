@@ -6,12 +6,13 @@ public partial class MainView : Window, IDisposable
     {
         InitializeComponent();
         Loaded += MainView_Loaded;
+        SizeChanged += MainView_SizeChanged;
         MainViewModel = mainViewModel;
         _serviceProvider = serviceProvider;
 
         // Resolve and add ChessboardUserControl to the MainView
-        var chessboardUserContrl = _serviceProvider.GetRequiredService<ChessboardUserControl>();
-        chessboardPlaceholder.Content = chessboardUserContrl;
+        var chessboardUserControl = _serviceProvider.GetRequiredService<ChessboardUserControl>();
+        chessboardPlaceholder.Content = chessboardUserControl;
 
         // Resolve and add InputPanelUserControl to the MainView
         var inputPanel = _serviceProvider.GetRequiredService<InputPanelUserControl>();
@@ -53,8 +54,9 @@ public partial class MainView : Window, IDisposable
             {
                 MainViewModel.Dispose();
 
-                // Unsubscribe from the Loaded event
+                // Unsubscribe from events
                 Loaded -= MainView_Loaded;
+                SizeChanged -= MainView_SizeChanged;
             }
         }
 
@@ -65,15 +67,51 @@ public partial class MainView : Window, IDisposable
     private void MainView_Loaded(object sender, RoutedEventArgs e)
     {
         if (chessboardPlaceholder.Content is not ChessboardUserControl board)
-            throw new InvalidOperationException("chessboardPlaceholder.Content is not a ChessboardUserControl.");
+            throw new InvalidOperationException(
+                "chessboardPlaceholder.Content is not a ChessboardUserControl.");
         else
+        {
+            UpdateChessboardSize(board);
+            board.SizeChanged += (s, args) => UpdateChessboardSize(board);
+            DataContext = MainViewModel;
+        }
+    }
+
+    private void MainView_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (chessboardPlaceholder.Content is ChessboardUserControl board)
         {
             var size = (int)Math.Min(board.ActualWidth, board.ActualHeight);
             board.Width = size;
             board.Height = size;
+
+            MainViewModel.ChessboardVm.WindowWidth = board.ActualWidth;
+            MainViewModel.ChessboardVm.WindowHeight = board.ActualHeight;
+
             MainViewModel.SetChessboard(size);
-            DataContext = MainViewModel;
         }
+    }
+
+    private void UpdateChessboardDimensions(ChessboardUserControl board)
+    {
+        var size = (int)Math.Min(board.ActualWidth, board.ActualHeight);
+        board.Width = size;
+        board.Height = size;
+
+        // Update the ChessboardVm dimensions
+        MainViewModel.ChessboardVm.WindowWidth = board.ActualWidth;
+        MainViewModel.ChessboardVm.WindowHeight = board.ActualHeight;
+
+        // Optionally, update the chessboard size in the ViewModel
+        MainViewModel.SetChessboard(size);
+    }
+
+    private void UpdateChessboardSize(ChessboardUserControl board)
+    {
+        var size = (int)Math.Min(board.ActualWidth, board.ActualHeight);
+        board.Width = size;
+        board.Height = size;
+        MainViewModel.SetChessboard(size);
     }
 
     private bool _disposed = false;

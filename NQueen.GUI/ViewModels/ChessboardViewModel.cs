@@ -27,10 +27,10 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
     private ObservableCollection<SquareViewModel> squares = [];
 
     [ObservableProperty]
-    private double windowWidth;
+    private double _windowWidth;
 
     [ObservableProperty]
-    private double windowHeight;
+    private double _windowHeight;
 
     public void CreateSquares(int boardSize)
     {

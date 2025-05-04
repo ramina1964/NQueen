@@ -4,7 +4,6 @@ namespace NQueen.ConsoleApp.Utils;
 
 public static class DispatchUtils
 {
-    // Todo: Move this property to NQueen.Shared project.
     public static char WhiteQueen { get; } = '\u2655';
 
     // This is used for enabling dotnet-counters performance utility when you run the application.

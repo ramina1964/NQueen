@@ -63,8 +63,17 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
             IsOutputReady = false;
         }
         else
+        {
+            // Notify that BoardSize has changed
+            OnPropertyChanged(nameof(BoardSize));
             IsIdle = true;
+
+            // Update the chessboard
+            var boardDimension = Math.Min(ChessboardVm.WindowWidth, ChessboardVm.WindowHeight);
+            SetChessboard(boardDimension);
+        }
 
         RefreshCommandStates();
     }
+
 }

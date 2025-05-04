@@ -1,6 +1,4 @@
-﻿using NQueen.Shared.Utils;
-
-namespace NQueen.GUI.ViewModels;
+﻿namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
@@ -23,6 +21,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         // Initialize non-nullable properties
         InputViewModel = new InputViewModel { ClassLevelCascadeMode = CascadeMode.Stop };
         CancelationTokenSource = new CancellationTokenSource();
+        ChessboardVm = new ChessboardViewModel(_uiDispatcher);
 
         // Initialize commands directly
         SimulateCommand = new AsyncRelayCommand(SimulateAsync, CanSimulate);
@@ -83,9 +82,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         DelayInMilliseconds = SimulationSettings.DefaultDelayInMilliseconds;
         ProgressVisibility = Visibility.Hidden;
         ProgressLabelVisibility = Visibility.Hidden;
-
-        // Initialize the chessboard
-        ChessboardVm = new ChessboardViewModel(_uiDispatcher);
     }
 
     private void UpdateUiState()

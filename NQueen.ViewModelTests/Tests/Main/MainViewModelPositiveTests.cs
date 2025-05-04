@@ -1,6 +1,6 @@
 ﻿namespace NQueen.ViewModelTests.Tests.Main;
 
-// Todo: Conside removing this attribute and its corresponding class:
+// Todo: Consider removing this attribute and its corresponding class:
 //[CollectionDefinition("Serial Test Collection", DisableParallelization = true)]
 public class MainViewModelPositiveTests : IDisposable
 {
