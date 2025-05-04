@@ -17,7 +17,7 @@ global using NQueen.Kernel.Models;
 global using NQueen.Kernel.Services;
 global using NQueen.Kernel.Solvers;
 global using NQueen.Kernel.Utilities;
-global using NQueen.Shared.Utility;
+global using NQueen.Shared.Utils;
 global using System;
 global using System.Collections;
 global using System.Collections.Generic;
