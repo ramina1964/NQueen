@@ -1,5 +1,7 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
+// Todo: Queens must be placed from columnwise from buttom and upward.
+//       Currently, they are placed rowwise and from top to bottom.
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
     public MainViewModel(IDispatcher uiDispatcher) : this(new BackTrackingSolver(
