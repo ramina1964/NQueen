@@ -24,7 +24,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         _errors.Remove(propertyName);
 
         // Perform validation using InputViewModel
-        var validationResults = InputViewModel.Validate(this);
+        var validationResults = InputViewModel.ValidateBoardSize(BoardSizeText);
         var propertyErrors = validationResults.Errors
             .Where(error => error.PropertyName == propertyName)
             .Select(error => error.ErrorMessage)
@@ -46,7 +46,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         ValidateProperty(nameof(BoardSizeText));
 
         // Update IsValid state
-        IsValid = InputViewModel.Validate(this).IsValid;
+        IsValid = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
 
         // Disable buttons if invalid
         if (IsValid == false)

@@ -21,7 +21,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             ?? throw new ArgumentNullException(nameof(saveFileService));
 
         // Initialize non-nullable properties
-        InputViewModel = new InputViewModel { ClassLevelCascadeMode = CascadeMode.Stop };
+        InputViewModel = new InputViewModel(SolutionMode.Unique);
         CancelationTokenSource = new CancellationTokenSource();
         ChessboardVm = new ChessboardViewModel(_uiDispatcher);
 
@@ -70,7 +70,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         SolutionMode solutionMode = SimulationSettings.DefaultSolutionMode,
         DisplayMode displayMode = SimulationSettings.DefaultDisplayMode)
     {
-        InputViewModel = new InputViewModel { ClassLevelCascadeMode = CascadeMode.Stop };
+        InputViewModel = new InputViewModel(solutionMode);
         BoardSizeText = boardSize.ToString();
         SolutionMode = solutionMode;
         DisplayMode = displayMode;

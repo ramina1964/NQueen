@@ -86,7 +86,7 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(BoardSizeText));
         OnPropertyChanged(nameof(SolutionTitle));
 
-        IsValid = InputViewModel.Validate(this).IsValid;
+        IsValid = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
 
         if (IsValid == false)
         {
@@ -109,7 +109,7 @@ public sealed partial class MainViewModel : ObservableObject
         if (Solver == null)
             return;
 
-        IsValid = InputViewModel.Validate(this).IsValid;
+        IsValid = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
         if (IsValid == false)
         {
             IsIdle = false;

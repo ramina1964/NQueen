@@ -1,4 +1,6 @@
-﻿namespace NQueen.ConsoleApp.Commands;
+﻿using NQueen.Shared.Validation;
+
+namespace NQueen.ConsoleApp.Commands;
 
 public partial class DispatchCommands(
     ISolver solver,
@@ -183,17 +185,17 @@ public partial class DispatchCommands(
         return true;
     }
 
-    // Todo: Use InputViewModel logic from NQueen.GUI project. 
-    public bool CheckBoardSize(string value)
+    public bool CheckBoardSize(string boardSizeText)
     {
-        var isValidBoardSize = ParsingUtils.TryParseInt(value, out int size);
+        var inputViewModel = new BoardSizeValidator(SolutionMode);
+        var isValidBoardSize = inputViewModel.Validate(boardSizeText).IsValid;
         if (isValidBoardSize == false)
         {
             HelpCommands.ShowExitError(CommandConst.InvalidBoardSize);
             return false;
         }
 
-        BoardSize = size;
+        BoardSize = ParsingUtils.ParseIntOrThrow(boardSizeText);
         return true;
     }
 
