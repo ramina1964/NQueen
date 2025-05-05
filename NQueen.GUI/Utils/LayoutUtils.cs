@@ -1,6 +1,5 @@
 ﻿namespace NQueen.GUI.Utils;
 
-// Todo: Find out if this class is useful in deciding the chessboard dimensions in ChessboardViewModel.
 public static class LayoutUtils
 {
     /// <summary>

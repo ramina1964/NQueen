@@ -51,7 +51,6 @@ public static class DispatchUtils
         return board;
     }
 
-    // Todo: Use InputViewModel logic from NQueen.GUI project.
     public static (bool isValid, int boardSize) CheckBoardSize(
         string value, SolutionMode solutionMode)
     {

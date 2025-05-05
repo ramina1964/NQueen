@@ -93,12 +93,10 @@ public partial class MainView : Window, IDisposable
         }
     }
 
-    private void UpdateChessboardSize(ChessboardUserControl board)
+    private void UpdateChessboardSize(FrameworkElement board)
     {
-        var size = (int)Math.Min(board.ActualWidth, board.ActualHeight);
-        board.Width = size;
-        board.Height = size;
-        MainViewModel.SetChessboard(size);
+        var availableDimensions = LayoutUtils.CalculateAvailableDimension(board);
+        MainViewModel.SetChessboard(availableDimensions);
     }
 
     private bool _disposed = false;
