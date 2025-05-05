@@ -10,4 +10,8 @@
 	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\NQueen.Shared\NQueen.Shared.csproj" />
+	</ItemGroup>
+
 </Project>

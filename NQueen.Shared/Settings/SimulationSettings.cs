@@ -1,4 +1,6 @@
-﻿namespace NQueen.Kernel.Utilities;
+﻿global using NQueen.Shared.Enums;
+
+namespace NQueen.Shared.Settings;
 
 public class SimulationSettings
 {

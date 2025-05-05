@@ -1,4 +1,6 @@
-﻿namespace NQueen.UnitTests.Tests.NQueenSolver;
+﻿using NQueen.Shared.Enums;
+
+namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 public class NQueenSolverNegativeTests : IDisposable
 {

@@ -1,4 +1,5 @@
-﻿using NQueen.Shared.Utils;
+﻿using NQueen.Shared.Enums;
+using NQueen.Shared.Utils;
 
 namespace NQueen.ConsoleApp.Commands;
 

@@ -1,4 +1,6 @@
-﻿namespace NQueen.ViewModelTests.Tests.Main;
+﻿using NQueen.Shared.Enums;
+
+namespace NQueen.ViewModelTests.Tests.Main;
 
 public class MainViewModelNegativeTests
 {

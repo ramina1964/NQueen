@@ -1,4 +1,6 @@
-﻿namespace NQueen.ViewModelTests.Tests.Main;
+﻿using NQueen.Shared.Enums;
+
+namespace NQueen.ViewModelTests.Tests.Main;
 
 // Todo: Consider removing this attribute and its corresponding class:
 //[CollectionDefinition("Serial Test Collection", DisableParallelization = true)]

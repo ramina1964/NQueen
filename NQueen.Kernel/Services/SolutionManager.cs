@@ -1,4 +1,6 @@
-﻿namespace NQueen.Kernel.Services;
+﻿using NQueen.Shared.Enums;
+
+namespace NQueen.Kernel.Services;
 
 public class SolutionManager : ISolutionManager
 {
