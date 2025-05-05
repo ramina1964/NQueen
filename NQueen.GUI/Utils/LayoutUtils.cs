@@ -1,5 +1,6 @@
 ﻿namespace NQueen.GUI.Utils;
 
+// Todo: Find out if this class is useful in deciding the chessboard dimensions in ChessboardViewModel.
 public static class LayoutUtils
 {
     /// <summary>
@@ -9,9 +10,8 @@ public static class LayoutUtils
     /// <returns>The smaller of the element's actual width and height.</returns>
     public static double CalculateAvailableDimension(FrameworkElement element)
     {
-        if (element == null)
-            throw new ArgumentNullException(nameof(element));
-
-        return Math.Min(element.ActualWidth, element.ActualHeight);
+        return element == null
+            ? throw new ArgumentNullException(nameof(element))
+            : Math.Min(element.ActualWidth, element.ActualHeight);
     }
 }
