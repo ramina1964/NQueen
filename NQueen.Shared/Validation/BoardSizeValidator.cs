@@ -1,6 +1,4 @@
-﻿
-
-namespace NQueen.Shared.Validation;
+﻿namespace NQueen.Shared.Validation;
 
 public class BoardSizeValidator : AbstractValidator<string>
 {
@@ -10,19 +8,30 @@ public class BoardSizeValidator : AbstractValidator<string>
             .NotNull().NotEmpty()
             .WithMessage(ErrorMessages.ValueNullOrWhiteSpaceMsg)
             .Must(bst => int.TryParse(bst, out _))
-            .WithMessage(ErrorMessages.InvalidIntegerError)
+            .WithName("BoardSizeText")
+            .WithMessage(ErrorMessages.InvalidIntegerError);
+
+        RuleFor(bst => bst)
             .Must(bst =>
             {
                 if (int.TryParse(bst, out var boardSize))
                 {
-                    return BoardSettings.MinSize <= boardSize;
+                    Debug.WriteLine($"Validating board size: {boardSize}");
+                    return boardSize >= BoardSettings.MinSize;
                 }
                 return false;
             })
             .WithMessage(ErrorMessages.SizeTooSmallMsg);
 
         RuleFor(bst => bst)
-            .Must(bst => ValidateAndParseBoardSize(bst, GetMaxSizeForMode(solutionMode), out _))
+            .Must(bst =>
+            {
+                if (int.TryParse(bst, out var boardSize))
+                {
+                    return boardSize <= GetMaxSizeForMode(solutionMode);
+                }
+                return false;
+            })
             .WithMessage(GetErrorMessageForMode(solutionMode));
     }
 
@@ -41,7 +50,4 @@ public class BoardSizeValidator : AbstractValidator<string>
         SolutionMode.All => ErrorMessages.SizeTooLargeForAllSolutionsMsg,
         _ => throw new ArgumentOutOfRangeException(nameof(mode))
     };
-
-    private static bool ValidateAndParseBoardSize(string? boardSizeText, int maxSize, out int boardSize) =>
-        int.TryParse(boardSizeText, out boardSize) && boardSize <= maxSize;
 }

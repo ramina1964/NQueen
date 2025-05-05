@@ -20,21 +20,25 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
     private void ValidateProperty(string propertyName)
     {
-        // Clear existing errors for the property
         _errors.Remove(propertyName);
 
-        // Perform validation using InputViewModel
         var validationResults = InputViewModel.ValidateBoardSize(BoardSizeText);
+        foreach (var error in validationResults.Errors)
+        {
+            Debug.WriteLine($"Validation Error: {error.PropertyName} - {error.ErrorMessage}");
+        }
+
         var propertyErrors = validationResults.Errors
-            .Where(error => error.PropertyName == propertyName)
+            .Where(error => error.PropertyName == nameof(BoardSizeText))
             .Select(error => error.ErrorMessage)
             .ToList();
 
         if (propertyErrors.Count != 0)
+        {
             _errors[propertyName] = propertyErrors;
-
-        // Notify that errors have changed for the property
-        OnErrorsChanged(propertyName);
+            Debug.WriteLine($"Errors for {propertyName}: {string.Join(", ", propertyErrors)}");
+            OnErrorsChanged(propertyName);
+        }
     }
 
     private void OnErrorsChanged(string propertyName) =>
