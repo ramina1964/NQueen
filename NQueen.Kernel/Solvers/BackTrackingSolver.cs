@@ -259,8 +259,8 @@ public class BackTrackingSolver : ISolver, IDisposable
 
     private int FindQueenPosition(int colNo)
     {
-        colNo = (int)Math.Min(colNo, BoardSize - 1);
-        for (int pos = (QueenPositions[colNo] + 1); pos < BoardSize; pos++)
+        colNo = Math.Min(colNo, BoardSize - 1);
+        for (var pos = (QueenPositions[colNo] + 1); pos < BoardSize; pos++)
         {
             if (IsValidPosition(colNo, pos))
             {
@@ -279,13 +279,14 @@ public class BackTrackingSolver : ISolver, IDisposable
 
     private bool IsValidPosition(int colNo, int pos)
     {
-        for (int j = 0; j < colNo; j++)
+        for (var j = 0; j < colNo; j++)
         {
-            int lhs = Math.Abs(pos - QueenPositions[j]);
-            int rhs = Math.Abs(colNo - j);
+            var lhs = Math.Abs(pos - QueenPositions[j]);
+            var rhs = Math.Abs(colNo - j);
             if (lhs == 0 || lhs == rhs)
                 return false;
         }
+
         return true;
     }
 

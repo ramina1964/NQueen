@@ -43,10 +43,9 @@ public class ResultPresentation
         var subFolder = Path.Combine(dir.FullName, "Results");
         var filePath = Path.Combine(subFolder, fileName);
 
-        var _ =
-                Directory.Exists(subFolder)
-                ? new DirectoryInfo(subFolder)
-                : Directory.CreateDirectory(subFolder);
+        var _ = Directory.Exists(subFolder)
+            ? new DirectoryInfo(subFolder)
+            : Directory.CreateDirectory(subFolder);
 
         File.WriteAllText(filePath, PrintFinalResults(solutionMode));
         return filePath;
@@ -77,8 +76,7 @@ public class ResultPresentation
         const int decimalPlaces = 2;
         const int placeHolderInt = 20;
 
-        var sb =
-            new StringBuilder().AppendLine()
+        var sb = new StringBuilder().AppendLine()
             .AppendLine("Summary of Results:")
             .AppendLine($"{"Date and Time",placeHolderText}{DateTime.Now,placeHolderInt}");
 
@@ -103,9 +101,9 @@ public class ResultPresentation
     private string PrintFinalResults(SolutionMode solutionMode)
     {
         var result = new StringBuilder()
-                    .Append(FormatSolutionTitle(solutionMode))
-                    .Append(GetSummary(solutionMode))
-                    .AppendLine();
+            .Append(FormatSolutionTitle(solutionMode))
+            .Append(GetSummary(solutionMode))
+            .AppendLine();
 
         return result.ToString();
     }
