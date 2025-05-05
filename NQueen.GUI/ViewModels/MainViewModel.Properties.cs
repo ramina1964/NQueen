@@ -1,6 +1,4 @@
-﻿using NQueen.Shared.Utils;
-
-namespace NQueen.GUI.ViewModels;
+﻿namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject
 {

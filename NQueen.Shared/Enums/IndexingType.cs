@@ -1,4 +1,4 @@
-﻿namespace NQueen.Kernel.Enums;
+﻿namespace NQueen.Shared.Enums;
 
 public enum IndexingType
 {

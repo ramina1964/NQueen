@@ -1,4 +1,4 @@
-﻿namespace NQueen.Kernel.Utilities;
+﻿namespace NQueen.Shared.Utils;
 
 public static class ErrorMessages
 {

@@ -1,14 +1,15 @@
 ﻿global using Microsoft.Extensions.DependencyInjection;
-global using NQueen.Kernel.Enums;
 global using NQueen.Kernel.Events;
 global using NQueen.Kernel.Interfaces;
 global using NQueen.Kernel.Models;
 global using NQueen.Kernel.Solvers;
 global using NQueen.Kernel.Utilities;
+global using NQueen.Shared.Enums;
+global using NQueen.Shared.Settings;
+global using NQueen.Shared.Utils;
 global using System;
 global using System.Collections.Generic;
 global using System.Collections.ObjectModel;
-global using System.ComponentModel;
 global using System.Diagnostics;
 global using System.IO;
 global using System.Linq;

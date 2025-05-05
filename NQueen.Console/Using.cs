@@ -2,10 +2,10 @@
 global using NQueen.ConsoleApp.Commands;
 global using NQueen.ConsoleApp.Interfaces;
 global using NQueen.ConsoleApp.Utils;
-global using NQueen.Kernel.Enums;
 global using NQueen.Kernel.Interfaces;
 global using NQueen.Kernel.Services;
-global using NQueen.Kernel.Utilities;
+global using NQueen.Shared.Enums;
+global using NQueen.Shared.Utils;
 global using System;
 global using System.Collections.Generic;
 global using System.Diagnostics;

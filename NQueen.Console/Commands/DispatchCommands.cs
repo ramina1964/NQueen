@@ -1,6 +1,4 @@
-﻿using NQueen.Shared.Utils;
-
-namespace NQueen.ConsoleApp.Commands;
+﻿namespace NQueen.ConsoleApp.Commands;
 
 public partial class DispatchCommands(
     ISolver solver,

@@ -1,4 +1,6 @@
-﻿namespace NQueen.Kernel.Interfaces;
+﻿using NQueen.Shared.Enums;
+
+namespace NQueen.Kernel.Interfaces;
 
 public interface ISolverBackEnd
 {

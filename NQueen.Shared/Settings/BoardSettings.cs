@@ -1,4 +1,4 @@
-﻿namespace NQueen.Kernel.Utilities;
+﻿namespace NQueen.Shared.Settings;
 
 public static class BoardSettings
 {
