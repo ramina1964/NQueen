@@ -52,7 +52,6 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         // Update IsValid state
         IsValid = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
 
-        // Disable buttons if invalid
         if (IsValid == false)
         {
             IsIdle = false;
@@ -72,5 +71,4 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
         RefreshCommandStates();
     }
-
 }

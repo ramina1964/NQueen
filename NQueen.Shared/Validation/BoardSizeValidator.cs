@@ -8,8 +8,8 @@ public class BoardSizeValidator : AbstractValidator<string>
             .NotNull().NotEmpty()
             .WithMessage(ErrorMessages.ValueNullOrWhiteSpaceMsg)
             .Must(bst => int.TryParse(bst, out _))
-            .WithName("BoardSizeText")
-            .WithMessage(ErrorMessages.InvalidIntegerError);
+            .WithMessage(ErrorMessages.InvalidIntegerError)
+            .WithName("BoardSizeText");
 
         RuleFor(bst => bst)
             .Must(bst =>
@@ -21,7 +21,8 @@ public class BoardSizeValidator : AbstractValidator<string>
                 }
                 return false;
             })
-            .WithMessage(ErrorMessages.SizeTooSmallMsg);
+            .WithMessage(ErrorMessages.SizeTooSmallMsg)
+            .WithName("BoardSizeText");
 
         RuleFor(bst => bst)
             .Must(bst =>
@@ -32,7 +33,8 @@ public class BoardSizeValidator : AbstractValidator<string>
                 }
                 return false;
             })
-            .WithMessage(GetErrorMessageForMode(solutionMode));
+            .WithMessage(GetErrorMessageForMode(solutionMode))
+            .WithName("BoardSizeText");
     }
 
     private static int GetMaxSizeForMode(SolutionMode mode) => mode switch
@@ -45,9 +47,9 @@ public class BoardSizeValidator : AbstractValidator<string>
 
     private static string GetErrorMessageForMode(SolutionMode mode) => mode switch
     {
-        SolutionMode.Single => ErrorMessages.SizeTooLargeForSingleSolutionMsg,
-        SolutionMode.Unique => ErrorMessages.SizeTooLargeForUniqueSolutionsMsg,
-        SolutionMode.All => ErrorMessages.SizeTooLargeForAllSolutionsMsg,
+        SolutionMode.Single => ErrorMessages.SizeTooLargeForSingleMsg,
+        SolutionMode.Unique => ErrorMessages.SizeTooLargeForUniqueMsg,
+        SolutionMode.All => ErrorMessages.SizeTooLargeForAllMsg,
         _ => throw new ArgumentOutOfRangeException(nameof(mode))
     };
 }

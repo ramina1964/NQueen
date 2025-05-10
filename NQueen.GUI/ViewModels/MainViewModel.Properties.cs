@@ -75,20 +75,23 @@ public sealed partial class MainViewModel : ObservableObject
     {
         if (Solver == null)
             return;
-
-        SolutionTitle = (value == SolutionMode.Single)
-            ? $"Solution"
-            : $"Solutions (Max: {SimulationSettings.MaxNoOfSolutionsInOutput})";
+        var maxSolutions = SimulationSettings.MaxNoOfSolutionsInOutput;
+        SolutionTitle = (value == SolutionMode.All)
+            ? $"All Sols, Max: {maxSolutions}"
+            : (value == SolutionMode.Unique)? $"Unique Sols, Max: {maxSolutions}"
+            : "Single Sol";
 
         // Trigger validation for BoardSizeText
         ValidateProperty(nameof(BoardSizeText));
 
+        // Notify UI of changes
         OnPropertyChanged(nameof(BoardSizeText));
         OnPropertyChanged(nameof(SolutionTitle));
 
+        // Update IsValid state
         IsValid = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
 
-        if (IsValid == false)
+        if (!IsValid)
         {
             IsIdle = false;
             IsSimulating = false;
