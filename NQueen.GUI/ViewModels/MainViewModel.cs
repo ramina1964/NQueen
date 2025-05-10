@@ -71,9 +71,12 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         DisplayMode displayMode = SimulationSettings.DefaultDisplayMode)
     {
         InputViewModel = new InputViewModel(solutionMode);
-        BoardSizeText = boardSize.ToString();
+        BoardSizeText = boardSize.ToString(); // This will trigger validation via OnBoardSizeTextChanged.
         SolutionMode = solutionMode;
         DisplayMode = displayMode;
+
+        // Explicitly validate BoardSizeText to ensure errors are captured.
+        ValidateProperty(nameof(BoardSizeText));
 
         IsIdle = true;
         IsInInputMode = true;

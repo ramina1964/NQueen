@@ -52,7 +52,7 @@
                 IsEnabled="{Binding IsInInputMode}"
                 Style="{StaticResource TextBoxNumericalStyle}"
                 Text="{Binding BoardSizeText, UpdateSourceTrigger=LostFocus, Mode=TwoWay, ValidatesOnDataErrors=True, ValidatesOnExceptions=True}"
-                Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}"/>
+                Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" />
 
             <Label
                 Grid.Row="1"
@@ -68,7 +68,7 @@
                 Margin="5,2"
                 IsEnabled="{Binding IsInInputMode}"
                 ItemsSource="{Binding EnumSolutionModes, Mode=TwoWay}"
-                SelectedItem="{Binding SolutionMode}"
+                SelectedItem="{Binding SolutionMode, Mode=TwoWay}"
                 Style="{StaticResource ComboBoxStyle}" />
 
             <Label
@@ -86,7 +86,7 @@
                 Margin="5,2"
                 IsEnabled="{Binding IsInInputMode}"
                 ItemsSource="{Binding EnumDisplayModes, Mode=TwoWay}"
-                SelectedItem="{Binding DisplayMode}"
+                SelectedItem="{Binding DisplayMode, Mode=TwoWay}"
                 Style="{StaticResource ComboBoxStyle}" />
 
             <Label
