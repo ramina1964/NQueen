@@ -1,7 +1,4 @@
-﻿using NQueen.Shared.Enums;
-using NQueen.Shared.Utils;
-
-namespace NQueen.ViewModelTests.Setup;
+﻿namespace NQueen.ViewModelTests.Setup;
 
 public static class TestHelpers
 {

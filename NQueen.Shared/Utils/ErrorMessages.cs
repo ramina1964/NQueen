@@ -14,13 +14,13 @@ public static class ErrorMessages
     public static string SizeTooSmallMsg =>
         $"Board size must be greater than or equal to {BoardSettings.MinSize}.";
 
-    public static string SizeTooLargeForSingleMsg =>
+    public static string SizeTooLargeForSingleModeMsg =>
         $"Board size for Single Solution must not exceed {BoardSettings.MaxSizeForSingleMode}.";
 
-    public static string SizeTooLargeForUniqueMsg =>
+    public static string SizeTooLargeForUniqueModeMsg =>
         $"Board size for Unique Solutions must not exceed {BoardSettings.MaxSizeForUniqueMode}.";
 
-    public static string SizeTooLargeForAllMsg =>
+    public static string SizeTooLargeForAllModeMsg =>
         $"Board size for All Solutions must not exceed {BoardSettings.MaxSizeForAllMode}.";
 
     public static string GetTimeoutMessage(TimeSpan timeout) =>

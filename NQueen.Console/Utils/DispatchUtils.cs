@@ -69,19 +69,19 @@ public static class DispatchUtils
 
         if (solutionMode == SolutionMode.Single && boardSize > BoardSettings.MaxSizeForSingleMode)
         {
-            HelpCommands.ShowExitError(ErrorMessages.SizeTooLargeForSingleMsg);
+            HelpCommands.ShowExitError(ErrorMessages.SizeTooLargeForSingleModeMsg);
             return (false, 0);
         }
 
         if (solutionMode == SolutionMode.Unique && boardSize > BoardSettings.MaxSizeForUniqueMode)
         {
-            HelpCommands.ShowExitError(ErrorMessages.SizeTooLargeForUniqueMsg);
+            HelpCommands.ShowExitError(ErrorMessages.SizeTooLargeForUniqueModeMsg);
             return (false, 0);
         }
 
         if (solutionMode == SolutionMode.All && boardSize > BoardSettings.MaxSizeForAllMode)
         {
-            HelpCommands.ShowExitError(ErrorMessages.SizeTooLargeForAllMsg);
+            HelpCommands.ShowExitError(ErrorMessages.SizeTooLargeForAllModeMsg);
             return (false, 0);
         }
 
