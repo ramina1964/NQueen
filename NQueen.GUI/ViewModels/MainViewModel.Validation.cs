@@ -71,4 +71,41 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
         RefreshCommandStates();
     }
+
+    partial void OnSolutionModeChanged(SolutionMode value)
+    {
+        if (Solver == null)
+            return;
+
+        // Update InputViewModel with new SolutionMode
+        InputViewModel = new InputViewModel(value);
+
+        var maxNoOfSols = SimulationSettings.MaxNoOfSolutionsInOutput;
+        SolutionTitle = (value == SolutionMode.All)
+            ? $"All Sols. (Max: {maxNoOfSols})"
+            : (value == SolutionMode.Unique) ? $"Unique Sols. (Max: {maxNoOfSols})"
+            : "Single Solution";
+
+        // Trigger validation for BoardSizeText
+        ValidateProperty(nameof(BoardSizeText));
+
+        // Notify UI of changes
+        OnPropertyChanged(nameof(BoardSizeText));
+        OnPropertyChanged(nameof(SolutionTitle));
+
+        // Update IsValid state
+        IsValid = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
+
+        if (IsValid == false)
+        {
+            IsIdle = false;
+            IsSimulating = false;
+            IsOutputReady = false;
+            return;
+        }
+
+        IsIdle = true;
+        IsSimulating = false;
+        UpdateUiState();
+    }
 }
