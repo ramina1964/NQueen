@@ -6,7 +6,7 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        _serviceProvider = NQueen.GUI.Infrastructure.ServiceCollectionExtensions.Initialize();
+        _serviceProvider = Infrastructure.ServiceCollectionExtensions.Initialize();
         var mainWindow = _serviceProvider.GetRequiredService<MainView>();
         mainWindow.Show();
     }

@@ -39,7 +39,12 @@ public sealed partial class MainViewModel
         }
     }
 
-    private bool CanSimulate() => IsIdle && IsValid;
+    // Todo: Find out why this isn't called when BoardSizeText is wrongly formatted, e.g "abc".
+    private bool CanSimulate()
+    {
+        Debug.WriteLine($"CanSimulate called: IsIdle={IsIdle}, HasErrors={HasErrors}");
+        return IsIdle && HasErrors == false;
+    }
 
     private bool CanCancel() => IsSimulating;
 

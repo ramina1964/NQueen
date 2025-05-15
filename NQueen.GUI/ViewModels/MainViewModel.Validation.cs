@@ -28,8 +28,8 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
             Debug.WriteLine($"Validation Error: {error.PropertyName} - {error.ErrorMessage}");
         }
 
+        // Collect all errors, regardless of property name
         var propertyErrors = validationResults.Errors
-            .Where(error => error.PropertyName == nameof(BoardSizeText))
             .Select(error => error.ErrorMessage)
             .ToList();
 
@@ -37,12 +37,16 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         {
             _errors[propertyName] = propertyErrors;
             Debug.WriteLine($"Errors for {propertyName}: {string.Join(", ", propertyErrors)}");
-            OnErrorsChanged(propertyName);
         }
+
+        OnErrorsChanged(propertyName);
     }
 
-    private void OnErrorsChanged(string propertyName) =>
+    private void OnErrorsChanged(string propertyName)
+    {
         ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
+        Application.Current.Dispatcher.Invoke(RefreshCommandStates);
+    }
 
     partial void OnBoardSizeTextChanged(string value)
     {
@@ -70,5 +74,43 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         }
 
         RefreshCommandStates();
+    }
+
+    partial void OnSolutionModeChanged(SolutionMode value)
+    {
+        if (Solver == null)
+            return;
+
+        // Update InputViewModel with new SolutionMode
+        InputViewModel = new InputViewModel(value);
+        OnPropertyChanged(nameof(InputViewModel));
+
+        var maxNoOfSols = SimulationSettings.MaxNoOfSolutionsInOutput;
+        SolutionTitle = (value == SolutionMode.All)
+            ? $"All Sols. (Max: {maxNoOfSols})"
+            : (value == SolutionMode.Unique) ? $"Unique Sols. (Max: {maxNoOfSols})"
+            : "Single Solution";
+
+        // Trigger validation for BoardSizeText
+        ValidateProperty(nameof(BoardSizeText));
+
+        // Notify UI of changes
+        OnPropertyChanged(nameof(BoardSizeText));
+        OnPropertyChanged(nameof(SolutionTitle));
+
+        // Update IsValid state
+        IsValid = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
+
+        if (IsValid == false)
+        {
+            IsIdle = false;
+            IsSimulating = false;
+            IsOutputReady = false;
+            return;
+        }
+
+        IsIdle = true;
+        IsSimulating = false;
+        UpdateUiState();
     }
 }

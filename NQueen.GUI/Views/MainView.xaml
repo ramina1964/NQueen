@@ -38,16 +38,16 @@
         <view:SolutionListUserControl
             Grid.Row="1"
             Grid.Column="0"
-            Width="145"
+            Width="Auto"
             Margin="5" />
 
         <ContentControl
             x:Name="chessboardPlaceholder"
             Grid.Row="1"
             Grid.Column="1"
-            Margin="5"
             Width="{Binding ChessboardVm.WindowWidth, Mode=TwoWay}"
-            Height="{Binding ChessboardVm.WindowHeight, Mode=TwoWay}" />
+            Height="{Binding ChessboardVm.WindowHeight, Mode=TwoWay}"
+            Margin="5" />
 
         <Grid
             Grid.Row="1"
