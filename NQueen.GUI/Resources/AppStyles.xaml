@@ -3,9 +3,9 @@
 
     <!-- Validation Error Template -->
     <ControlTemplate x:Key="ValidationErrorTemplate">
-        <StackPanel Orientation="Horizontal">
-            <AdornedElementPlaceholder />
+        <DockPanel LastChildFill="True">
             <Label
+                DockPanel.Dock ="Right"
                 Margin="10,0,0,0"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Center"
@@ -13,7 +13,8 @@
                 VerticalContentAlignment="Center"
                 Content="{Binding [0].ErrorContent}"
                 Foreground="Red" />
-        </StackPanel>
+            <AdornedElementPlaceholder />
+        </DockPanel>
     </ControlTemplate>
 
     <!--  ************************* Based on Label *************************  -->
