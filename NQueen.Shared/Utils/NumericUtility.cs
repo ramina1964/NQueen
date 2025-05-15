@@ -26,14 +26,10 @@ public class NumericUtility
         if (string.IsNullOrWhiteSpace(formattedNumber))
             throw new ArgumentException("Input cannot be null or empty.", nameof(formattedNumber));
 
-        var numberFormat = new NumberFormatInfo
-        {
-            NumberGroupSeparator = " ",
-            NumberDecimalSeparator = "."
-        };
+        // Use the current culture's number format for parsing
+        var numberFormat = CultureInfo.CurrentCulture.NumberFormat;
 
-        return int.Parse(formattedNumber.Replace('\u00A0', ' '),
-            NumberStyles.Number, numberFormat);
+        return int.Parse(formattedNumber, NumberStyles.Number, numberFormat);
     }
 
     private static string FormatWithSpaceSeparator(double value, int decimalPlaces)
