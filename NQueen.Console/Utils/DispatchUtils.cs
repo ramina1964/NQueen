@@ -1,8 +1,4 @@
-﻿using NQueen.Shared.Enums;
-using NQueen.Shared.Settings;
-using NQueen.Shared.Utils;
-
-namespace NQueen.ConsoleApp.Utils;
+﻿namespace NQueen.ConsoleApp.Utils;
 
 public static class DispatchUtils
 {
@@ -67,21 +63,21 @@ public static class DispatchUtils
             return (false, 0);
         }
 
-        if (solutionMode == SolutionMode.Single && boardSize > BoardSettings.MaxSizeForSingleMode)
+        if (solutionMode == SolutionMode.Single && boardSize > BoardSettings.MaxSizeForSingle)
         {
-            HelpCommands.ShowExitError(ErrorMessages.SizeTooLargeForSingleModeMsg);
+            HelpCommands.ShowExitError(ErrorMessages.SizeTooLargeForSingle);
             return (false, 0);
         }
 
-        if (solutionMode == SolutionMode.Unique && boardSize > BoardSettings.MaxSizeForUniqueMode)
+        if (solutionMode == SolutionMode.Unique && boardSize > BoardSettings.MaxSizeForUnique)
         {
-            HelpCommands.ShowExitError(ErrorMessages.SizeTooLargeForUniqueModeMsg);
+            HelpCommands.ShowExitError(ErrorMessages.SizeTooLargeForUnique);
             return (false, 0);
         }
 
-        if (solutionMode == SolutionMode.All && boardSize > BoardSettings.MaxSizeForAllMode)
+        if (solutionMode == SolutionMode.All && boardSize > BoardSettings.MaxSizeForAll)
         {
-            HelpCommands.ShowExitError(ErrorMessages.SizeTooLargeForAllModeMsg);
+            HelpCommands.ShowExitError(ErrorMessages.SizeTooLargeForAll);
             return (false, 0);
         }
 

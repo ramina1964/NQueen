@@ -5,6 +5,7 @@ global using NQueen.ConsoleApp.Utils;
 global using NQueen.Kernel.Interfaces;
 global using NQueen.Kernel.Services;
 global using NQueen.Shared.Enums;
+global using NQueen.Shared.Settings;
 global using NQueen.Shared.Utils;
 global using System;
 global using System.Collections.Generic;

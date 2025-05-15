@@ -12,6 +12,7 @@ public class BoardSizeValidator : AbstractValidator<string>
             .WithName("BoardSizeText")
             .WithMessage(ErrorMessages.ValueNullOrWhiteSpaceMsg)
             .Must(bst => ParsingUtils.TryParseInt(bst, out _))
+            .WithName("BoardSizeText")
             .WithMessage(ErrorMessages.InvalidIntegerError);
 
         RuleFor(bst => bst)
@@ -25,16 +26,17 @@ public class BoardSizeValidator : AbstractValidator<string>
             .WithMessage(errorMsg);
     }
 
-    private static (int maxSize, string errorMsg) GetMaxSizeAndErrorMsg(SolutionMode solutionMode) =>
+    private static (int maxSize, string errorMsg) GetMaxSizeAndErrorMsg
+        (SolutionMode solutionMode) =>
         solutionMode switch
         {
             SolutionMode.Single => (
-                BoardSettings.MaxSizeForSingleMode, ErrorMessages.SizeTooLargeForSingleModeMsg),
+                BoardSettings.MaxSizeForSingle, ErrorMessages.SizeTooLargeForSingle),
 
             SolutionMode.Unique => (
-                BoardSettings.MaxSizeForUniqueMode, ErrorMessages.SizeTooLargeForUniqueModeMsg),
+                BoardSettings.MaxSizeForUnique, ErrorMessages.SizeTooLargeForUnique),
 
-            SolutionMode.All => (BoardSettings.MaxSizeForAllMode, ErrorMessages.SizeTooLargeForAllModeMsg),
+            SolutionMode.All => (BoardSettings.MaxSizeForAll, ErrorMessages.SizeTooLargeForAll),
                 _ => throw new ArgumentOutOfRangeException(nameof(solutionMode))
         };
 }

@@ -9,7 +9,7 @@ public static class BoardSettings
     public const int SmallSizeForUniqueMode = 10;
     public const int MediumSizeForUniqueMode = 15;
 
-    public const int MaxSizeForSingleMode = 37;
-    public const int MaxSizeForUniqueMode = 17;
-    public const int MaxSizeForAllMode = 17;
+    public const int MaxSizeForSingle = 37;
+    public const int MaxSizeForUnique = 17;
+    public const int MaxSizeForAll = 17;
 }
