@@ -28,8 +28,8 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
             Debug.WriteLine($"Validation Error: {error.PropertyName} - {error.ErrorMessage}");
         }
 
-        // Collect all errors, regardless of property name
         var propertyErrors = validationResults.Errors
+            .Where(error => error.PropertyName == nameof(BoardSizeText))
             .Select(error => error.ErrorMessage)
             .ToList();
 
@@ -37,16 +37,12 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         {
             _errors[propertyName] = propertyErrors;
             Debug.WriteLine($"Errors for {propertyName}: {string.Join(", ", propertyErrors)}");
+            OnErrorsChanged(propertyName);
         }
-
-        OnErrorsChanged(propertyName);
     }
 
-    private void OnErrorsChanged(string propertyName)
-    {
+    private void OnErrorsChanged(string propertyName) =>
         ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
-        Application.Current.Dispatcher.Invoke(RefreshCommandStates);
-    }
 
     partial void OnBoardSizeTextChanged(string value)
     {
@@ -83,7 +79,6 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
         // Update InputViewModel with new SolutionMode
         InputViewModel = new InputViewModel(value);
-        OnPropertyChanged(nameof(InputViewModel));
 
         var maxNoOfSols = SimulationSettings.MaxNoOfSolutionsInOutput;
         SolutionTitle = (value == SolutionMode.All)

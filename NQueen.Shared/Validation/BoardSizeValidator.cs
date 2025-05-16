@@ -9,16 +9,20 @@ public class BoardSizeValidator : AbstractValidator<string>
         RuleFor(bst => bst)
             .Cascade(CascadeMode.Stop)
             .NotNull().NotEmpty()
+            .WithName("BoardSizeText")
             .WithMessage(ErrorMessages.ValueNullOrWhiteSpaceMsg)
             .Must(bst => ParsingUtils.TryParseInt(bst, out _))
+            .WithName("BoardSizeText")
             .WithMessage(ErrorMessages.InvalidIntegerError);
 
         RuleFor(bst => bst)
             .Must(bst => ParsingUtils.ParseIntOrThrow(bst) >= BoardSettings.MinSize)
+            .WithName("BoardSizeText")
             .WithMessage(ErrorMessages.SizeTooSmallMsg);
 
         RuleFor(bst => bst)
             .Must(bst => ParsingUtils.ParseIntOrThrow(bst) <= maxSize)
+            .WithName("BoardSizeText")
             .WithMessage(errorMsg);
     }
 

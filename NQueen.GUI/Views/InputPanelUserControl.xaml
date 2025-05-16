@@ -51,7 +51,8 @@
                 Margin="5,2"
                 IsEnabled="{Binding IsInInputMode}"
                 Style="{StaticResource TextBoxNumericalStyle}"
-                Text="{Binding BoardSizeText, UpdateSourceTrigger=LostFocus, Mode=TwoWay, ValidatesOnDataErrors=True, ValidatesOnExceptions=True}" />
+                Text="{Binding BoardSizeText, UpdateSourceTrigger=LostFocus, Mode=TwoWay, ValidatesOnDataErrors=True, ValidatesOnExceptions=True}"
+                Validation.ErrorTemplate="{StaticResource ValidationErrorTemplate}" />
 
             <Label
                 Grid.Row="1"
