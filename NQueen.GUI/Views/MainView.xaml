@@ -38,7 +38,7 @@
         <view:SolutionListUserControl
             Grid.Row="1"
             Grid.Column="0"
-            Width="Auto"
+            Width="150"
             Margin="5" />
 
         <ContentControl
