@@ -7,7 +7,6 @@ public class BoardSizeValidator : AbstractValidator<string>
         (int maxSize, string errorMsg) = GetMaxSizeAndErrorMsg(solutionMode);
 
         RuleFor(bst => bst)
-            .Cascade(CascadeMode.Stop)
             .NotNull().NotEmpty()
             .WithName("BoardSizeText")
             .WithMessage(ErrorMessages.ValueNullOrWhiteSpaceMsg)
@@ -16,12 +15,12 @@ public class BoardSizeValidator : AbstractValidator<string>
             .WithMessage(ErrorMessages.InvalidIntegerError);
 
         RuleFor(bst => bst)
-            .Must(bst => ParsingUtils.ParseIntOrThrow(bst) >= BoardSettings.MinSize)
+            .Must(bst => ParsingUtils.TryParseInt(bst, out var v) && v >= BoardSettings.MinSize)
             .WithName("BoardSizeText")
             .WithMessage(ErrorMessages.SizeTooSmallMsg);
 
         RuleFor(bst => bst)
-            .Must(bst => ParsingUtils.ParseIntOrThrow(bst) <= maxSize)
+            .Must(bst => ParsingUtils.TryParseInt(bst, out var v) && v <= maxSize)
             .WithName("BoardSizeText")
             .WithMessage(errorMsg);
     }

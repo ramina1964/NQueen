@@ -52,14 +52,10 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         // Update IsValid state
         IsValid = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
 
-        if (IsValid == false)
+        if (IsValid)
         {
-            IsIdle = false;
-            IsSimulating = false;
-            IsOutputReady = false;
-        }
-        else
-        {
+            _lastValidBoardSize = ParsingUtils.ParseIntOrThrow(value);
+
             // Notify that BoardSize has changed
             OnPropertyChanged(nameof(BoardSize));
             IsIdle = true;
@@ -67,6 +63,12 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
             // Update the chessboard
             var boardDimension = Math.Min(ChessboardVm.WindowWidth, ChessboardVm.WindowHeight);
             SetChessboard(boardDimension);
+        }
+        else
+        {
+            IsIdle = false;
+            IsSimulating = false;
+            IsOutputReady = false;
         }
 
         RefreshCommandStates();

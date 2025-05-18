@@ -2,6 +2,16 @@
 
 public sealed partial class MainViewModel : ObservableObject
 {
+    [ObservableProperty]
+    private string _boardSizeText = string.Empty;
+
+    private int _lastValidBoardSize = BoardSettings.DefaultBoardSize;
+
+    public int BoardSize =>
+        ParsingUtils.TryParseInt(BoardSizeText, out var boardSize)
+        ? boardSize
+        : _lastValidBoardSize;
+
     private InputViewModel InputViewModel { get; set; }
 
     [ObservableProperty]
@@ -94,14 +104,6 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(BoardSizeText));
         UpdateUiState();
     }
-
-    [ObservableProperty]
-    private string _boardSizeText = string.Empty;
-
-    public int? BoardSize =>
-        ParsingUtils.TryParseInt(BoardSizeText, out var value)
-        ? value
-        : null;
 
     [ObservableProperty]
     private bool _isValid = false;
