@@ -98,8 +98,10 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _boardSizeText = string.Empty;
 
-    // A computed property that parses the board size from the text input.
-    public int BoardSize => ParsingUtils.ParseIntOrThrow(BoardSizeText);
+    public int? BoardSize =>
+        ParsingUtils.TryParseInt(BoardSizeText, out var value)
+        ? value
+        : null;
 
     [ObservableProperty]
     private bool _isValid = false;
@@ -120,8 +122,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     public void SetChessboard(double boardDimension)
     {
-        // Set the chessboard size, throw an exception if invalid.
-        var boardSize = ParsingUtils.ParseIntOrThrow(BoardSizeText);
+        if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) == false)
+            return;
 
         ChessboardVm.WindowWidth = boardDimension;
         ChessboardVm.WindowHeight = boardDimension;

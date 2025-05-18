@@ -14,6 +14,9 @@ public sealed partial class MainViewModel
 
     private void Save()
     {
+        if (ParsingUtils.TryParseInt(BoardSizeText, out var _) == false)
+            return;
+
         // Use the save file dialog service to get the file path
         var filePath = _saveFileService.ShowSaveFileDialog();
         if (string.IsNullOrEmpty(filePath))
@@ -39,7 +42,7 @@ public sealed partial class MainViewModel
         }
     }
 
-    private bool CanSimulate() => IsIdle && IsValid;
+    private bool CanSimulate() => IsValid && HasErrors == false;
 
     private bool CanCancel() => IsSimulating;
 
@@ -103,6 +106,9 @@ public sealed partial class MainViewModel
 
     private string GenerateSaveContent()
     {
+        if (ParsingUtils.TryParseInt(BoardSizeText, out var _) == false)
+            return string.Empty;
+
         // Generate the content to save (e.g., solutions, settings, etc.)
         StringBuilder sb = new();
 

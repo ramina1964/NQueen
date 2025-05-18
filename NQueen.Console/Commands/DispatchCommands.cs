@@ -188,8 +188,8 @@ public partial class DispatchCommands(
     public bool CheckBoardSize(string boardSizeText)
     {
         var inputViewModel = new BoardSizeValidator(SolutionMode);
-        var isValidBoardSize = inputViewModel.Validate(boardSizeText).IsValid;
-        if (isValidBoardSize == false)
+        var isValid = inputViewModel.Validate(boardSizeText).IsValid;
+        if (isValid == false)
         {
             HelpCommands.ShowExitError(CommandConst.InvalidBoardSize);
             return false;

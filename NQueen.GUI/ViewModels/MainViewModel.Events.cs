@@ -10,8 +10,9 @@ public sealed partial class MainViewModel
     private void OnQueenPlaced(QueenPlacedMessage message)
     {
         // Set the chessboard size, throw an exception if invalid.
-        var boardSize = ParsingUtils.ParseIntOrThrow(BoardSizeText);
-
+        if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) == false)
+            return;
+        
         var positions = message.Solution
             .Take(boardSize)
             .Select((queenPosition, rowIndex) => new Position(rowIndex, queenPosition))
