@@ -1,6 +1,4 @@
-﻿using NQueen.Shared.Enums;
-
-namespace NQueen.ViewModelTests.Tests.Solver;
+﻿namespace NQueen.ViewModelTests.Tests.Solver;
 
 public class SolverTests
 {

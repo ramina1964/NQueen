@@ -1,6 +1,4 @@
-﻿using NQueen.Shared.Enums;
-
-namespace NQueen.ViewModelTests.Tests.Commands;
+﻿namespace NQueen.ViewModelTests.Tests.Commands;
 
 public class CommandManagerPositiveTests : IDisposable
 {
