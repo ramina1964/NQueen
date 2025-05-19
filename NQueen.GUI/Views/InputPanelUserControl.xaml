@@ -51,8 +51,11 @@
                 Margin="5,2"
                 IsEnabled="{Binding IsInInputMode}"
                 Style="{StaticResource TextBoxNumericalStyle}"
-                Text="{Binding BoardSizeText, UpdateSourceTrigger=LostFocus, Mode=TwoWay, ValidatesOnDataErrors=True}" />
-
+                Text="{Binding BoardSizeText, UpdateSourceTrigger=LostFocus, Mode=TwoWay, ValidatesOnDataErrors=True}">
+                <TextBox.ToolTip>
+                    <Binding Path="(Validation.Errors)" RelativeSource="{RelativeSource Self}" Converter="{StaticResource FirstValidationErrorConverter}" />
+                </TextBox.ToolTip>
+            </TextBox>
             <Label
                 Grid.Row="1"
                 Grid.Column="0"

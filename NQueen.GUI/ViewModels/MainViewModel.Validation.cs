@@ -46,31 +46,17 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
     partial void OnBoardSizeTextChanged(string value)
     {
-        // Trigger validation
+        if (Solver == null)
+            return;
+
         ValidateProperty(nameof(BoardSizeText));
-
-        // Update IsValid state
-        IsValid = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
-
-        if (IsValid)
+        if (ValidateAndSetUiState())
         {
             _lastValidBoardSize = ParsingUtils.ParseIntOrThrow(value);
-
-            // Notify that BoardSize has changed
             OnPropertyChanged(nameof(BoardSize));
-            IsIdle = true;
-
-            // Update the chessboard
             var boardDimension = Math.Min(ChessboardVm.WindowWidth, ChessboardVm.WindowHeight);
             SetChessboard(boardDimension);
         }
-        else
-        {
-            IsIdle = false;
-            IsSimulating = false;
-            IsOutputReady = false;
-        }
-
         RefreshCommandStates();
     }
 
@@ -79,7 +65,6 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         if (Solver == null)
             return;
 
-        // Update InputViewModel with new SolutionMode
         InputViewModel = new InputViewModel(value);
 
         var maxNoOfSols = SimulationSettings.MaxNoOfSolutionsInOutput;
@@ -88,26 +73,34 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
             : (value == SolutionMode.Unique) ? $"Unique Sols. (Max: {maxNoOfSols})"
             : "Single Solution";
 
-        // Trigger validation for BoardSizeText
         ValidateProperty(nameof(BoardSizeText));
-
-        // Notify UI of changes
         OnPropertyChanged(nameof(BoardSizeText));
         OnPropertyChanged(nameof(SolutionTitle));
 
-        // Update IsValid state
-        IsValid = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
+        if (!ValidateAndSetUiState())
+            return;
 
-        if (IsValid == false)
+        UpdateUiState();
+    }
+
+    private bool ValidateAndSetUiState(bool updateOutputReady = true)
+    {
+        IsValid = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
+        if (!IsValid)
         {
             IsIdle = false;
             IsSimulating = false;
-            IsOutputReady = false;
-            return;
+            if (updateOutputReady)
+                IsOutputReady = false;
+            return false;
         }
 
         IsIdle = true;
         IsSimulating = false;
-        UpdateUiState();
+        
+        if (updateOutputReady)
+            IsOutputReady = false;
+
+        return true;
     }
 }

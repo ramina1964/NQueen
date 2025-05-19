@@ -89,18 +89,9 @@ public sealed partial class MainViewModel : ObservableObject
         if (Solver == null)
             return;
 
-        IsValid = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
-        if (IsValid == false)
-        {
-            IsIdle = false;
-            IsSimulating = false;
-            IsOutputReady = false;
+        if (ValidateAndSetUiState() == false)
             return;
-        }
 
-        IsIdle = true;
-        IsSimulating = false;
-        IsOutputReady = false;
         OnPropertyChanged(nameof(BoardSizeText));
         UpdateUiState();
     }
@@ -113,7 +104,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ResultTitle))]
-    private string _noOfSolutions ="0";
+    private string _noOfSolutions = "0";
 
     [ObservableProperty]
     private string _memoryUsage = "0";
