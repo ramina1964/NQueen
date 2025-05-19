@@ -3,12 +3,13 @@
 public class MainViewModelValidationTests
 {
     [Theory]
-    [InlineData("8", true)]
-    [InlineData("0", false)]
-    [InlineData("-1", false)]
-    [InlineData("abc", false)]
-    [InlineData("", false)]
-    public void BoardSizeText_Validation_ShouldReportErrors(string input, bool isValid)
+    [InlineData("8", true, null)]
+    [InlineData("0", false, nameof(ErrorMessages.SizeTooSmallMsg))]
+    [InlineData("-1", false, nameof(ErrorMessages.SizeTooSmallMsg))]
+    [InlineData("abc", false, nameof(ErrorMessages.InvalidIntegerError))]
+    [InlineData("", false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
+    public void BoardSizeText_Validation_ShouldReportErrors(string input, bool isValid,
+        string? expectedErrorKey)
     {
         var mainVm = TestHelpers.CreateMainViewModel();
         mainVm.BoardSizeText = input;
@@ -24,6 +25,19 @@ public class MainViewModelValidationTests
         {
             errors.Should().NotBeEmpty();
             mainVm.HasErrors.Should().BeTrue();
+
+            // Check the error message if expectedErrorKey is provided
+            if (expectedErrorKey != null)
+            {
+                var expectedError = expectedErrorKey switch
+                {
+                    nameof(ErrorMessages.SizeTooSmallMsg) => ErrorMessages.SizeTooSmallMsg,
+                    nameof(ErrorMessages.InvalidIntegerError) => ErrorMessages.InvalidIntegerError,
+                    nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg) => ErrorMessages.ValueNullOrWhiteSpaceMsg,
+                    _ => null
+                };
+                errors.Should().Contain(expectedError);
+            }
         }
     }
 
