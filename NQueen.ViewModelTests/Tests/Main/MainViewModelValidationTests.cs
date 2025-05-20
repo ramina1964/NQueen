@@ -14,16 +14,23 @@ public class MainViewModelValidationTests
     [InlineData("abc", false, nameof(ErrorMessages.InvalidIntegerError))]
     [InlineData("1", true, null)]
     [InlineData("8", true, null)]
+    [InlineData("17", true, null)]
     [InlineData("18", true, null)]
     [InlineData("37", true, null)]
     public void BoardSizeText_Validation_ShouldHandleAllCases_ForSingleMode(
         string? boardSizeText, bool isValid, string? expectedErrorKey)
     {
+        // Arrange
         var mainVm = TestHelpers.CreateMainViewModel();
         mainVm.BoardSizeText = boardSizeText!;
 
-        var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
+        // Act
+        var errors = mainVm
+            .GetErrors(nameof(mainVm.BoardSizeText))
+            .Cast<string>()
+            .ToList();
 
+        // Assert
         if (isValid)
         {
             errors.Should().BeEmpty();
@@ -55,14 +62,19 @@ public class MainViewModelValidationTests
     [InlineData("17", SolutionMode.Unique)]
     [InlineData("17", SolutionMode.All)]
     public void BoardSizeText_Validation_ShouldReportValidCases_WhenValid(
-    string boardSizeText, SolutionMode solutionMode)
+        string boardSizeText, SolutionMode solutionMode)
     {
+        // Arrange
         var mainVm = TestHelpers.CreateMainViewModel();
         mainVm.SolutionMode = solutionMode;
         mainVm.BoardSizeText = boardSizeText;
 
-        var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
+        // Act
+        var errors = mainVm
+            .GetErrors(nameof(mainVm.BoardSizeText))
+            .Cast<string>().ToList();
 
+        // Assert
         errors.Should().BeEmpty();
         mainVm.HasErrors.Should().BeFalse();
     }
@@ -76,12 +88,15 @@ public class MainViewModelValidationTests
     public void BoardSizeText_Validation_ShouldReportLargeValues_BySolutionMode(
         string boardSizeText, SolutionMode solutionMode, bool isValid, string? expectedErrorKey)
     {
+        // Arrange
         var mainVm = TestHelpers.CreateMainViewModel();
         mainVm.SolutionMode = solutionMode;
         mainVm.BoardSizeText = boardSizeText;
 
+        // Act
         var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
 
+        // Assert
         if (isValid)
         {
             errors.Should().BeEmpty();
@@ -111,13 +126,16 @@ public class MainViewModelValidationTests
     public void BoardSizeText_Validation_ShouldRespectSolutionModeLimits(string originalBoardSize,
         string finalBoardSize, SolutionMode originalSolutionMode, SolutionMode finalSolutionMode)
     {
+        // Arrange
         var mainVm = TestHelpers.CreateMainViewModel();
         mainVm.SolutionMode = originalSolutionMode;
         mainVm.BoardSizeText = originalBoardSize;
 
+        // Act
         var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
-        errors.Should().Contain(ErrorMessages.SizeTooLargeForUnique);
 
+        // Assert
+        errors.Should().Contain(ErrorMessages.SizeTooLargeForUnique);
         mainVm.SolutionMode = finalSolutionMode;
         mainVm.BoardSizeText = finalBoardSize;
         errors = [.. mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>()];
@@ -127,11 +145,15 @@ public class MainViewModelValidationTests
     [Fact]
     public void ValidationError_ShouldClear_WhenInputBecomesValid()
     {
+        // Arrange
         var mainVm = TestHelpers.CreateMainViewModel();
         mainVm.BoardSizeText = "abc";
-        var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
-        errors.Should().NotBeEmpty();
 
+        // Act
+        var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
+
+        // Assert
+        errors.Should().NotBeEmpty();
         mainVm.BoardSizeText = "8";
         errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
         errors.Should().BeEmpty();
