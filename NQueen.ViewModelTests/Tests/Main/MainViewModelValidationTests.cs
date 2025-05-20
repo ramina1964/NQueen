@@ -3,16 +3,18 @@
 public class MainViewModelValidationTests
 {
     [Theory]
+    [InlineData("   ", false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
+    [InlineData(null, false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
     [InlineData("8", true, null)]
     [InlineData("0", false, nameof(ErrorMessages.SizeTooSmallMsg))]
     [InlineData("-1", false, nameof(ErrorMessages.SizeTooSmallMsg))]
     [InlineData("abc", false, nameof(ErrorMessages.InvalidIntegerError))]
     [InlineData("", false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
-    public void BoardSizeText_Validation_ShouldReportErrors(string input, bool isValid,
+    public void BoardSizeText_Validation_ShouldReportErrors(string? boardSizeText, bool isValid,
         string? expectedErrorKey)
     {
         var mainVm = TestHelpers.CreateMainViewModel();
-        mainVm.BoardSizeText = input;
+        mainVm.BoardSizeText = boardSizeText!;
 
         var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
 

@@ -16,12 +16,13 @@ public class MainViewModelNegativeTests
     [InlineData(18, SolutionMode.All)]
     [InlineData(6.5, SolutionMode.All)]
     [InlineData(8, (SolutionMode)999)]
-    public async Task Solver_ShouldThrowExceptionForInvalidInputs(int boardSize, SolutionMode solutionMode)
+    public async Task Solver_ShouldThrowExceptionForInvalidInputs(
+        int boardSize, SolutionMode solutionMode)
     {
         // Arrange
         var solver = new Mock<ISolver>();
         solver.Setup(s => s.GetResultsAsync(boardSize, solutionMode, DisplayMode.Visualize))
-              .ThrowsAsync(new ArgumentException("Invalid input"));
+            .ThrowsAsync(new ArgumentException("Invalid input"));
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(async () =>
