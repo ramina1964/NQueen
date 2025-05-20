@@ -15,8 +15,8 @@ public class MainViewModelValidationTests
     [InlineData("18", true, null)]
     [InlineData("8.0", false, nameof(ErrorMessages.InvalidIntegerError))]
     [InlineData("4,5", false, nameof(ErrorMessages.InvalidIntegerError))]
-    public void BoardSizeText_Validation_ShouldReportErrors(string? boardSizeText, bool isValid,
-        string? expectedErrorKey)
+    public void BoardSizeText_Validation_ShouldReportErrors(string? boardSizeText,
+        bool isValid, string? expectedErrorKey)
     {
         var mainVm = TestHelpers.CreateMainViewModel();
         mainVm.BoardSizeText = boardSizeText!;
@@ -87,18 +87,20 @@ public class MainViewModelValidationTests
         }
     }
 
-    [Fact]
-    public void BoardSizeText_Validation_ShouldRespectSolutionModeLimits()
+    [Theory]
+    [InlineData("21", "18", SolutionMode.Unique, SolutionMode.All)]
+    public void BoardSizeText_Validation_ShouldRespectSolutionModeLimits(string originalBoardSize,
+        string finalBoardSize, SolutionMode originalSolutionMode, SolutionMode finalSolutionMode)
     {
         var mainVm = TestHelpers.CreateMainViewModel();
-        mainVm.SolutionMode = SolutionMode.Unique;
-        mainVm.BoardSizeText = "21";
+        mainVm.SolutionMode = originalSolutionMode;
+        mainVm.BoardSizeText = originalBoardSize;
 
         var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
         errors.Should().Contain(ErrorMessages.SizeTooLargeForUnique);
 
-        mainVm.SolutionMode = SolutionMode.All;
-        mainVm.BoardSizeText = "18";
+        mainVm.SolutionMode = finalSolutionMode;
+        mainVm.BoardSizeText = finalBoardSize;
         errors = [.. mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>()];
         errors.Should().Contain(ErrorMessages.SizeTooLargeForAll);
     }
