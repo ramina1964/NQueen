@@ -3,20 +3,21 @@
 public class MainViewModelValidationTests
 {
     [Theory]
-    [InlineData("   ", false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
     [InlineData(null, false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
-    [InlineData("8", true, null)]
+    [InlineData("   ", false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
+    [InlineData("       ", false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
+    [InlineData("", false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
     [InlineData("0", false, nameof(ErrorMessages.SizeTooSmallMsg))]
     [InlineData("-1", false, nameof(ErrorMessages.SizeTooSmallMsg))]
-    [InlineData("abc", false, nameof(ErrorMessages.InvalidIntegerError))]
-    [InlineData("", false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
-    [InlineData("1", true, null)]
-    [InlineData("17", true, null)]
-    [InlineData("18", true, null)]
     [InlineData("8.0", false, nameof(ErrorMessages.InvalidIntegerError))]
     [InlineData("4,5", false, nameof(ErrorMessages.InvalidIntegerError))]
-    public void BoardSizeText_Validation_ShouldReportErrors(string? boardSizeText,
-        bool isValid, string? expectedErrorKey)
+    [InlineData("abc", false, nameof(ErrorMessages.InvalidIntegerError))]
+    [InlineData("1", true, null)]
+    [InlineData("8", true, null)]
+    [InlineData("18", true, null)]
+    [InlineData("37", true, null)]
+    public void BoardSizeText_Validation_ShouldHandleAllCases_ForSingleMode(
+        string? boardSizeText, bool isValid, string? expectedErrorKey)
     {
         var mainVm = TestHelpers.CreateMainViewModel();
         mainVm.BoardSizeText = boardSizeText!;
@@ -46,6 +47,24 @@ public class MainViewModelValidationTests
                 errors.Should().Contain(expectedError);
             }
         }
+    }
+
+    [Theory]
+    [InlineData("1", SolutionMode.Single)]
+    [InlineData("37", SolutionMode.Single)]
+    [InlineData("17", SolutionMode.Unique)]
+    [InlineData("17", SolutionMode.All)]
+    public void BoardSizeText_Validation_ShouldReportValidCases_WhenValid(
+    string boardSizeText, SolutionMode solutionMode)
+    {
+        var mainVm = TestHelpers.CreateMainViewModel();
+        mainVm.SolutionMode = solutionMode;
+        mainVm.BoardSizeText = boardSizeText;
+
+        var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
+
+        errors.Should().BeEmpty();
+        mainVm.HasErrors.Should().BeFalse();
     }
 
     [Theory]

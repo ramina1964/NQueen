@@ -1,6 +1,4 @@
-﻿using NQueen.Shared.Enums;
-
-namespace NQueen.UnitTests.Setup;
+﻿namespace NQueen.UnitTests.Setup;
 
 public static class NQueenTestData
 {
