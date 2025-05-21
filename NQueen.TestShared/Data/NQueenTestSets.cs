@@ -2,6 +2,35 @@
 
 public static class NQueenTestSets
 {
+    public static TheoryData<string, SolutionMode, bool, string> LargeValueCases =>
+        new()
+        {
+            { "1000", SolutionMode.Single, false, nameof(ErrorMessages.SizeTooLargeForSingle) },
+            { "1000", SolutionMode.Unique, false, nameof(ErrorMessages.SizeTooLargeForUnique) },
+            { "1000", SolutionMode.All, false, nameof(ErrorMessages.SizeTooLargeForAll) },
+            { "18", SolutionMode.Unique, false, nameof(ErrorMessages.SizeTooLargeForUnique) },
+            { "18", SolutionMode.All, false, nameof(ErrorMessages.SizeTooLargeForAll) }
+        };
+
+    public static TheoryData<string, bool, string> SingleDataModeHandling =>
+        new()
+        {
+            { null!, false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg) },
+            { "   ", false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg) },
+            { "       ", false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg) },
+            { "", false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg) },
+            { "0", false, nameof(ErrorMessages.SizeTooSmallMsg) },
+            { "-1", false, nameof(ErrorMessages.SizeTooSmallMsg) },
+            { "8.0", false, nameof(ErrorMessages.InvalidIntegerError) },
+            { "4,5", false, nameof(ErrorMessages.InvalidIntegerError) },
+            { "abc", false, nameof(ErrorMessages.InvalidIntegerError) },
+            { "1", true, null! },
+            { "8", true, null! },
+            { "17", true, null! },
+            { "18", true, null! },
+            { "37", true, null! },
+        };  
+
     public static TheoryData<int, SolutionMode> SolverShouldNotGenerateAnySolutionData =>
         new()
         {

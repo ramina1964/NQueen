@@ -3,20 +3,8 @@
 public class MainViewModelValidationTests
 {
     [Theory]
-    [InlineData(null, false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
-    [InlineData("   ", false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
-    [InlineData("       ", false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
-    [InlineData("", false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
-    [InlineData("0", false, nameof(ErrorMessages.SizeTooSmallMsg))]
-    [InlineData("-1", false, nameof(ErrorMessages.SizeTooSmallMsg))]
-    [InlineData("8.0", false, nameof(ErrorMessages.InvalidIntegerError))]
-    [InlineData("4,5", false, nameof(ErrorMessages.InvalidIntegerError))]
-    [InlineData("abc", false, nameof(ErrorMessages.InvalidIntegerError))]
-    [InlineData("1", true, null)]
-    [InlineData("8", true, null)]
-    [InlineData("17", true, null)]
-    [InlineData("18", true, null)]
-    [InlineData("37", true, null)]
+    [MemberData(nameof(NQueenTestSets.SingleDataModeHandling),
+        MemberType = typeof(NQueenTestSets))]
     public void BoardSizeText_Validation_ShouldHandleAllCases_ForSingleMode(
         string? boardSizeText, bool isValid, string? expectedErrorKey)
     {
@@ -80,11 +68,8 @@ public class MainViewModelValidationTests
     }
 
     [Theory]
-    [InlineData("1000", SolutionMode.Single, false, nameof(ErrorMessages.SizeTooLargeForSingle))]
-    [InlineData("1000", SolutionMode.Unique, false, nameof(ErrorMessages.SizeTooLargeForUnique))]
-    [InlineData("1000", SolutionMode.All, false, nameof(ErrorMessages.SizeTooLargeForAll))]
-    [InlineData("18", SolutionMode.Unique, false, nameof(ErrorMessages.SizeTooLargeForUnique))]
-    [InlineData("18", SolutionMode.All, false, nameof(ErrorMessages.SizeTooLargeForAll))]
+    [MemberData(nameof(NQueenTestSets.LargeValueCases),
+        MemberType = typeof(NQueenTestSets))]
     public void BoardSizeText_Validation_ShouldReportLargeValues_BySolutionMode(
         string boardSizeText, SolutionMode solutionMode, bool isValid, string? expectedErrorKey)
     {
