@@ -1,5 +1,3 @@
-using NQueen.TestShared.Data;
-
 namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 public class NQueenSolverPositiveTests : IDisposable
@@ -22,7 +20,7 @@ public class NQueenSolverPositiveTests : IDisposable
     {
         // Arrange
         var expectedSolutions = NQueenTestBase.FetchExpectedSols(boardSize, solutionMode);
-        Assert.Single(expectedSolutions); // Ensure there is exactly one expected solution
+        Assert.Single(expectedSolutions);
 
         // Act
         var actualSolutions = await _solverBackEnd.GetResultsAsync(boardSize, solutionMode);

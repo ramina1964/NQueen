@@ -61,5 +61,19 @@ public static class NQueenTestSets
             {7, SolutionMode.All},
             {8, SolutionMode.All}
         };
-}
 
+    public static TheoryData<int, SolutionMode> InvalidInputs =>
+        new()
+        {
+            {-1, SolutionMode.Single },
+            {0, SolutionMode.Single },
+            {38, SolutionMode.Single },
+            {-1, SolutionMode.Unique },
+            {0, SolutionMode.Unique},
+            {18, SolutionMode.Unique },
+            {-1, SolutionMode.All },
+            {0, SolutionMode.All},
+            {18, SolutionMode.All},
+            {8, (SolutionMode)999 },
+        };
+}
