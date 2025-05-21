@@ -75,15 +75,7 @@ public class MainViewModelPositiveTests : IDisposable
     }
 
     [Theory]
-    [InlineData(4, SolutionMode.Single)]
-    [InlineData(4, SolutionMode.Unique)]
-    [InlineData(4, SolutionMode.All)]
-    [InlineData(8, SolutionMode.Single)]
-    [InlineData(8, SolutionMode.Unique)]
-    [InlineData(8, SolutionMode.All)]
-    [InlineData(12, SolutionMode.Single)]
-    [InlineData(12, SolutionMode.Unique)]
-    [InlineData(12, SolutionMode.All)]
+    [MemberData(nameof(NQueenTestSets.SmallValueCases), MemberType = typeof(NQueenTestSets))]
     public void Save_ShouldProcessSimulationResults(
         int boardSize, SolutionMode solutionMode)
     {

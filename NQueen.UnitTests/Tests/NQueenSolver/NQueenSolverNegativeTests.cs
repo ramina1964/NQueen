@@ -1,6 +1,4 @@
-﻿using NQueen.TestShared.Data;
-
-namespace NQueen.UnitTests.Tests.NQueenSolver;
+﻿namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 public class NQueenSolverNegativeTests : IDisposable
 {

@@ -12,6 +12,20 @@ public static class NQueenTestSets
             { "18", SolutionMode.All, false, nameof(ErrorMessages.SizeTooLargeForAll) }
         };
 
+    public static TheoryData<int, SolutionMode> SmallValueCases =>
+        new()
+        {
+            { 4, SolutionMode.Single},
+            { 4, SolutionMode.Unique},
+            { 4, SolutionMode.All},
+            { 8, SolutionMode.Single},
+            { 8, SolutionMode.Unique},
+            { 8, SolutionMode.All},
+            { 12, SolutionMode.Single},
+            { 12, SolutionMode.Unique},
+            { 12, SolutionMode.All},
+        };
+
     public static TheoryData<string, bool, string> SingleDataModeHandling =>
         new()
         {
