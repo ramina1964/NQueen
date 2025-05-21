@@ -1,3 +1,5 @@
+using NQueen.TestShared.Data;
+
 namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 public class NQueenSolverPositiveTests : IDisposable
@@ -13,8 +15,8 @@ public class NQueenSolverPositiveTests : IDisposable
     }
 
     [Theory]
-    [MemberData(nameof(NQueenTestData.SolverShouldGenerateOneSingleSolutionData),
-        MemberType = typeof(NQueenTestData))]
+    [MemberData(nameof(NQueenTestSets.SolverShouldGenerateOneSingleSolutionData),
+        MemberType = typeof(NQueenTestSets))]
     public async Task SolverShouldGenerateOneSingleSolution(
         int boardSize, SolutionMode solutionMode)
     {
@@ -34,8 +36,8 @@ public class NQueenSolverPositiveTests : IDisposable
     }
 
     [Theory]
-    [MemberData(nameof(NQueenTestData.SolverShouldGenerateCorrectListOfUniqueSolutions),
-        MemberType = typeof(NQueenTestData))]
+    [MemberData(nameof(NQueenTestSets.SolverShouldGenerateCorrectListOfUniqueSolutions),
+        MemberType = typeof(NQueenTestSets))]
     public async Task SolverShouldGenerateCorrectListOfUniqueSolutions(
         int boardSize, SolutionMode solutionMode)
     {
@@ -56,8 +58,8 @@ public class NQueenSolverPositiveTests : IDisposable
     }
 
     [Theory]
-    [MemberData(nameof(NQueenTestData.SolverShouldGenerateCorrectListOfAllSolutionsData),
-        MemberType = typeof(NQueenTestData))]
+    [MemberData(nameof(NQueenTestSets.SolverShouldGenerateCorrectListOfAllSolutionsData),
+        MemberType = typeof(NQueenTestSets))]
     public async Task SolverShouldGenerateCorrectListOfAllSolutions(
         int boardSize, SolutionMode solutionMode)
     {

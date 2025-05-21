@@ -1,6 +1,6 @@
-﻿namespace NQueen.TestShared.TestData;
+﻿namespace NQueen.TestShared.Data;
 
-public static class NQueenTestData
+public static class NQueenTestSets
 {
     public static TheoryData<int, SolutionMode> SolverShouldNotGenerateAnySolutionData =>
         new()

@@ -1,4 +1,6 @@
-﻿namespace NQueen.UnitTests.Tests.NQueenSolver;
+﻿using NQueen.TestShared.Data;
+
+namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 public class NQueenSolverNegativeTests : IDisposable
 {
@@ -14,8 +16,8 @@ public class NQueenSolverNegativeTests : IDisposable
     }
 
     [Theory]
-    [MemberData(nameof(NQueenTestData.SolverShouldNotGenerateAnySolutionData),
-        MemberType = typeof(NQueenTestData))]
+    [MemberData(nameof(NQueenTestSets.SolverShouldNotGenerateAnySolutionData),
+        MemberType = typeof(NQueenTestSets))]
     public async Task SolverShouldNotGenerateAnySolution(int boardSize, SolutionMode solutionMode)
     {
         // Arrange
