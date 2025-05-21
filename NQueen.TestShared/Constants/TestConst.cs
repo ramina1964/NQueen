@@ -1,4 +1,4 @@
-﻿namespace NQueen.ViewModelTests.Setup;
+﻿namespace NQueen.TestShared.Constants;
 
 public static class TestConst
 {

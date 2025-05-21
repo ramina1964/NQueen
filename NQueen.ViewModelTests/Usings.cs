@@ -10,6 +10,7 @@ global using NQueen.Kernel.Services;
 global using NQueen.Kernel.Solvers;
 global using NQueen.Shared.Enums;
 global using NQueen.Shared.Utils;
+global using NQueen.TestShared.Constants;
 global using NQueen.ViewModelTests.Helpers;
 global using NQueen.ViewModelTests.Setup;
 global using System.Windows.Threading;

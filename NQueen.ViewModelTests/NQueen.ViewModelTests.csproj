@@ -31,6 +31,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\NQueen.GUI\NQueen.GUI.csproj" />
+    <ProjectReference Include="..\NQueen.TestShared\NQueen.TestShared.csproj" />
   </ItemGroup>
 
   <ItemGroup>
