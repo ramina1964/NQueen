@@ -1,5 +1,3 @@
-using NQueen.Shared.Enums;
-
 namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 public class NQueenSolverPositiveTests : IDisposable

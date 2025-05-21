@@ -1,4 +1,4 @@
-﻿namespace NQueen.UnitTests.Setup;
+﻿namespace NQueen.TestShared.TestData;
 
 public static class NQueenTestData
 {

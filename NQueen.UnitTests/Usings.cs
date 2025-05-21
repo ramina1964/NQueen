@@ -5,6 +5,7 @@ global using NQueen.Kernel.Models;
 global using NQueen.Kernel.Services;
 global using NQueen.Kernel.Solvers;
 global using NQueen.Shared.Enums;
+global using NQueen.TestShared.TestData;
 global using NQueen.UnitTests.Base;
 global using NQueen.UnitTests.Setup;
 global using System;
@@ -12,3 +13,4 @@ global using System.Collections.Generic;
 global using System.Linq;
 global using System.Threading.Tasks;
 global using Xunit;
+
