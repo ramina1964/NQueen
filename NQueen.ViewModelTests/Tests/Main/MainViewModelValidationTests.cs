@@ -144,4 +144,56 @@ public class MainViewModelValidationTests
         errors.Should().BeEmpty();
         mainVm.HasErrors.Should().BeFalse();
     }
+
+    [Theory]
+    [InlineData("18", SolutionMode.All, SolutionMode.Single, 18)] 
+    [InlineData("21", SolutionMode.Unique, SolutionMode.Single, 21)]
+    [InlineData("17", SolutionMode.All, SolutionMode.Unique, 17)]
+    public void Chessboard_Updates_WhenSwitchingToValidMode(string boardSizeText,
+        SolutionMode invalidMode, SolutionMode validMode, int expectedBoardSize)
+    {
+        // Arrange
+        var mainVm = TestHelpers.CreateMainViewModel();
+        mainVm.SolutionMode = invalidMode;
+        mainVm.BoardSizeText = boardSizeText;
+
+        // Act: Should be invalid, so chessboard should not update to expected size
+        var initialSquaresCount = mainVm.ChessboardVm.Squares.Count;
+        initialSquaresCount.Should().NotBe(expectedBoardSize * expectedBoardSize);
+
+        // Now switch to a mode where the board size is valid
+        mainVm.SolutionMode = validMode;
+
+        // Assert: Chessboard should now be updated to expected size
+        mainVm.ChessboardVm.Squares.Count.Should().Be(expectedBoardSize * expectedBoardSize);
+        mainVm.BoardSize.Should().Be(expectedBoardSize);
+        mainVm.HasErrors.Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("37", SolutionMode.Single, SolutionMode.Unique)]
+    [InlineData("18", SolutionMode.Single, SolutionMode.All)]
+    [InlineData("21", SolutionMode.Single, SolutionMode.All)]
+    public void Chessboard_DoesNotUpdate_WhenSwitchingToInvalidMode(
+    string boardSizeText, SolutionMode validMode, SolutionMode invalidMode)
+    {
+        // Arrange: Start with a valid mode and board size
+        var mainVm = TestHelpers.CreateMainViewModel();
+        mainVm.SolutionMode = validMode;
+        mainVm.BoardSizeText = boardSizeText;
+
+        // Act: Should be valid, so chessboard should be updated to expected size
+        int expectedBoardSize = int.Parse(boardSizeText);
+        mainVm.ChessboardVm.Squares.Count.Should().Be(expectedBoardSize * expectedBoardSize);
+        mainVm.HasErrors.Should().BeFalse();
+
+        // Now switch to a mode where the board size is invalid
+        mainVm.SolutionMode = invalidMode;
+
+        // Assert: Chessboard should NOT be updated to the invalid size, and errors should be present
+        mainVm.ChessboardVm.Squares.Count.Should().NotBe(expectedBoardSize * expectedBoardSize);
+        mainVm.HasErrors.Should().BeTrue();
+        mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().Should().NotBeEmpty();
+    }
+
 }
