@@ -49,7 +49,13 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         if (Solver == null)
             return;
 
+        // Update last valid board size if the new value is valid
+        if (ParsingUtils.TryParseInt(value, out var boardSize))
+            _lastValidBoardSize = boardSize;
+
         ValidateProperty(nameof(BoardSizeText));
+
+        // If the board size is valid, update the UI and chessboard
         if (ValidateAndSetUiState())
         {
             _lastValidBoardSize = ParsingUtils.ParseIntOrThrow(value);
@@ -57,6 +63,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
             var boardDimension = Math.Min(ChessboardVm.WindowWidth, ChessboardVm.WindowHeight);
             SetChessboard(boardDimension);
         }
+
         RefreshCommandStates();
     }
 
@@ -65,7 +72,11 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         if (Solver == null)
             return;
 
+        // Recreate InputViewModel with new validation rules
         InputViewModel = new InputViewModel(value);
+
+        // Revalidate BoardSizeText with new rules
+        ValidateProperty(nameof(BoardSizeText));
 
         var maxNoOfSols = SimulationSettings.MaxNoOfSolutionsInOutput;
         SolutionTitle = (value == SolutionMode.All)
@@ -77,10 +88,15 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         OnPropertyChanged(nameof(BoardSizeText));
         OnPropertyChanged(nameof(SolutionTitle));
 
-        if (!ValidateAndSetUiState())
-            return;
-
-        UpdateUiState();
+        // If the board size is now valid, update the UI and chessboard
+        if (ValidateAndSetUiState())
+        {
+            _lastValidBoardSize = ParsingUtils.ParseIntOrThrow(BoardSizeText);
+            OnPropertyChanged(nameof(BoardSize));
+            var boardDimension = Math.Min(ChessboardVm.WindowWidth, ChessboardVm.WindowHeight);
+            SetChessboard(boardDimension);
+        }
+        RefreshCommandStates();
     }
 
     private bool ValidateAndSetUiState(bool updateOutputReady = true)
