@@ -1,31 +1,41 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-// Todo: Queens must be placed from columnwise from buttom and upward.
-//       Currently, they are placed rowwise and from top to bottom.
-public sealed partial class MainViewModel : ObservableObject, IDisposable
+public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorInfo, IDisposable
 {
-    public MainViewModel(IDispatcher uiDispatcher) : this(new BackTrackingSolver(
-        new SolutionManager()), uiDispatcher, new SaveFileDialogService())
+    // --- Public Properties ---
+    public int BoardSize => ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) ? boardSize : _lastValidBoardSize;
+    
+    public string ResultTitle => SolverHelper.UpdateSolutionTitle(SolutionMode);
+    
+    public ChessboardViewModel ChessboardVm { get; set; }
+    
+    public IAsyncRelayCommand SimulateCommand { get; private set; }
+    
+    public IRelayCommand SaveCommand { get; private set; }
+    
+    public IRelayCommand CancelCommand { get; private set; }
+    
+    public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
+    
+    public event EventHandler? SimulationCompleted;
+    
+    public bool HasErrors => _errors.Count != 0;
+
+    // --- Constructors ---
+    public MainViewModel(IDispatcher uiDispatcher)
+        : this(new BackTrackingSolver(new SolutionManager()), uiDispatcher, new SaveFileDialogService())
     { }
 
-    public MainViewModel(
-        ISolver solver, IDispatcher dispatcher, ISaveFileDialogService saveFileService)
+    public MainViewModel(ISolver solver, IDispatcher dispatcher, ISaveFileDialogService saveFileService)
     {
-        Solver = solver
-            ?? throw new ArgumentNullException(nameof(solver));
+        Solver = solver ?? throw new ArgumentNullException(nameof(solver));
+        _uiDispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
+        _saveFileService = saveFileService ?? throw new ArgumentNullException(nameof(saveFileService));
 
-        _uiDispatcher = dispatcher
-            ?? throw new ArgumentNullException(nameof(dispatcher));
-
-        _saveFileService = saveFileService
-            ?? throw new ArgumentNullException(nameof(saveFileService));
-
-        // Initialize non-nullable properties
         InputViewModel = new InputViewModel(SolutionMode.Unique);
         CancelationTokenSource = new CancellationTokenSource();
         ChessboardVm = new ChessboardViewModel(_uiDispatcher);
 
-        // Initialize commands directly
         SimulateCommand = new AsyncRelayCommand(SimulateAsync, CanSimulate);
         SaveCommand = new RelayCommand(Save, CanSave);
         CancelCommand = new RelayCommand(Cancel, CanCancel);
@@ -34,11 +44,36 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         SubscribeToSimulationEvents();
     }
 
-    public IAsyncRelayCommand SimulateCommand { get; private set; }
+    // --- Public Methods ---
+    public IEnumerable GetErrors(string? propertyName)
+    {
+        if (string.IsNullOrEmpty(propertyName))
+            return _errors.Values.SelectMany(errors => errors).ToList();
+        return _errors.TryGetValue(propertyName, out var propertyErrors) ? propertyErrors : Enumerable.Empty<string>();
+    }
 
-    public IRelayCommand SaveCommand { get; private set; }
+    public void SetChessboard(double boardDimension)
+    {
+        if (!ParsingUtils.TryParseInt(BoardSizeText, out var boardSize))
+        {
+            ChessboardVm.Squares.Clear();
+            return;
+        }
 
-    public IRelayCommand CancelCommand { get; private set; }
+        // Validate board size for the current solution mode
+        var validationResult = InputViewModel.ValidateBoardSize(BoardSizeText);
+        if (!validationResult.IsValid)
+        {
+            ChessboardVm.Squares.Clear();
+            return;
+        }
+
+        ChessboardVm.WindowWidth = boardDimension;
+        ChessboardVm.WindowHeight = boardDimension;
+        ChessboardVm.CreateSquares(boardSize);
+        IsIdle = true;
+        IsSimulating = false;
+    }
 
     public void Dispose()
     {
@@ -46,27 +81,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private void Dispose(bool disposing)
-    {
-        if (_disposed)
-            return;
-
-        if (disposing)
-        {
-            // Dispose managed resources
-            CancelationTokenSource?.Dispose();
-            CancelationTokenSource = null!;
-
-            // Clear collections
-            ObservableSolutions.Clear();
-            ChessboardVm?.Squares.Clear();
-        }
-
-        // Dispose unmanaged resources
-        _disposed = true;
-    }
-
-    private void Initialize(int boardSize = BoardSettings.DefaultBoardSize,
+    private void Initialize(
+        int boardSize = BoardSettings.DefaultBoardSize,
         SolutionMode solutionMode = SimulationSettings.DefaultSolutionMode,
         DisplayMode displayMode = SimulationSettings.DefaultDisplayMode)
     {
@@ -89,97 +105,36 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         ProgressLabelVisibility = Visibility.Hidden;
     }
 
-    private void UpdateUiState()
+    private void Dispose(bool disposing)
     {
-        if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) == false)
+        if (_disposed)
             return;
 
-        ObservableSolutions.Clear();
-        ChessboardVm?.Squares.Clear();
-
-        NoOfSolutions = "0";
-        ElapsedTimeInSec = $"{0,0:N1}";
-        MemoryUsage = "0";
-        ChessboardVm?.CreateSquares(boardSize);
+        if (disposing)
+        {
+            CancelationTokenSource?.Dispose();
+            CancelationTokenSource = null!;
+            ObservableSolutions.Clear();
+            ChessboardVm?.Squares.Clear();
+            UnsubscribeFromSimulationEvents();
+        }
+        _disposed = true;
     }
 
-    private void RefreshCommandStates()
-    {
-        SimulateCommand?.NotifyCanExecuteChanged();
-        CancelCommand?.NotifyCanExecuteChanged();
-        SaveCommand?.NotifyCanExecuteChanged();
-    }
-
-    private void ExtractCorrectNoOfSols()
-    {
-        // Ensure previous solutions are cleared before adding new ones
-        Debug.WriteLine("[ExtractCorrectNoOfSols] Clearing previous solutions.");
-        ObservableSolutions.Clear();
-
-        var sols = SimulationResults
-            .Solutions
-            .Take(SimulationSettings.MaxNoOfSolutionsInOutput);
-
-        if (DisplayMode == DisplayMode.Visualize)
-        {
-            foreach (var s in sols)
-                ObservableSolutions.Add(s);
-
-            return;
-        }
-
-        StringBuilder sb = new();
-        foreach (var s in sols)
-        {
-            sb.Append(s.ToString());
-            sb.Append(Environment.NewLine);
-            ObservableSolutions.Add(s);
-        }
-
-        _ = sb.ToString();
-    }
-
-    private async Task SimulateAsync()
-    {
-        try
-        {
-            // Set the chessboard size, throw an exception if invalid.
-            if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) == false)
-                return;
-
-            Debug.WriteLine("[SimulateAsync] Starting simulation...");
-            ManageSimulationStatus(SimulationStatus.Started);
-            
-            UpdateUiState();
-            SimulationResults =
-                await Solver.GetResultsAsync(boardSize, SolutionMode, DisplayMode);
-
-            if (SimulationResults == null || SimulationResults.Solutions.Any() == false)
-            {
-                Debug.WriteLine("[SimulateAsync] No solutions generated.");
-                throw new InvalidOperationException("No solutions were generated by the solver.");
-            }
-
-            ExtractCorrectNoOfSols();
-            NoOfSolutions = $"{SimulationResults.NoOfSolutions,0:N0}";
-            ElapsedTimeInSec = $"{SimulationResults.ElapsedTimeInSec,0:N1}";
-            SelectedSolution = ObservableSolutions.FirstOrDefault() ?? new Solution([], null);
-            MemoryUsage = NumericUtility.UpdateMemoryUsage();
-
-            Debug.WriteLine("[SimulateAsync] Simulation completed successfully.");
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[SimulateAsync] Error: {ex.Message}");
-            MessageBox.Show($"An error occurred during simulation: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
-        finally
-        {
-            ManageSimulationStatus(SimulationStatus.Finished);
-            Debug.WriteLine("[SimulateAsync] Simulation status set to Finished.");
-        }
-    }
-
+    // --- Private Fields ---
+    private readonly Dictionary<string, List<string>> _errors = [];
+    
+    private int _lastValidBoardSize = BoardSettings.DefaultBoardSize;
+    
+    private InputViewModel InputViewModel { get; set; }
+    
+    private bool _disposed;
+    
+    private CancellationTokenSource CancelationTokenSource { get; set; }
+    
+    private readonly ISolver Solver;
+    
     private readonly IDispatcher _uiDispatcher;
+    
     private readonly ISaveFileDialogService _saveFileService;
 }

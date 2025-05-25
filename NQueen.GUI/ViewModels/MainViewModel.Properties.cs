@@ -5,15 +5,6 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _boardSizeText = string.Empty;
 
-    private int _lastValidBoardSize = BoardSettings.DefaultBoardSize;
-
-    public int BoardSize =>
-        ParsingUtils.TryParseInt(BoardSizeText, out var boardSize)
-        ? boardSize
-        : _lastValidBoardSize;
-
-    private InputViewModel InputViewModel { get; set; }
-
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ProgressLabel))]
     private double _progressValue = 0;
@@ -88,10 +79,8 @@ public sealed partial class MainViewModel : ObservableObject
     {
         if (Solver == null)
             return;
-
-        if (ValidateAndSetUiState() == false)
+        if (!ValidateAndSetUiState())
             return;
-
         OnPropertyChanged(nameof(BoardSizeText));
         UpdateUiState();
     }
@@ -108,25 +97,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private string _memoryUsage = "0";
-
-    public string ResultTitle => SolverHelper.UpdateSolutionTitle(SolutionMode);
-
-    public ChessboardViewModel ChessboardVm { get; set; }
-
-    public void SetChessboard(double boardDimension)
-    {
-        if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) == false)
-            return;
-
-        ChessboardVm.WindowWidth = boardDimension;
-        ChessboardVm.WindowHeight = boardDimension;
-
-        // Update the squares with the new board size
-        ChessboardVm.CreateSquares(boardSize);
-
-        IsIdle = true;
-        IsSimulating = false;
-    }
 
     [ObservableProperty]
     private string _elapsedTimeInSec = string.Empty;
@@ -160,10 +130,4 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnIsOutputReadyChanged(bool value) =>
         RefreshCommandStates();
-
-    private bool _disposed;
-
-    private CancellationTokenSource CancelationTokenSource { get; set; }
-
-    private readonly ISolver Solver;
 }
