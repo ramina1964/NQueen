@@ -61,7 +61,7 @@ public class MainViewModelPositiveTests : IDisposable
     [Theory]
     [InlineData(8, SolutionMode.Single, DisplayMode.Visualize)]
     public async Task Visualization_ShouldUpdateDuringSimulation(
-    int boardSize, SolutionMode solutionMode, DisplayMode displayMode)
+        int boardSize, SolutionMode solutionMode, DisplayMode displayMode)
     {
         // Arrange
         var mainVm = TestHelpers.CreateMainViewModel(

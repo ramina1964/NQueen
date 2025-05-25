@@ -16,10 +16,12 @@ public class NQueenSolverNegativeTests : IDisposable
     [Theory]
     [MemberData(nameof(NQueenTestSets.SolverShouldNotGenerateAnySolutionData),
         MemberType = typeof(NQueenTestSets))]
-    public async Task SolverShouldNotGenerateAnySolution(int boardSize, SolutionMode solutionMode)
+    public async Task SolverShouldNotGenerateAnySolution(
+        int boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        var expectedSolutions = ExpectedSolutionData.SingleSolutions.GetValueOrDefault(boardSize)
+        var expectedSolutions = ExpectedSolutionData
+            .SingleSolutions.GetValueOrDefault(boardSize)
             ?.Select(solution => new Solution(solution)).ToList()
             ?? [];
 

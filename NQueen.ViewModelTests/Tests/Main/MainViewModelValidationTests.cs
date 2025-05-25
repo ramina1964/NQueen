@@ -108,13 +108,16 @@ public class MainViewModelValidationTests
 
     [Theory]
     [InlineData("21", "18", SolutionMode.Unique, SolutionMode.All)]
-    public void BoardSizeText_Validation_ShouldRespectSolutionModeLimits(string originalBoardSize,
-        string finalBoardSize, SolutionMode originalSolutionMode, SolutionMode finalSolutionMode)
+    public void BoardSizeText_Validation_ShouldRespectSolutionModeLimits(
+        string originalBoardSizeText,
+        string finalBoardSizeText,
+        SolutionMode originalSolutionMode,
+        SolutionMode finalSolutionMode)
     {
         // Arrange
         var mainVm = TestHelpers.CreateMainViewModel();
         mainVm.SolutionMode = originalSolutionMode;
-        mainVm.BoardSizeText = originalBoardSize;
+        mainVm.BoardSizeText = originalBoardSizeText;
 
         // Act
         var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
@@ -122,7 +125,7 @@ public class MainViewModelValidationTests
         // Assert
         errors.Should().Contain(ErrorMessages.SizeTooLargeForUnique);
         mainVm.SolutionMode = finalSolutionMode;
-        mainVm.BoardSizeText = finalBoardSize;
+        mainVm.BoardSizeText = finalBoardSizeText;
         errors = [.. mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>()];
         errors.Should().Contain(ErrorMessages.SizeTooLargeForAll);
     }

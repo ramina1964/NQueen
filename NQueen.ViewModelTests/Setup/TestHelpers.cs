@@ -23,8 +23,31 @@ public static class TestHelpers
         return mainViewModel;
     }
 
+    public static MainViewModel CreateMainViewModelWithBoardSizeText(
+        string boardSizeText,
+        SolutionMode solutionMode = SolutionMode.Single,
+        DisplayMode displayMode = DisplayMode.Hide)
+    {
+        var mainVm = CreateMainViewModel();
+        mainVm.SolutionMode = solutionMode;
+        mainVm.BoardSizeText = boardSizeText;
+        
+        // Todo: Set display mode if needed
+        return mainVm;
+    }
+
+    public static MainViewModel CreateMainViewModelWithBoardSize(
+        int boardSize,
+        SolutionMode solutionMode = SolutionMode.Single,
+        DisplayMode displayMode = DisplayMode.Hide) =>
+            CreateMainViewModelWithBoardSizeText(
+                boardSize.ToString(),
+                solutionMode, displayMode);
+
     public static MainViewModel CreateMainViewModelWithSimulationResults(
-        int boardSize, SolutionMode solutionMode, MockSaveFileDialogService saveFileDialogService)
+        int boardSize,
+        SolutionMode solutionMode,
+        MockSaveFileDialogService saveFileDialogService)
     {
         var solver = new BackTrackingSolver(new SolutionManager());
         var mainVm = new MainViewModel(solver, new TestDispatcher(), saveFileDialogService)
@@ -45,7 +68,9 @@ public static class TestHelpers
     public static Mock<ISolver> CreateMockSolver(IEnumerable<Solution> solutions)
     {
         var mockSolver = new Mock<ISolver>();
-        mockSolver.Setup(s => s.GetResultsAsync(It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
+        mockSolver.Setup(
+            s => s.GetResultsAsync(
+                        It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
                   .ReturnsAsync(new SimulationResults(solutions));
         return mockSolver;
     }

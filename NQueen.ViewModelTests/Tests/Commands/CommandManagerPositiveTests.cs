@@ -14,8 +14,8 @@ public class CommandManagerPositiveTests : IDisposable
         string boardSizeText, SolutionMode solutionMode, DisplayMode displayMode)
     {
         // Arrange
-        var mainVm = TestHelpers.CreateMainViewModel(
-            int.Parse(boardSizeText), solutionMode, displayMode);
+        var mainVm = TestHelpers.CreateMainViewModelWithBoardSizeText(
+            boardSizeText, solutionMode, displayMode);
 
         var tcs = new TaskCompletionSource<bool>();
         mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
@@ -51,8 +51,8 @@ public class CommandManagerPositiveTests : IDisposable
         string boardSizeText, SolutionMode solutionMode, DisplayMode displayMode)
     {
         // Arrange
-        var mainVm = TestHelpers.CreateMainViewModel(
-            int.Parse(boardSizeText), solutionMode, displayMode);
+        var mainVm = TestHelpers.CreateMainViewModelWithBoardSizeText(
+            boardSizeText, solutionMode, displayMode);
 
         mainVm.SimulationResults = new SimulationResults([new([1, 3, 0, 2], 1)]);
         mainVm.NoOfSolutions = "1";
