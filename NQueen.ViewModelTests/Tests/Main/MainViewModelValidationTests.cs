@@ -53,9 +53,8 @@ public class MainViewModelValidationTests
         string boardSizeText, SolutionMode solutionMode)
     {
         // Arrange
-        var mainVm = TestHelpers.CreateMainViewModel();
-        mainVm.SolutionMode = solutionMode;
-        mainVm.BoardSizeText = boardSizeText;
+        var mainVm = TestHelpers.CreateMainViewModelWithBoardSizeText(
+            boardSizeText, solutionMode);
 
         // Act
         var errors = mainVm
@@ -187,7 +186,7 @@ public class MainViewModelValidationTests
         mainVm.BoardSizeText = boardSizeText;
 
         // Act: Should be valid, so chessboard should be updated to expected size
-        int expectedSize = int.Parse(boardSizeText);
+        var expectedSize = ParsingUtils.ParseIntOrThrow(boardSizeText);
         var expectedSizeSquared = expectedSize * expectedSize;
         mainVm.ChessboardVm.Squares.Count.Should().Be(expectedSizeSquared);
         mainVm.HasErrors.Should().BeFalse();
