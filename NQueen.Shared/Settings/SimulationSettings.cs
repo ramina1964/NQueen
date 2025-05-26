@@ -1,6 +1,4 @@
-﻿global using NQueen.Shared.Enums;
-
-namespace NQueen.Shared.Settings;
+﻿namespace NQueen.Shared.Settings;
 
 public class SimulationSettings
 {

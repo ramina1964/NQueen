@@ -12,4 +12,9 @@ public static class BoardSettings
     public const int MaxSizeForSingle = 37;
     public const int MaxSizeForUnique = 17;
     public const int MaxSizeForAll = 17;
+
+    public const string DefaultQueenImagePath = @"..\..\Images\WhiteQueen.png";
+    public const char WhiteQueenChar = '\u2655';
+    public const string QueenImageResource =
+        "pack://application:,,,/NQueen.GUI;component/Images/WhiteQueen.png";
 }

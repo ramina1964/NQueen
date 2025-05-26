@@ -1,6 +1,4 @@
-﻿using NQueen.Shared.Settings;
-
-namespace NQueen.ConsoleApp.Commands;
+﻿namespace NQueen.ConsoleApp.Commands;
 
 public static class HelpCommands
 {

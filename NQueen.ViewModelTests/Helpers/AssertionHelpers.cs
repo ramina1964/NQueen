@@ -5,7 +5,7 @@ public static class AssertionHelpers
     public static void AssertChessboardState(MainViewModel mainVm, int expectedQueenCount)
     {
         mainVm.ChessboardVm.Squares.Should().NotBeEmpty(TestConst.ChessboardNotPopulatedError);
-        mainVm.ChessboardVm.Squares.Count(sq => !string.IsNullOrEmpty(sq.ImagePath))
+        mainVm.ChessboardVm.Squares.Count(sq => string.IsNullOrEmpty(sq.ImagePath) == false)
             .Should().Be(expectedQueenCount, TestConst.IncorrectQueenPlacementError);
     }
 

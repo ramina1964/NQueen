@@ -2,7 +2,7 @@
 
 public static class DispatchUtils
 {
-    public static char WhiteQueen { get; } = '\u2655';
+    public static char WhiteQueen { get; } = BoardSettings.WhiteQueenChar;
 
     // This is used for enabling dotnet-counters performance utility when you run the application.
     public static readonly bool DotNetCountersEnabled = false;
