@@ -34,11 +34,13 @@
             Grid.ColumnSpan="3"
             Margin="5" />
 
+        <!-- SolutionListUserControl: Remove explicit Width, set VerticalAlignment to Stretch -->
         <view:SolutionListUserControl
             Grid.Row="1"
             Grid.Column="0"
-            Width="150"
-            Margin="5" />
+            Margin="5"
+            VerticalAlignment="Stretch"
+            Height="{Binding ChessboardVm.WindowHeight, Mode=OneWay}" />
 
         <ContentControl
             x:Name="chessboardPlaceholder"

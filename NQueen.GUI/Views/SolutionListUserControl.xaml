@@ -6,9 +6,15 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
-    mc:Ignorable="d">
+    mc:Ignorable="d"
+    VerticalAlignment="Stretch"
+    Height="{Binding ChessboardVm.WindowHeight, Mode=OneWay}">
 
-    <Grid Background="Bisque">
+    <!--
+        The root Grid is set to stretch vertically to fill the available space.
+        The UserControl's Height is bound to the Chessboard's height to ensure both columns match.
+    -->
+    <Grid Background="Bisque" VerticalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="30" />
             <RowDefinition Height="*" />
@@ -48,4 +54,3 @@
         </ListBox>
     </Grid>
 </UserControl>
-
