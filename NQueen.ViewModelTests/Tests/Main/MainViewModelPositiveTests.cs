@@ -113,6 +113,26 @@ public class MainViewModelPositiveTests : IDisposable
         AssertionHelpers.AssertSolutionsState(mainViewModel);
     }
 
+    // Todo: This test method passes but gives error message on index out of range. Fix it.
+    //[Theory]
+    //[InlineData(SolutionMode.Single, true)]
+    //[InlineData(SolutionMode.Unique, false)]
+    //[InlineData(SolutionMode.All, false)]
+    //public async Task IsSingleRunning_ShouldReflectSolutionMode(
+    //    SolutionMode solutionMode, bool expectedIndeterminate)
+    //{
+    //    // Arrange
+    //    var mainVm = TestHelpers.CreateMainViewModel(8, solutionMode, DisplayMode.Visualize);
+
+    //    // Act & Assert
+    //    mainVm.SimulateCommand.Execute(null);
+    //    mainVm.IsSingleRunning.Should().Be(expectedIndeterminate);
+    //    await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
+
+    //    // After completion, IsSingleRunning should be false
+    //    mainVm.IsSingleRunning.Should().BeFalse();
+    //}
+
     public void Dispose() => _serviceProvider.Dispose();
 
     private readonly ServiceProvider _serviceProvider;
