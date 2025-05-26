@@ -93,11 +93,12 @@ public sealed partial class MainViewModel
                 IsSimulating = true;
                 IsOutputReady = false;
                 ProgressVisibility = Visibility.Visible;
+
                 if (SolutionMode == SolutionMode.Single)
                 {
                     IsSingleRunning = true;
-                    ProgressVisibility = Visibility.Visible;
                     ProgressLabelVisibility = Visibility.Hidden;
+                    ProgressValue = 0;
                 }
                 else
                 {

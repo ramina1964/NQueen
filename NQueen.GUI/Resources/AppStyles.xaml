@@ -150,20 +150,6 @@
         <Setter Property="Minimum" Value="0" />
         <Setter Property="Maximum" Value="100" />
         <Setter Property="FlowDirection" Value="LeftToRight" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="ProgressBar">
-                    <Grid>
-                        <Rectangle Fill="{TemplateBinding Background}" />
-                        <Rectangle x:Name="PART_Track" Fill="Transparent" />
-                        <Rectangle
-                            x:Name="PART_Indicator"
-                            HorizontalAlignment="Left"
-                            Fill="{TemplateBinding Foreground}" />
-                    </Grid>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
     </Style>
 
     <!--  *********************** Based on ListBox **********************  -->

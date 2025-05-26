@@ -64,7 +64,9 @@ public sealed partial class MainViewModel
         value = Math.Clamp(value, 0, 100);
         _uiDispatcher.Invoke(() =>
         {
-            ProgressValue = value / 100.0;
+            if (IsSingleRunning == false)
+                ProgressValue = value / 100.0;
+
             ProgressLabel = label;
             OnPropertyChanged(nameof(ProgressLabel));
         });

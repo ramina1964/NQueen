@@ -86,6 +86,9 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         OnPropertyChanged(nameof(BoardSizeText));
         OnPropertyChanged(nameof(SolutionTitle));
 
+        // Ensure IsSingleRunning is updated when SolutionMode changes
+        IsSingleRunning = value == SolutionMode.Single && IsSimulating;
+
         if (ValidateAndSetUiState())
         {
             _lastValidBoardSize = ParsingUtils.ParseIntOrThrow(BoardSizeText);
