@@ -32,8 +32,15 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
     [ObservableProperty]
     private double _windowHeight;
 
+    private int _lastBoardSize = -1;
+    private double _lastWidth = -1;
+    private double _lastHeight = -1;
+
     public void CreateSquares(int boardSize)
     {
+        if (IsBoardStateUpdatedAndSquaresPopulated(boardSize))
+            return;
+
         Squares.Clear();
         var width = WindowWidth / boardSize;
         var height = width;
@@ -45,7 +52,7 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
                 var pos = new Position(i, j);
                 var square = new SquareViewModel(pos, FindColor(pos))
                 {
-                    ImagePath = null!,
+                    ImagePath = string.Empty,
                     Height = height,
                     Width = width,
                 };
@@ -53,10 +60,25 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
                 Squares.Add(square);
             }
         }
+
+        _lastBoardSize = boardSize;
+        _lastWidth = WindowWidth;
+        _lastHeight = WindowHeight;
     }
 
-    private void ClearImages() =>
-        Squares.ToList().ForEach(sq => sq.ImagePath = null!);
+    // This method is used as a condition for early termination of CreateSquares()
+    private bool IsBoardStateUpdatedAndSquaresPopulated(int boardSize) =>
+        boardSize > 0 &&
+        boardSize == _lastBoardSize &&
+        WindowWidth == _lastWidth &&
+        WindowHeight == _lastHeight &&
+        Squares.Count > 0;
+
+    private void ClearImages()
+    {
+        foreach (var sq in Squares)
+            sq.ImagePath = null!;
+    }
 
     private static SolidColorBrush FindColor(Position pos)
     {

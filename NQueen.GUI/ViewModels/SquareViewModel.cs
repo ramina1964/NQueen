@@ -2,9 +2,9 @@
 
 public class SquareViewModel(Position pos, Brush color) : ObservableObject
 {
-    public Brush Color { get; set; } = color;
+    public Brush Color { get; } = color;
 
-    public Position Position { get; set; } = pos;
+    public Position Position { get; } = pos;
 
     public double Width
     {
