@@ -26,13 +26,13 @@
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <Border
-                Width="{Binding Width}"
-                Height="{Binding Height}"
-                Background="{Binding Color}">
+                        Width="{Binding Width}"
+                        Height="{Binding Height}"
+                        Background="{Binding Color}">
                         <Image
-                    Width="{Binding Width}"
-                    Height="{Binding Height}"
-                    Source="{Binding ImagePath, Converter={StaticResource NullImageConverter}}" />
+                            Width="{Binding Width}"
+                            Height="{Binding Height}"
+                            Source="{Binding ImagePath, Converter={StaticResource NullImageConverter}}" />
                     </Border>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
