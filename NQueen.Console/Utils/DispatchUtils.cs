@@ -47,43 +47,6 @@ public static class DispatchUtils
         return board;
     }
 
-    public static (bool isValid, int boardSize) CheckBoardSize(
-        string value, SolutionMode solutionMode)
-    {
-        var isValidBoardSize = ParsingUtils.TryParseInt(value, out int boardSize);
-        if (isValidBoardSize == false)
-        {
-            HelpCommands.ShowExitError(CommandConst.InvalidBoardSize);
-            return (false, 0);
-        }
-
-        if (boardSize < 1)
-        {
-            HelpCommands.ShowExitError("BoardSize must be a positive number.");
-            return (false, 0);
-        }
-
-        if (solutionMode == SolutionMode.Single && boardSize > BoardSettings.MaxSizeForSingle)
-        {
-            HelpCommands.ShowExitError(ErrorMessages.SizeTooLargeForSingle);
-            return (false, 0);
-        }
-
-        if (solutionMode == SolutionMode.Unique && boardSize > BoardSettings.MaxSizeForUnique)
-        {
-            HelpCommands.ShowExitError(ErrorMessages.SizeTooLargeForUnique);
-            return (false, 0);
-        }
-
-        if (solutionMode == SolutionMode.All && boardSize > BoardSettings.MaxSizeForAll)
-        {
-            HelpCommands.ShowExitError(ErrorMessages.SizeTooLargeForAll);
-            return (false, 0);
-        }
-
-        return (true, boardSize);
-    }
-
     private static string[,] ChessBoardHelper(int[] queens, char whiteQueen)
     {
         var size = queens.Length;

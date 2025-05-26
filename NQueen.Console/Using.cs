@@ -7,6 +7,7 @@ global using NQueen.Kernel.Services;
 global using NQueen.Shared.Enums;
 global using NQueen.Shared.Settings;
 global using NQueen.Shared.Utils;
+global using NQueen.Shared.Validation;
 global using System;
 global using System.Collections.Generic;
 global using System.Diagnostics;
