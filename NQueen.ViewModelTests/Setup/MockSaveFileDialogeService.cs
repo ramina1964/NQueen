@@ -12,7 +12,7 @@ public class MockSaveFileDialogService : ISaveFileDialogService
         return "mockedFilePath.txt";
     }
 
-    public void SaveContent(string content) =>
+    public void SaveContent(string filePath, string content) =>
         SavedContent = content;
 
     public void Reset()
@@ -20,5 +20,6 @@ public class MockSaveFileDialogService : ISaveFileDialogService
         WasCalled = false;
         SavedContent = null;
     }
+
 }
 
