@@ -42,7 +42,6 @@
                 <TextBlock
                     Text="{Binding SelectedSolution.Details}"
                     Foreground="Purple"
-                    Style="{StaticResource LabelStyle}"
                     TextWrapping="Wrap" />
             </ScrollViewer>
             
