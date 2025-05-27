@@ -13,10 +13,6 @@
     </UserControl.Resources>
 
     <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-
         <ItemsControl ItemsSource="{Binding ChessboardVm.Squares}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -26,13 +22,14 @@
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <Border
-                        Width="{Binding Width}"
-                        Height="{Binding Height}"
-                        Background="{Binding Color}">
+                        Background="{Binding Color}"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch">
                         <Image
-                            Width="{Binding Width}"
-                            Height="{Binding Height}"
-                            Source="{Binding ImagePath, Converter={StaticResource NullImageConverter}}" />
+                            Source="{Binding ImagePath, Converter={StaticResource NullImageConverter}}"
+                            Stretch="Uniform"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch" />
                     </Border>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
