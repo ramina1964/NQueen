@@ -27,7 +27,7 @@ public sealed partial class MainViewModel
         try
         {
             var content = GenerateSaveContent();
-            _saveFileService.SaveContent(content);
+            _saveFileService.SaveContent(filePath, content);
             Debug.WriteLine($"[Save] Content saved successfully to: {filePath}");
         }
         catch (Exception ex)
@@ -134,15 +134,24 @@ public sealed partial class MainViewModel
     {
         if (ParsingUtils.TryParseInt(BoardSizeText, out var _) == false)
             return string.Empty;
-        var boardSize = ParsingUtils.ParseIntOrThrow(BoardSizeText);
+
         StringBuilder sb = new();
-        sb.AppendLine($"Board Size: {boardSize}");
-        sb.AppendLine($"Number of Solutions: {NoOfSolutions}");
+        sb.AppendLine($"Date && Time: {DateTime.Now}");
+        sb.AppendLine($"Board Size: {BoardSizeText}");
+        sb.AppendLine($"SolutionMode: {SolutionMode}");
+        sb.AppendLine($"No. of Sols: {NoOfSolutions}");
+        sb.AppendLine($"Max No. of Sols. Included: {SimulationSettings.MaxNoOfSolutionsInOutput}");
         sb.AppendLine($"Elapsed Time: {ElapsedTimeInSec} seconds");
+        sb.AppendLine($"Memory Usage: {MemoryUsage} MB");
+        sb.AppendLine();
+        
         sb.AppendLine("Solutions:");
         foreach (var solution in ObservableSolutions)
-            sb.AppendLine(solution.ToString());
-        sb.AppendLine($"Memory Usage: {MemoryUsage} bytes");
+        {
+            sb.Append($"Solution ID: {solution.Id}\t\t\t");
+            sb.AppendLine(solution.Details);
+        }        
+
         return sb.ToString();
     }
 

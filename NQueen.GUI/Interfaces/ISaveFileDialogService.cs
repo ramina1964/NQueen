@@ -4,5 +4,5 @@ public interface ISaveFileDialogService
 {
     string? ShowSaveFileDialog();
 
-    void SaveContent(string content);
+    void SaveContent(string filePath, string content);
 }

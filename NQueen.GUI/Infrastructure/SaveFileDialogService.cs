@@ -8,10 +8,9 @@ public class SaveFileDialogService : ISaveFileDialogService
         return dialog.ShowDialog() == true ? dialog.FileName : null;
     }
 
-    public void SaveContent(string content)
+    public void SaveContent(string filePath, string content)
     {
-        var filePath = ShowSaveFileDialog();
-        if (!string.IsNullOrEmpty(filePath))
+        if (string.IsNullOrEmpty(filePath) == false)
         {
             System.IO.File.WriteAllText(filePath, content);
         }

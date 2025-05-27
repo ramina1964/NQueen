@@ -8,7 +8,7 @@ public class Solution
         Id = id;
         Name = ToString();
         QueenPositions = queenPositions;
-        Positions = SetPositions(QueenPositions);
+        Positions = MapQueenArrayToPositions(QueenPositions);
         Details = GetDetails();
     }
 
@@ -32,6 +32,7 @@ public class Solution
     private string GetDetails(IndexingType indexingType = IndexingType.ZeroBased)
     {
         const int noOfQueensPerLine = 40;
+
         // Order by column index ascending
         var columnOrdered = Positions.OrderBy(p => p.ColumnNo).ToList();
         var noOfLines = BoardSize % noOfQueensPerLine == 0 ?
@@ -52,27 +53,25 @@ public class Solution
                     break;
 
                 if (indexingType == IndexingType.ZeroBased)
-                {
-                    sb.Append($"({columnOrdered[posNo].ColumnNo,0:N0}, {columnOrdered[posNo].RowNo,0:N0})");
-                }
+                    sb.Append($"({columnOrdered[posNo].ColumnNo,0:N0}," +
+                        $"{columnOrdered[posNo].RowNo,0:N0})");
                 else
-                {
-                    sb.Append($"({columnOrdered[posNo].ColumnNo + 1,0:N0}, {columnOrdered[posNo].RowNo + 1,0:N0})");
-                }
+                    sb.Append($"({columnOrdered[posNo].ColumnNo + 1,0:N0}," +
+                        $"{columnOrdered[posNo].RowNo + 1,0:N0})");
 
                 if (posNo < BoardSize - 1)
                     sb.Append(", ");
             }
 
             if (lineNo < noOfLines - 1)
-            { sb.AppendLine(); }
+                sb.AppendLine();
         }
 
         return sb.ToString();
     }
 
     // Each pair is (column, row) 
-    private static List<Position> SetPositions(int[] queenPositions) =>
+    private static List<Position> MapQueenArrayToPositions(int[] queenPositions) =>
         queenPositions.Select((rowNo, columnNo) => new Position(rowNo, columnNo)).ToList();
 
     #endregion PrivateMembers
