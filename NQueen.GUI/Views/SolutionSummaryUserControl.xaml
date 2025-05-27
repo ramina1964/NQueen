@@ -89,7 +89,7 @@
             <Button
                 Grid.Row="4"
                 Grid.ColumnSpan="2"
-                Width="100"
+                MinWidth="140"
                 Margin="5"
                 Command="{Binding SaveCommand}"
                 Content="Save To File"

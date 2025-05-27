@@ -5,18 +5,13 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
-    Height="{Binding ChessboardVm.WindowHeight, Mode=OneWay}"
     VerticalAlignment="Stretch"
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
     mc:Ignorable="d">
 
-    <!--
-        The root Grid is set to stretch vertically to fill the available space.
-        The UserControl's Height is bound to the Chessboard's height to ensure both columns match.
-    -->
     <Grid VerticalAlignment="Stretch" Background="Bisque">
         <Grid.RowDefinitions>
-            <RowDefinition Height="30" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
