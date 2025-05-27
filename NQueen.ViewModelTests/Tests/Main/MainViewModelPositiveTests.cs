@@ -90,8 +90,11 @@ public class MainViewModelPositiveTests : IDisposable
         // Assert
         mockSaveFileDialogService.WasCalled.Should().BeTrue(TestConst.SaveDialogNotShownError);
 
-        AssertionHelpers.AssertSavedContent(
-            mockSaveFileDialogService.SavedContent, boardSize, mainVm.SimulationResults);
+        var savedContent = mockSaveFileDialogService.SavedContent;
+        savedContent.Should().NotBeNullOrEmpty(TestConst.ContentNotSavedError);
+
+        AssertSavedContentProperties(savedContent!, boardSize,
+            solutionMode, mainVm.SimulationResults);
     }
 
     [Fact]
@@ -132,6 +135,51 @@ public class MainViewModelPositiveTests : IDisposable
     //    // After completion, IsSingleRunning should be false
     //    mainVm.IsSingleRunning.Should().BeFalse();
     //}
+
+    private void AssertSavedContentProperties(
+        string savedContent,
+        int boardSize,
+        SolutionMode solutionMode,
+        SimulationResults simulationResults)
+    {
+        var lines = savedContent.Split(['\r', '\n'],
+            StringSplitOptions.RemoveEmptyEntries);
+
+        var dict = new Dictionary<string, string>();
+        foreach (var line in lines)
+        {
+            var idx = line.IndexOf(':');
+            if (idx > 0)
+            {
+                var key = line.Substring(0, idx).Trim();
+                var value = line.Substring(idx + 1).Trim();
+                dict[key] = value;
+            }
+        }
+
+        dict.Should().ContainKey("Date && Time");
+        dict["Date && Time"].Should().NotBeNullOrWhiteSpace();
+
+        dict.Should().ContainKey("Board Size");
+        dict["Board Size"].Should().Be(boardSize.ToString());
+
+        dict.Should().ContainKey("SolutionMode");
+        dict["SolutionMode"].Should().Be(solutionMode.ToString());
+
+        dict.Should().ContainKey("Number of Solutions");
+        dict["Number of Solutions"].Should()
+            .Be(simulationResults.NoOfSolutions.ToString());
+
+        dict.Should().ContainKey("Max Number of Solutions Included");
+        dict["Max Number of Solutions Included"].Should()
+            .Be(SimulationSettings.MaxNoOfSolutionsInOutput.ToString());
+
+        dict.Should().ContainKey("Elapsed Time");
+        dict["Elapsed Time"].Should().Contain("seconds");
+
+        dict.Should().ContainKey("Memory Usage");
+        dict["Memory Usage"].Should().Contain("MB");
+    }
 
     public void Dispose() => _serviceProvider.Dispose();
 
