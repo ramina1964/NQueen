@@ -139,8 +139,8 @@ public sealed partial class MainViewModel
         sb.AppendLine($"Date && Time: {DateTime.Now}");
         sb.AppendLine($"Board Size: {BoardSizeText}");
         sb.AppendLine($"SolutionMode: {SolutionMode}");
-        sb.AppendLine($"No. of Sols: {NoOfSolutions}");
-        sb.AppendLine($"Max No. of Sols. Included: {SimulationSettings.MaxNoOfSolutionsInOutput}");
+        sb.AppendLine($"Number of Solutions: {NoOfSolutions}");
+        sb.AppendLine($"Max Number of Solutions Included: {SimulationSettings.MaxNoOfSolutionsInOutput}");
         sb.AppendLine($"Elapsed Time: {ElapsedTimeInSec} seconds");
         sb.AppendLine($"Memory Usage: {MemoryUsage} MB");
         sb.AppendLine();
