@@ -32,6 +32,8 @@ public class Solution
     private string GetDetails(IndexingType indexingType = IndexingType.ZeroBased)
     {
         const int noOfQueensPerLine = 40;
+        // Order by column index ascending
+        var columnOrdered = Positions.OrderBy(p => p.ColumnNo).ToList();
         var noOfLines = BoardSize % noOfQueensPerLine == 0 ?
             BoardSize / noOfQueensPerLine :
             BoardSize / noOfQueensPerLine + 1;
@@ -46,13 +48,16 @@ public class Solution
             for (var posInLine = 0; posInLine < maxQueensInLastLine; posInLine++)
             {
                 var posNo = noOfQueensPerLine * lineNo + posInLine;
+                if (posNo >= columnOrdered.Count)
+                    break;
+
                 if (indexingType == IndexingType.ZeroBased)
                 {
-                    sb.Append($"({Positions[posNo].RowNo,0:N0}, {Positions[posNo].ColumnNo,0:N0})");
+                    sb.Append($"({columnOrdered[posNo].ColumnNo,0:N0}, {columnOrdered[posNo].RowNo,0:N0})");
                 }
                 else
                 {
-                    sb.Append($"({Positions[posNo].RowNo + 1,0:N0}, {Positions[posNo].ColumnNo + 1,0:N0})");
+                    sb.Append($"({columnOrdered[posNo].ColumnNo + 1,0:N0}, {columnOrdered[posNo].RowNo + 1,0:N0})");
                 }
 
                 if (posNo < BoardSize - 1)
@@ -66,10 +71,9 @@ public class Solution
         return sb.ToString();
     }
 
-    private static List<Position> SetPositions(int[] queenPositions)
-    {
-        return queenPositions.Select((column, row) =>
-            new Position(row, column)).ToList();
-    }
+    // Each pair is (column, row) 
+    private static List<Position> SetPositions(int[] queenPositions) =>
+        queenPositions.Select((rowNo, columnNo) => new Position(rowNo, columnNo)).ToList();
+
     #endregion PrivateMembers
 }

@@ -8,15 +8,18 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
 
         foreach (var pos in positions)
         {
+            int row = pos.RowNo;
+            int col = pos.ColumnNo;
+
             try
             {
-                var square = Squares.First(sq => pos.RowNo == sq.Position.RowNo &&
-                                                 pos.ColumnNo == sq.Position.ColumnNo);
+                var square = Squares.First(sq => sq.Position.RowNo == row &&
+                                                 sq.Position.ColumnNo == col);
                 square.ImagePath = QueenImagePath;
             }
             catch (InvalidOperationException ex)
             {
-                Debug.WriteLine($"Error in PlaceQueens: No matching square found for position ({pos.RowNo}, {pos.ColumnNo}). Exception: {ex.Message}");
+                Debug.WriteLine($"Error in PlaceQueens: No matching square found for position ({row}, {col}). Exception: {ex.Message}");
             }
         }
     }
@@ -45,11 +48,13 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
         var width = WindowWidth / boardSize;
         var height = width;
 
-        for (var i = 0; i < boardSize; i++)
+        // Fill columns left-to-right, and in each column from bottom (row 0) to top (row N-1)
+        for (var col = 0; col < boardSize; col++)
         {
-            for (var j = 0; j < boardSize; j++)
+            for (var row = 0; row < boardSize; row++)
             {
-                var pos = new Position(i, j);
+                // No inversion: row 0 is bottom, col 0 is left
+                var pos = new Position(row, col);
                 var square = new SquareViewModel(pos, FindColor(pos))
                 {
                     ImagePath = string.Empty,
