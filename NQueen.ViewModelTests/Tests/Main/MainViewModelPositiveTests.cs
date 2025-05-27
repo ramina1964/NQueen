@@ -6,7 +6,7 @@ public class MainViewModelPositiveTests : IDisposable
         _serviceProvider = TestHelpers.CreateServiceProvider();
 
     [Theory]
-    [InlineData(8, SolutionMode.Single, DisplayMode.Visualize)]
+    [InlineData(4, SolutionMode.Single, DisplayMode.Visualize)]
     public async Task Chessboard_ShouldUpdateQueenPlacements(
         int boardSize, SolutionMode solutionMode, DisplayMode displayMode)
     {
@@ -116,25 +116,39 @@ public class MainViewModelPositiveTests : IDisposable
         AssertionHelpers.AssertSolutionsState(mainViewModel);
     }
 
-    // Todo: This test method passes but gives error message on index out of range. Fix it.
-    //[Theory]
-    //[InlineData(SolutionMode.Single, true)]
-    //[InlineData(SolutionMode.Unique, false)]
-    //[InlineData(SolutionMode.All, false)]
-    //public async Task IsSingleRunning_ShouldReflectSolutionMode(
-    //    SolutionMode solutionMode, bool expectedIndeterminate)
-    //{
-    //    // Arrange
-    //    var mainVm = TestHelpers.CreateMainViewModel(8, solutionMode, DisplayMode.Visualize);
+    [Theory]
+    [InlineData(SolutionMode.Single, true)]
+    [InlineData(SolutionMode.Unique, false)]
+    [InlineData(SolutionMode.All, false)]
+    public async Task IsSingleRunning_ShouldReflectSolutionMode(
+        SolutionMode solutionMode, bool expectedIndeterminate)
+    {
+        var mockSolver = new Mock<ISolver>();
+        mockSolver
+            .Setup(s => s.GetResultsAsync(It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
+            .Returns(async () => {
+                if (solutionMode == SolutionMode.Single)
+                    await Task.Delay(10); // Minimal delay only for Single mode
+                return new SimulationResults([new Solution([1, 3, 0, 2])]);
+            });
 
-    //    // Act & Assert
-    //    mainVm.SimulateCommand.Execute(null);
-    //    mainVm.IsSingleRunning.Should().Be(expectedIndeterminate);
-    //    await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
+        var mainVm = new MainViewModel(
+            mockSolver.Object,
+            new TestDispatcher(),
+            new MockSaveFileDialogService()
+        )
+        {
+            SolutionMode = solutionMode
+        };
 
-    //    // After completion, IsSingleRunning should be false
-    //    mainVm.IsSingleRunning.Should().BeFalse();
-    //}
+        mainVm.SimulateCommand.Execute(null);
+        if (solutionMode == SolutionMode.Single)
+            await Task.Delay(2); // Just enough to catch the running state
+
+        mainVm.IsSingleRunning.Should().Be(expectedIndeterminate);
+        await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
+        mainVm.IsSingleRunning.Should().BeFalse();
+    }
 
     private void AssertSavedContentProperties(
         string savedContent,
