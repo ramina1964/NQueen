@@ -81,6 +81,26 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         GC.SuppressFinalize(this);
     }
 
+    private void Dispose(bool disposing)
+    {
+        if (_disposed)
+            return;
+
+        if (disposing)
+        {
+            CancelationTokenSource?.Dispose();
+            ObservableSolutions.Clear();
+            ChessboardVm?.Squares.Clear();
+            UnsubscribeFromSimulationEvents();
+
+            // Marking large objects for garbage collection
+            CancelationTokenSource = null!;
+            ChessboardVm = null!;
+            InputViewModel = null!;
+        }
+        _disposed = true;
+    }
+
     private void Initialize(
         int boardSize = BoardSettings.DefaultBoardSize,
         SolutionMode solutionMode = SimulationSettings.DefaultSolutionMode,
@@ -103,22 +123,6 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         DelayInMilliseconds = SimulationSettings.DefaultDelayInMilliseconds;
         ProgressVisibility = Visibility.Hidden;
         ProgressLabelVisibility = Visibility.Hidden;
-    }
-
-    private void Dispose(bool disposing)
-    {
-        if (_disposed)
-            return;
-
-        if (disposing)
-        {
-            CancelationTokenSource?.Dispose();
-            CancelationTokenSource = null!;
-            ObservableSolutions.Clear();
-            ChessboardVm?.Squares.Clear();
-            UnsubscribeFromSimulationEvents();
-        }
-        _disposed = true;
     }
 
     // --- Private Fields ---

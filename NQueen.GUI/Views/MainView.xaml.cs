@@ -26,7 +26,7 @@ public partial class MainView : Window, IDisposable
         simulationPanelPlaceHolder.Content = simulationPanel;
     }
 
-    public MainViewModel MainViewModel { get; }
+    public MainViewModel MainViewModel { get; set; }
 
     public void Dispose()
     {
@@ -60,6 +60,8 @@ public partial class MainView : Window, IDisposable
                 // Unsubscribe from events
                 Loaded -= MainView_Loaded;
                 SizeChanged -= MainView_SizeChanged;
+
+                MainViewModel = null!;
             }
         }
 
