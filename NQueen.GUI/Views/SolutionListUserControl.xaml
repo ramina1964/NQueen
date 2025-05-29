@@ -9,7 +9,7 @@
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
     mc:Ignorable="d">
 
-    <Grid VerticalAlignment="Stretch" Background="Bisque">
+    <Grid VerticalAlignment="Stretch" Background="Bisque" MinWidth="160">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -17,6 +17,7 @@
 
         <Label
             Grid.Row="0"
+            Grid.Column="0"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             Content="{Binding SolutionTitle}"
@@ -25,6 +26,7 @@
 
         <ListBox
             Grid.Row="1"
+            Grid.Column="0"
             Foreground="Black"
             ItemsSource="{Binding ObservableSolutions}"
             SelectedItem="{Binding SelectedSolution}">
