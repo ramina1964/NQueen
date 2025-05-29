@@ -14,115 +14,119 @@
 
     <UserControl.Resources>
         <converters:DisplayModeToEnabledConverter x:Key="DisplayModeToEnabledConverter" />
+        <converters:StringNotEmptyToVisibilityConverter x:Key="StringNotEmptyToVisibilityConverter" />
     </UserControl.Resources>
 
-    <GroupBox
-        Grid.Row="0"
-        HorizontalAlignment="Stretch"
-        VerticalAlignment="Stretch"
-        Background="Bisque"
-        BorderBrush="Black"
-        BorderThickness="1"
-        Header="Input">
+    <StackPanel>
+        <!--  Error message outside the GroupBox  -->
+        <Label
+            Content="{Binding BoardSizeError}"
+            Style="{StaticResource LabelErrorStyle}"
+            Visibility="{Binding BoardSizeError,
+                Converter={StaticResource StringNotEmptyToVisibilityConverter}}" />
 
-        <Grid Margin="5">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+        <GroupBox
+            Grid.Row="0"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Background="Bisque"
+            BorderBrush="Black"
+            BorderThickness="1"
+            Header="Input">
 
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+            <Grid Margin="5">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-            <Label
-                Grid.Row="0"
-                Grid.Column="0"
-                Margin="5,2"
-                Content="Board Size"
-                Style="{StaticResource LabelStyle}" />
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-            <TextBox
-                Grid.Row="0"
-                Grid.Column="1"
-                Width="90"
-                MinWidth="120"
-                Margin="0,2,5,2"
-                HorizontalAlignment="Right"
-                IsEnabled="{Binding IsInInputMode}"
-                Style="{StaticResource TextBoxNumericalStyle}"
-                Text="{Binding BoardSizeText, UpdateSourceTrigger=LostFocus, Mode=TwoWay, ValidatesOnDataErrors=True}">
-                <TextBox.ToolTip>
-                    <Binding
-                        Converter="{StaticResource FirstValidationErrorConverter}"
-                        Path="(Validation.Errors)"
-                        RelativeSource="{RelativeSource Self}" />
-                </TextBox.ToolTip>
-            </TextBox>
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Margin="5,2"
+                    Content="Board Size"
+                    Style="{StaticResource LabelStyle}" />
 
-            <Label
-                Grid.Row="1"
-                Grid.Column="0"
-                Margin="5,2"
-                Content="Solution Mode"
-                Style="{StaticResource LabelStyle}" />
+                <TextBox
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Width="90"
+                    MinWidth="120"
+                    Margin="0,2,5,2"
+                    HorizontalAlignment="Right"
+                    IsEnabled="{Binding IsInInputMode}"
+                    Style="{StaticResource TextBoxNumericalStyle}"
+                    Text="{Binding BoardSizeText, UpdateSourceTrigger=LostFocus,
+                        Mode=TwoWay, ValidatesOnDataErrors=True}" />
 
-            <ComboBox
-                Grid.Row="1"
-                Grid.Column="1"
-                Width="90"
-                MinWidth="120"
-                Margin="0,2,5,2"
-                HorizontalAlignment="Right"
-                IsEnabled="{Binding IsInInputMode}"
-                ItemsSource="{Binding EnumSolutionModes, Mode=TwoWay}"
-                SelectedItem="{Binding SolutionMode, Mode=TwoWay}"
-                Style="{StaticResource ComboBoxStyle}" />
+                <Label
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Margin="5,2"
+                    Content="Solution Mode"
+                    Style="{StaticResource LabelStyle}" />
 
-            <Label
-                Grid.Row="2"
-                Grid.Column="0"
-                Margin="5,2"
-                Content="Display Mode"
-                Style="{StaticResource LabelStyle}" />
+                <ComboBox
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Width="90"
+                    MinWidth="120"
+                    Margin="0,2,5,2"
+                    HorizontalAlignment="Right"
+                    IsEnabled="{Binding IsInInputMode}"
+                    ItemsSource="{Binding EnumSolutionModes, Mode=TwoWay}"
+                    SelectedItem="{Binding SolutionMode, Mode=TwoWay}"
+                    Style="{StaticResource ComboBoxStyle}" />
 
-            <ComboBox
-                x:Name="CmbDisplayMode"
-                Grid.Row="2"
-                Grid.Column="1"
-                Width="90"
-                MinWidth="120"
-                Margin="0,2,5,2"
-                HorizontalAlignment="Right"
-                IsEnabled="{Binding IsInInputMode}"
-                ItemsSource="{Binding EnumDisplayModes, Mode=TwoWay}"
-                SelectedItem="{Binding DisplayMode, Mode=TwoWay}"
-                Style="{StaticResource ComboBoxStyle}" />
+                <Label
+                    Grid.Row="2"
+                    Grid.Column="0"
+                    Margin="5,2"
+                    Content="Display Mode"
+                    Style="{StaticResource LabelStyle}" />
 
-            <Label
-                Grid.Row="3"
-                Grid.Column="0"
-                Margin="5,2"
-                Content="Delay in Milisec"
-                Style="{StaticResource LabelStyle}" />
+                <ComboBox
+                    x:Name="CmbDisplayMode"
+                    Grid.Row="2"
+                    Grid.Column="1"
+                    Width="90"
+                    MinWidth="120"
+                    Margin="0,2,5,2"
+                    HorizontalAlignment="Right"
+                    IsEnabled="{Binding IsInInputMode}"
+                    ItemsSource="{Binding EnumDisplayModes, Mode=TwoWay}"
+                    SelectedItem="{Binding DisplayMode, Mode=TwoWay}"
+                    Style="{StaticResource ComboBoxStyle}" />
 
-            <Slider
-                x:Name="DelaySlider"
-                Grid.Row="3"
-                Grid.Column="1"
-                Width="90"
-                MinWidth="120"
-                Margin="0,2,5,2"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Center"
-                IsEnabled="{Binding DisplayMode, Converter={StaticResource DisplayModeToEnabledConverter}, ConverterParameter=Visualize}"
-                Maximum="3000"
-                Minimum="10"
-                Style="{StaticResource SliderStyle}"
-                Value="{Binding DelayInMilliseconds, Mode=TwoWay}" />
-        </Grid>
-    </GroupBox>
+                <Label
+                    Grid.Row="3"
+                    Grid.Column="0"
+                    Margin="5,2"
+                    Content="Delay in Milisec"
+                    Style="{StaticResource LabelStyle}" />
+
+                <Slider
+                    x:Name="DelaySlider"
+                    Grid.Row="3"
+                    Grid.Column="1"
+                    Width="90"
+                    MinWidth="120"
+                    Margin="0,2,5,2"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    IsEnabled="{Binding DisplayMode, Converter={StaticResource DisplayModeToEnabledConverter}, ConverterParameter=Visualize}"
+                    Maximum="3000"
+                    Minimum="10"
+                    Style="{StaticResource SliderStyle}"
+                    Value="{Binding DelayInMilliseconds, Mode=TwoWay}" />
+            </Grid>
+        </GroupBox>
+    </StackPanel>
 </UserControl>

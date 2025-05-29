@@ -75,31 +75,6 @@
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="HorizontalContentAlignment" Value="Right" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="Validation.ErrorTemplate">
-            <Setter.Value>
-                <ControlTemplate>
-                    <StackPanel Orientation="Horizontal">
-                        <AdornedElementPlaceholder />
-                        <Label
-                            Margin="10,0,0,0"
-                            HorizontalAlignment="Left"
-                            VerticalAlignment="Center"
-                            HorizontalContentAlignment="Left"
-                            VerticalContentAlignment="Center"
-                            Foreground="Red"
-                            Content="{Binding [0].ErrorContent}" />
-                    </StackPanel>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-        <Style.Triggers>
-            <Trigger Property="Validation.HasError" Value="True">
-                <Setter Property="ToolTip"
-                        Value="{Binding (Validation.Errors),
-                                RelativeSource={RelativeSource Self},
-                                Converter={StaticResource FirstValidationErrorConverter}}" />
-            </Trigger>
-        </Style.Triggers>
     </Style>
 
     <!--  *********************** Based on ComboBox **********************  -->

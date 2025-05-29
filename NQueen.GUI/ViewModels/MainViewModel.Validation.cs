@@ -2,6 +2,9 @@
 
 public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorInfo
 {
+    public string? BoardSizeError =>
+        GetErrors(nameof(BoardSizeText)).OfType<string>().FirstOrDefault();
+
     private void ValidateProperty(string propertyName)
     {
         _errors.Remove(propertyName);
@@ -21,7 +24,12 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
             Debug.WriteLine($"Errors for {propertyName}: {string.Join(", ", propertyErrors)}");
             OnErrorsChanged(propertyName);
         }
+
+        // Notify UI that BoardSizeError may have changed
+        if (propertyName == nameof(BoardSizeText))
+            OnPropertyChanged(nameof(BoardSizeError));
     }
+
 
     private void OnErrorsChanged(string propertyName) =>
         ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
@@ -82,8 +90,6 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
             _ => "Single Solution"
         };
 
-        ValidateProperty(nameof(BoardSizeText));
-        OnPropertyChanged(nameof(BoardSizeText));
         OnPropertyChanged(nameof(SolutionTitle));
 
         // Ensure IsSingleRunning is updated when SolutionMode changes
@@ -96,6 +102,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
             var boardDimension = Math.Min(ChessboardVm.WindowWidth, ChessboardVm.WindowHeight);
             SetChessboard(boardDimension);
         }
+
         RefreshCommandStates();
     }
 }
