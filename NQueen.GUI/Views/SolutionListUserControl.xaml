@@ -5,11 +5,16 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
+    HorizontalAlignment="Stretch"
     VerticalAlignment="Stretch"
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
     mc:Ignorable="d">
 
-    <Grid VerticalAlignment="Stretch" Background="Bisque" MinWidth="160">
+    <Grid
+        MinWidth="160"
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
+        Background="Bisque">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />

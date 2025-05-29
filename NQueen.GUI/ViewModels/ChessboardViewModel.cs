@@ -27,7 +27,7 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
     public string QueenImagePath { get; } = BoardSettings.QueenImageResource;
 
     [ObservableProperty]
-    private ObservableCollection<SquareViewModel> squares = [];
+    private ObservableCollection<SquareViewModel> _squares = [];
 
     [ObservableProperty]
     private double _windowWidth;

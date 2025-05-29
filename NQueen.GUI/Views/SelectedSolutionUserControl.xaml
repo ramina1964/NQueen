@@ -6,7 +6,9 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
-    mc:Ignorable="d">
+    mc:Ignorable="d"
+    HorizontalAlignment="Stretch"
+    VerticalAlignment="Stretch">
 
     <GroupBox
         HorizontalAlignment="Stretch"
@@ -16,35 +18,40 @@
         BorderThickness="1"
         Header="Selected Solution">
 
+        <!-- Center the content block vertically and horizontally -->
         <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <Label
+            <StackPanel
                 Grid.Row="0"
                 Grid.Column="0"
-                HorizontalAlignment="Stretch"
-                VerticalAlignment="Stretch"
-                Content="Locations"
-                Foreground="Purple"
-                Style="{StaticResource LabelStyle}" />
-
-            <ScrollViewer
-                Grid.Row="0"
-                Grid.Column="1"
-                HorizontalScrollBarVisibility="Auto"
-                VerticalScrollBarVisibility="Hidden">
-                <TextBlock
-                    Text="{Binding SelectedSolution.Details}"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center"
+                Orientation="Horizontal"
+                >
+                <Label
+                    Content="Locations"
                     Foreground="Purple"
-                    TextWrapping="Wrap" />
-            </ScrollViewer>
-            
+                    Style="{StaticResource LabelStyle}"
+                    VerticalAlignment="Center"
+                    Margin="0,0,8,0"/>
+                <ScrollViewer
+                    HorizontalScrollBarVisibility="Auto"
+                    VerticalScrollBarVisibility="Hidden"
+                    VerticalAlignment="Center"
+                    MinWidth="120">
+                    <TextBlock
+                        Text="{Binding SelectedSolution.Details}"
+                        Foreground="Purple"
+                        VerticalAlignment="Center"
+                        TextWrapping="Wrap" />
+                </ScrollViewer>
+            </StackPanel>
         </Grid>
     </GroupBox>
 </UserControl>

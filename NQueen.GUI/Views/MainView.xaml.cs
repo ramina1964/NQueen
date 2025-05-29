@@ -87,7 +87,14 @@ public partial class MainView : Window, IDisposable
     {
         if (chessboardPlaceholder.Content is ChessboardUserControl board)
         {
-            var size = (int)Math.Min(board.ActualWidth, board.ActualHeight);
+            // Get the available height for the row
+            var rowHeight = ((Grid)Content).RowDefinitions[1].ActualHeight;
+            // Get the available width for the column
+            var colWidth = ((Grid)Content).ColumnDefinitions[1].ActualWidth;
+
+            // The chessboard should be square, so use the smaller of the two
+            var size = Math.Min(rowHeight, colWidth);
+
             board.Width = size;
             board.Height = size;
 
