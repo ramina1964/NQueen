@@ -6,21 +6,22 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
+    Background="Transparent"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
 
+    <!-- GroupBox for solution summary -->
     <GroupBox
-        Grid.Row="1"
-        Margin="0,2,0,0"
-        HorizontalAlignment="Stretch"
-        VerticalAlignment="Stretch"
+        Margin="0"
+        Padding="0"
         Background="Bisque"
         BorderBrush="Black"
         BorderThickness="1"
         Header="Solution Summary">
-
-        <Grid Margin="10,5,5,2">
+        
+        <!-- Main content grid with consistent margin -->
+        <Grid Margin="2">
             <Grid.RowDefinitions>
                 <RowDefinition />
                 <RowDefinition />
@@ -28,64 +29,69 @@
                 <RowDefinition />
                 <RowDefinition />
             </Grid.RowDefinitions>
-
+            
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-
+            
+            <!-- Board Size -->
             <Label
                 Grid.Row="0"
                 Grid.Column="0"
                 Content="Board Size"
                 Style="{StaticResource LabelStyle}" />
-
+            
             <Label
                 Grid.Row="0"
                 Grid.Column="1"
                 HorizontalContentAlignment="Right"
                 Content="{Binding BoardSize}"
                 Style="{StaticResource LabelStyle}" />
-
+            
+            <!-- Result Title -->
             <Label
                 Grid.Row="1"
                 Grid.Column="0"
                 Content="{Binding ResultTitle}"
                 Style="{StaticResource LabelStyle}" />
-
+            
             <Label
                 Grid.Row="1"
                 Grid.Column="1"
                 HorizontalContentAlignment="Right"
                 Content="{Binding NoOfSolutions}"
                 Style="{StaticResource LabelStyle}" />
-
+            
+            <!-- Elapsed Time -->
             <Label
                 Grid.Row="2"
                 Grid.Column="0"
                 Content="Elapsed Time (sec)"
                 Style="{StaticResource LabelStyle}" />
-
+            
             <Label
                 Grid.Row="2"
                 Grid.Column="1"
                 HorizontalContentAlignment="Right"
                 Content="{Binding ElapsedTimeInSec}"
                 Style="{StaticResource LabelStyle}" />
-
+            
+            <!-- Memory Usage -->
             <Label
                 Grid.Row="3"
                 Grid.Column="0"
                 Content="Memory Usage (MB)"
                 Style="{StaticResource LabelStyle}" />
-
+            
             <Label
                 Grid.Row="3"
                 Grid.Column="1"
                 HorizontalContentAlignment="Right"
                 Content="{Binding MemoryUsage}"
                 Style="{StaticResource LabelStyle}" />
-
+            
+            <!-- Save Button -->
             <Button
                 Grid.Row="4"
                 Grid.ColumnSpan="2"

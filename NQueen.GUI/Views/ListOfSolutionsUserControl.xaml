@@ -5,54 +5,44 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
-    HorizontalAlignment="Stretch"
-    VerticalAlignment="Stretch"
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
+    Background="Transparent"
     mc:Ignorable="d">
 
-    <Grid
-        MinWidth="160"
-        HorizontalAlignment="Stretch"
-        VerticalAlignment="Stretch"
-        Background="Bisque">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <!--  Border for visual grouping and margin  -->
+    <Border
+        Margin="2"
+        Padding="0"
+        Background="White"
+        BorderBrush="Black"
+        BorderThickness="1">
 
-        <Label
-            Grid.Row="0"
-            Grid.Column="0"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Content="{Binding SolutionTitle}"
-            Foreground="Purple"
-            Style="{StaticResource LabelStyle}" />
-
-        <ListBox
-            Grid.Row="1"
-            Grid.Column="0"
-            Foreground="Black"
-            ItemsSource="{Binding ObservableSolutions}"
-            SelectedItem="{Binding SelectedSolution}">
-            <ListBox.ItemContainerStyle>
-                <Style TargetType="ListBoxItem">
-                    <Style.Triggers>
-                        <Trigger Property="IsSelected" Value="True">
-                            <Setter Property="FontWeight" Value="Bold" />
-                            <Setter Property="Background" Value="Transparent" />
-                            <Setter Property="Foreground" Value="Crimson" />
-                        </Trigger>
-                    </Style.Triggers>
-                </Style>
-            </ListBox.ItemContainerStyle>
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <StackPanel>
-                        <TextBlock Text="{Binding Name}" />
-                    </StackPanel>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-    </Grid>
+        <!--  Grid for future extensibility (single child for now)  -->
+        <Grid>
+            <ListBox
+                BorderThickness="0"
+                Foreground="Black"
+                ItemsSource="{Binding ObservableSolutions}"
+                SelectedItem="{Binding SelectedSolution}">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="FontWeight" Value="Bold" />
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="Foreground" Value="Crimson" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <TextBlock Text="{Binding Name}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
+    </Border>
 </UserControl>

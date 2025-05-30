@@ -12,27 +12,40 @@
         <converters:NullImageConverter x:Key="NullImageConverter" />
     </UserControl.Resources>
 
-    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-        <ItemsControl ItemsSource="{Binding ChessboardVm.Squares}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <UniformGrid Columns="{Binding BoardSize}" Rows="{Binding BoardSize}" />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Border
-                        Background="{Binding Color}"
-                        HorizontalAlignment="Stretch"
-                        VerticalAlignment="Stretch">
-                        <Image
-                            Source="{Binding ImagePath, Converter={StaticResource NullImageConverter}}"
-                            Stretch="Uniform"
+    <!--  Border for visual grouping and margin  -->
+    <Border
+        Margin="2"
+        Padding="0"
+        Background="White"
+        BorderBrush="Black"
+        BorderThickness="1">
+
+        <!--  Grid for content alignment  -->
+        <Grid
+            HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <ItemsControl ItemsSource="{Binding ChessboardVm.Squares}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="{Binding BoardSize}" Rows="{Binding BoardSize}" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border
                             HorizontalAlignment="Stretch"
-                            VerticalAlignment="Stretch" />
-                    </Border>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-    </Grid>
+                            VerticalAlignment="Stretch"
+                            Background="{Binding Color}">
+                            <Image
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                Source="{Binding ImagePath, Converter={StaticResource NullImageConverter}}"
+                                Stretch="Uniform" />
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+                
+            </ItemsControl>
+        </Grid>
+    </Border>
 </UserControl>
