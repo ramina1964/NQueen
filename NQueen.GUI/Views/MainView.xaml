@@ -10,13 +10,15 @@
     Title="Solutions of NQueen Problem with Backtracking - .NET 9.0"
     MinWidth="1200"
     MinHeight="1000"
+    Background="White"
     FontSize="14"
     ResizeMode="CanResize"
     WindowStartupLocation="CenterScreen"
     WindowState="Normal"
     mc:Ignorable="d">
 
-    <Grid Margin="5">
+    <!--  Main grid layout for the window  -->
+    <Grid Margin="5" Background="White">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" MinHeight="40" />
             <RowDefinition Height="*" />
@@ -27,7 +29,7 @@
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
-        <!--  Top Row: Centralized and wrapped in a Border for visual grouping  -->
+        <!--  Top header row (not relevant for alignment)  -->
         <Border
             Grid.Row="0"
             Grid.Column="0"
@@ -41,16 +43,16 @@
             <view:ActiveSolutionUserControl HorizontalAlignment="Stretch" VerticalAlignment="Center" />
         </Border>
 
-        <!--  Left Column: Solution List, height controlled in code-behind  -->
+        <!--  Left: Solution List  -->
         <view:ListOfSolutionsUserControl
             x:Name="solutionList"
             Grid.Row="1"
             Grid.Column="0"
-            Margin="5"
+            Margin="0"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch" />
 
-        <!--  Center Column: Chessboard, always square and centered, height controlled in code-behind  -->
+        <!--  Center: Chessboard  -->
         <ContentControl
             x:Name="chessboardPlaceholder"
             Grid.Row="1"
@@ -58,7 +60,7 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Top" />
 
-        <!--  Right Column: Controls with equal width and small vertical gaps  -->
+        <!--  Right: Controls (unchanged)  -->
         <Grid
             Grid.Row="1"
             Grid.Column="2"
