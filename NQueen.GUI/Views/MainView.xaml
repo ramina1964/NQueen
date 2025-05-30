@@ -85,7 +85,7 @@
                 Grid.Column="0"
                 MinWidth="220"
                 HorizontalAlignment="Stretch" />
-            <view:ResultsPanelUserControl
+            <view:OutputPanelUserControl
                 Grid.Row="2"
                 Grid.Column="0"
                 MinWidth="220"
