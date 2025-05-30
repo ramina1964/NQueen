@@ -38,11 +38,11 @@
             VerticalAlignment="Center"
             Background="WhiteSmoke"
             CornerRadius="8">
-            <view:SelectedSolutionUserControl HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+            <view:ActiveSolutionUserControl HorizontalAlignment="Stretch" VerticalAlignment="Center" />
         </Border>
 
         <!--  Left Column: Solution List, height controlled in code-behind  -->
-        <view:SolutionListUserControl
+        <view:ListOfSolutionsUserControl
             x:Name="solutionList"
             Grid.Row="1"
             Grid.Column="0"
@@ -85,7 +85,7 @@
                 Grid.Column="0"
                 MinWidth="220"
                 HorizontalAlignment="Stretch" />
-            <view:SolutionSummaryUserControl
+            <view:ResultSummaryUserControl
                 Grid.Row="2"
                 Grid.Column="0"
                 MinWidth="220"

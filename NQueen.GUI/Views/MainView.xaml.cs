@@ -1,5 +1,7 @@
 ﻿namespace NQueen.GUI.Views;
 
+// Todo: Make height of these controls equal: SolutionListUserControl and ChessboardUserControl.
+// Todo: Align top of these controls: SolutionListUserControl and ChessboardUserControl.
 public partial class MainView : Window, IDisposable
 {
     public MainView(MainViewModel mainViewModel, IServiceProvider serviceProvider)
