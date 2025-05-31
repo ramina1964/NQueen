@@ -24,12 +24,16 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
             Debug.WriteLine($"Errors for {propertyName}: {string.Join(", ", propertyErrors)}");
             OnErrorsChanged(propertyName);
         }
+        else
+        {
+            // Notify UI that errors have been cleared
+            OnErrorsChanged(propertyName);
+        }
 
         // Notify UI that BoardSizeError may have changed
         if (propertyName == nameof(BoardSizeText))
             OnPropertyChanged(nameof(BoardSizeError));
     }
-
 
     private void OnErrorsChanged(string propertyName) =>
         ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
