@@ -34,8 +34,8 @@
             Grid.Row="0"
             Grid.Column="0"
             Grid.ColumnSpan="3"
-            Margin="5"
-            Padding="10"
+            Margin="5,5,5,0" 
+            Padding="0"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Center"
             Background="WhiteSmoke"
@@ -48,7 +48,8 @@
             x:Name="solutionList"
             Grid.Row="1"
             Grid.Column="0"
-            Margin="0"
+            Margin="5,0,0,5"
+            Padding="0"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Top" />
 
