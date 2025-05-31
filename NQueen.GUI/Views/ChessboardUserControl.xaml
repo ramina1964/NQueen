@@ -16,20 +16,21 @@
     <Border
         Margin="2"
         Padding="0"
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
         Background="White"
         BorderBrush="Black"
         BorderThickness="1">
 
         <!--  Grid for content alignment  -->
-        <Grid
-            HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <ItemsControl ItemsSource="{Binding ChessboardVm.Squares}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <UniformGrid Columns="{Binding BoardSize}" Rows="{Binding BoardSize}" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
-                
+
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border
@@ -44,7 +45,7 @@
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
-                
+
             </ItemsControl>
         </Grid>
     </Border>

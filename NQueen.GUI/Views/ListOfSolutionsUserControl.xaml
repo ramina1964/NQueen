@@ -13,12 +13,14 @@
     <Border
         Margin="2"
         Padding="0"
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
         Background="White"
         BorderBrush="Black"
         BorderThickness="1">
 
         <!--  Grid for future extensibility (single child for now)  -->
-        <Grid>
+        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <ListBox
                 BorderThickness="0"
                 Foreground="Black"

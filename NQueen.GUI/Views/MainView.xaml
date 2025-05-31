@@ -50,7 +50,7 @@
             Grid.Column="0"
             Margin="0"
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch" />
+            VerticalAlignment="Top" />
 
         <!--  Center: Chessboard  -->
         <ContentControl
@@ -67,7 +67,7 @@
             Margin="5"
             HorizontalAlignment="Center"
             VerticalAlignment="Center">
-            
+
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="2" />
@@ -75,7 +75,7 @@
                 <RowDefinition Height="2" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            
+
             <Grid.ColumnDefinitions>
                 <ColumnDefinition
                     Width="Auto"
@@ -89,13 +89,13 @@
                 Grid.Column="0"
                 MinWidth="220"
                 HorizontalAlignment="Stretch" />
-            
+
             <view:OutputPanelUserControl
                 Grid.Row="2"
                 Grid.Column="0"
                 MinWidth="220"
                 HorizontalAlignment="Stretch" />
-            
+
             <ContentControl
                 x:Name="simulationPanelPlaceHolder"
                 Grid.Row="4"

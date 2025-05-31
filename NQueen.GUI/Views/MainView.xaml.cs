@@ -87,23 +87,27 @@ public partial class MainView : Window, IDisposable
 
     private void MainView_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        if (chessboardPlaceholder.Content is ChessboardUserControl board)
+        if (chessboardPlaceholder.Content is ChessboardUserControl chessBoard)
         {
             // Get the available height for the row
             var rowHeight = ((Grid)Content).RowDefinitions[1].ActualHeight;
+
             // Get the available width for the column
             var colWidth = ((Grid)Content).ColumnDefinitions[1].ActualWidth;
 
             // The chessboard should be square, so use the smaller of the two
-            var size = Math.Min(rowHeight, colWidth);
+            var maxChessBoardSize = Math.Min(rowHeight, colWidth);
 
-            board.Width = size;
-            board.Height = size;
+            chessBoard.Width = maxChessBoardSize;
+            chessBoard.Height = maxChessBoardSize;
 
-            MainViewModel.ChessboardVm.WindowWidth = board.ActualWidth;
-            MainViewModel.ChessboardVm.WindowHeight = board.ActualHeight;
+            // Set the height of the solution list to match the chessboard
+            solutionList.Height = maxChessBoardSize;
 
-            MainViewModel.SetChessboard(size);
+            MainViewModel.ChessboardVm.WindowWidth = chessBoard.ActualWidth;
+            MainViewModel.ChessboardVm.WindowHeight = chessBoard.ActualHeight;
+
+            MainViewModel.SetChessboard(maxChessBoardSize);
         }
     }
 
