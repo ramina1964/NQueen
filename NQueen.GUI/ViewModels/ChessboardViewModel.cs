@@ -2,6 +2,17 @@
 
 public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableObject
 {
+    [ObservableProperty]
+    private ObservableCollection<SquareViewModel> _squares = [];
+
+    [ObservableProperty]
+    private double _windowWidth;
+
+    [ObservableProperty]
+    private double _windowHeight;
+
+    public string QueenImagePath { get; } = BoardSettings.QueenImageResource;
+
     public void PlaceQueens(IEnumerable<Position> positions)
     {
         ClearImages();
@@ -24,21 +35,6 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
         }
     }
 
-    public string QueenImagePath { get; } = BoardSettings.QueenImageResource;
-
-    [ObservableProperty]
-    private ObservableCollection<SquareViewModel> _squares = [];
-
-    [ObservableProperty]
-    private double _windowWidth;
-
-    [ObservableProperty]
-    private double _windowHeight;
-
-    private int _lastBoardSize = -1;
-    private double _lastWidth = -1;
-    private double _lastHeight = -1;
-
     public void CreateSquares(int boardSize)
     {
         if (IsBoardStateUpdatedAndSquaresPopulated(boardSize))
@@ -53,7 +49,6 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
         {
             for (var row = 0; row < boardSize; row++)
             {
-                // No inversion: row 0 is bottom, col 0 is left
                 var pos = new Position(row, col);
                 var square = new SquareViewModel(pos, FindColor(pos))
                 {
@@ -71,7 +66,8 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
         _lastHeight = WindowHeight;
     }
 
-    // This method is used as a condition for early termination of CreateSquares()
+    // --- Private Methods and Fields ---
+
     private bool IsBoardStateUpdatedAndSquaresPopulated(int boardSize) =>
         boardSize > 0 &&
         boardSize == _lastBoardSize &&
@@ -93,6 +89,10 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
 
         return new SolidColorBrush(col);
     }
+
+    private int _lastBoardSize = -1;
+    private double _lastWidth = -1;
+    private double _lastHeight = -1;
 
     private readonly IDispatcher _uiDispatcher = uiDispatcher
         ?? throw new ArgumentNullException(nameof(_uiDispatcher));

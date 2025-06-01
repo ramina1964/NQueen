@@ -119,6 +119,7 @@ public sealed partial class MainViewModel
                 OnSimulationCompleted();
                 break;
         }
+
         RefreshCommandStates();
     }
 
@@ -144,13 +145,13 @@ public sealed partial class MainViewModel
         sb.AppendLine($"Elapsed Time: {ElapsedTimeInSec} seconds");
         sb.AppendLine($"Memory Usage: {MemoryUsage} MB");
         sb.AppendLine();
-        
+
         sb.AppendLine("Solutions:");
         foreach (var solution in ObservableSolutions)
         {
             sb.Append($"Solution ID: {solution.Id}\t\t\t");
             sb.AppendLine(solution.Details);
-        }        
+        }
 
         return sb.ToString();
     }
