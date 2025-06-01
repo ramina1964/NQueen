@@ -26,6 +26,7 @@ public class SquareViewModel(Position pos, Brush color) : ObservableObject
 
     public override string ToString() => $"{Position.RowNo}, {Position.ColumnNo}";
 
+    // --- Private Fields ---
     private double _width;
     private double _height;
     private string _imagePath = string.Empty;

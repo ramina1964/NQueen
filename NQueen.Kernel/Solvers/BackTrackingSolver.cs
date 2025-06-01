@@ -1,6 +1,6 @@
 ﻿namespace NQueen.Kernel.Solvers;
 
-public class BackTrackingSolver : ISolver, IDisposable
+public class BackTrackingSolver : ISolver, IDisposable 
 {
     public BackTrackingSolver(
         ISolutionManager solutionManager,
