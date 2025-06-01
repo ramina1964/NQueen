@@ -1,5 +1,7 @@
 ﻿namespace NQueen.Kernel.Solvers;
 
+// Todo: Cancelling the simulation when Visualizatio is activated cases an error message
+// in a Dialogbox.
 public class BackTrackingSolver : ISolver, IDisposable 
 {
     public BackTrackingSolver(

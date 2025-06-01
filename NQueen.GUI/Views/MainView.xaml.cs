@@ -1,7 +1,11 @@
 ﻿namespace NQueen.GUI.Views;
 
-// Todo: Make height of these controls equal: SolutionListUserControl and ChessboardUserControl.
-// Todo: Align top of these controls: SolutionListUserControl and ChessboardUserControl.
+// Todo: Consider using a more specific name for this class, such as MainWindowView
+// or MainApplicationView.
+
+// Todo: The error messages for invalid board sizes have different length, such that changing solution
+// mode could cause widening or narrowing of the UserControl panesl on the last column of the
+// second row, i.e., Grid.Row = 1 Grid.Column = 3 of the MainView.xaml.
 public partial class MainView : Window, IDisposable
 {
     public MainView(MainViewModel mainViewModel, IServiceProvider serviceProvider)
