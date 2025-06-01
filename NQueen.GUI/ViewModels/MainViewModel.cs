@@ -1,36 +1,26 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorInfo, IDisposable
+public sealed partial class MainViewModel :
+    ObservableObject, INotifyDataErrorInfo, IDisposable
 {
-    // --- Public Properties ---
-    public int BoardSize => ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) ? boardSize : _lastValidBoardSize;
-    
-    public string ResultTitle => SolverHelper.UpdateSolutionTitle(SolutionMode);
-    
-    public ChessboardViewModel ChessboardVm { get; set; }
-    
-    public IAsyncRelayCommand SimulateCommand { get; private set; }
-    
-    public IRelayCommand SaveCommand { get; private set; }
-    
-    public IRelayCommand CancelCommand { get; private set; }
-    
-    public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
-    
-    public event EventHandler? SimulationCompleted;
-    
-    public bool HasErrors => _errors.Count != 0;
-
     // --- Constructors ---
     public MainViewModel(IDispatcher uiDispatcher)
-        : this(new BackTrackingSolver(new SolutionManager()), uiDispatcher, new SaveFileDialogService())
+        : this(
+              new BackTrackingSolver(new SolutionManager()), uiDispatcher,
+              new SaveFileDialogService())
     { }
 
-    public MainViewModel(ISolver solver, IDispatcher dispatcher, ISaveFileDialogService saveFileService)
+    public MainViewModel(ISolver solver, IDispatcher dispatcher,
+        ISaveFileDialogService saveFileService)
     {
-        Solver = solver ?? throw new ArgumentNullException(nameof(solver));
-        _uiDispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
-        _saveFileService = saveFileService ?? throw new ArgumentNullException(nameof(saveFileService));
+        Solver = solver ??
+            throw new ArgumentNullException(nameof(solver));
+
+        _uiDispatcher = dispatcher ??
+            throw new ArgumentNullException(nameof(dispatcher));
+
+        _saveFileService = saveFileService ??
+            throw new ArgumentNullException(nameof(saveFileService));
 
         InputViewModel = new InputViewModel(SolutionMode.Unique);
         CancelationTokenSource = new CancellationTokenSource();
@@ -44,11 +34,31 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         SubscribeToSimulationEvents();
     }
 
+    // --- Public Properties ---
+    public int BoardSize => ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) ? boardSize : _lastValidBoardSize;
+
+    public string ResultTitle => SolverHelper.UpdateSolutionTitle(SolutionMode);
+
+    public ChessboardViewModel ChessboardVm { get; set; }
+
+    public IAsyncRelayCommand SimulateCommand { get; private set; }
+
+    public IRelayCommand SaveCommand { get; private set; }
+
+    public IRelayCommand CancelCommand { get; private set; }
+
+    public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
+
+    public event EventHandler? SimulationCompleted;
+
+    public bool HasErrors => _errors.Count != 0;
+
     // --- Public Methods ---
     public IEnumerable GetErrors(string? propertyName)
     {
         if (string.IsNullOrEmpty(propertyName))
             return _errors.Values.SelectMany(errors => errors).ToList();
+    
         return _errors.TryGetValue(propertyName, out var propertyErrors) ? propertyErrors : Enumerable.Empty<string>();
     }
 
@@ -62,7 +72,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
         // Validate board size for the current solution mode
         var validationResult = InputViewModel.ValidateBoardSize(BoardSizeText);
-        if (!validationResult.IsValid)
+        if (validationResult.IsValid == false)
         {
             ChessboardVm.Squares.Clear();
             return;
@@ -81,6 +91,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         GC.SuppressFinalize(this);
     }
 
+    // --- Private Methods ---
     private void Dispose(bool disposing)
     {
         if (_disposed)
@@ -98,6 +109,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
             ChessboardVm = null!;
             InputViewModel = null!;
         }
+
         _disposed = true;
     }
 
@@ -127,18 +139,18 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
     // --- Private Fields ---
     private readonly Dictionary<string, List<string>> _errors = [];
-    
+
     private int _lastValidBoardSize = BoardSettings.DefaultBoardSize;
-    
+
     private InputViewModel InputViewModel { get; set; }
-    
+
     private bool _disposed;
-    
+
     private CancellationTokenSource CancelationTokenSource { get; set; }
-    
+
     private readonly ISolver Solver;
-    
+
     private readonly IDispatcher _uiDispatcher;
-    
+
     private readonly ISaveFileDialogService _saveFileService;
 }
