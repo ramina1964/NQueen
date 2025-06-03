@@ -31,8 +31,8 @@ public static class TestHelpers
         var mainVm = CreateMainViewModel();
         mainVm.SolutionMode = solutionMode;
         mainVm.BoardSizeText = boardSizeText;
-        
-        // Todo: Set display mode if needed
+        mainVm.DisplayMode = displayMode;
+
         return mainVm;
     }
 
@@ -41,8 +41,7 @@ public static class TestHelpers
         SolutionMode solutionMode = SolutionMode.Single,
         DisplayMode displayMode = DisplayMode.Hide) =>
             CreateMainViewModelWithBoardSizeText(
-                boardSize.ToString(),
-                solutionMode, displayMode);
+                boardSize.ToString(), solutionMode, displayMode);
 
     public static MainViewModel CreateMainViewModelWithSimulationResults(
         int boardSize,
