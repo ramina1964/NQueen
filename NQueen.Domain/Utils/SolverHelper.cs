@@ -1,4 +1,4 @@
-﻿namespace NQueen.Kernel.Utilities;
+﻿namespace NQueen.Domain.Utils;
 
 public static class SolverHelper
 {
@@ -51,7 +51,7 @@ public static class SolverHelper
             : GetSolutionSizeAll(boardSize);
 
     public static string UpdateSolutionTitle(SolutionMode solutionMode) =>
-        (solutionMode == SolutionMode.Single)
+        solutionMode == SolutionMode.Single
                 ? $"Solution"
                 : solutionMode == SolutionMode.Unique
                 ? $"Unique Solutions (Max: {SimulationSettings.MaxNoOfSolutionsInOutput})"

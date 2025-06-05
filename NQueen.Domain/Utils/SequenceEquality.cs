@@ -1,4 +1,4 @@
-﻿namespace NQueen.Shared.Utils;
+﻿namespace NQueen.Domain.Utils;
 
 public class SequenceEquality<T> : IEqualityComparer<IEnumerable<T>>
 {
@@ -11,6 +11,7 @@ public class SequenceEquality<T> : IEqualityComparer<IEnumerable<T>>
     public int GetHashCode(IEnumerable<T> seq)
     {
         if (seq == null) throw new ArgumentNullException(nameof(seq));
+        
         return seq.Aggregate(1234567, (current, elem) =>
             current * HashConstant + (elem?.GetHashCode() ?? 0));
     }

@@ -1,8 +1,4 @@
-﻿using NQueen.Domain.Enums;
-using NQueen.Domain.Interfaces;
-using NQueen.Domain.Models;
-
-namespace NQueen.ViewModelTests.Tests.Main;
+﻿namespace NQueen.ViewModelTests.Tests.Main;
 
 public class MainViewModelPositiveTests : IDisposable
 {

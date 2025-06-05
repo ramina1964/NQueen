@@ -1,4 +1,4 @@
-﻿namespace NQueen.Shared.Settings;
+﻿namespace NQueen.Domain.Settings;
 
 public class SimulationSettings
 {
