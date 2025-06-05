@@ -30,6 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\NQueen.Domain\NQueen.Domain.csproj" />
     <ProjectReference Include="..\NQueen.GUI\NQueen.GUI.csproj" />
     <ProjectReference Include="..\NQueen.TestShared\NQueen.TestShared.csproj" />
   </ItemGroup>

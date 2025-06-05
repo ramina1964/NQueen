@@ -1,10 +1,10 @@
 ﻿global using Microsoft.Extensions.DependencyInjection;
-global using NQueen.Kernel.Events;
-global using NQueen.Kernel.Interfaces;
-global using NQueen.Kernel.Models;
+global using NQueen.Domain.Enums;
+global using NQueen.Domain.EventArgs;
+global using NQueen.Domain.Interfaces;
+global using NQueen.Domain.Models;
 global using NQueen.Kernel.Solvers;
 global using NQueen.Kernel.Utilities;
-global using NQueen.Shared.Enums;
 global using NQueen.Shared.Settings;
 global using NQueen.Shared.Utils;
 global using System;

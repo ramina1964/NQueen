@@ -1,4 +1,4 @@
-﻿namespace NQueen.Kernel.Models;
+﻿namespace NQueen.Domain.Models;
 
 public class SimulationResults
 {

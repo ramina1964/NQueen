@@ -1,10 +1,10 @@
 ﻿global using FluentAssertions;
 global using Microsoft.Extensions.DependencyInjection;
-global using NQueen.Kernel.Interfaces;
-global using NQueen.Kernel.Models;
+global using NQueen.Domain.Enums;
+global using NQueen.Domain.Interfaces;
+global using NQueen.Domain.Models;
 global using NQueen.Kernel.Services;
 global using NQueen.Kernel.Solvers;
-global using NQueen.Shared.Enums;
 global using NQueen.TestShared.Data;
 global using NQueen.UnitTests.Base;
 global using NQueen.UnitTests.Setup;
@@ -13,4 +13,3 @@ global using System.Collections.Generic;
 global using System.Linq;
 global using System.Threading.Tasks;
 global using Xunit;
-

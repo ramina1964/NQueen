@@ -1,4 +1,8 @@
-﻿namespace NQueen.ViewModelTests.Tests.Solver;
+﻿global using NQueen.Domain.Enums;
+global using NQueen.Domain.Interfaces;
+global using NQueen.Domain.Models;
+
+namespace NQueen.ViewModelTests.Tests.Solver;
 
 // Todo: Add a test method for checking the simulation cancellation under execution.
 public class SolverTests

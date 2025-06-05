@@ -1,6 +1,4 @@
-﻿using NQueen.Shared.Enums;
-
-namespace NQueen.GUI.Converters;
+﻿namespace NQueen.GUI.Converters;
 
 public class DisplayModeToEnabledConverter : IValueConverter
 {

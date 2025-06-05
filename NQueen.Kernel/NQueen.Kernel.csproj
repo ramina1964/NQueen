@@ -11,6 +11,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\NQueen.Domain\NQueen.Domain.csproj" />
 	  <ProjectReference Include="..\NQueen.Shared\NQueen.Shared.csproj" />
 	</ItemGroup>
 

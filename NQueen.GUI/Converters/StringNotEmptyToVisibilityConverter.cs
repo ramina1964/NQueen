@@ -6,7 +6,9 @@ public class StringNotEmptyToVisibilityConverter : IValueConverter
         CultureInfo culture)
     {
         var str = value as string;
-        return !string.IsNullOrWhiteSpace(str) ? Visibility.Visible : Visibility.Collapsed;
+        return string.IsNullOrWhiteSpace(str) == false
+            ? Visibility.Visible
+            : Visibility.Collapsed;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
