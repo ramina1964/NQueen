@@ -6,11 +6,15 @@ public sealed partial class MainViewModel :
     // --- Constructors ---
     public MainViewModel(IDispatcher uiDispatcher)
         : this(
-              new BackTrackingSolver(new SolutionManager()), uiDispatcher,
-              new SaveFileDialogService())
+              new BackTrackingSolver(
+                  new SolutionManager()),
+                  uiDispatcher,
+                  new SaveFileDialogService())
     { }
 
-    public MainViewModel(ISolver solver, IDispatcher dispatcher,
+    public MainViewModel(
+        ISolver solver,
+        IDispatcher dispatcher,
         ISaveFileDialogService saveFileService)
     {
         Solver = solver ??
@@ -58,7 +62,7 @@ public sealed partial class MainViewModel :
     {
         if (string.IsNullOrEmpty(propertyName))
             return _errors.Values.SelectMany(errors => errors).ToList();
-    
+
         return _errors.TryGetValue(propertyName, out var propertyErrors) ? propertyErrors : Enumerable.Empty<string>();
     }
 
