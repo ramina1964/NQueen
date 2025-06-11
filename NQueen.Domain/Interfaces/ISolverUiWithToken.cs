@@ -1,13 +1,14 @@
 ﻿namespace NQueen.Domain.Interfaces;
 
-// Todo: This is used in kegacy Solver, in NQueen.Kernel, and should be removed in the future.
-public interface ISolverUi
+public interface ISolverUiWithToken
 {
     int DelayInMilliseconds { get; set; }
 
     double ProgressValue { get; set; }
 
     event EventHandler<QueenPlacedEventArgs> QueenPlaced;
+
     event EventHandler<SolutionFoundEventArgs> SolutionFound;
-    event EventHandler<ProgressValueChangedEventArgs> ProgressValueChanged;
+
+    event EventHandler<ProgressValueChangedWithTokenEventArgs> ProgressValueChanged;
 }

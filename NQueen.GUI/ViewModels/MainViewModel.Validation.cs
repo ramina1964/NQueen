@@ -49,10 +49,12 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
                 IsOutputReady = false;
             return false;
         }
+
         IsIdle = true;
         IsSimulating = false;
         if (updateOutputReady)
             IsOutputReady = false;
+
         return true;
     }
 
@@ -60,6 +62,14 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
     {
         if (Solver == null)
             return;
+
+        // Ensure previous simulation is cancelled
+        Cancel();
+
+        // Prevent old events from firing
+        UnsubscribeFromSimulationEvents();
+
+        ResetSimulationState();
 
         if (ParsingUtils.TryParseInt(value, out var boardSize))
             _lastValidBoardSize = boardSize;
@@ -81,6 +91,14 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
     {
         if (Solver == null)
             return;
+
+        // Ensure previous simulation is cancelled
+        Cancel();
+
+        // Prevent old events from firing
+        UnsubscribeFromSimulationEvents();
+
+        ResetSimulationState();
 
         InputViewModel = new InputViewModel(value);
 
@@ -108,5 +126,19 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         }
 
         RefreshCommandStates();
+    }
+
+    private void ResetSimulationState()
+    {
+        ObservableSolutions.Clear();
+        SelectedSolution = new([], null);
+        ProgressValue = 0;
+        NoOfSolutions = "0";
+        ElapsedTimeInSec = $"{0,0:N1}";
+        MemoryUsage = "0";
+        IsOutputReady = false;
+        IsSimulating = false;
+
+        // Todo: Add any other resets needed for your simulation state
     }
 }

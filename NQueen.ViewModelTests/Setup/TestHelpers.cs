@@ -64,9 +64,9 @@ public static class TestHelpers
         return mainVm;
     }
 
-    public static Mock<ISolver> CreateMockSolver(IEnumerable<Solution> solutions)
+    public static Mock<ISolverWithToken> CreateMockSolver(IEnumerable<Solution> solutions)
     {
-        var mockSolver = new Mock<ISolver>();
+        var mockSolver = new Mock<ISolverWithToken>();
         mockSolver.Setup(
             s => s.GetResultsAsync(
                         It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))

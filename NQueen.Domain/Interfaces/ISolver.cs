@@ -1,4 +1,4 @@
 ﻿namespace NQueen.Domain.Interfaces;
 
-public interface ISolver : ISolverBackEnd, ISolverUI
+public interface ISolver : ISolverBackEnd, ISolverUi
 { }

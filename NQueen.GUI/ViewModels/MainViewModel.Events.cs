@@ -87,8 +87,13 @@ public sealed partial class MainViewModel
         });
     }
 
-    private void OnProgressValueChangedEvent(object? sender, ProgressValueChangedEventArgs e) =>
+    private void OnProgressValueChangedEvent(object? sender, ProgressValueChangedWithTokenEventArgs e)
+    {
+        if (e.SimulationToken != _currentSimulationToken)
+            return;
+
         WeakReferenceMessenger.Default.Send(new ProgressValueChangedMessage(e.Value));
+    }
 
     private void OnQueenPlacedEvent(object? sender, QueenPlacedEventArgs e) =>
         WeakReferenceMessenger.Default.Send(new QueenPlacedMessage(e.Solution, 0));

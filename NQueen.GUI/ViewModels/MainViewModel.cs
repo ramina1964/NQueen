@@ -13,7 +13,7 @@ public sealed partial class MainViewModel :
     { }
 
     public MainViewModel(
-        ISolver solver,
+        ISolverWithToken solver,
         IDispatcher dispatcher,
         ISaveFileDialogService saveFileService)
     {
@@ -39,7 +39,10 @@ public sealed partial class MainViewModel :
     }
 
     // --- Public Properties ---
-    public int BoardSize => ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) ? boardSize : _lastValidBoardSize;
+    public int BoardSize =>
+        ParsingUtils.TryParseInt(BoardSizeText, out var boardSize)
+            ? boardSize
+            : _lastValidBoardSize;
 
     public string ResultTitle => SolverHelper.UpdateSolutionTitle(SolutionMode);
 
@@ -68,19 +71,14 @@ public sealed partial class MainViewModel :
 
     public void SetChessboard(double boardDimension)
     {
-        if (!ParsingUtils.TryParseInt(BoardSizeText, out var boardSize))
-        {
-            ChessboardVm.Squares.Clear();
+        // If BoardSizeText is invalid, do not clear the chessboard, just return
+        if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) == false)
             return;
-        }
 
-        // Validate board size for the current solution mode
+        // Validate board size for the current solution mode, if invalid, just return
         var validationResult = InputViewModel.ValidateBoardSize(BoardSizeText);
         if (validationResult.IsValid == false)
-        {
-            ChessboardVm.Squares.Clear();
             return;
-        }
 
         ChessboardVm.WindowWidth = boardDimension;
         ChessboardVm.WindowHeight = boardDimension;
@@ -152,7 +150,7 @@ public sealed partial class MainViewModel :
 
     private CancellationTokenSource CancelationTokenSource { get; set; }
 
-    private readonly ISolver Solver;
+    private readonly ISolverWithToken Solver;
 
     private readonly IDispatcher _uiDispatcher;
 
