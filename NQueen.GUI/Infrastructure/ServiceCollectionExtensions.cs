@@ -10,7 +10,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IDispatcher, WpfDispatcher>();
 
         // Shared NQueen-Related Services
-        services.AddNQueenServices();
+        ServiceRegistration.AddNextGenNQueenServices(services);
 
         // Register specific services, i.e., views and view models
         services.AddTransient<ChessboardViewModel>();

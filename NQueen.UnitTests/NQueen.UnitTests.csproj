@@ -35,7 +35,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\NQueen.Domain\NQueen.Domain.csproj" />
-		<ProjectReference Include="..\NQueen.Kernel\NQueen.Kernel.csproj" />
+		<ProjectReference Include="..\NQueen.NextGenKernel\NQueen.NextGenKernel.csproj" />
 		<ProjectReference Include="..\NQueen.TestShared\NQueen.TestShared.csproj" />
 	</ItemGroup>
 
