@@ -12,6 +12,7 @@ public static class ServiceRegistration
         services.AddTransient<BoardState>();
         services.AddTransient<SolverCancellation>();
         services.AddTransient<NQueenBacktracker>();
+        
         // Add other services as needed
     }
 }

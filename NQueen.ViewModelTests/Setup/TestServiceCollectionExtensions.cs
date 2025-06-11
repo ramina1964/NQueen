@@ -11,7 +11,7 @@ public static class TestServiceCollectionExtensions
         services.AddTransient<ISaveFileDialogService, MockSaveFileDialogService>();
 
         // Shared NQueen-Related Services
-        services.AddNQueenServices();
+        services.AddNextGenNQueenServices();
 
         // Register specific services, i.e., views and view models
         services.AddTransient<ChessboardViewModel>();
