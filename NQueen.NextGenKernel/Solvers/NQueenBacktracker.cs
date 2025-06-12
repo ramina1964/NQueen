@@ -1,31 +1,35 @@
 ﻿namespace NQueen.NextGenKernel.Solvers;
 
+using SM = SolutionMode;
+using DP = DisplayMode;
+
 public class NQueenBacktracker(
     BoardState board,
     SolverCancellation cancellation,
     Action<int[]> onSolutionFound)
 {
+    // Todo: Find out why this method is not used.
     public async Task FindSolutionsAsync(
-        SolutionMode mode, int delayMs, DisplayMode displayMode)
+        SM solutionMode, int delayInMs, DP displayMode)
     {
-        switch (mode)
+        switch (solutionMode)
         {
-            case SolutionMode.Single:
-                await FindSingleOrUniqueSolutions(0, SolutionMode.Single, delayMs, displayMode);
+            case SM.Single:
+                await FindSingleOrUniqueSolutions(0, SM.Single, delayInMs, displayMode);
                 break;
             
-            case SolutionMode.Unique:
-                await FindSingleOrUniqueSolutions(0, SolutionMode.Unique, delayMs, displayMode);
+            case SM.Unique:
+                await FindSingleOrUniqueSolutions(0, SM.Unique, delayInMs, displayMode);
                 break;
             
-            case SolutionMode.All:
-                await FindAllSolutions(0, delayMs, displayMode);
+            case SM.All:
+                await FindAllSolutions(0, delayInMs, displayMode);
                 break;
         }
     }
 
     private async Task FindSingleOrUniqueSolutions(
-        int colNo, SolutionMode solutionMode, int delayMs, DisplayMode displayMode)
+        int colNo, SM solutionMode, int delayInMs, DP displayMode)
     {
         var boardSize = _board.BoardSize;
         var halfBoardSize = _board.HalfBoardSize;
@@ -39,15 +43,15 @@ public class NQueenBacktracker(
             if (queenPositions[0] == halfBoardSize)
                 return;
 
-            if (colNo == boardSize && solutionMode == SolutionMode.Single)
+            if (colNo == boardSize && solutionMode == SM.Single)
             {
                 _solutions.Add((int[])queenPositions.Clone());
                 _onSolutionFound?.Invoke(queenPositions);
-                if (delayMs > 0)
-                    await Task.Delay(delayMs);
+                if (delayInMs > 0)
+                    await Task.Delay(delayInMs);
                 return;
             }
-            else if (colNo == boardSize && solutionMode == SolutionMode.Unique)
+            else if (colNo == boardSize && solutionMode == SM.Unique)
             {
                 _solutions.Add((int[])queenPositions.Clone());
                 _onSolutionFound?.Invoke(queenPositions);
@@ -63,20 +67,20 @@ public class NQueenBacktracker(
                 continue;
             }
 
-            if (displayMode == DisplayMode.Visualize)
+            if (displayMode == DP.Visualize)
             {
                 _onSolutionFound?.Invoke(queenPositions);
-                if (solutionMode != SolutionMode.Single && delayMs > 0)
-                    await Task.Delay(delayMs);
+                if (solutionMode != SM.Single && delayInMs > 0)
+                    await Task.Delay(delayInMs);
             }
 
             colNo++;
         }
     }
 
-    private async Task FindAllSolutions(int colNo, int delayMs, DisplayMode displayMode)
+    private async Task FindAllSolutions(int colNo, int delayInMs, DP displayMode)
     {
-        await FindSingleOrUniqueSolutions(colNo, SolutionMode.Unique, delayMs, displayMode);
+        await FindSingleOrUniqueSolutions(colNo, SolutionMode.Unique, delayInMs, displayMode);
         // Optionally, you can add additional logic for updating or reporting all solutions here.
     }
 
