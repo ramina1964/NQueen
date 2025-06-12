@@ -1,6 +1,6 @@
 ﻿namespace NQueen.Domain.Interfaces;
 
-// Todo: This is used in kegacy Solver, in NQueen.Kernel, and should be removed in the future.
+// Todo: This is used in legacy Solver, i.e., NQueen.Kernel, and should be removed.
 public interface ISolverUi
 {
     int DelayInMilliseconds { get; set; }
