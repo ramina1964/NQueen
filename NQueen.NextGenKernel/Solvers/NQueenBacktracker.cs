@@ -97,8 +97,11 @@ public class NQueenBacktracker(
     }
 
     private readonly BoardState _board = board;
+
     private readonly SolverCancellation _cancellation = cancellation;
+    
     private readonly Action<int[]> _onSolutionFound = onSolutionFound;
+    
     private readonly HashSet<int[]> _solutions =
         new(new SequenceEquality<int>());
 }

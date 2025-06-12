@@ -6,7 +6,7 @@ public sealed partial class MainViewModel
     {
         if (IsSimulating)
         {
-            CancelationTokenSource?.Cancel();
+            CancellationTokenSource?.Cancel();
             Solver.IsSolverCanceled = true;
             IsSimulating = false;
         }

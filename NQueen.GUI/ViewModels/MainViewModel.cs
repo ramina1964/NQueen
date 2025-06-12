@@ -27,7 +27,7 @@ public sealed partial class MainViewModel :
             throw new ArgumentNullException(nameof(saveFileService));
 
         InputViewModel = new InputViewModel(SolutionMode.Unique);
-        CancelationTokenSource = new CancellationTokenSource();
+        CancellationTokenSource = new CancellationTokenSource();
         ChessboardVm = new ChessboardViewModel(_uiDispatcher);
 
         SimulateCommand = new AsyncRelayCommand(SimulateAsync, CanSimulate);
@@ -101,13 +101,13 @@ public sealed partial class MainViewModel :
 
         if (disposing)
         {
-            CancelationTokenSource?.Dispose();
+            CancellationTokenSource?.Dispose();
             ObservableSolutions.Clear();
             ChessboardVm?.Squares.Clear();
             UnsubscribeFromSimulationEvents();
 
             // Marking large objects for garbage collection
-            CancelationTokenSource = null!;
+            CancellationTokenSource = null!;
             ChessboardVm = null!;
             InputViewModel = null!;
         }
@@ -148,7 +148,7 @@ public sealed partial class MainViewModel :
 
     private bool _disposed;
 
-    private CancellationTokenSource CancelationTokenSource { get; set; }
+    private CancellationTokenSource CancellationTokenSource { get; set; }
 
     private readonly ISolverWithToken Solver;
 

@@ -19,5 +19,5 @@ public class App(DispatchCommands dispatchCommands)
     }
 
     private readonly DispatchCommands _dispatchCommands = dispatchCommands
-            ?? throw new ArgumentNullException(nameof(dispatchCommands));
+        ?? throw new ArgumentNullException(nameof(dispatchCommands));
 }
