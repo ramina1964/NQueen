@@ -1,7 +1,7 @@
 ﻿namespace NQueen.ConsoleApp.Commands;
 
 public partial class DispatchCommands(
-    ISolver solver,
+    ISolverBackEnd solver,
     IConsoleUtils consoleUtils,
     ICommandProcessor commandProcessor)
 {
@@ -206,7 +206,7 @@ public partial class DispatchCommands(
 
     #endregion PrivateMethods
 
-    private readonly ISolver _solver = solver
+    private readonly ISolverBackEnd _solver = solver
         ?? throw new ArgumentNullException(nameof(solver));
 
     private readonly IConsoleUtils _consoleUtils = consoleUtils

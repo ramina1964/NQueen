@@ -1,11 +1,12 @@
 ﻿global using Microsoft.Extensions.DependencyInjection;
 global using NQueen.ConsoleApp.Commands;
 global using NQueen.ConsoleApp.Interfaces;
+global using NQueen.ConsoleApp.Services;
 global using NQueen.ConsoleApp.Utils;
 global using NQueen.Domain.Enums;
 global using NQueen.Domain.Interfaces;
 global using NQueen.Domain.Settings;
-global using NQueen.Kernel.Services;
+global using NQueen.NextGenKernel.Services;
 global using NQueen.Shared.Utils;
 global using NQueen.Shared.Validation;
 global using System;
