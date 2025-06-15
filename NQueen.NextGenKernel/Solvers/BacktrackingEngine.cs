@@ -80,7 +80,7 @@ public class SolverEngine(
 
     private async Task FindAllSolutions(int colNo, int delayInMs, DP displayMode)
     {
-        await FindSingleOrUniqueSolutions(colNo, SolutionMode.Unique, delayInMs, displayMode);
+        await FindSingleOrUniqueSolutions(colNo, SM.Unique, delayInMs, displayMode);
         // Optionally, you can add additional logic for updating or reporting all solutions here.
     }
 
