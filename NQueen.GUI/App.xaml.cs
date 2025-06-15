@@ -7,7 +7,7 @@ public partial class App : Application
         base.OnStartup(e);
 
         _serviceProvider = Infrastructure.ServiceCollectionExtensions.Initialize();
-        var mainWindow = _serviceProvider.GetRequiredService<MainView>();
+        var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         mainWindow.Show();
     }
 

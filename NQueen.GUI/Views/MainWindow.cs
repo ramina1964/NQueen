@@ -5,10 +5,10 @@
 
 // Todo: The error messages for the invalid board sizes have different length, so that changing
 // the solution mode could cause widening/narrowing of the UserControl panels on the last column
-// of the second row, i.e., Grid.Row = 1, Grid.Column = 3 of the MainView.xaml.
-public partial class MainView : Window, IDisposable
+// of the second row, i.e., Grid.Row = 1, Grid.Column = 3 of the MainWindow.xaml.
+public partial class MainWindow : Window, IDisposable
 {
-    public MainView(MainViewModel mainViewModel, IServiceProvider serviceProvider)
+    public MainWindow(MainViewModel mainViewModel, IServiceProvider serviceProvider)
     {
         InitializeComponent();
         _serviceProvider = serviceProvider
@@ -22,17 +22,17 @@ public partial class MainView : Window, IDisposable
         MainViewModel = mainViewModel;
         _serviceProvider = serviceProvider;
 
-        // Resolve and add ChessboardUserControl to the MainView
+        // Resolve and add ChessboardUserControl to the MainWindow
         var chessboard = _serviceProvider.GetRequiredService<ChessboardUserControl>();
         chessboard.DataContext = MainViewModel;
         chessboardPlaceholder.Content = chessboard;
 
-        // Resolve and add InputPanelUserControl to the MainView
+        // Resolve and add InputPanelUserControl to the MainWindow
         var inputPanel = _serviceProvider.GetRequiredService<InputPanelUserControl>();
         inputPanel.DataContext = MainViewModel;
         inputPanelPlaceHolder.Content = inputPanel;
 
-        // Resolve and add SimulationPanelUserControl to the MainView
+        // Resolve and add SimulationPanelUserControl to the MainWindow
         var simulationPanel = _serviceProvider.GetRequiredService<SimulationPanelUserControl>();
         simulationPanel.DataContext = MainViewModel;
         simulationPanelPlaceHolder.Content = simulationPanel;
