@@ -64,8 +64,12 @@ public sealed partial class MainViewModel
         value = Math.Clamp(value, 0, 100);
         _uiDispatcher.Invoke(() =>
         {
+            Debug.WriteLine($"[UpdateProgress] IsSingleRunning={IsSingleRunning}, value={value}");
             if (IsSingleRunning == false)
+            {
                 ProgressValue = value / 100.0;
+                Debug.WriteLine($"[UpdateProgress] ProgressValue set to {ProgressValue}");
+            }
 
             ProgressLabel = label;
             OnPropertyChanged(nameof(ProgressLabel));

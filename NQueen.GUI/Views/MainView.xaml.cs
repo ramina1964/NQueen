@@ -11,6 +11,12 @@ public partial class MainView : Window, IDisposable
     public MainView(MainViewModel mainViewModel, IServiceProvider serviceProvider)
     {
         InitializeComponent();
+        _serviceProvider = serviceProvider
+            ?? throw new ArgumentNullException(nameof(serviceProvider));
+        
+        DataContext = mainViewModel
+            ?? throw new ArgumentNullException(nameof(mainViewModel));
+
         Loaded += MainView_Loaded;
         SizeChanged += MainView_SizeChanged;
         MainViewModel = mainViewModel;
@@ -85,7 +91,6 @@ public partial class MainView : Window, IDisposable
         {
             UpdateChessboardSize(board);
             board.SizeChanged += (s, args) => UpdateChessboardSize(board);
-            DataContext = MainViewModel;
         }
     }
 

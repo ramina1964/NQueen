@@ -2,9 +2,8 @@
 
 public partial class SimulationPanelUserControl : UserControl
 {
-    public SimulationPanelUserControl(MainViewModel mainViewModel)
+    public SimulationPanelUserControl()
     {
         InitializeComponent();
-        DataContext = mainViewModel;
     }
 }

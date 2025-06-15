@@ -2,9 +2,8 @@
 
 public partial class InputPanelUserControl : UserControl
 {
-    public InputPanelUserControl(MainViewModel mainVm)
+    public InputPanelUserControl()
     {
         InitializeComponent();
-        DataContext = mainVm;
     }
 }
