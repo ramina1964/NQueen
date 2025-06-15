@@ -5,7 +5,7 @@ public sealed partial class MainViewModel
     private void SubscribeToSimulationEvents()
     {
         UnsubscribeFromSimulationEvents();
-        if (Solver is BackTrackingSolver backTrackingSolver)
+        if (Solver is SimulationOrchestrator backTrackingSolver)
         {
             backTrackingSolver.QueenPlaced += OnQueenPlacedEvent;
             backTrackingSolver.SolutionFound += OnSolutionFoundEvent;
@@ -18,7 +18,7 @@ public sealed partial class MainViewModel
 
     private void UnsubscribeFromSimulationEvents()
     {
-        if (Solver is BackTrackingSolver backTrackingSolver)
+        if (Solver is SimulationOrchestrator backTrackingSolver)
         {
             backTrackingSolver.QueenPlaced -= OnQueenPlacedEvent;
             backTrackingSolver.SolutionFound -= OnSolutionFoundEvent;

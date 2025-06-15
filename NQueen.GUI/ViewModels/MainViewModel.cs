@@ -6,7 +6,7 @@ public sealed partial class MainViewModel :
     // --- Constructors ---
     public MainViewModel(IDispatcher uiDispatcher)
         : this(
-              new BackTrackingSolver(
+              new SimulationOrchestrator(
                   new SolutionManager()),
                   uiDispatcher,
                   new SaveFileDialogService())

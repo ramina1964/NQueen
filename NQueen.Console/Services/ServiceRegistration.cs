@@ -7,6 +7,6 @@ public static class ServiceRegistration
     public static void AddNQueenServices(this IServiceCollection services)
     {
         services.AddTransient<ISolutionManager, SolutionManager>();
-        services.AddTransient<ISolverBackEnd, BackTrackingSolver>();
+        services.AddTransient<ISolverBackEnd, SimulationOrchestrator>();
     }
 }

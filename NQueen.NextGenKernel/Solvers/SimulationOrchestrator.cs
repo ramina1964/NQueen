@@ -6,9 +6,9 @@
 // Todo: Check if there is a test method to catch thiis error and add it if there isn't.
 // Todo: This class has a orchestrator role and should be renamed thereafter.
 
-public class BackTrackingSolver : ISolverWithToken, IDisposable
+public class SimulationOrchestrator : ISolverWithToken, IDisposable
 {
-    public BackTrackingSolver(
+    public SimulationOrchestrator(
         ISolutionManager solutionManager,
         int boardSize = BoardSettings.DefaultBoardSize)
     {
