@@ -6,7 +6,7 @@ public static class DependencyInjectionConfig
     {
         // Register application services
         services.AddNextGenNQueenServices();
-        services.AddScoped<ISolverBackEnd, SimulationOrchestrator>();
+        services.AddScoped<ISolver, SimulationOrchestrator>();
 
         return services;
     }

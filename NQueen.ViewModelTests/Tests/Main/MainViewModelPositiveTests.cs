@@ -123,7 +123,7 @@ public class MainViewModelPositiveTests : IDisposable
     public async Task IsSingleRunning_ShouldReflectSolutionMode(
         SolutionMode solutionMode, bool expectedIndeterminate)
     {
-        var mockSolver = new Mock<ISolverWithToken>();
+        var mockSolver = new Mock<ISolver>();
         mockSolver
             .Setup(s => s.GetResultsForBoardAsync(It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
             .Returns(async () => {

@@ -1,12 +1,12 @@
 ﻿namespace NQueen.UnitTests.Base;
 
-public class NQueenTestBase(ISolverBackEnd sut)
+public class NQueenTestBase(ISolver sut)
 {
     public List<int[]> ExpectedSolutions { get; set; } = [];
 
     public List<int[]> ActualSolutions { get; set; } = [];
 
-    protected readonly ISolverBackEnd Sut = sut
+    protected readonly ISolver Sut = sut
         ?? throw new ArgumentNullException(nameof(sut));
 
     public static List<int[]> FetchExpectedSols(int boardSize, SolutionMode solutionMode) =>

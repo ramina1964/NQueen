@@ -9,7 +9,7 @@ public class NQueenSolverPositiveTests : IDisposable
         services.AddTestServices();
         _serviceProvider = services.BuildServiceProvider();
 
-        _solverBackEnd = _serviceProvider.GetRequiredService<ISolverBackEnd>();
+        _solverBackEnd = _serviceProvider.GetRequiredService<ISolver>();
     }
 
     [Theory]
@@ -79,7 +79,7 @@ public class NQueenSolverPositiveTests : IDisposable
 
     public void Dispose() => _serviceProvider.Dispose();
     
-    private readonly ISolverBackEnd _solverBackEnd;
+    private readonly ISolver _solverBackEnd;
     private readonly ServiceProvider _serviceProvider;
 }
 
