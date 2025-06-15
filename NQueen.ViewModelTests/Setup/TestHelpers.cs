@@ -57,7 +57,7 @@ public static class TestHelpers
         };
 
         // Dynamically calculate simulation results
-        var simulationResults = solver.GetResultsAsync(boardSize, solutionMode).Result;
+        var simulationResults = solver.GetResultsForBoardAsync(boardSize, solutionMode).Result;
         mainVm.SimulationResults = simulationResults;
         mainVm.NoOfSolutions = simulationResults.Solutions.Count().ToString();
 
@@ -68,7 +68,7 @@ public static class TestHelpers
     {
         var mockSolver = new Mock<ISolverWithToken>();
         mockSolver.Setup(
-            s => s.GetResultsAsync(
+            s => s.GetResultsForBoardAsync(
                         It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
                   .ReturnsAsync(new SimulationResults(solutions));
         return mockSolver;

@@ -93,7 +93,7 @@ public partial class DispatchCommands(
     public async Task<bool> RunApp()
     {
         var simulationResult = await _solver
-            .GetResultsAsync(BoardSize, SolutionMode, DisplayMode.Hide);
+            .GetResultsForBoardAsync(BoardSize, SolutionMode, DisplayMode.Hide);
 
         var noOfSolutions = simulationResult.NoOfSolutions;
         var elapsedTime = simulationResult.ElapsedTimeInSec;

@@ -26,7 +26,7 @@ public class NQueenSolverNegativeTests : IDisposable
             ?? [];
 
         // Act
-        var actualSolutions = await _solverBackEnd.GetResultsAsync(boardSize, solutionMode);
+        var actualSolutions = await _solverBackEnd.GetResultsForBoardAsync(boardSize, solutionMode);
 
         // Assert
         Assert.Empty(actualSolutions.Solutions);

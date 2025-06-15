@@ -58,7 +58,7 @@ public sealed partial class MainViewModel
 
             UpdateUiState();
 
-            SimulationResults = await Solver.GetResultsAsync(boardSize, SolutionMode, DisplayMode);
+            SimulationResults = await Solver.GetResultsForBoardAsync(boardSize, SolutionMode, DisplayMode);
 
             // After awaiting, check if this is still the current simulation
             if (SimulationResults == null || !SimulationResults.Solutions.Any() || _currentSimulationToken == Guid.Empty)

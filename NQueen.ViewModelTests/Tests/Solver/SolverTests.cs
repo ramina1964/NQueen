@@ -8,12 +8,12 @@ public class SolverTests
     {
         // Arrange
         var solver = new Mock<ISolver>();
-        solver.Setup(s => s.GetResultsAsync(
+        solver.Setup(s => s.GetResultsForBoardAsync(
                 It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
             .ReturnsAsync(new SimulationResults([new Solution([1, 3, 0, 2])]));
 
         // Act
-        var results = await solver.Object.GetResultsAsync(
+        var results = await solver.Object.GetResultsForBoardAsync(
             4, SolutionMode.Single, DisplayMode.Visualize);
 
         // Assert
@@ -25,12 +25,12 @@ public class SolverTests
     {
         // Arrange
         var solver = new Mock<ISolver>();
-        solver.Setup(s => s.GetResultsAsync(
+        solver.Setup(s => s.GetResultsForBoardAsync(
                 It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
             .ReturnsAsync(new SimulationResults([]));
 
         // Act
-        var results = await solver.Object.GetResultsAsync(
+        var results = await solver.Object.GetResultsForBoardAsync(
             4, SolutionMode.Single, DisplayMode.Visualize);
 
         // Assert

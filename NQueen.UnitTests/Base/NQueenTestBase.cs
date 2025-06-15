@@ -31,7 +31,7 @@ public class NQueenTestBase(ISolverBackEnd sut)
         };
 
     public async Task<IEnumerable<int[]>> FetchActualSolsAsync(int boardSize, SolutionMode solutionMode) =>
-        (await Sut.GetResultsAsync(boardSize, solutionMode)).Solutions
+        (await Sut.GetResultsForBoardAsync(boardSize, solutionMode)).Solutions
             .Select(sol => sol.QueenPositions);
 
     // Helper method for assertions

@@ -9,12 +9,12 @@ public class MainViewModelNegativeTests
     {
         // Arrange
         var solver = new Mock<ISolver>();
-        solver.Setup(s => s.GetResultsAsync(boardSize, solutionMode, DisplayMode.Visualize))
+        solver.Setup(s => s.GetResultsForBoardAsync(boardSize, solutionMode, DisplayMode.Visualize))
             .ThrowsAsync(new ArgumentException("Invalid input"));
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(async () =>
-            await solver.Object.GetResultsAsync(boardSize, solutionMode, DisplayMode.Visualize));
+            await solver.Object.GetResultsForBoardAsync(boardSize, solutionMode, DisplayMode.Visualize));
     }
 
     [Fact]

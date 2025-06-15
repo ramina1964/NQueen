@@ -125,7 +125,7 @@ public class MainViewModelPositiveTests : IDisposable
     {
         var mockSolver = new Mock<ISolverWithToken>();
         mockSolver
-            .Setup(s => s.GetResultsAsync(It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
+            .Setup(s => s.GetResultsForBoardAsync(It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
             .Returns(async () => {
                 if (solutionMode == SolutionMode.Single)
                     await Task.Delay(10); // Minimal delay only for Single mode

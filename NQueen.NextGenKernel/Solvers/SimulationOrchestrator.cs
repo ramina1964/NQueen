@@ -68,7 +68,7 @@ public class SimulationOrchestrator : ISolverWithToken, IDisposable
         }
     }
 
-    public async Task<SimulationResults> GetResultsAsync(
+    public async Task<SimulationResults> GetResultsForBoardAsync(
         int boardSize,
         SolutionMode solutionMode,
         DisplayMode displayMode = DisplayMode.Hide)
@@ -77,7 +77,7 @@ public class SimulationOrchestrator : ISolverWithToken, IDisposable
         SolutionMode = solutionMode;
         DisplayMode = displayMode;
 
-        return await Task.Run(GetResultsAsync);
+        return await Task.Run(GetResultsForCurrentConfigurationAsync);
     }
     #endregion ISolverBackEnd
 
@@ -117,9 +117,7 @@ public class SimulationOrchestrator : ISolverWithToken, IDisposable
     public void OnProgressChanged(object sender, ProgressValueChangedWithTokenEventArgs e) =>
         ProgressValueChanged?.Invoke(this, e);
 
-    // Todo: Move this method upward and set it under its overloaded counterpart.
-    // Todo: Then rename both of them to something more descriptive.
-    public async Task<SimulationResults> GetResultsAsync()
+    public async Task<SimulationResults> GetResultsForCurrentConfigurationAsync()
     {
         var stopwatch = Stopwatch.StartNew();
         var solutions = await SolveNQueenProblem();
