@@ -37,7 +37,7 @@
   - [ ] `SolutionListUserControl`
   - [ ] `ResultSummaryUserControl`
 - [ ] Use dependency injection to provide view models to views:
-  - [ ] Inject `MainViewModel` into `MainView`.
+  - [ ] Inject `MainViewModel` into `MainWindow`.
   - [ ] Inject `InputViewModel` into `InputPanelUserControl`.
 - [ ] Move any shared logic to helper classes or services.
 
@@ -77,7 +77,7 @@
   - [ ] `MainViewModel` with mocked dependencies.
   - [ ] `InputViewModel` for validation logic.
 - [ ] Write integration tests for views and view models:
-  - [ ] Test interaction between `MainView` and `MainViewModel`.
+  - [ ] Test interaction between `MainWindow` and `MainViewModel`.
   - [ ] Test `ChessboardUserControl` with `Chessboard`.
 
 ---
@@ -85,8 +85,8 @@
 ### 7. General Cleanup
 - [ ] Remove unused code and comments.
 - [ ] Fix all TODOs in the codebase:
-  - [ ] Add `AutomationProperties.Name` to active UI elements in `MainView.xaml`.
-  - [ ] Fix WPF bounding errors in `MainView.xaml`.
+  - [ ] Add `AutomationProperties.Name` to active UI elements in `MainWindow.xaml`.
+  - [ ] Fix WPF bounding errors in `MainWindow.xaml`.
 
 ---
 

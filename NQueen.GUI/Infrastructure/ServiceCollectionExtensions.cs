@@ -19,7 +19,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<SimulationPanelUserControl>();
 
         services.AddSingleton<MainViewModel>();
-        services.AddSingleton<MainView>();
+        services.AddSingleton<MainWindow>();
 
         // Build the service provider
         return services.BuildServiceProvider();
