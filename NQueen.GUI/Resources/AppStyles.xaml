@@ -3,7 +3,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:converters="clr-namespace:NQueen.GUI.Converters">
 
-    <!-- Make the converter available to all styles in this dictionary -->
+    <!--  Make the converter available to all styles in this dictionary  -->
     <converters:FirstValidationErrorConverter x:Key="FirstValidationErrorConverter" />
 
     <!--  Validation Error Template  -->
@@ -122,8 +122,6 @@
         <Setter Property="VerticalAlignment" Value="Stretch" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="Minimum" Value="0" />
-        <Setter Property="Maximum" Value="100" />
         <Setter Property="FlowDirection" Value="LeftToRight" />
     </Style>
 

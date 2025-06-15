@@ -115,7 +115,8 @@ public class SimulationOrchestrator : ISolverWithToken, IDisposable
         BoardSize % 2 == 0 ? BoardSize / 2 : BoardSize / 2 + 1;
 
     public void OnProgressChanged(object sender, ProgressValueChangedWithTokenEventArgs e) =>
-        ProgressValueChanged?.Invoke(this, e);
+        ProgressValueChanged?.Invoke(
+            this, new ProgressValueChangedWithTokenEventArgs(e.Value, e.SimulationToken));
 
     public async Task<SimulationResults> GetResultsForCurrentConfigurationAsync()
     {
@@ -218,9 +219,13 @@ public class SimulationOrchestrator : ISolverWithToken, IDisposable
 
             if (QueenPositions[colNo] == -1)
             {
+                NotifyProgressChanged();
                 colNo--;
                 continue;
             }
+
+            // Progress update after each successful queen placement
+            NotifyProgressChanged();
 
             if (DisplayMode == DisplayMode.Visualize)
             {
@@ -307,10 +312,21 @@ public class SimulationOrchestrator : ISolverWithToken, IDisposable
         if (IsSolverCanceled)
             return;
 
-        ProgressValue = Math.Round(100.0 * QueenPositions[0] / HalfBoardSize, 1);
-        Debug.WriteLine($"[NotifyProgressChanged] ProgressValue updated to: {ProgressValue}");
+        // Calculate percent for display (0–100)
+        double percent = Math.Round(100.0 * QueenPositions[0] / HalfBoardSize, 1);
+
+        // Calculate normalized value for ProgressBar (0–1)
+        ProgressValue = Math.Clamp(QueenPositions[0] / (double)HalfBoardSize, 0.0, 1.0);
+
+        Debug.WriteLine($"[NotifyProgressChanged] ProgressValue updated to: {ProgressValue}, Percent: {percent}");
+
+        // Raise event with normalized value for the progress bar
         ProgressValueChanged?.Invoke(this, new ProgressValueChangedWithTokenEventArgs(
             ProgressValue, _currentSimulationToken));
+
+        // Optionally, if you want to expose the percent for display in the UI,
+        // you can add a property like ProgressPercent and set it here:
+        // ProgressPercent = percent;
     }
 
     private void UpdateSolutions()
