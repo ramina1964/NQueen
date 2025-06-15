@@ -3,7 +3,7 @@
 using SM = SolutionMode;
 using DP = DisplayMode;
 
-public class NQueenBacktracker(
+public class SolverEngine(
     BoardState board,
     SolverCancellation cancellation,
     Action<int[]> onSolutionFound)
