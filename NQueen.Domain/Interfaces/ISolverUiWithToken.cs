@@ -1,5 +1,6 @@
 ﻿namespace NQueen.Domain.Interfaces;
 
+// Todo: Simplify ISolverUi, ISolverUiWithToken, ISolverWithToken, and ISolverBackEnd.
 public interface ISolverUiWithToken
 {
     int DelayInMilliseconds { get; set; }
