@@ -1,6 +1,6 @@
 ﻿namespace NQueen.Domain.Settings;
 
-public class SimulationSettings
+public static class SimulationSettings
 {
     public const int MaxNoOfSolutionsInOutput = 50;
     public const int DefaultDelayInMilliseconds = 70;

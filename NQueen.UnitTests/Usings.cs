@@ -5,6 +5,7 @@ global using NQueen.Domain.Interfaces;
 global using NQueen.Domain.Models;
 global using NQueen.NextGenKernel.Services;
 global using NQueen.NextGenKernel.Solvers;
+global using NQueen.NextGenKernel.Utils;
 global using NQueen.TestShared.Data;
 global using NQueen.UnitTests.Base;
 global using NQueen.UnitTests.Setup;

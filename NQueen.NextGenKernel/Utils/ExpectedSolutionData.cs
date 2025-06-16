@@ -1,4 +1,4 @@
-﻿namespace NQueen.UnitTests.Setup;
+﻿namespace NQueen.NextGenKernel.Utils;
 
 public static class ExpectedSolutionData
 {

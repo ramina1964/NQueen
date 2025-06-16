@@ -11,9 +11,15 @@ public sealed partial class MainViewModel
             backTrackingSolver.SolutionFound += OnSolutionFoundEvent;
             backTrackingSolver.ProgressValueChanged += OnProgressValueChangedEvent;
         }
-        WeakReferenceMessenger.Default.Register<ProgressValueChangedMessage>(this, (r, m) => OnProgressValueChanged(m));
-        WeakReferenceMessenger.Default.Register<QueenPlacedMessage>(this, (r, m) => OnQueenPlaced(m));
-        WeakReferenceMessenger.Default.Register<SolutionFoundMessage>(this, (r, m) => OnSolutionFound(m));
+
+        WeakReferenceMessenger.Default.Register<QueenPlacedMessage>(this, (r, m) =>
+            OnQueenPlaced(m));
+        
+        WeakReferenceMessenger.Default.Register<SolutionFoundMessage>(this, (r, m) =>
+            OnSolutionFound(m));
+
+        WeakReferenceMessenger.Default.Register<ProgressValueChangedMessage>(this, (r, m) =>
+            OnProgressValueChanged(m));
     }
 
     private void UnsubscribeFromSimulationEvents()
@@ -61,17 +67,18 @@ public sealed partial class MainViewModel
 
     private void UpdateProgress(double value, string label)
     {
-        value = Math.Clamp(value, 0, 100);
+        value = Math.Clamp(value, 0, 1);
         _uiDispatcher.Invoke(() =>
         {
             Debug.WriteLine($"[UpdateProgress] IsSingleRunning={IsSingleRunning}, value={value}");
             if (IsSingleRunning == false)
             {
-                ProgressValue = value / 100.0;
+                ProgressValue = value;
                 Debug.WriteLine($"[UpdateProgress] ProgressValue set to {ProgressValue}");
             }
 
-            ProgressLabel = label;
+            // Always show percent in label, regardless of input label
+            ProgressLabel = $"{Math.Round(value * 100, 1)} %";
             OnPropertyChanged(nameof(ProgressLabel));
         });
     }

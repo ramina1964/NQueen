@@ -1,4 +1,6 @@
-﻿namespace NQueen.UnitTests.Tests.NQueenSolver;
+﻿using NQueen.NextGenKernel.Utils;
+
+namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 public class NQueenSolverNegativeTests : IDisposable
 {
