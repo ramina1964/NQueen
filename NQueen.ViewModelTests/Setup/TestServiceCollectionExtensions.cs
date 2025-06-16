@@ -13,10 +13,8 @@ public static class TestServiceCollectionExtensions
         // Shared NQueen-Related Services
         services.AddNextGenNQueenServices();
 
-        // Register specific services, i.e., views and view models
-        services.AddTransient<ChessboardViewModel>();
-
-        services.AddTransient<MainViewModel>();
+        // Register shared ViewModels
+        services.AddNQueenViewModels();
 
         // Build and return the service provider
         return services.BuildServiceProvider();

@@ -6,19 +6,21 @@ public static class ServiceCollectionExtensions
     {
         var services = new ServiceCollection();
 
-        // IDispatcher for WPF
+        // WPF-specific services
         services.AddSingleton<IDispatcher, WpfDispatcher>();
+        services.AddTransient<ISaveFileDialogService, SaveFileDialogService>();
 
         // Shared NQueen-Related Services
         services.AddNextGenNQueenServices();
 
+        // Register shared ViewModels
+        services.AddNQueenViewModels();
+
         // Register specific services, i.e., views and view models
-        services.AddTransient<ChessboardViewModel>();
         services.AddTransient<ChessboardUserControl>();
         services.AddTransient<InputPanelUserControl>();
         services.AddTransient<SimulationPanelUserControl>();
 
-        services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
 
         // Build the service provider
