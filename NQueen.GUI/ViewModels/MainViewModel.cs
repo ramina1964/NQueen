@@ -10,13 +10,17 @@ public sealed partial class MainViewModel :
                   new SolutionManager()),
                   uiDispatcher,
                   new SaveFileDialogService())
-    { }
+    {
+        Debug.WriteLine("MainViewModel (default) constructed: " + GetHashCode());
+    }
 
     public MainViewModel(
         ISolver solver,
         IDispatcher dispatcher,
         ISaveFileDialogService saveFileService)
     {
+        Debug.WriteLine("MainViewModel (DI) constructed: " + GetHashCode());
+
         Solver = solver ??
             throw new ArgumentNullException(nameof(solver));
 

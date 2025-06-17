@@ -14,7 +14,7 @@ public sealed partial class MainViewModel
 
         WeakReferenceMessenger.Default.Register<QueenPlacedMessage>(this, (r, m) =>
             OnQueenPlaced(m));
-        
+
         WeakReferenceMessenger.Default.Register<SolutionFoundMessage>(this, (r, m) =>
             OnSolutionFound(m));
 
@@ -74,11 +74,11 @@ public sealed partial class MainViewModel
             if (IsSingleRunning == false)
             {
                 ProgressValue = value;
+                ProgressLabel = $"{Math.Round(value * 100, 1)} %";
                 Debug.WriteLine($"[UpdateProgress] ProgressValue set to {ProgressValue}");
             }
 
             // Always show percent in label, regardless of input label
-            ProgressLabel = $"{Math.Round(value * 100, 1)} %";
             OnPropertyChanged(nameof(ProgressLabel));
         });
     }

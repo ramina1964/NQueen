@@ -149,32 +149,30 @@ public class SimulationOrchestrator : ISolver, IDisposable
 
     private async Task FindSingleOrUniqueSolutions(int colNo, SolutionMode solutionMode)
     {
+        int totalSolutions = 0;
+        if (solutionMode == SolutionMode.Unique)
+            NQueenSolutionCounts.UniqueSolutions.TryGetValue(BoardSize, out totalSolutions);
+        else if (solutionMode == SolutionMode.All)
+            NQueenSolutionCounts.AllSolutions.TryGetValue(BoardSize, out totalSolutions);
+
         while (colNo != -1)
         {
             if (IsSolverCanceled)
-            {
-                Debug.WriteLine("[FindSingleOrUniqueSolutions] Solver canceled.");
                 return;
-            }
 
             if (QueenPositions[0] == HalfBoardSize)
-            {
-                Debug.WriteLine("[FindSingleOrUniqueSolutions] HalfBoardSize reached. Exiting.");
                 return;
-            }
 
             if (colNo == BoardSize && solutionMode == SolutionMode.Single)
             {
-                Debug.WriteLine("[FindSingleOrUniqueSolutions] Solution found for Single mode.");
                 UpdateSolutions();
                 NotifySolutionFound();
-                NotifyProgressChanged();
+                UpdateProgress(totalSolutions);
                 await Task.Delay(DelayInMilliseconds);
                 return;
             }
-            else if (colNo == BoardSize && solutionMode == SolutionMode.Unique)
+            if (colNo == BoardSize && solutionMode == SolutionMode.Unique)
             {
-                Debug.WriteLine("[FindSingleOrUniqueSolutions] Solution found for Unique mode.");
                 UpdateSolutions();
                 NotifySolutionFound();
                 NotifyProgressChanged();
@@ -182,20 +180,13 @@ public class SimulationOrchestrator : ISolver, IDisposable
                 continue;
             }
 
-            QueenPositions[colNo] = FindQueenPosition(colNo);
-
-            // Progress update after each queen placement (for all modes)
-            NotifyProgressChanged();
+            QueenPositions[colNo] = await FindQueenPositionAsync(colNo);
 
             if (QueenPositions[colNo] == -1)
             {
-                NotifyProgressChanged();
                 colNo--;
                 continue;
             }
-
-            // Progress update after each successful queen placement
-            NotifyProgressChanged();
 
             if (DisplayMode == DisplayMode.Visualize)
             {
@@ -205,6 +196,16 @@ public class SimulationOrchestrator : ISolver, IDisposable
             }
 
             colNo++;
+        }
+    }
+
+    private void UpdateProgress(int totalSolutions)
+    {
+        if (totalSolutions > 0)
+        {
+            ProgressValue = Math.Clamp(Solutions.Count / (double)totalSolutions, 0.0, 1.0);
+            ProgressValueChanged?.Invoke(this, new ProgressValueChangedWithTokenEventArgs(
+                ProgressValue, _currentSimulationToken));
         }
     }
 
@@ -228,13 +229,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
 
     private void NotifySolutionFound()
     {
-        Debug.WriteLine($"[NotifySolutionFound] Called. NoOfSolutions: {NoOfSolutions}, SolutionCountPerUpdate: {SolutionCountPerUpdate}");
-
-        if (NoOfSolutions % SolutionCountPerUpdate == 0)
-        {
-            Debug.WriteLine("[NotifySolutionFound] Triggering NotifyProgressChanged.");
-            NotifyProgressChanged();
-        }
+        Debug.WriteLine($"[NotifySolutionFound] Called. NoOfSolutions: {NoOfSolutions}");
 
         if (DisplayMode == DisplayMode.Visualize)
         {
@@ -243,7 +238,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
         }
     }
 
-    private int FindQueenPosition(int colNo)
+    private async Task<int> FindQueenPositionAsync(int colNo)
     {
         colNo = Math.Min(colNo, BoardSize - 1);
         for (var pos = QueenPositions[colNo] + 1; pos < BoardSize; pos++)
@@ -252,7 +247,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
             {
                 if (DisplayMode == DisplayMode.Visualize && DelayInMilliseconds > 0)
                 {
-                    Task.Delay(DelayInMilliseconds).Wait();
+                    await Task.Delay(DelayInMilliseconds);
                 }
                 return pos;
             }

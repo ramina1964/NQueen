@@ -61,13 +61,13 @@
                 Grid.ColumnSpan="2"
                 Margin="0,2">
 
+                <!--  Visibility="{Binding ProgressVisibility}"  -->
                 <ProgressBar
                     Name="ProgressBar"
                     IsIndeterminate="{Binding IsSingleRunning}"
                     Maximum="1"
                     Minimum="0"
                     Style="{StaticResource ProgressBarStyle}"
-                    Visibility="{Binding ProgressVisibility}"
                     Value="{Binding ProgressValue}" />
 
                 <Label
