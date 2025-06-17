@@ -11,7 +11,7 @@ public sealed partial class MainViewModel :
                   uiDispatcher,
                   new SaveFileDialogService())
     {
-        Debug.WriteLine("MainViewModel (default) constructed: " + GetHashCode());
+        Debug.WriteLine("MainViewModel instance: " + GetHashCode());
     }
 
     public MainViewModel(

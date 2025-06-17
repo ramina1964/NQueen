@@ -90,6 +90,7 @@ public sealed partial class MainViewModel
     {
         if (ObservableSolutions.Any(existingSol => existingSol.Id == solution.Id))
             return;
+
         _uiDispatcher.Invoke(() =>
         {
             if (ObservableSolutions.Count >= SimulationSettings.MaxNoOfSolutionsInOutput)
@@ -100,6 +101,7 @@ public sealed partial class MainViewModel
 
     private void OnProgressValueChangedEvent(object? sender, ProgressValueChangedWithTokenEventArgs e)
     {
+        Debug.WriteLine($"[OnProgressValueChangedEvent] Called on MainViewModel {GetHashCode()} with token {e.SimulationToken}");
         if (e.SimulationToken != _currentSimulationToken)
             return;
 

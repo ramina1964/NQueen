@@ -34,6 +34,7 @@ public class SolverEngine(
         var boardSize = _board.BoardSize;
         var halfBoardSize = _board.HalfBoardSize;
         var queenPositions = _board.QueenPositions;
+        int iteration = 0;
 
         while (colNo != -1)
         {
@@ -49,6 +50,8 @@ public class SolverEngine(
                 _onSolutionFound?.Invoke(queenPositions);
                 if (delayInMs > 0)
                     await Task.Delay(delayInMs);
+                await Task.Yield();
+
                 return;
             }
             else if (colNo == boardSize && solutionMode == SM.Unique)
@@ -56,14 +59,16 @@ public class SolverEngine(
                 _solutions.Add((int[])queenPositions.Clone());
                 _onSolutionFound?.Invoke(queenPositions);
                 colNo--;
+
                 continue;
             }
 
-            queenPositions[colNo] = FindQueenPosition(colNo);
+            queenPositions[colNo] = await FindQueenPositionAsync(colNo, delayInMs, displayMode);
 
             if (queenPositions[colNo] == -1)
             {
                 colNo--;
+
                 continue;
             }
 
@@ -72,7 +77,13 @@ public class SolverEngine(
                 _onSolutionFound?.Invoke(queenPositions);
                 if (solutionMode != SM.Single && delayInMs > 0)
                     await Task.Delay(delayInMs);
+
+                await Task.Yield();
             }
+
+            // Yield every 1000 iterations to keep UI responsive even in Hide mode
+            if (++iteration % 1000 == 0)
+                await Task.Yield();
 
             colNo++;
         }
@@ -81,24 +92,34 @@ public class SolverEngine(
     private async Task FindAllSolutions(int colNo, int delayInMs, DP displayMode)
     {
         await FindSingleOrUniqueSolutions(colNo, SM.Unique, delayInMs, displayMode);
-        // Optionally, you can add additional logic for updating or reporting all solutions here.
+        await Task.Yield();
     }
 
-    private int FindQueenPosition(int colNo)
+    private async Task<int> FindQueenPositionAsync(int colNo, int delayInMs, DP displayMode)
     {
         var boardSize = _board.BoardSize;
         var queenPositions = _board.QueenPositions;
-
+        int iteration = 0;
         for (var pos = queenPositions[colNo] + 1; pos < boardSize; pos++)
         {
             if (_board.IsValidPosition(colNo, pos))
             {
+                if (displayMode == DP.Visualize && delayInMs > 0)
+                {
+                    await Task.Delay(delayInMs);
+                    await Task.Yield();
+                }
                 return pos;
             }
+
+            // Yield every 1000 iterations for very large boards
+            if (++iteration % 1000 == 0)
+                await Task.Yield();
         }
 
         return -1;
     }
+
 
     private readonly BoardState _board = board;
 

@@ -183,5 +183,14 @@ public sealed partial class MainViewModel
         SaveCommand?.NotifyCanExecuteChanged();
     }
 
+    [RelayCommand]
+    private void TestProgress()
+    {
+        ProgressValue += 0.1;
+        if (ProgressValue > 1)
+            ProgressValue = 0;
+    }
+
+
     private Guid _currentSimulationToken = Guid.Empty;
 }

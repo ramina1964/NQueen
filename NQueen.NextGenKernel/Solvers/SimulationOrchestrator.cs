@@ -169,6 +169,8 @@ public class SimulationOrchestrator : ISolver, IDisposable
                 NotifySolutionFound();
                 UpdateProgress(totalSolutions);
                 await Task.Delay(DelayInMilliseconds);
+                await Task.Yield();
+
                 return;
             }
             if (colNo == BoardSize && solutionMode == SolutionMode.Unique)
@@ -177,6 +179,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
                 NotifySolutionFound();
                 NotifyProgressChanged();
                 colNo--;
+
                 continue;
             }
 
@@ -185,6 +188,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
             if (QueenPositions[colNo] == -1)
             {
                 colNo--;
+
                 continue;
             }
 
@@ -193,6 +197,8 @@ public class SimulationOrchestrator : ISolver, IDisposable
                 QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(QueenPositions));
                 if (SolutionMode != SolutionMode.Single)
                     await Task.Delay(DelayInMilliseconds);
+
+                await Task.Yield();
             }
 
             colNo++;
@@ -224,6 +230,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
             };
 
             SolutionManager.UpdateSolutions(updateDTO);
+            await Task.Yield();
         }
     }
 
@@ -248,10 +255,13 @@ public class SimulationOrchestrator : ISolver, IDisposable
                 if (DisplayMode == DisplayMode.Visualize && DelayInMilliseconds > 0)
                 {
                     await Task.Delay(DelayInMilliseconds);
+                    await Task.Yield();
                 }
+
                 return pos;
             }
         }
+
         return -1;
     }
 
@@ -327,7 +337,4 @@ public class SimulationOrchestrator : ISolver, IDisposable
     private CancellationTokenSource _cancellationTokenSource;
     private Guid _currentSimulationToken = Guid.Empty;
     private int _solutionsSinceLastProgressUpdate = 0;
-
-    private int _searchStepsSinceLastProgressUpdate = 0;
-    private const int SearchStepUpdateInterval = 100;
 }
