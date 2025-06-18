@@ -26,7 +26,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" MinWidth="140" />
             <ColumnDefinition Width="*" MaxWidth="1000" />
-            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="400" />
         </Grid.ColumnDefinitions>
 
         <!--  Top header row  -->
