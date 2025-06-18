@@ -201,7 +201,23 @@ public class SimulationOrchestrator : ISolver, IDisposable
                 await Task.Yield();
             }
 
+            // For both Unique and All, update progress at a reasonable interval
+            if (solutionMode != SolutionMode.Single && Solutions.Count > 0)
+            {
+                // Raise progress event every N solutions or after each solution for small boards
+                if (Solutions.Count % Math.Max(1, SolutionCountPerUpdate / 10) == 0)
+                {
+                    NotifyProgressChanged();
+                }
+            }
+
             colNo++;
+        }
+
+        // Ensure progress is updated at the end if not already at 100%
+        if (solutionMode != SolutionMode.Single)
+        {
+            NotifyProgressChanged();
         }
     }
 
@@ -285,8 +301,8 @@ public class SimulationOrchestrator : ISolver, IDisposable
         if (SolutionMode == SolutionMode.Single)
             return;
 
-        double percent = 0;
-        double progress = 0;
+        double percent;
+        double progress;
 
         if (SolutionMode == SolutionMode.Unique &&
             NQueenSolutionCounts.UniqueSolutions.TryGetValue(BoardSize, out var uniqueSolutions) &&
@@ -308,6 +324,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
         ProgressValue = progress;
         Debug.WriteLine($"[NotifyProgressChanged] ProgressValue updated to: {ProgressValue}, Percent: {percent}");
 
+        // Just raise the event; UI thread marshalling is the responsibility of the UI layer
         ProgressValueChanged?.Invoke(this, new ProgressValueChangedWithTokenEventArgs(
             ProgressValue, _currentSimulationToken));
     }

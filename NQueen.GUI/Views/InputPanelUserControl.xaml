@@ -7,6 +7,7 @@
     xmlns:local="clr-namespace:NQueen.GUI.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
+    Width="360"
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
     d:DesignHeight="450"
     d:DesignWidth="800"
@@ -44,7 +45,7 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                
+
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -57,7 +58,7 @@
                     Margin="5,2"
                     Content="Board Size"
                     Style="{StaticResource LabelStyle}" />
-                
+
                 <TextBox
                     Grid.Row="0"
                     Grid.Column="1"
@@ -76,7 +77,7 @@
                     Margin="5,2"
                     Content="Solution Mode"
                     Style="{StaticResource LabelStyle}" />
-                
+
                 <ComboBox
                     Grid.Row="1"
                     Grid.Column="1"
@@ -96,7 +97,7 @@
                     Margin="5,2"
                     Content="Display Mode"
                     Style="{StaticResource LabelStyle}" />
-                
+
                 <ComboBox
                     x:Name="CmbDisplayMode"
                     Grid.Row="2"
@@ -117,7 +118,7 @@
                     Margin="5,2"
                     Content="Delay in Milisec"
                     Style="{StaticResource LabelStyle}" />
-                
+
                 <Slider
                     x:Name="DelaySlider"
                     Grid.Row="3"

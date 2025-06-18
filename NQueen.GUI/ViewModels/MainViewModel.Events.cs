@@ -42,7 +42,7 @@ public sealed partial class MainViewModel
     }
 
     private void OnProgressValueChanged(ProgressValueChangedMessage message) =>
-        UpdateProgress(message.Value, $"{message.Value} %");
+        UpdateProgress(message.Value, $"{Math.Round(message.Value * 100, 1)} %");
 
     private void OnQueenPlaced(QueenPlacedMessage message)
     {
@@ -52,7 +52,7 @@ public sealed partial class MainViewModel
             .Select((queenPosition, rowIndex) => new Position(rowIndex, queenPosition))
             .ToList();
         ChessboardVm.PlaceQueens(positions);
-        UpdateProgress(message.Value, $"{message.Value} %");
+        UpdateProgress(message.Value, $"{Math.Round(message.Value * 100, 1)} %");
     }
 
     private void OnSolutionFound(SolutionFoundMessage message)
@@ -74,7 +74,7 @@ public sealed partial class MainViewModel
             if (IsSingleRunning == false)
             {
                 ProgressValue = value;
-                ProgressLabel = $"{Math.Round(value * 100, 1)} %";
+                ProgressLabel = label;
                 Debug.WriteLine($"[UpdateProgress] ProgressValue set to {ProgressValue}");
             }
 

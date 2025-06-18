@@ -1,8 +1,5 @@
 ﻿namespace NQueen.GUI.Views;
 
-// Todo: The error messages for the invalid board sizes have different length, so that changing
-// the solution mode could cause widening/narrowing of the UserControl panels on the last column
-// of the second row, i.e., Grid.Row = 1, Grid.Column = 3 of the MainWindow.xaml.
 public partial class MainWindow : Window, IDisposable
 {
     public MainWindow(MainViewModel mainViewModel, IServiceProvider serviceProvider)
