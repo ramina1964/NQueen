@@ -41,7 +41,8 @@ public class NQueenTestBase(ISolver sut)
         ExpectedSolutions = FetchExpectedSols(boardSize, solutionMode);
 
         // Act
-        ActualSolutions = (await FetchActualSolsAsync(boardSize, solutionMode)).ToList();
+        ActualSolutions = (await FetchActualSolsAsync(boardSize, solutionMode))
+            .ToList();
 
         // Assert
         Assert.Equal(ExpectedSolutions.Count, ActualSolutions.Count);

@@ -1,6 +1,4 @@
-﻿using NQueen.NextGenKernel.Utils;
-
-namespace NQueen.UnitTests.Tests.NQueenSolver;
+﻿namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 public class NQueenSolverNegativeTests : IDisposable
 {
@@ -21,14 +19,9 @@ public class NQueenSolverNegativeTests : IDisposable
     public async Task SolverShouldNotGenerateAnySolution(
         int boardSize, SolutionMode solutionMode)
     {
-        // Arrange
-        var expectedSolutions = ExpectedSolutionData
-            .SingleSolutions.GetValueOrDefault(boardSize)
-            ?.Select(solution => new Solution(solution)).ToList()
-            ?? [];
-
         // Act
-        var actualSolutions = await _solverBackEnd.GetResultsForBoardAsync(boardSize, solutionMode);
+        var actualSolutions = await _solverBackEnd
+            .GetResultsForBoardAsync(boardSize, solutionMode);
 
         // Assert
         Assert.Empty(actualSolutions.Solutions);

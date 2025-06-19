@@ -34,7 +34,10 @@ public class Solution
         const int noOfQueensPerLine = 40;
 
         // Order by column index ascending
-        var columnOrdered = Positions.OrderBy(p => p.ColumnNo).ToList();
+        var columnOrdered = Positions
+            .OrderBy(p => p.ColumnNo)
+            .ToList();
+        
         var noOfLines = BoardSize % noOfQueensPerLine == 0 ?
             BoardSize / noOfQueensPerLine :
             BoardSize / noOfQueensPerLine + 1;
@@ -72,7 +75,9 @@ public class Solution
 
     // Each pair is (column, row) 
     private static List<Position> MapQueenArrayToPositions(int[] queenPositions) =>
-        queenPositions.Select((rowNo, columnNo) => new Position(rowNo, columnNo)).ToList();
+        queenPositions
+        .Select((rowNo, columnNo) => new Position(rowNo, columnNo))
+        .ToList();
 
     #endregion PrivateMembers
 }

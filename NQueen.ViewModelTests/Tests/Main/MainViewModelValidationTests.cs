@@ -13,8 +13,7 @@ public class MainViewModelValidationTests
         mainVm.BoardSizeText = boardSizeText!;
 
         // Act
-        var errors = mainVm
-            .GetErrors(nameof(mainVm.BoardSizeText))
+        var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText))
             .Cast<string>()
             .ToList();
 
@@ -57,13 +56,13 @@ public class MainViewModelValidationTests
             boardSizeText, solutionMode);
 
         // Act
-        var errors = mainVm
-            .GetErrors(nameof(mainVm.BoardSizeText))
-            .Cast<string>().ToList();
+        var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
 
         // Assert
         errors.Should().BeEmpty();
-        mainVm.HasErrors.Should().BeFalse();
+
+        mainVm.HasErrors
+            .Should().BeFalse();
     }
 
     [Theory]
@@ -119,7 +118,9 @@ public class MainViewModelValidationTests
         mainVm.BoardSizeText = originalBoardSizeText;
 
         // Act
-        var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
+        var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText))
+            .Cast<string>()
+            .ToList();
 
         // Assert
         errors.Should().Contain(ErrorMessages.SizeTooLargeForUnique);
@@ -137,7 +138,9 @@ public class MainViewModelValidationTests
         mainVm.BoardSizeText = "abc";
 
         // Act
-        var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
+        var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText))
+            .Cast<string>()
+            .ToList();
 
         // Assert
         errors.Should().NotBeEmpty();
@@ -188,6 +191,7 @@ public class MainViewModelValidationTests
         // Act: Should be valid, so chessboard should be updated to expected size
         var expectedSize = ParsingUtils.ParseIntOrThrow(boardSizeText);
         var expectedSizeSquared = expectedSize * expectedSize;
+
         mainVm.ChessboardVm.Squares.Count.Should().Be(expectedSizeSquared);
         mainVm.HasErrors.Should().BeFalse();
 

@@ -46,11 +46,15 @@ public sealed partial class MainViewModel
 
     private void OnQueenPlaced(QueenPlacedMessage message)
     {
-        if (!ParsingUtils.TryParseInt(BoardSizeText, out var boardSize))
+        if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) == false)
             return;
-        var positions = message.Solution.Take(boardSize)
+
+        var positions = message
+            .Solution
+            .Take(boardSize)
             .Select((queenPosition, rowIndex) => new Position(rowIndex, queenPosition))
             .ToList();
+
         ChessboardVm.PlaceQueens(positions);
         UpdateProgress(message.Value, $"{Math.Round(message.Value * 100, 1)} %");
     }

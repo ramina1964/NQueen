@@ -66,9 +66,13 @@ public sealed partial class MainViewModel :
     public IEnumerable GetErrors(string? propertyName)
     {
         if (string.IsNullOrEmpty(propertyName))
-            return _errors.Values.SelectMany(errors => errors).ToList();
+            return _errors.Values
+                .SelectMany(errors => errors)
+                .ToList();
 
-        return _errors.TryGetValue(propertyName, out var propertyErrors) ? propertyErrors : Enumerable.Empty<string>();
+        return _errors.TryGetValue(propertyName, out var propertyErrors)
+            ? propertyErrors
+            : Enumerable.Empty<string>();
     }
 
     public void SetChessboard(double boardDimension)

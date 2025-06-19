@@ -25,12 +25,11 @@ public class NQueenSolverPositiveTests : IDisposable
         // Act
         var actualSolutions = await _solverBackEnd.GetResultsForBoardAsync(boardSize, solutionMode);
         var actualSolutionsList = actualSolutions.Solutions
-            .Select(solution => solution.QueenPositions.ToArray())
-            .ToList();
+            .Select(solution => solution.QueenPositions.ToArray());
 
         // Assert
-        actualSolutionsList.Should().ContainSingle()
-            .Which.Should().BeEquivalentTo(expectedSolutions.First());
+        actualSolutionsList.Should().ContainSingle().Which.Should()
+            .BeEquivalentTo(expectedSolutions.First());
     }
 
     [Theory]
@@ -72,12 +71,15 @@ public class NQueenSolverPositiveTests : IDisposable
 
         // Assert
         Assert.Equal(
-            expectedSolutions.OrderBy(solution => string.Join(",", solution)),
-            actualSolutionsList.OrderBy(solution => string.Join(",", solution))
+            expectedSolutions
+            .OrderBy(solution => string.Join(",", solution)),
+            actualSolutionsList
+            .OrderBy(solution => string.Join(",", solution))
         );
     }
 
-    public void Dispose() => _serviceProvider.Dispose();
+    public void Dispose() =>
+        _serviceProvider.Dispose();
     
     private readonly ISolver _solverBackEnd;
     private readonly ServiceProvider _serviceProvider;
