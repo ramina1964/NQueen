@@ -17,7 +17,7 @@ public sealed partial class MainViewModel :
         IDispatcher dispatcher,
         ISaveFileDialogService saveFileService)
     {
-        Solver = solver ??
+        _solver = solver ??
             throw new ArgumentNullException(nameof(solver));
 
         _uiDispatcher = dispatcher ??
@@ -156,7 +156,7 @@ public sealed partial class MainViewModel :
 
     private CancellationTokenSource CancellationTokenSource { get; set; }
 
-    private readonly ISolver Solver;
+    private readonly ISolver _solver;
 
     private readonly IDispatcher _uiDispatcher;
 

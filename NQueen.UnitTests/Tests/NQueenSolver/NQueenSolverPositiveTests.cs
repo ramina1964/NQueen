@@ -8,8 +8,7 @@ public class NQueenSolverPositiveTests : IDisposable
         services.AddApplicationServices();
         services.AddTestServices();
         _serviceProvider = services.BuildServiceProvider();
-
-        _solverBackEnd = _serviceProvider.GetRequiredService<ISolver>();
+        _solver = _serviceProvider.GetRequiredService<ISolver>();
     }
 
     [Theory]
@@ -23,7 +22,7 @@ public class NQueenSolverPositiveTests : IDisposable
         Assert.Single(expectedSolutions);
 
         // Act
-        var actualSolutions = await _solverBackEnd.GetResultsForBoardAsync(boardSize, solutionMode);
+        var actualSolutions = await _solver.GetResultsForBoardAsync(boardSize, solutionMode);
         var actualSolutionsList = actualSolutions.Solutions
             .Select(solution => solution.QueenPositions.ToArray());
 
@@ -42,7 +41,7 @@ public class NQueenSolverPositiveTests : IDisposable
         var expectedSolutions = NQueenTestBase.FetchExpectedSols(boardSize, solutionMode);
 
         // Act
-        var actualSolutions = await _solverBackEnd.GetResultsForBoardAsync(boardSize, solutionMode);
+        var actualSolutions = await _solver.GetResultsForBoardAsync(boardSize, solutionMode);
         var actualSolutionsList = actualSolutions.Solutions
             .Select(solution => solution.QueenPositions.ToArray())
             .ToList();
@@ -64,7 +63,7 @@ public class NQueenSolverPositiveTests : IDisposable
         var expectedSolutions = NQueenTestBase.FetchExpectedSols(boardSize, solutionMode);
 
         // Act
-        var actualSolutions = await _solverBackEnd.GetResultsForBoardAsync(boardSize, solutionMode);
+        var actualSolutions = await _solver.GetResultsForBoardAsync(boardSize, solutionMode);
         var actualSolutionsList = actualSolutions.Solutions
             .Select(solution => solution.QueenPositions.ToArray())
             .ToList();
@@ -81,7 +80,7 @@ public class NQueenSolverPositiveTests : IDisposable
     public void Dispose() =>
         _serviceProvider.Dispose();
     
-    private readonly ISolver _solverBackEnd;
+    private readonly ISolver _solver;
     private readonly ServiceProvider _serviceProvider;
 }
 

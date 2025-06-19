@@ -14,12 +14,10 @@ public class SimulationOrchestrator : ISolver, IDisposable
         _cancellationTokenSource = new CancellationTokenSource();
     }
 
-    public void SetSimulationToken(Guid token)
-    {
+    public void SetSimulationToken(Guid token) =>
         _currentSimulationToken = token;
-    }
 
-    #region IDisposable Implementation
+    #region IDisposable Implementation1
     public void Dispose()
     {
         Dispose(true);
@@ -49,7 +47,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
     }
     #endregion
 
-    #region ISolverBackEnd
+    #region ISolver
     public bool IsSolverCanceled
     {
         get => _cancellationTokenSource?.IsCancellationRequested ?? false;
@@ -73,10 +71,9 @@ public class SimulationOrchestrator : ISolver, IDisposable
 
         return await Task.Run(GetResultsForCurrentConfigurationAsync);
     }
-    #endregion
 
-    #region ISolverUI
     public int DelayInMilliseconds { get; set; }
+
     public double ProgressValue { get; set; }
 
     public event EventHandler<QueenPlacedEventArgs> QueenPlaced = delegate { };
@@ -139,12 +136,15 @@ public class SimulationOrchestrator : ISolver, IDisposable
             case SolutionMode.Single:
                 await FindSingleOrUniqueSolutions(0, SolutionMode.Single);
                 break;
+
             case SolutionMode.Unique:
                 await FindSingleOrUniqueSolutions(0, SolutionMode.Unique);
                 break;
+
             case SolutionMode.All:
                 await FindAllSolutions(0);
                 break;
+
             default:
                 throw new NotImplementedException();
         }
@@ -157,6 +157,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
         int totalSolutions = 0;
         if (solutionMode == SolutionMode.Unique)
             NQueenSolutionCounts.UniqueSolutions.TryGetValue(BoardSize, out totalSolutions);
+
         else if (solutionMode == SolutionMode.All)
             NQueenSolutionCounts.AllSolutions.TryGetValue(BoardSize, out totalSolutions);
 
