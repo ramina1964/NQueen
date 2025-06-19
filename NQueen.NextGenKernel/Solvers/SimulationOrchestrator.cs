@@ -17,7 +17,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
     public void SetSimulationToken(Guid token) =>
         _currentSimulationToken = token;
 
-    #region IDisposable Implementation1
+    #region IDisposable Implementation
     public void Dispose()
     {
         Dispose(true);
