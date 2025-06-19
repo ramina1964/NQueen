@@ -14,6 +14,11 @@ public class SimulationOrchestrator : ISolver, IDisposable
         _cancellationTokenSource = new CancellationTokenSource();
     }
 
+    public void SetSimulationToken(Guid token)
+    {
+        _currentSimulationToken = token;
+    }
+
     #region IDisposable Implementation
     public void Dispose()
     {
@@ -129,7 +134,6 @@ public class SimulationOrchestrator : ISolver, IDisposable
 
     private async Task<IEnumerable<Solution>> SolveNQueenProblem()
     {
-        Debug.WriteLine("BackTrackingSolver constructor called.");
         switch (SolutionMode)
         {
             case SolutionMode.Single:
@@ -147,6 +151,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
         return Solutions.Select((s, index) => new Solution(s, index + 1));
     }
 
+    // --- Refactored Method ---
     private async Task FindSingleOrUniqueSolutions(int colNo, SolutionMode solutionMode)
     {
         int totalSolutions = 0;
@@ -155,6 +160,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
         else if (solutionMode == SolutionMode.All)
             NQueenSolutionCounts.AllSolutions.TryGetValue(BoardSize, out totalSolutions);
 
+        int iteration = 0;
         while (colNo != -1)
         {
             if (IsSolverCanceled)
@@ -170,7 +176,6 @@ public class SimulationOrchestrator : ISolver, IDisposable
                 UpdateProgress(totalSolutions);
                 await Task.Delay(DelayInMilliseconds);
                 await Task.Yield();
-
                 return;
             }
             if (colNo == BoardSize && solutionMode == SolutionMode.Unique)
@@ -179,7 +184,6 @@ public class SimulationOrchestrator : ISolver, IDisposable
                 NotifySolutionFound();
                 NotifyProgressChanged();
                 colNo--;
-
                 continue;
             }
 
@@ -188,7 +192,6 @@ public class SimulationOrchestrator : ISolver, IDisposable
             if (QueenPositions[colNo] == -1)
             {
                 colNo--;
-
                 continue;
             }
 
@@ -211,6 +214,10 @@ public class SimulationOrchestrator : ISolver, IDisposable
                 }
             }
 
+            // Yield every 1000 iterations to keep UI responsive even in Hide mode
+            if (++iteration % 1000 == 0)
+                await Task.Yield();
+
             colNo++;
         }
 
@@ -220,6 +227,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
             NotifyProgressChanged();
         }
     }
+    // --- End Refactored Method ---
 
     private void UpdateProgress(int totalSolutions)
     {
@@ -252,8 +260,6 @@ public class SimulationOrchestrator : ISolver, IDisposable
 
     private void NotifySolutionFound()
     {
-        Debug.WriteLine($"[NotifySolutionFound] Called. NoOfSolutions: {NoOfSolutions}");
-
         if (DisplayMode == DisplayMode.Visualize)
         {
             SolutionFound?.Invoke(this, new SolutionFoundEventArgs(QueenPositions));
@@ -322,7 +328,6 @@ public class SimulationOrchestrator : ISolver, IDisposable
             return;
 
         ProgressValue = progress;
-        Debug.WriteLine($"[NotifyProgressChanged] ProgressValue updated to: {ProgressValue}, Percent: {percent}");
 
         // Just raise the event; UI thread marshalling is the responsibility of the UI layer
         ProgressValueChanged?.Invoke(this, new ProgressValueChangedWithTokenEventArgs(

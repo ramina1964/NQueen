@@ -70,12 +70,10 @@ public sealed partial class MainViewModel
         value = Math.Clamp(value, 0, 1);
         _uiDispatcher.Invoke(() =>
         {
-            Debug.WriteLine($"[UpdateProgress] IsSingleRunning={IsSingleRunning}, value={value}");
             if (IsSingleRunning == false)
             {
                 ProgressValue = value;
                 ProgressLabel = label;
-                Debug.WriteLine($"[UpdateProgress] ProgressValue set to {ProgressValue}");
             }
 
             // Always show percent in label, regardless of input label
@@ -99,9 +97,9 @@ public sealed partial class MainViewModel
         });
     }
 
-    private void OnProgressValueChangedEvent(object? sender, ProgressValueChangedWithTokenEventArgs e)
+    private void OnProgressValueChangedEvent(object? sender,
+        ProgressValueChangedWithTokenEventArgs e)
     {
-        Debug.WriteLine($"[OnProgressValueChangedEvent] Called on MainViewModel {GetHashCode()} with token {e.SimulationToken}");
         if (e.SimulationToken != _currentSimulationToken)
             return;
 

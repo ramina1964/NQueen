@@ -10,17 +10,13 @@ public sealed partial class MainViewModel :
                   new SolutionManager()),
                   uiDispatcher,
                   new SaveFileDialogService())
-    {
-        Debug.WriteLine("MainViewModel instance: " + GetHashCode());
-    }
+    {}
 
     public MainViewModel(
         ISolver solver,
         IDispatcher dispatcher,
         ISaveFileDialogService saveFileService)
     {
-        Debug.WriteLine("MainViewModel (DI) constructed: " + GetHashCode());
-
         Solver = solver ??
             throw new ArgumentNullException(nameof(solver));
 
@@ -40,6 +36,8 @@ public sealed partial class MainViewModel :
 
         Initialize();
         SubscribeToSimulationEvents();
+
+        ProgressValue = 0.5;
     }
 
     // --- Public Properties ---

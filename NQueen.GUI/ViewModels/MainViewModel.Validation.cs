@@ -8,10 +8,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
     private void ValidateProperty(string propertyName)
     {
         _errors.Remove(propertyName);
-
-        var validationResults = InputViewModel.ValidateBoardSize(BoardSizeText);
-        foreach (var error in validationResults.Errors)
-            Debug.WriteLine($"Validation Error: {error.PropertyName} - {error.ErrorMessage}");
+        var validationResults = InputViewModel.ValidateBoardSize(BoardSizeText);;
 
         var propertyErrors = validationResults.Errors
             .Where(error => error.PropertyName == nameof(BoardSizeText))
@@ -21,7 +18,6 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         if (propertyErrors.Count != 0)
         {
             _errors[propertyName] = propertyErrors;
-            Debug.WriteLine($"Errors for {propertyName}: {string.Join(", ", propertyErrors)}");
             OnErrorsChanged(propertyName);
         }
         else

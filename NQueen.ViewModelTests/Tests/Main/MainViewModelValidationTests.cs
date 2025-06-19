@@ -1,6 +1,4 @@
-﻿using NQueen.Domain.Enums;
-
-namespace NQueen.ViewModelTests.Tests.Main;
+﻿namespace NQueen.ViewModelTests.Tests.Main;
 
 public class MainViewModelValidationTests
 {
