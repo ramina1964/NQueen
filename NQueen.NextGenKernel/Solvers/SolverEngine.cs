@@ -59,7 +59,6 @@ public class SolverEngine(
                 _solutions.Add((int[])queenPositions.Clone());
                 _onSolutionFound?.Invoke(queenPositions);
                 colNo--;
-
                 continue;
             }
 
@@ -68,7 +67,6 @@ public class SolverEngine(
             if (queenPositions[colNo] == -1)
             {
                 colNo--;
-
                 continue;
             }
 

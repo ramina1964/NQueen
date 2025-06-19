@@ -10,7 +10,7 @@ public class NQueenSolverNegativeTests : IDisposable
         services.AddTestServices();
 
         _serviceProvider = services.BuildServiceProvider();
-        _solverBackEnd = _serviceProvider.GetRequiredService<ISolver>();
+        _solver = _serviceProvider.GetRequiredService<ISolver>();
     }
 
     [Theory]
@@ -20,7 +20,7 @@ public class NQueenSolverNegativeTests : IDisposable
         int boardSize, SolutionMode solutionMode)
     {
         // Act
-        var actualSolutions = await _solverBackEnd
+        var actualSolutions = await _solver
             .GetResultsForBoardAsync(boardSize, solutionMode);
 
         // Assert
@@ -29,6 +29,6 @@ public class NQueenSolverNegativeTests : IDisposable
 
     public void Dispose() => _serviceProvider.Dispose();
 
-    private readonly ISolver _solverBackEnd;
+    private readonly ISolver _solver;
     private readonly ServiceProvider _serviceProvider;
 }

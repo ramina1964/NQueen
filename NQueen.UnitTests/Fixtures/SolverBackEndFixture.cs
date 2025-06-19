@@ -17,7 +17,7 @@ public class SolverBackEndFixture
         // Build the service provider
         ServiceProvider = services.BuildServiceProvider();
 
-        // Resolve the ISolverBackEnd instance
+        // Resolve the ISolver instance
         Sut = ServiceProvider.GetRequiredService<ISolver>();
     }
 }

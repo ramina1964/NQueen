@@ -50,8 +50,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnDelayInMillisecondsChanged(int value)
     {
-        if (Solver != null)
-            Solver.DelayInMilliseconds = value;
+        if (_solver != null)
+            _solver.DelayInMilliseconds = value;
     }
 
     [ObservableProperty]
@@ -77,7 +77,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnDisplayModeChanged(DisplayMode value)
     {
-        if (Solver == null)
+        if (_solver == null)
             return;
         if (!ValidateAndSetUiState())
             return;

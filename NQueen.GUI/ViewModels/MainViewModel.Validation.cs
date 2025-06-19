@@ -56,7 +56,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
     partial void OnBoardSizeTextChanged(string value)
     {
-        if (Solver == null)
+        if (_solver == null)
             return;
 
         // Ensure previous simulation is cancelled
@@ -85,7 +85,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
     partial void OnSolutionModeChanged(SolutionMode value)
     {
-        if (Solver == null)
+        if (_solver == null)
             return;
 
         // Ensure previous simulation is cancelled

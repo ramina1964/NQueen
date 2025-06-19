@@ -7,7 +7,7 @@ public sealed partial class MainViewModel
         if (IsSimulating)
         {
             CancellationTokenSource?.Cancel();
-            Solver.IsSolverCanceled = true;
+            _solver.IsSolverCanceled = true;
             IsSimulating = false;
         }
     }
@@ -45,7 +45,7 @@ public sealed partial class MainViewModel
         _currentSimulationToken = Guid.NewGuid();
 
         // Synchronize the token with the orchestrator
-        if (Solver is SimulationOrchestrator orchestrator)
+        if (_solver is SimulationOrchestrator orchestrator)
         {
             orchestrator.SetSimulationToken(_currentSimulationToken);
         }
@@ -57,7 +57,7 @@ public sealed partial class MainViewModel
 
             ManageSimulationStatus(SimulationStatus.Started);
             UpdateUiState();
-            SimulationResults = await Solver.GetResultsForBoardAsync(boardSize, SolutionMode, DisplayMode);
+            SimulationResults = await _solver.GetResultsForBoardAsync(boardSize, SolutionMode, DisplayMode);
 
             // After awaiting, check if this is still the current simulation
             if (SimulationResults == null || !SimulationResults.Solutions.Any() || _currentSimulationToken == Guid.Empty)
