@@ -77,10 +77,15 @@ public static class TestHelpers
     public static async Task WaitForSimulationCompletionAsync(MainViewModel mainVm)
     {
         var tcs = new TaskCompletionSource<bool>();
-        mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
+        EventHandler? handler = null;
+        handler = (s, e) =>
+        {
+            tcs.TrySetResult(true);
+            mainVm.SimulationCompleted -= handler;
+        };
+        mainVm.SimulationCompleted += handler;
         mainVm.SimulateCommand.Execute(null);
         await tcs.Task;
-        mainVm.SimulationCompleted -= (s, e) => tcs.SetResult(true);
     }
 
     public static async Task WaitForConditionAsync(Func<bool> condition, TimeSpan timeout)
