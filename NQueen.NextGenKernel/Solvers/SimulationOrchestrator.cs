@@ -151,17 +151,19 @@ public class SimulationOrchestrator : ISolver, IDisposable
         return Solutions.Select((s, index) => new Solution(s, index + 1));
     }
 
-    // --- Refactored Method ---
     private async Task FindSingleOrUniqueSolutions(int colNo, SolutionMode solutionMode)
     {
         int totalSolutions = 0;
         if (solutionMode == SolutionMode.Unique)
             NQueenSolutionCounts.UniqueSolutions.TryGetValue(BoardSize, out totalSolutions);
-
         else if (solutionMode == SolutionMode.All)
             NQueenSolutionCounts.AllSolutions.TryGetValue(BoardSize, out totalSolutions);
 
         int iteration = 0;
+        // Ensure progress is updated at the start for non-Single modes
+        if (solutionMode != SolutionMode.Single)
+            NotifyProgressChanged();
+
         while (colNo != -1)
         {
             if (IsSolverCanceled)
@@ -228,7 +230,6 @@ public class SimulationOrchestrator : ISolver, IDisposable
             NotifyProgressChanged();
         }
     }
-    // --- End Refactored Method ---
 
     private void UpdateProgress(int totalSolutions)
     {
@@ -329,8 +330,6 @@ public class SimulationOrchestrator : ISolver, IDisposable
             return;
 
         ProgressValue = progress;
-
-        // Just raise the event; UI thread marshalling is the responsibility of the UI layer
         ProgressValueChanged?.Invoke(this, new ProgressValueChangedWithTokenEventArgs(
             ProgressValue, _currentSimulationToken));
     }

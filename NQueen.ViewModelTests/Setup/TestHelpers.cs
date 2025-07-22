@@ -77,12 +77,12 @@ public static class TestHelpers
     public static async Task WaitForSimulationCompletionAsync(MainViewModel mainVm)
     {
         var tcs = new TaskCompletionSource<bool>();
-        EventHandler? handler = null;
-        handler = (s, e) =>
+        void handler(object? s, EventArgs e)
         {
             tcs.TrySetResult(true);
             mainVm.SimulationCompleted -= handler;
-        };
+        }
+
         mainVm.SimulationCompleted += handler;
         mainVm.SimulateCommand.Execute(null);
         await tcs.Task;

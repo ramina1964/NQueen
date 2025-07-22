@@ -150,7 +150,27 @@ public class MainViewModelPositiveTests : IDisposable
         mainVm.IsSingleRunning.Should().BeFalse();
     }
 
-    private void AssertSavedContentProperties(
+    [Theory]
+    [InlineData(8, SolutionMode.Single, DisplayMode.Visualize)]
+    [InlineData(8, SolutionMode.Unique, DisplayMode.Visualize)]
+    [InlineData(8, SolutionMode.All, DisplayMode.Visualize)]
+    public async Task ProgressBar_ShouldUpdate_ForAllSolutionModes(
+        int boardSize, SolutionMode solutionMode, DisplayMode displayMode)
+    {
+        // Arrange
+        var mainVm = TestHelpers.CreateMainViewModel(boardSize, solutionMode, displayMode);
+
+        // Act
+        await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
+        await TestHelpers.WaitForConditionAsync(() => mainVm.ProgressValue > 0, TimeSpan.FromSeconds(2));
+
+        // Assert
+        mainVm.ProgressVisibility.Should().Be(Visibility.Visible, "progress bar should be visible during simulation");
+        mainVm.ProgressValue.Should().BeGreaterThan(0, "progress value should be updated for all modes");
+        mainVm.ProgressValue.Should().BeLessThanOrEqualTo(1, "progress value should not exceed 1");
+    }
+
+    private static void AssertSavedContentProperties(
         string savedContent,
         int boardSize,
         SolutionMode solutionMode,
@@ -195,7 +215,11 @@ public class MainViewModelPositiveTests : IDisposable
         dict["Memory Usage"].Should().Contain("MB");
     }
 
-    public void Dispose() => _serviceProvider.Dispose();
+    public void Dispose()
+    {
+        _serviceProvider.Dispose();
+        GC.SuppressFinalize(this);
+    }
 
     private readonly ServiceProvider _serviceProvider;
 }

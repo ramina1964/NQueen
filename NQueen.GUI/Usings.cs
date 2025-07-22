@@ -13,7 +13,6 @@ global using NQueen.GUI.Configuration;
 global using NQueen.GUI.Infrastructure;
 global using NQueen.GUI.Interfaces;
 global using NQueen.GUI.Messaging;
-global using NQueen.GUI.Utils;
 global using NQueen.GUI.ViewModels;
 global using NQueen.GUI.Views;
 global using NQueen.NextGenKernel.Services;
