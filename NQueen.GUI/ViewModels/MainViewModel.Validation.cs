@@ -62,16 +62,14 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         // Ensure previous simulation is cancelled
         Cancel();
 
-        // Prevent old events from firing
-        UnsubscribeFromSimulationEvents();
-
+        // Replace subscription to the old events with the new ones
+        SubscribeToSimulationEvents();
         ResetSimulationState();
 
         if (ParsingUtils.TryParseInt(value, out var boardSize))
             _lastValidBoardSize = boardSize;
 
         ValidateProperty(nameof(BoardSizeText));
-
         if (ValidateAndSetUiState())
         {
             _lastValidBoardSize = ParsingUtils.ParseIntOrThrow(value);
@@ -91,8 +89,8 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         // Ensure previous simulation is cancelled
         Cancel();
 
-        // Prevent old events from firing
-        UnsubscribeFromSimulationEvents();
+        // Replace subscription to the old events with the new ones
+        SubscribeToSimulationEvents();
         ResetSimulationState();
         InputViewModel = new InputViewModel(value);
         ValidateProperty(nameof(BoardSizeText));
