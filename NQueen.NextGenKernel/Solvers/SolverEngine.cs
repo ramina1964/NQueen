@@ -1,35 +1,13 @@
 ﻿namespace NQueen.NextGenKernel.Solvers;
 
-using SM = SolutionMode;
-using DP = DisplayMode;
-
 public class SolverEngine(
     BoardState board,
     SolverCancellation cancellation,
     Action<int[]> onSolutionFound)
 {
-    //// Todo: Find out why this method is not used.
-    //public async Task FindSolutionsAsync(
-    //    SM solutionMode, int delayInMs, DP displayMode)
-    //{
-    //    switch (solutionMode)
-    //    {
-    //        case SM.Single:
-    //            await FindSingleOrUniqueSolutions(0, SM.Single, delayInMs, displayMode);
-    //            break;
-            
-    //        case SM.Unique:
-    //            await FindSingleOrUniqueSolutions(0, SM.Unique, delayInMs, displayMode);
-    //            break;
-            
-    //        case SM.All:
-    //            await FindAllSolutions(0, delayInMs, displayMode);
-    //            break;
-    //    }
-    //}
 
     private async Task FindSingleOrUniqueSolutions(
-        int colNo, SM solutionMode, int delayInMs, DP displayMode)
+        int colNo, SolutionMode solutionMode, int delayInMs, DisplayMode displayMode)
     {
         var boardSize = _board.BoardSize;
         var halfBoardSize = _board.HalfBoardSize;
@@ -44,7 +22,7 @@ public class SolverEngine(
             if (queenPositions[0] == halfBoardSize)
                 return;
 
-            if (colNo == boardSize && solutionMode == SM.Single)
+            if (colNo == boardSize && solutionMode == SolutionMode.Single)
             {
                 _solutions.Add((int[])queenPositions.Clone());
                 _onSolutionFound?.Invoke(queenPositions);
@@ -54,7 +32,7 @@ public class SolverEngine(
 
                 return;
             }
-            else if (colNo == boardSize && solutionMode == SM.Unique)
+            else if (colNo == boardSize && solutionMode == SolutionMode.Unique)
             {
                 _solutions.Add((int[])queenPositions.Clone());
                 _onSolutionFound?.Invoke(queenPositions);
@@ -70,10 +48,10 @@ public class SolverEngine(
                 continue;
             }
 
-            if (displayMode == DP.Visualize)
+            if (displayMode == DisplayMode.Visualize)
             {
                 _onSolutionFound?.Invoke(queenPositions);
-                if (solutionMode != SM.Single && delayInMs > 0)
+                if (solutionMode != SolutionMode.Single && delayInMs > 0)
                     await Task.Delay(delayInMs);
 
                 await Task.Yield();
@@ -87,13 +65,13 @@ public class SolverEngine(
         }
     }
 
-    private async Task FindAllSolutions(int colNo, int delayInMs, DP displayMode)
+    private async Task FindAllSolutions(int colNo, int delayInMs, DisplayMode displayMode)
     {
-        await FindSingleOrUniqueSolutions(colNo, SM.Unique, delayInMs, displayMode);
+        await FindSingleOrUniqueSolutions(colNo, SolutionMode.Unique, delayInMs, displayMode);
         await Task.Yield();
     }
 
-    private async Task<int> FindQueenPositionAsync(int colNo, int delayInMs, DP displayMode)
+    private async Task<int> FindQueenPositionAsync(int colNo, int delayInMs, DisplayMode displayMode)
     {
         var boardSize = _board.BoardSize;
         var queenPositions = _board.QueenPositions;
@@ -102,7 +80,7 @@ public class SolverEngine(
         {
             if (_board.IsValidPosition(colNo, pos))
             {
-                if (displayMode == DP.Visualize && delayInMs > 0)
+                if (displayMode == DisplayMode.Visualize && delayInMs > 0)
                 {
                     await Task.Delay(delayInMs);
                     await Task.Yield();
