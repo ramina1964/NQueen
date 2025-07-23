@@ -41,8 +41,11 @@ public sealed partial class MainViewModel
         SimulationCompleted?.Invoke(this, EventArgs.Empty);
     }
 
-    private void OnProgressValueChanged(ProgressValueChangedMessage message) =>
+    private void OnProgressValueChanged(ProgressValueChangedMessage message)
+    {
+        Debug.WriteLine($"[MainViewModel] ProgressValue received: {message.Value}");
         UpdateProgress(message.Value, $"{Math.Round(message.Value * 100, 1)} %");
+    }
 
     private void OnQueenPlaced(QueenPlacedMessage message)
     {
@@ -74,14 +77,12 @@ public sealed partial class MainViewModel
         value = Math.Clamp(value, 0, 1);
         _uiDispatcher.Invoke(() =>
         {
+            Debug.WriteLine($"[MainViewModel] ProgressValue set to: {value}");
             if (IsSingleRunning == false)
             {
                 ProgressValue = value;
                 ProgressLabel = label;
             }
-
-            // Always show percent in label, regardless of input label
-            OnPropertyChanged(nameof(ProgressLabel));
         });
     }
 

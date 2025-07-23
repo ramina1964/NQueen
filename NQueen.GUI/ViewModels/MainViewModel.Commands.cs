@@ -92,21 +92,10 @@ public sealed partial class MainViewModel
                 IsSimulating = true;
                 IsOutputReady = false;
 
-                // Always show progress bar and label at the start
                 ProgressVisibility = Visibility.Visible;
                 ProgressLabelVisibility = Visibility.Visible;
                 ProgressValue = 0;
-
-                if (SolutionMode == SolutionMode.Single)
-                {
-                    IsSingleRunning = true;
-                    ProgressLabelVisibility = Visibility.Hidden;
-                }
-                else
-                {
-                    IsSingleRunning = false;
-                    ProgressLabelVisibility = Visibility.Visible;
-                }
+                IsSingleRunning = SolutionMode == SolutionMode.Single;
                 break;
 
             case SimulationStatus.Finished:
