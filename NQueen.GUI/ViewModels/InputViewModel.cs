@@ -9,6 +9,5 @@ public class InputViewModel(SolutionMode solutionMode)
         return _boardSizeValidator.Validate(boardSizeText);
     }
 
-    // --- Private Fields ---
     private readonly BoardSizeValidator _boardSizeValidator = new(solutionMode);
 }

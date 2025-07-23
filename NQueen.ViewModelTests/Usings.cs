@@ -19,5 +19,8 @@ global using NQueen.TestShared.Constants;
 global using NQueen.TestShared.Data;
 global using NQueen.ViewModelTests.Helpers;
 global using NQueen.ViewModelTests.Setup;
-global using System.Windows.Threading;
+global using System.ComponentModel;
 global using System.Windows;
+global using System.Windows.Threading;
+
+
