@@ -131,7 +131,7 @@ public class MainViewModelPositiveTests : IDisposable
             .Returns(async () =>
             {
                 if (solutionMode == SolutionMode.Single)
-                    await Task.Delay(10); // Minimal delay only for Single mode
+                    await Task.Delay(10);
                 return new SimulationResults([new Solution([1, 3, 0, 2])]);
             });
 

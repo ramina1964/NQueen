@@ -8,25 +8,25 @@ public class SolverEngine(
     SolverCancellation cancellation,
     Action<int[]> onSolutionFound)
 {
-    // Todo: Find out why this method is not used.
-    public async Task FindSolutionsAsync(
-        SM solutionMode, int delayInMs, DP displayMode)
-    {
-        switch (solutionMode)
-        {
-            case SM.Single:
-                await FindSingleOrUniqueSolutions(0, SM.Single, delayInMs, displayMode);
-                break;
+    //// Todo: Find out why this method is not used.
+    //public async Task FindSolutionsAsync(
+    //    SM solutionMode, int delayInMs, DP displayMode)
+    //{
+    //    switch (solutionMode)
+    //    {
+    //        case SM.Single:
+    //            await FindSingleOrUniqueSolutions(0, SM.Single, delayInMs, displayMode);
+    //            break;
             
-            case SM.Unique:
-                await FindSingleOrUniqueSolutions(0, SM.Unique, delayInMs, displayMode);
-                break;
+    //        case SM.Unique:
+    //            await FindSingleOrUniqueSolutions(0, SM.Unique, delayInMs, displayMode);
+    //            break;
             
-            case SM.All:
-                await FindAllSolutions(0, delayInMs, displayMode);
-                break;
-        }
-    }
+    //        case SM.All:
+    //            await FindAllSolutions(0, delayInMs, displayMode);
+    //            break;
+    //    }
+    //}
 
     private async Task FindSingleOrUniqueSolutions(
         int colNo, SM solutionMode, int delayInMs, DP displayMode)
