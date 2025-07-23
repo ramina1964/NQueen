@@ -6,7 +6,7 @@ public class SolverEngine(
     Action<int[]> onSolutionFound)
 {
     private async Task FindSingleOrUniqueSolutions(
-        int colNo, SolutionMode solutionMode, int delayInMs, DisplayMode displayMode)
+        int colNo, SM solutionMode, int delayInMs, DP displayMode)
     {
         var boardSize = _board.BoardSize;
         var halfBoardSize = _board.HalfBoardSize;
