@@ -84,8 +84,18 @@ public static class TestHelpers
         }
 
         mainVm.SimulationCompleted += handler;
-        mainVm.SimulateCommand.Execute(null);
-        await tcs.Task;
+
+        try
+        {
+            mainVm.SimulateCommand.Execute(null);
+            await tcs.Task;
+        }
+        catch (Exception ex)
+        {
+            // Log the exception and rethrow for test visibility
+            Console.WriteLine($"Exception during simulation: {ex}");
+            throw;
+        }
     }
 
     public static async Task WaitForConditionAsync(Func<bool> condition, TimeSpan timeout)

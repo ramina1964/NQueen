@@ -61,7 +61,7 @@
                 Grid.ColumnSpan="2"
                 Margin="0,2">
 
-                <!--Style="{StaticResource ProgressBarStyle}"-->
+                <!--  Style="{StaticResource ProgressBarStyle}"  -->
                 <ProgressBar
                     Name="ProgressBar"
                     IsIndeterminate="{Binding IsSingleRunning}"

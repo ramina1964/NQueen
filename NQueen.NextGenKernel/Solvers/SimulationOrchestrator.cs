@@ -78,16 +78,21 @@ public class SimulationOrchestrator : ISolver, IDisposable
 
     public event EventHandler<QueenPlacedEventArgs> QueenPlaced = delegate { };
     public event EventHandler<SolutionFoundEventArgs> SolutionFound = delegate { };
-    public event EventHandler<ProgressValueChangedWithTokenEventArgs> ProgressValueChanged =
-        delegate { };
+    public event EventHandler<ProgressValueChangedWithTokenEventArgs>
+        ProgressValueChanged = delegate { };
     #endregion
 
     #region PublicProperties
     public ISolutionManager SolutionManager { get; }
+
     public int BoardSize { get; set; }
+
     public int NoOfSolutions => Solutions.Count;
+
     public int HalfBoardSize { get; set; }
+
     public int[] QueenPositions { get; set; }
+
     public int SolutionCountPerUpdate =>
         SimulationSettings.SolutionCountPerUpdate(BoardSize);
     #endregion
@@ -113,7 +118,9 @@ public class SimulationOrchestrator : ISolver, IDisposable
     }
 
     public SolutionMode SolutionMode { get; set; }
+
     public DisplayMode DisplayMode { get; set; }
+
     public HashSet<int[]> Solutions { get; set; } = [];
     #endregion
 
@@ -153,16 +160,11 @@ public class SimulationOrchestrator : ISolver, IDisposable
 
     private async Task FindSingleOrUniqueSolutions(int colNo, SolutionMode solutionMode)
     {
-        int totalSolutions = 0;
+        int noOfSolutions = 0;
         if (solutionMode == SolutionMode.Unique)
-            NQueenSolutionCounts.UniqueSolutions.TryGetValue(BoardSize, out totalSolutions);
+            NQueenSolutionCounts.UniqueSolutions.TryGetValue(BoardSize, out noOfSolutions);
         else if (solutionMode == SolutionMode.All)
-            NQueenSolutionCounts.AllSolutions.TryGetValue(BoardSize, out totalSolutions);
-
-        int iteration = 0;
-        // Ensure progress is updated at the start for non-Single modes
-        if (solutionMode != SolutionMode.Single)
-            NotifyProgressChanged();
+            NQueenSolutionCounts.AllSolutions.TryGetValue(BoardSize, out noOfSolutions);
 
         while (colNo != -1)
         {
@@ -176,17 +178,22 @@ public class SimulationOrchestrator : ISolver, IDisposable
             {
                 UpdateSolutions();
                 NotifySolutionFound();
-                UpdateProgress(totalSolutions);
+                noOfSolutions = 1;
+                UpdateProgress(noOfSolutions);
                 await Task.Delay(DelayInMilliseconds);
                 await Task.Yield();
+
                 return;
             }
             if (colNo == BoardSize && solutionMode == SolutionMode.Unique)
             {
                 UpdateSolutions();
                 NotifySolutionFound();
+                noOfSolutions += 1;
+                UpdateProgress(noOfSolutions);
                 NotifyProgressChanged();
                 colNo--;
+
                 continue;
             }
 
@@ -217,10 +224,6 @@ public class SimulationOrchestrator : ISolver, IDisposable
                 }
             }
 
-            // Yield every 1000 iterations to keep UI responsive even in Hide mode
-            if (++iteration % 1000 == 0)
-                await Task.Yield();
-
             colNo++;
         }
 
@@ -231,11 +234,12 @@ public class SimulationOrchestrator : ISolver, IDisposable
         }
     }
 
-    private void UpdateProgress(int totalSolutions)
+    private void UpdateProgress(int noOfSolutions)
     {
-        if (totalSolutions > 0)
+        if (noOfSolutions > 0)
         {
-            ProgressValue = Math.Clamp(Solutions.Count / (double)totalSolutions, 0.0, 1.0);
+            ProgressValue = Math.Clamp(Solutions.Count / (double)noOfSolutions, 0.0, 1.0);
+            Debug.WriteLine($"UpdateProgress: Solutions.Count={Solutions.Count}, noOfSolutions={noOfSolutions}, ProgressValue={ProgressValue}");
             ProgressValueChanged?.Invoke(this, new ProgressValueChangedWithTokenEventArgs(
                 ProgressValue, _currentSimulationToken));
         }
@@ -265,7 +269,8 @@ public class SimulationOrchestrator : ISolver, IDisposable
         if (DisplayMode == DisplayMode.Visualize)
         {
             SolutionFound?.Invoke(this, new SolutionFoundEventArgs(QueenPositions));
-            QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(QueenPositions));
+            ProgressValueChanged?.Invoke(this, new ProgressValueChangedWithTokenEventArgs(
+                ProgressValue, _currentSimulationToken));
         }
     }
 
@@ -309,27 +314,33 @@ public class SimulationOrchestrator : ISolver, IDisposable
         if (SolutionMode == SolutionMode.Single)
             return;
 
-        double percent;
-        double progress;
+        double progress = 0;
+        int noOfSolutions = 0;
 
         if (SolutionMode == SolutionMode.Unique &&
-            NQueenSolutionCounts.UniqueSolutions.TryGetValue(BoardSize, out var uniqueSolutions) &&
-            uniqueSolutions > 0)
+            NQueenSolutionCounts.UniqueSolutions
+                .TryGetValue(BoardSize, out var uniqueSolutions) &&
+                uniqueSolutions > 0)
         {
-            percent = Math.Round(100.0 * Solutions.Count / uniqueSolutions, 1);
+            noOfSolutions = uniqueSolutions;
             progress = Math.Clamp(Solutions.Count / (double)uniqueSolutions, 0.0, 1.0);
         }
         else if (SolutionMode == SolutionMode.All &&
-            NQueenSolutionCounts.AllSolutions.TryGetValue(BoardSize, out var allSolutions) &&
-            allSolutions > 0)
+            NQueenSolutionCounts.AllSolutions
+                .TryGetValue(BoardSize, out var allSolutions) && allSolutions > 0)
         {
-            percent = Math.Round(100.0 * Solutions.Count / allSolutions, 1);
+            noOfSolutions = allSolutions;
             progress = Math.Clamp(Solutions.Count / (double)allSolutions, 0.0, 1.0);
         }
         else
+        {
+            Debug.WriteLine($"[NotifyProgressChanged] No valid solution count for BoardSize={BoardSize}, SolutionMode={SolutionMode}");
             return;
+        }
 
         ProgressValue = progress;
+        Debug.WriteLine($"[NotifyProgressChanged] BoardSize={BoardSize}, SolutionMode={SolutionMode}, Solutions.Count={Solutions.Count}, TotalSolutions={noOfSolutions}, ProgressValue={ProgressValue}");
+
         ProgressValueChanged?.Invoke(this, new ProgressValueChangedWithTokenEventArgs(
             ProgressValue, _currentSimulationToken));
     }
