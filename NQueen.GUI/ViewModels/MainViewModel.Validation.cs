@@ -93,11 +93,8 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
         // Prevent old events from firing
         UnsubscribeFromSimulationEvents();
-
         ResetSimulationState();
-
         InputViewModel = new InputViewModel(value);
-
         ValidateProperty(nameof(BoardSizeText));
 
         var maxNoOfSols = SimulationSettings.MaxNoOfSolutionsInOutput;
@@ -107,8 +104,6 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
             SolutionMode.Unique => $"Unique Sols. (Max: {maxNoOfSols})",
             _ => "Single Solution"
         };
-
-        OnPropertyChanged(nameof(SolutionTitle));
 
         // Ensure IsSingleRunning is updated when SolutionMode changes
         IsSingleRunning = value == SolutionMode.Single && IsSimulating;
@@ -134,7 +129,5 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         MemoryUsage = "0";
         IsOutputReady = false;
         IsSimulating = false;
-
-        // Todo: Add any other resets needed for your simulation state
     }
 }
