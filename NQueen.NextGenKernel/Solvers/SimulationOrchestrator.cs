@@ -224,12 +224,6 @@ public class SimulationOrchestrator : ISolver, IDisposable
 
             colNo++;
         }
-
-        // Ensure progress is updated at the end if not already at 100%
-        if (solutionMode != SolutionMode.Single)
-        {
-            NotifyProgressChanged();
-        }
     }
 
     private void UpdateProgress(int noOfSolutions)

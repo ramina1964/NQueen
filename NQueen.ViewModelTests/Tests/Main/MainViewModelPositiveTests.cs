@@ -171,7 +171,7 @@ public class MainViewModelPositiveTests : IDisposable
 
     [Theory]
     [InlineData(4, SolutionMode.Unique, DisplayMode.Visualize)]
-    //[InlineData(4, SolutionMode.All, DisplayMode.Visualize)]
+    [InlineData(4, SolutionMode.All, DisplayMode.Visualize)]
     public async Task ProgressBar_ShouldUpdate_ForUniqueAndAllModes(
         int boardSize, SolutionMode solutionMode, DisplayMode displayMode)
     {
