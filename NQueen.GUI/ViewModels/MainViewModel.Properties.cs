@@ -15,12 +15,8 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private Visibility _progressVisibility;
 
-    partial void OnProgressVisibilityChanged(Visibility value)
-    {
+    partial void OnProgressVisibilityChanged(Visibility value) =>
         IsProgressBarOffscreen = value != Visibility.Visible;
-        if (DisplayMode == DisplayMode.Visualize)
-            OnPropertyChanged(nameof(ProgressLabel));
-    }
 
     [ObservableProperty]
     private Visibility _progressLabelVisibility;
@@ -79,8 +75,10 @@ public sealed partial class MainViewModel : ObservableObject
     {
         if (_solver == null)
             return;
-        if (!ValidateAndSetUiState())
+
+        if (ValidateAndSetUiState() == false)
             return;
+
         OnPropertyChanged(nameof(BoardSizeText));
         UpdateUiState();
     }
