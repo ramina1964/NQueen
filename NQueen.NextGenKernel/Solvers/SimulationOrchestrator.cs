@@ -142,11 +142,11 @@ public class SimulationOrchestrator : ISolver, IDisposable
         switch (SolutionMode)
         {
             case SolutionMode.Single:
-                await SearchSolutions(0, SolutionMode.Single);
+                await SolveNQueenForModeAsync(0, SolutionMode.Single);
                 break;
 
             case SolutionMode.Unique:
-                await SearchSolutions(0, SolutionMode.Unique);
+                await SolveNQueenForModeAsync(0, SolutionMode.Unique);
                 break;
 
             case SolutionMode.All:
@@ -160,7 +160,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
         return Solutions.Select((s, index) => new Solution(s, index + 1));
     }
 
-    private async Task SearchSolutions(int colNo, SolutionMode solutionMode)
+    private async Task SolveNQueenForModeAsync(int colNo, SolutionMode solutionMode)
     {
         var totalNoOfSolutions =
             NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, solutionMode);
@@ -254,7 +254,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
 
     private async Task FindAllSolutions(int colNo)
     {
-        await SearchSolutions(colNo, SolutionMode.Unique);
+        await SolveNQueenForModeAsync(colNo, SolutionMode.Unique);
 
         foreach (var solution in Solutions.ToList())
         {
