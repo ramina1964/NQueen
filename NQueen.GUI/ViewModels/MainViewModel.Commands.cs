@@ -41,14 +41,14 @@ public sealed partial class MainViewModel
 
     private async Task SimulateAsync()
     {
+        Debug.WriteLine($"[SimulateAsync] Using solver instance: {_solver?.GetHashCode()}");
+
         // Generate a new token for this simulation run
         _currentSimulationToken = Guid.NewGuid();
 
         // Synchronize the token with the orchestrator
         if (_solver is SimulationOrchestrator orchestrator)
-        {
             orchestrator.SetSimulationToken(_currentSimulationToken);
-        }
 
         try
         {

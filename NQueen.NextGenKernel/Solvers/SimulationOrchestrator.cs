@@ -6,6 +6,8 @@ public class SimulationOrchestrator : ISolver, IDisposable
         ISolutionManager solutionManager,
         int boardSize = BoardSettings.DefaultBoardSize)
     {
+        Debug.WriteLine($"[Orchestrator] Created: {GetHashCode()}");
+
         Initialize(boardSize);
         SolutionManager = solutionManager
             ?? throw new ArgumentNullException(nameof(solutionManager));
@@ -132,7 +134,6 @@ public class SimulationOrchestrator : ISolver, IDisposable
         HalfBoardSize = GetHalfSize();
         QueenPositions = [.. Enumerable.Repeat(-1, BoardSize)];
         Solutions = new HashSet<int[]>(new IntArrayComparer());
-        _currentSimulationToken = Guid.NewGuid();
         _solutionsSinceLastProgressUpdate = 0;
     }
 
@@ -190,6 +191,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
                 AddSolutionAndNotify();
                 NotifySolutionFound();
                 ReportProgress(totalNoOfSolutions);
+                await Task.Yield();
 
                 colNo--;
                 continue;
@@ -218,7 +220,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
 
     private double _lastReportedProgress = -1;
 
-    // Consolidated progress reporting
+    // Consolidated progress reporting with extra debug output
     private void ReportProgress(int totalNoOfSolutions)
     {
         if (totalNoOfSolutions > 0)
@@ -226,7 +228,8 @@ public class SimulationOrchestrator : ISolver, IDisposable
             ProgressValue = Math.Clamp(Solutions.Count / (double)totalNoOfSolutions, 0.0, 1.0);
             if (ProgressValue != _lastReportedProgress)
             {
-                Debug.WriteLine($"Progress: {Solutions.Count}/{totalNoOfSolutions} = {ProgressValue}");
+                Debug.WriteLine($"[ReportProgress] Progress: {Solutions.Count}/{totalNoOfSolutions} = {ProgressValue}");
+                Debug.WriteLine($"[ReportProgress] Raising ProgressValueChanged: ProgressValue={ProgressValue}, _currentSimulationToken={_currentSimulationToken}");
                 ProgressValueChanged?.Invoke(this, new ProgressValueChangedWithTokenEventArgs(
                     ProgressValue, _currentSimulationToken));
                 _lastReportedProgress = ProgressValue;

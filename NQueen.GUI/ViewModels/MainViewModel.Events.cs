@@ -4,6 +4,8 @@ public sealed partial class MainViewModel
 {
     private void SubscribeToSimulationEvents()
     {
+        Debug.WriteLine($"[MainViewModel] Subscribing to: {_solver?.GetHashCode()}");
+
         UnsubscribeFromSimulationEvents();
         if (_solver is SimulationOrchestrator backTrackingSolver)
         {
@@ -102,18 +104,19 @@ public sealed partial class MainViewModel
         });
     }
 
-    private void OnProgressValueChangedEvent(object? sender,
-        ProgressValueChangedWithTokenEventArgs e)
-    {
-        if (e.SimulationToken != _currentSimulationToken)
-            return;
-
-        WeakReferenceMessenger.Default.Send(new ProgressValueChangedMessage(e.Value));
-    }
-
     private void OnQueenPlacedEvent(object? sender, QueenPlacedEventArgs e) =>
         WeakReferenceMessenger.Default.Send(new QueenPlacedMessage(e.Solution, 0));
 
     private void OnSolutionFoundEvent(object? sender, SolutionFoundEventArgs e) =>
         WeakReferenceMessenger.Default.Send(new SolutionFoundMessage(e.Solution));
+
+    private void OnProgressValueChangedEvent(object? sender,
+        ProgressValueChangedWithTokenEventArgs e)
+    {
+        Debug.WriteLine($"[MainViewModel] OnProgressValueChangedEvent: Received Token={e.SimulationToken}, Current Token={_currentSimulationToken}");
+        if (e.SimulationToken != _currentSimulationToken)
+            return;
+
+        WeakReferenceMessenger.Default.Send(new ProgressValueChangedMessage(e.Value));
+    }
 }
