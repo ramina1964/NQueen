@@ -160,14 +160,10 @@ public class SimulationOrchestrator : ISolver, IDisposable
         return Solutions.Select((s, index) => new Solution(s, index + 1));
     }
 
-    // Consolidated and renamed: FindSingleOrUniqueSolutions -> SearchSolutions
     private async Task SearchSolutions(int colNo, SolutionMode solutionMode)
     {
-        int totalNoOfSolutions = 0;
-        if (solutionMode == SolutionMode.Unique)
-            NQueenSolutionCounts.UniqueSolutions.TryGetValue(BoardSize, out totalNoOfSolutions);
-        else if (solutionMode == SolutionMode.All)
-            NQueenSolutionCounts.AllSolutions.TryGetValue(BoardSize, out totalNoOfSolutions);
+        var totalNoOfSolutions =
+            NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, solutionMode);
 
         while (colNo != -1)
         {
@@ -220,7 +216,6 @@ public class SimulationOrchestrator : ISolver, IDisposable
 
     private double _lastReportedProgress = -1;
 
-    // Consolidated progress reporting with extra debug output
     private void ReportProgress(int totalNoOfSolutions)
     {
         if (totalNoOfSolutions > 0)
@@ -240,12 +235,9 @@ public class SimulationOrchestrator : ISolver, IDisposable
     private void NotifySolutionFound()
     {
         if (DisplayMode == DisplayMode.Visualize)
-        {
             SolutionFound?.Invoke(this, new SolutionFoundEventArgs(QueenPositions));
-        }
     }
 
-    // Renamed: UpdateSolutions -> AddSolutionAndNotify
     private void AddSolutionAndNotify()
     {
         var updateDTO = new SolutionUpdateDTO

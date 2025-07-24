@@ -2,8 +2,16 @@
 
 public static class NQueenSolutionCounts
 {
-    // Unique solutions for board sizes
-    public static readonly Dictionary<int, int> UniqueSolutions = new()
+    public static int GetTotalNumberOfSolutions(int boardSize, SolutionMode solutionMode) =>
+        solutionMode switch
+        {
+            SolutionMode.Unique => _uniqueSolutions.TryGetValue(boardSize, out var unique) ? unique : 0,
+            SolutionMode.All => _allSolutions.TryGetValue(boardSize, out var all) ? all : 0,
+            _ => 0
+        };
+
+    // Unique no of solutions
+    private static readonly Dictionary<int, int> _uniqueSolutions = new()
     {
         { 1, 1 },
         { 2, 0 },
@@ -24,8 +32,8 @@ public static class NQueenSolutionCounts
         { 17, 11977939},
     };
 
-    // All solutions for board sizes
-    public static readonly Dictionary<int, int> AllSolutions = new()
+    // All no of solutions
+    private static readonly Dictionary<int, int> _allSolutions = new()
     {
         { 1, 1 },
         { 2, 0 },

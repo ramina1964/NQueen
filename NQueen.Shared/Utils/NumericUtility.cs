@@ -6,7 +6,7 @@ public class NumericUtility
     {
         var currentProcess = Process.GetCurrentProcess();
         var memoryUsageInBytes = currentProcess.WorkingSet64;
-        var roundedMemoryUsageInMB = RoundToNearestTen(memoryUsageInBytes / MB);
+        var roundedMemoryUsageInMB = RoundToNearestTen(memoryUsageInBytes / _megaByte);
 
         return FormatWithSpaceSeparator(roundedMemoryUsageInMB, 0);
     }
@@ -46,5 +46,5 @@ public class NumericUtility
     private static double RoundToNearestTen(double value) =>
         Math.Round(value / 10) * 10;
 
-    private const double MB = 1024.0 * 1024.0;
+    private const double _megaByte = 1024.0 * 1024.0;
 }

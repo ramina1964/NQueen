@@ -65,8 +65,11 @@ public class CommandManagerPositiveTests : IDisposable
         mainVm.IsIdle.Should().BeTrue();
     }
 
-    public void Dispose() =>
+    public void Dispose()
+    {
         _serviceProvider.Dispose();
+        GC.SuppressFinalize(this);
+    }
 
     private readonly ServiceProvider _serviceProvider;
 }

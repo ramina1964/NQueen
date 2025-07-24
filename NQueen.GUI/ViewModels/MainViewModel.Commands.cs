@@ -57,6 +57,14 @@ public sealed partial class MainViewModel
 
             ManageSimulationStatus(SimulationStatus.Started);
             UpdateUiState();
+
+            if (_solver == null)
+            {
+                Debug.WriteLine("[SimulateAsync] Solver instance is null.");
+                MessageBox.Show("Solver is not initialized.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
             SimulationResults = await _solver.GetResultsForBoardAsync(boardSize, SolutionMode, DisplayMode);
 
             // After awaiting, check if this is still the current simulation
