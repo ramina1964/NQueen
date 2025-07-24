@@ -31,7 +31,7 @@ public static class SolverHelper
                 symmetricalToBiDiag[flippedColIndex] = flippedRowIndex;
         }
 
-        return new HashSet<int[]>(new SequenceEquality<int>())
+        return new HashSet<int[]>(new IntArrayComparer())
         {
             symmetricalToMidVertical,
             symmetricalToMidHorizontal,

@@ -8,7 +8,7 @@ public class SolutionUpdateDTO
 
     public int[] QueenPositions { get; set; } = [];
 
-    public HashSet<int[]> Solutions { get; set; } = [];
+    public HashSet<int[]> Solutions { get; set; } = new HashSet<int[]>(new IntArrayComparer());
 
-    public int NoOfSolution => Solutions.Count;
+    public int NoOfSolution;
 }

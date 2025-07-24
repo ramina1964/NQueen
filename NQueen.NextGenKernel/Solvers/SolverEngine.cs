@@ -102,6 +102,5 @@ public class SolverEngine(
     
     private readonly Action<int[]> _onSolutionFound = onSolutionFound;
     
-    private readonly HashSet<int[]> _solutions =
-        new(new SequenceEquality<int>());
+    private readonly HashSet<int[]> _solutions = new(new IntArrayComparer());
 }

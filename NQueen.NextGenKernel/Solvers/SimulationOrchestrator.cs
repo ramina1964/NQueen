@@ -131,7 +131,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
         _cancellationTokenSource = new CancellationTokenSource();
         HalfBoardSize = GetHalfSize();
         QueenPositions = [.. Enumerable.Repeat(-1, BoardSize)];
-        Solutions = new HashSet<int[]>(new SequenceEquality<int>());
+        Solutions = new HashSet<int[]>(new IntArrayComparer());
         _currentSimulationToken = Guid.NewGuid();
         _solutionsSinceLastProgressUpdate = 0;
     }
@@ -141,11 +141,11 @@ public class SimulationOrchestrator : ISolver, IDisposable
         switch (SolutionMode)
         {
             case SolutionMode.Single:
-                await FindSingleOrUniqueSolutions(0, SolutionMode.Single);
+                await SearchSolutions(0, SolutionMode.Single);
                 break;
 
             case SolutionMode.Unique:
-                await FindSingleOrUniqueSolutions(0, SolutionMode.Unique);
+                await SearchSolutions(0, SolutionMode.Unique);
                 break;
 
             case SolutionMode.All:
@@ -155,16 +155,18 @@ public class SimulationOrchestrator : ISolver, IDisposable
             default:
                 throw new NotImplementedException();
         }
+
         return Solutions.Select((s, index) => new Solution(s, index + 1));
     }
 
-    private async Task FindSingleOrUniqueSolutions(int colNo, SolutionMode solutionMode)
+    // Consolidated and renamed: FindSingleOrUniqueSolutions -> SearchSolutions
+    private async Task SearchSolutions(int colNo, SolutionMode solutionMode)
     {
-        int noOfSolutions = 0;
+        int totalNoOfSolutions = 0;
         if (solutionMode == SolutionMode.Unique)
-            NQueenSolutionCounts.UniqueSolutions.TryGetValue(BoardSize, out noOfSolutions);
+            NQueenSolutionCounts.UniqueSolutions.TryGetValue(BoardSize, out totalNoOfSolutions);
         else if (solutionMode == SolutionMode.All)
-            NQueenSolutionCounts.AllSolutions.TryGetValue(BoardSize, out noOfSolutions);
+            NQueenSolutionCounts.AllSolutions.TryGetValue(BoardSize, out totalNoOfSolutions);
 
         while (colNo != -1)
         {
@@ -176,24 +178,20 @@ public class SimulationOrchestrator : ISolver, IDisposable
 
             if (colNo == BoardSize && solutionMode == SolutionMode.Single)
             {
-                UpdateSolutions();
+                AddSolutionAndNotify();
                 NotifySolutionFound();
-                noOfSolutions = 1;
-                UpdateProgress(noOfSolutions);
+
                 await Task.Delay(DelayInMilliseconds);
                 await Task.Yield();
-
                 return;
             }
-            if (colNo == BoardSize && solutionMode == SolutionMode.Unique)
+            if (colNo == BoardSize && (solutionMode == SolutionMode.Unique || solutionMode == SolutionMode.All))
             {
-                UpdateSolutions();
+                AddSolutionAndNotify();
                 NotifySolutionFound();
-                noOfSolutions += 1;
-                UpdateProgress(noOfSolutions);
-                NotifyProgressChanged();
-                colNo--;
+                ReportProgress(totalNoOfSolutions);
 
+                colNo--;
                 continue;
             }
 
@@ -214,32 +212,54 @@ public class SimulationOrchestrator : ISolver, IDisposable
                 await Task.Yield();
             }
 
-            // For both Unique and All, update progress at a reasonable interval
-            if (solutionMode != SolutionMode.Single && Solutions.Count > 0)
-            {
-                // Raise progress event every N solutions or after each solution for small boards
-                if (Solutions.Count % Math.Max(1, SolutionCountPerUpdate / 10) == 0)
-                    NotifyProgressChanged();
-            }
-
             colNo++;
         }
     }
 
-    private void UpdateProgress(int noOfSolutions)
+    private double _lastReportedProgress = -1;
+
+    // Consolidated progress reporting
+    private void ReportProgress(int totalNoOfSolutions)
     {
-        if (noOfSolutions > 0)
+        if (totalNoOfSolutions > 0)
         {
-            ProgressValue = Math.Clamp(Solutions.Count / (double)noOfSolutions, 0.0, 1.0);
-            Debug.WriteLine($"UpdateProgress: Solutions.Count={Solutions.Count}, noOfSolutions={noOfSolutions}, ProgressValue={ProgressValue}");
-            ProgressValueChanged?.Invoke(this, new ProgressValueChangedWithTokenEventArgs(
-                ProgressValue, _currentSimulationToken));
+            ProgressValue = Math.Clamp(Solutions.Count / (double)totalNoOfSolutions, 0.0, 1.0);
+            if (ProgressValue != _lastReportedProgress)
+            {
+                Debug.WriteLine($"Progress: {Solutions.Count}/{totalNoOfSolutions} = {ProgressValue}");
+                ProgressValueChanged?.Invoke(this, new ProgressValueChangedWithTokenEventArgs(
+                    ProgressValue, _currentSimulationToken));
+                _lastReportedProgress = ProgressValue;
+            }
         }
+    }
+
+    private void NotifySolutionFound()
+    {
+        if (DisplayMode == DisplayMode.Visualize)
+        {
+            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(QueenPositions));
+        }
+    }
+
+    // Renamed: UpdateSolutions -> AddSolutionAndNotify
+    private void AddSolutionAndNotify()
+    {
+        var updateDTO = new SolutionUpdateDTO
+        {
+            BoardSize = BoardSize,
+            SolutionMode = SolutionMode,
+            Solutions = Solutions,
+            QueenPositions = (int[])QueenPositions.Clone()
+        };
+        SolutionManager.UpdateSolutions(updateDTO);
+
+        _solutionsSinceLastProgressUpdate++;
     }
 
     private async Task FindAllSolutions(int colNo)
     {
-        await FindSingleOrUniqueSolutions(colNo, SolutionMode.Unique);
+        await SearchSolutions(colNo, SolutionMode.Unique);
 
         foreach (var solution in Solutions.ToList())
         {
@@ -253,16 +273,6 @@ public class SimulationOrchestrator : ISolver, IDisposable
 
             SolutionManager.UpdateSolutions(updateDTO);
             await Task.Yield();
-        }
-    }
-
-    private void NotifySolutionFound()
-    {
-        if (DisplayMode == DisplayMode.Visualize)
-        {
-            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(QueenPositions));
-            ProgressValueChanged?.Invoke(this, new ProgressValueChangedWithTokenEventArgs(
-                ProgressValue, _currentSimulationToken));
         }
     }
 
@@ -296,65 +306,6 @@ public class SimulationOrchestrator : ISolver, IDisposable
                 return false;
         }
         return true;
-    }
-
-    private void NotifyProgressChanged()
-    {
-        if (IsSolverCanceled)
-            return;
-
-        if (SolutionMode == SolutionMode.Single)
-            return;
-
-        double progress = 0;
-        int noOfSolutions = 0;
-
-        if (SolutionMode == SolutionMode.Unique &&
-            NQueenSolutionCounts.UniqueSolutions
-                .TryGetValue(BoardSize, out var uniqueSolutions) &&
-                uniqueSolutions > 0)
-        {
-            noOfSolutions = uniqueSolutions;
-            progress = Math.Clamp(Solutions.Count / (double)uniqueSolutions, 0.0, 1.0);
-        }
-        else if (SolutionMode == SolutionMode.All &&
-            NQueenSolutionCounts.AllSolutions
-                .TryGetValue(BoardSize, out var allSolutions) && allSolutions > 0)
-        {
-            noOfSolutions = allSolutions;
-            progress = Math.Clamp(Solutions.Count / (double)allSolutions, 0.0, 1.0);
-        }
-        else
-        {
-            Debug.WriteLine($"[NotifyProgressChanged] No valid solution count for BoardSize={BoardSize}, SolutionMode={SolutionMode}");
-            return;
-        }
-
-        ProgressValue = progress;
-        Debug.WriteLine($"[NotifyProgressChanged] BoardSize={BoardSize}, SolutionMode={SolutionMode}, Solutions.Count={Solutions.Count}, TotalSolutions={noOfSolutions}, ProgressValue={ProgressValue}");
-
-        ProgressValueChanged?.Invoke(this, new ProgressValueChangedWithTokenEventArgs(
-            ProgressValue, _currentSimulationToken));
-    }
-
-    private void UpdateSolutions()
-    {
-        var updateDTO = new SolutionUpdateDTO
-        {
-            BoardSize = BoardSize,
-            SolutionMode = SolutionMode,
-            Solutions = Solutions,
-            QueenPositions = (int[])QueenPositions.Clone()
-        };
-        SolutionManager.UpdateSolutions(updateDTO);
-
-        // Increment the counter and update progress if needed
-        _solutionsSinceLastProgressUpdate++;
-        if (_solutionsSinceLastProgressUpdate >= SolutionCountPerUpdate)
-        {
-            NotifyProgressChanged();
-            _solutionsSinceLastProgressUpdate = 0;
-        }
     }
     #endregion
 

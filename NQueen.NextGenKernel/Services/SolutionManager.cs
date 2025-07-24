@@ -28,7 +28,7 @@ public class SolutionManager : ISolutionManager
         // For SolutionMode.Single:
         if (solutionUpdateDTO.SolutionMode == SolutionMode.Single)
         {
-            solutionUpdateDTO.Solutions.Add(queenPositions);
+            solutionUpdateDTO.Solutions.Add((int[])queenPositions.Clone());
             SolutionsUpdated?.Invoke(solutionUpdateDTO);
             return;
         }
