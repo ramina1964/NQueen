@@ -134,7 +134,6 @@ public class SimulationOrchestrator : ISolver, IDisposable
         HalfBoardSize = GetHalfSize();
         QueenPositions = [.. Enumerable.Repeat(-1, BoardSize)];
         Solutions = new HashSet<int[]>(new IntArrayComparer());
-        _solutionsSinceLastProgressUpdate = 0;
     }
 
     private async Task<IEnumerable<Solution>> SolveNQueenProblem()
@@ -297,5 +296,4 @@ public class SimulationOrchestrator : ISolver, IDisposable
     private bool _disposed = false;
     private CancellationTokenSource _cancellationTokenSource;
     private Guid _currentSimulationToken = Guid.Empty;
-    private int _solutionsSinceLastProgressUpdate;
 }
