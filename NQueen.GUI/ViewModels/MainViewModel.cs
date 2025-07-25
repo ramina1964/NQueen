@@ -3,15 +3,7 @@
 public sealed partial class MainViewModel :
     ObservableObject, INotifyDataErrorInfo, IDisposable
 {
-    // --- Constructors ---
-    public MainViewModel(IDispatcher uiDispatcher)
-        : this(
-              new SimulationOrchestrator(
-                  new SolutionManager()),
-                  uiDispatcher,
-                  new SaveFileDialogService())
-    {}
-
+    // --- Constructor ---
     public MainViewModel(
         ISolver solver,
         IDispatcher dispatcher,
