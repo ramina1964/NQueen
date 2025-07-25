@@ -95,7 +95,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
 
     public int[] QueenPositions { get; set; }
 
-    public int SolutionPerUpdate =>
+    public int SolutionsPerUpdate =>
         SimulationSettings.SolutionCountPerUpdate(BoardSize);
     #endregion
 
@@ -240,8 +240,8 @@ public class SimulationOrchestrator : ISolver, IDisposable
         };
         SolutionManager.UpdateSolutions(updateDTO);
 
-        // Only report progress every SolutionsPerUpdate solutions
-        if (Solutions.Count % SolutionPerUpdate == 0)
+        // Report progress, oevery SolutionsPerUpdate solutions
+        if (Solutions.Count % SolutionsPerUpdate == 0)
             ReportProgress(NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode));
     }
 

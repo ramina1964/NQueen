@@ -61,7 +61,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnSelectedSolutionChanged(Solution value)
     {
-        if (value != null)
+        if (value != null && ChessboardVm != null)
             ChessboardVm.PlaceQueens(value.Positions);
     }
 

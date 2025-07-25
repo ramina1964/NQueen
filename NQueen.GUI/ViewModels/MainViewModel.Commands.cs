@@ -55,6 +55,10 @@ public sealed partial class MainViewModel
             if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) == false)
                 return;
 
+            // --- Reset the chessboard before starting simulation ---
+            var boardDimension = Math.Min(ChessboardVm.WindowWidth, ChessboardVm.WindowHeight);
+            ResetChessboard(boardDimension);
+
             ManageSimulationStatus(SimulationStatus.Started);
             UpdateUiState();
 

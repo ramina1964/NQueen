@@ -121,7 +121,7 @@ public partial class MainWindow : Window, IDisposable
         MainViewModel.ChessboardVm.WindowWidth = chessBoard.ActualWidth;
         MainViewModel.ChessboardVm.WindowHeight = chessBoard.ActualHeight;
 
-        MainViewModel.SetChessboard(maxChessBoardSize);
+        MainViewModel.ResetChessboard(maxChessBoardSize);
     }
 
 
