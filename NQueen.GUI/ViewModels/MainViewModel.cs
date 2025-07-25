@@ -36,8 +36,6 @@ public sealed partial class MainViewModel :
 
         Initialize();
         SubscribeToSimulationEvents();
-
-        ProgressValue = 0.5;
     }
 
     // --- Public Properties ---

@@ -61,7 +61,6 @@ public sealed partial class MainViewModel
             .ToList();
 
         ChessboardVm.PlaceQueens(positions);
-        UpdateProgress(message.Value, $"{Math.Round(message.Value * 100, 1)} %");
     }
 
     private void OnSolutionFound(SolutionFoundMessage message)
@@ -71,7 +70,6 @@ public sealed partial class MainViewModel
         UpdateSolutionCount();
         AddSolutionToObservable(newSolution);
         SelectedSolution = newSolution;
-        UpdateProgress(0, $"Solution {solutionId} found.");
     }
 
     private void UpdateProgress(double value, string label)

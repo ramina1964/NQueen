@@ -163,7 +163,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
     private async Task SolveNQueenForModeAsync(int colNo, SolutionMode solutionMode)
     {
         var totalNoOfSolutions =
-            NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, solutionMode);
+            NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode);
 
         while (colNo != -1)
         {
@@ -197,7 +197,10 @@ public class SimulationOrchestrator : ISolver, IDisposable
             }
 
             if (DisplayMode == DisplayMode.Visualize)
+            {
                 QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(QueenPositions));
+                ReportProgress(totalNoOfSolutions);
+            }
 
 
             colNo++;
@@ -207,16 +210,16 @@ public class SimulationOrchestrator : ISolver, IDisposable
         ReportProgress(totalNoOfSolutions);
     }
 
-    // private double _lastReportedProgress = -1;
-
     private void ReportProgress(int totalNoOfSolutions)
     {
         if (totalNoOfSolutions > 0)
         {
             ProgressValue = Math.Clamp(Solutions.Count / (double)totalNoOfSolutions, 0.0, 1.0);
-                Debug.WriteLine($"[ReportProgress] Progress: {Solutions.Count}/{totalNoOfSolutions} = {ProgressValue}");
-                Debug.WriteLine($"[ReportProgress] Raising ProgressValueChanged: ProgressValue={ProgressValue}, _currentSimulationToken={_currentSimulationToken}");
-                ProgressValueChanged?.Invoke(this, new ProgressValueChangedWithTokenEventArgs(
+            Debug.WriteLine($"[ReportProgress] Progress: {Solutions.Count}/{totalNoOfSolutions} = {ProgressValue}");
+            Debug.WriteLine($"[ReportProgress] Raising ProgressValueChanged: ProgressValue={ProgressValue}, _currentSimulationToken={_currentSimulationToken}");
+
+            Debug.WriteLine($"[AddSolutionAndNotify] BoardSize={BoardSize}, SolutionMode={SolutionMode}, ExpectedTotal={NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode)}, Solutions.Count={Solutions.Count}");
+            ProgressValueChanged?.Invoke(this, new ProgressValueChangedWithTokenEventArgs(
                     ProgressValue, _currentSimulationToken));
         }
     }
@@ -237,8 +240,6 @@ public class SimulationOrchestrator : ISolver, IDisposable
             QueenPositions = (int[])QueenPositions.Clone()
         };
         SolutionManager.UpdateSolutions(updateDTO);
-
-        _solutionsSinceLastProgressUpdate++;
 
         // Only report progress every SolutionsPerUpdate solutions
         if (Solutions.Count % SolutionPerUpdate == 0)
