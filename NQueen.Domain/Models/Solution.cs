@@ -75,9 +75,8 @@ public class Solution
 
     // Each pair is (column, row) 
     private static List<Position> MapQueenArrayToPositions(int[] queenPositions) =>
-        queenPositions
-        .Select((rowNo, columnNo) => new Position(rowNo, columnNo))
-        .ToList();
+        [.. queenPositions.Select((rowIndex, columnIndex) =>
+            new Position(rowIndex, columnIndex))];
 
     #endregion PrivateMembers
 }

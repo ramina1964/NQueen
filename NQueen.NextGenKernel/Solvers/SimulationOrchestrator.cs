@@ -159,12 +159,12 @@ public class SimulationOrchestrator : ISolver, IDisposable
         return Solutions.Select((s, index) => new Solution(s, index + 1));
     }
 
-    private async Task SolveNQueenForModeAsync(int colNo, SolutionMode solutionMode)
+    private async Task SolveNQueenForModeAsync(int colIndex, SolutionMode solutionMode)
     {
         var totalNoOfSolutions =
             NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode);
 
-        while (colNo != -1)
+        while (colIndex != -1)
         {
             if (IsSolverCanceled)
                 return;
@@ -172,26 +172,26 @@ public class SimulationOrchestrator : ISolver, IDisposable
             if (QueenPositions[0] == HalfBoardSize)
                 return;
 
-            if (colNo == BoardSize && solutionMode == SolutionMode.Single)
+            if (colIndex == BoardSize && solutionMode == SolutionMode.Single)
             {
                 AddSolutionAndNotify();
                 NotifySolutionFound();
                 return;
             }
-            if (colNo == BoardSize && (solutionMode == SolutionMode.Unique || solutionMode == SolutionMode.All))
+            if (colIndex == BoardSize && (solutionMode == SolutionMode.Unique || solutionMode == SolutionMode.All))
             {
                 AddSolutionAndNotify();
                 NotifySolutionFound();
 
-                colNo--;
+                colIndex--;
                 continue;
             }
 
-            QueenPositions[colNo] = await FindQueenPositionAsync(colNo);
+            QueenPositions[colIndex] = await FindQueenPositionAsync(colIndex);
 
-            if (QueenPositions[colNo] == -1)
+            if (QueenPositions[colIndex] == -1)
             {
-                colNo--;
+                colIndex--;
                 continue;
             }
 
@@ -202,7 +202,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
             }
 
 
-            colNo++;
+            colIndex++;
         }
 
         // Ensure final progress update after all solutions are processed
@@ -245,9 +245,9 @@ public class SimulationOrchestrator : ISolver, IDisposable
             ReportProgress(NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode));
     }
 
-    private async Task FindAllSolutions(int colNo)
+    private async Task FindAllSolutions(int colIndex)
     {
-        await SolveNQueenForModeAsync(colNo, SolutionMode.Unique);
+        await SolveNQueenForModeAsync(colIndex, SolutionMode.Unique);
 
         foreach (var solution in Solutions.ToList())
         {
@@ -263,12 +263,12 @@ public class SimulationOrchestrator : ISolver, IDisposable
         }
     }
 
-    private async Task<int> FindQueenPositionAsync(int colNo)
+    private async Task<int> FindQueenPositionAsync(int colIndex)
     {
-        colNo = Math.Min(colNo, BoardSize - 1);
-        for (var pos = QueenPositions[colNo] + 1; pos < BoardSize; pos++)
+        colIndex = Math.Min(colIndex, BoardSize - 1);
+        for (var pos = QueenPositions[colIndex] + 1; pos < BoardSize; pos++)
         {
-            if (IsValidPosition(colNo, pos))
+            if (IsValidPosition(colIndex, pos))
             {
                 if (DisplayMode == DisplayMode.Visualize && DelayInMilliseconds > 0)
                     await Task.Delay(DelayInMilliseconds);
@@ -280,12 +280,12 @@ public class SimulationOrchestrator : ISolver, IDisposable
         return -1;
     }
 
-    private bool IsValidPosition(int colNo, int pos)
+    private bool IsValidPosition(int colIndex, int rowIndex)
     {
-        for (var j = 0; j < colNo; j++)
+        for (var j = 0; j < colIndex; j++)
         {
-            var lhs = Math.Abs(pos - QueenPositions[j]);
-            var rhs = Math.Abs(colNo - j);
+            var lhs = Math.Abs(rowIndex - QueenPositions[j]);
+            var rhs = Math.Abs(colIndex - j);
             if (lhs == 0 || lhs == rhs)
                 return false;
         }

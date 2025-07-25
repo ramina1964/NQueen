@@ -6,13 +6,13 @@ public class SolverEngine(
     Action<int[]> onSolutionFound)
 {
     private async Task FindSingleOrUniqueSolutions(
-        int colNo, SolutionMode solutionMode, int delayInMs, DisplayMode displayMode)
+        int colIndex, SolutionMode solutionMode, int delayInMs, DisplayMode displayMode)
     {
         var boardSize = _board.BoardSize;
         var halfBoardSize = _board.HalfBoardSize;
         var queenPositions = _board.QueenPositions;
 
-        while (colNo != -1)
+        while (colIndex != -1)
         {
             if (_cancellation.IsCanceled)
                 return;
@@ -20,7 +20,7 @@ public class SolverEngine(
             if (queenPositions[0] == halfBoardSize)
                 return;
 
-            if (colNo == boardSize && solutionMode == SolutionMode.Single)
+            if (colIndex == boardSize && solutionMode == SolutionMode.Single)
             {
                 _solutions.Add((int[])queenPositions.Clone());
                 _onSolutionFound?.Invoke(queenPositions);
@@ -29,19 +29,19 @@ public class SolverEngine(
 
                 return;
             }
-            else if (colNo == boardSize && solutionMode == SolutionMode.Unique)
+            else if (colIndex == boardSize && solutionMode == SolutionMode.Unique)
             {
                 _solutions.Add((int[])queenPositions.Clone());
                 _onSolutionFound?.Invoke(queenPositions);
-                colNo--;
+                colIndex--;
                 continue;
             }
 
-            queenPositions[colNo] = await FindQueenPositionAsync(colNo, delayInMs, displayMode);
+            queenPositions[colIndex] = await FindQueenPositionAsync(colIndex, delayInMs, displayMode);
 
-            if (queenPositions[colNo] == -1)
+            if (queenPositions[colIndex] == -1)
             {
-                colNo--;
+                colIndex--;
                 continue;
             }
 
@@ -52,22 +52,22 @@ public class SolverEngine(
                     await Task.Delay(delayInMs);
             }
 
-            colNo++;
+            colIndex++;
         }
     }
 
-    private async Task<int> FindQueenPositionAsync(int colNo, int delayInMs, DisplayMode displayMode)
+    private async Task<int> FindQueenPositionAsync(int colIndex, int delayInMs, DisplayMode displayMode)
     {
         var boardSize = _board.BoardSize;
         var queenPositions = _board.QueenPositions;
-        for (var pos = queenPositions[colNo] + 1; pos < boardSize; pos++)
+        for (var rowIndex = queenPositions[colIndex] + 1; rowIndex < boardSize; rowIndex++)
         {
-            if (_board.IsValidPosition(colNo, pos))
+            if (_board.IsValidPosition(colIndex, rowIndex))
             {
                 if (displayMode == DisplayMode.Visualize && delayInMs > 0)
                     await Task.Delay(delayInMs);
 
-                return pos;
+                return rowIndex;
             }
         }
 

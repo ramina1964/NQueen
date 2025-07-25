@@ -1,8 +1,8 @@
 ﻿namespace NQueen.Domain.Models;
 
-public class Position(int rowNo, int columnNo)
+public class Position(int rowIndex, int colIndex)
 {
-    public int RowNo { get; set; } = rowNo;
+    public int RowNo { get; set; } = rowIndex;
 
-    public int ColumnNo { get; set; } = columnNo;
+    public int ColumnNo { get; set; } = colIndex;
 }

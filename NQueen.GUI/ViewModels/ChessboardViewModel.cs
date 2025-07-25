@@ -19,22 +19,22 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
 
         foreach (var pos in positions)
         {
-            int rowNo = pos.RowNo;
-            int colNo = pos.ColumnNo;
+            int rowIndex = pos.RowNo;
+            int colIndex = pos.ColumnNo;
 
             // Todo: Fix the issue of invalid positions and then remove the following defensive code.
-            if (rowNo < 0 || colNo < 0)
+            if (rowIndex < 0 || colIndex < 0)
                 continue;
 
             try
             {
-                var square = Squares.First(sq => sq.Position.RowNo == rowNo &&
-                                                 sq.Position.ColumnNo == colNo);
+                var square = Squares.First(sq => sq.Position.RowNo == rowIndex &&
+                                                 sq.Position.ColumnNo == colIndex);
                 square.ImagePath = QueenImagePath;
             }
             catch (InvalidOperationException ex)
             {
-                Debug.WriteLine($"Error in PlaceQueens: No matching square found for position ({rowNo}, {colNo}). Exception: {ex.Message}");
+                Debug.WriteLine($"Error in PlaceQueens: No matching square found for position ({rowIndex}, {colIndex}). Exception: {ex.Message}");
             }
         }
     }
