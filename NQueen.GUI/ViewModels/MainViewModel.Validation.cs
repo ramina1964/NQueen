@@ -121,7 +121,8 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
     {
         ObservableSolutions.Clear();
         SelectedSolution = new([], null);
-        ProgressValue = 0;
+        ProgressValue = 0.0;
+        ProgressLabel = "0%";
         NoOfSolutions = "0";
         ElapsedTimeInSec = $"{0,0:N1}";
         MemoryUsage = "0";
