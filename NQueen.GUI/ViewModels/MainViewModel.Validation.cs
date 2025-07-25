@@ -127,5 +127,9 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         MemoryUsage = "0";
         IsOutputReady = false;
         IsSimulating = false;
+
+        // Reset the chessboard as part of simulation state reset
+        var boardDimension = Math.Min(ChessboardVm.WindowWidth, ChessboardVm.WindowHeight);
+        ResetChessboard(boardDimension);
     }
 }
