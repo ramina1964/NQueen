@@ -14,5 +14,5 @@ public static class SimulationSettings
         ? 1_000
         : boardSize <= BoardSettings.RelativeLargeSizeForUniqueMode
         ? 100_000
-        : 1_000_000;
+        : 500_000;
 }

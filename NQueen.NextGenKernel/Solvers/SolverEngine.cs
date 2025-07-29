@@ -58,6 +58,7 @@ public class SolverEngine : ISolver, IDisposable
     public event EventHandler<ProgressValueChangedWithTokenEventArgs>
         ProgressValueChanged = delegate { };
 
+    private Guid _currentSimulationToken = Guid.Empty;
     public void SetSimulationToken(Guid token) => _currentSimulationToken = token;
 
     public async Task<SimulationResults> GetResultsForBoardAsync(
@@ -283,7 +284,6 @@ public class SolverEngine : ISolver, IDisposable
 
     private readonly ISolutionManager _solutionManager;
     private CancellationTokenSource _cancellationTokenSource = new();
-    private Guid _currentSimulationToken = Guid.Empty;
     private bool _disposed = false;
     private readonly Func<int, BoardState> _boardStateFactory;
     private BoardState _board = null!;

@@ -17,4 +17,6 @@ public interface ISolver
     event EventHandler<QueenPlacedEventArgs> QueenPlaced;
     event EventHandler<SolutionFoundEventArgs> SolutionFound;
     event EventHandler<ProgressValueChangedWithTokenEventArgs> ProgressValueChanged;
+
+    void SetSimulationToken(Guid token);
 }

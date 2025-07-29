@@ -45,10 +45,7 @@ public sealed partial class MainViewModel
 
         // Generate a new token for this simulation run
         _currentSimulationToken = Guid.NewGuid();
-
-        // Synchronize the token with the orchestrator
-        if (_solver is SimulationOrchestrator orchestrator)
-            orchestrator.SetSimulationToken(_currentSimulationToken);
+        _solver.SetSimulationToken(_currentSimulationToken);
 
         try
         {
