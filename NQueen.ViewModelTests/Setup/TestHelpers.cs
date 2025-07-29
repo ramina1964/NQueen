@@ -48,7 +48,8 @@ public static class TestHelpers
         SolutionMode solutionMode,
         MockSaveFileDialogService saveFileDialogService)
     {
-        var solver = new SimulationOrchestrator(new SolutionManager());
+        var serviceProvider = CreateServiceProvider();
+        var solver = serviceProvider.GetRequiredService<ISolver>();
         var mainVm = new MainViewModel(solver, new TestDispatcher(), saveFileDialogService)
         {
             BoardSizeText = boardSize.ToString(),

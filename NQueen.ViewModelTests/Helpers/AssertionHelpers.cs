@@ -31,8 +31,8 @@ public static class AssertionHelpers
             var idx = line.IndexOf(':');
             if (idx > 0)
             {
-                var key = line.Substring(0, idx).Trim();
-                var value = line.Substring(idx + 1).Trim();
+                var key = line[..idx].Trim();
+                var value = line[(idx + 1)..].Trim();
                 dict[key] = value;
             }
         }

@@ -3,23 +3,87 @@
 public class SimulationOrchestrator : ISolver, IDisposable
 {
     public SimulationOrchestrator(
-        ISolutionManager solutionManager,
-        int boardSize = BoardSettings.DefaultBoardSize)
+        SolverEngine solverEngine)
     {
-        Debug.WriteLine($"[Orchestrator] Created: {GetHashCode()}");
+        _solverEngine = solverEngine ?? throw new ArgumentNullException(nameof(solverEngine));
 
-        Initialize(boardSize);
-        SolutionManager = solutionManager
-            ?? throw new ArgumentNullException(nameof(solutionManager));
-
-        QueenPositions = [.. Enumerable.Repeat(-1, boardSize)];
-        _cancellationTokenSource = new CancellationTokenSource();
+        // Relay events from SolverEngine
+        _solverEngine.QueenPlaced += (s, e) => QueenPlaced?.Invoke(this, e);
+        _solverEngine.SolutionFound += (s, e) => SolutionFound?.Invoke(this, e);
+        _solverEngine.ProgressValueChanged += (s, e) => ProgressValueChanged?.Invoke(this, e);
     }
 
-    public void SetSimulationToken(Guid token) =>
-        _currentSimulationToken = token;
+    #region ISolver Implementation
+
+    public bool IsSolverCanceled
+    {
+        get => _solverEngine.IsSolverCanceled;
+        set => _solverEngine.IsSolverCanceled = value;
+    }
+
+    public int DelayInMilliseconds
+    {
+        get => _solverEngine.DelayInMilliseconds;
+        set => _solverEngine.DelayInMilliseconds = value;
+    }
+
+    public double ProgressValue
+    {
+        get => _solverEngine.ProgressValue;
+        set => _solverEngine.ProgressValue = value;
+    }
+
+    public event EventHandler<QueenPlacedEventArgs> QueenPlaced = delegate { };
+
+    public event EventHandler<SolutionFoundEventArgs>
+        SolutionFound = delegate { };
+
+    public event EventHandler<ProgressValueChangedWithTokenEventArgs>
+        ProgressValueChanged = delegate { };
+
+    public async Task<SimulationResults> GetResultsForBoardAsync(
+        int boardSize,
+        SolutionMode solutionMode,
+        DisplayMode displayMode = DisplayMode.Hide)
+        => await _solverEngine.GetResultsForBoardAsync(boardSize, solutionMode, displayMode);
+
+    #endregion
+
+    #region Orchestrator API
+
+    public void SetSimulationToken(Guid token) => _solverEngine.SetSimulationToken(token);
+
+    public int BoardSize => _solverEngine.BoardSize;
+
+    public int[] QueenPositions => _solverEngine.QueenPositions;
+
+    public int NoOfSolutions => _solverEngine.NoOfSolutions;
+
+    public int HalfBoardSize => _solverEngine.HalfBoardSize;
+
+    public int SolutionsPerUpdate => _solverEngine.SolutionsPerUpdate;
+
+    public SolutionMode SolutionMode
+    {
+        get => _solverEngine.SolutionMode;
+        set => _solverEngine.SolutionMode = value;
+    }
+    public DisplayMode DisplayMode
+    {
+        get => _solverEngine.DisplayMode;
+        set => _solverEngine.DisplayMode = value;
+    }
+    public HashSet<int[]> Solutions => _solverEngine.Solutions;
+
+    public int GetHalfSize() => _solverEngine.GetHalfSize();
+
+    public async Task<SimulationResults> GetResultsForCurrentConfigurationAsync()
+        => await _solverEngine.GetResultsForCurrentConfigurationAsync();
+
+    #endregion
 
     #region IDisposable Implementation
+
     public void Dispose()
     {
         Dispose(true);
@@ -34,266 +98,16 @@ public class SimulationOrchestrator : ISolver, IDisposable
         _disposed = true;
         if (disposing)
         {
-            CleanupResources();
-            Solutions?.Clear();
+            _solverEngine.Dispose();
         }
     }
 
-    private void CleanupResources()
-    {
-        QueenPlaced = null!;
-        SolutionFound = null!;
-        ProgressValueChanged = null!;
-        Solutions?.Clear();
-        _cancellationTokenSource?.Dispose();
-    }
     #endregion
 
-    #region ISolver
-    public bool IsSolverCanceled
-    {
-        get => _cancellationTokenSource?.IsCancellationRequested ?? false;
-        set
-        {
-            if (value)
-                _cancellationTokenSource?.Cancel();
-            else
-                _cancellationTokenSource = new CancellationTokenSource();
-        }
-    }
-
-    public async Task<SimulationResults> GetResultsForBoardAsync(
-        int boardSize,
-        SolutionMode solutionMode,
-        DisplayMode displayMode = DisplayMode.Hide)
-    {
-        Initialize(boardSize);
-        SolutionMode = solutionMode;
-        DisplayMode = displayMode;
-
-        return await Task.Run(GetResultsForCurrentConfigurationAsync);
-    }
-
-    public int DelayInMilliseconds { get; set; }
-
-    public double ProgressValue { get; set; }
-
-    public event EventHandler<QueenPlacedEventArgs> QueenPlaced = delegate { };
-    public event EventHandler<SolutionFoundEventArgs> SolutionFound = delegate { };
-    public event EventHandler<ProgressValueChangedWithTokenEventArgs>
-        ProgressValueChanged = delegate { };
-    #endregion
-
-    #region PublicProperties
-    public ISolutionManager SolutionManager { get; }
-
-    public int BoardSize { get; set; }
-
-    public int NoOfSolutions => Solutions.Count;
-
-    public int HalfBoardSize { get; set; }
-
-    public int[] QueenPositions { get; set; }
-
-    public int SolutionsPerUpdate =>
-        SimulationSettings.SolutionCountPerUpdate(BoardSize);
-    #endregion
-
-    #region PublicMethods
-    public int GetHalfSize() =>
-        BoardSize % 2 == 0 ? BoardSize / 2 : BoardSize / 2 + 1;
-
-    public async Task<SimulationResults> GetResultsForCurrentConfigurationAsync()
-    {
-        var stopwatch = Stopwatch.StartNew();
-        var solutions = await SolveNQueenProblem();
-        stopwatch.Stop();
-        var elapsedTimeInSec = Math.Round(stopwatch.Elapsed.TotalSeconds, 1);
-
-        return new SimulationResults(solutions)
-        {
-            BoardSize = BoardSize,
-            Solutions = solutions,
-            NoOfSolutions = solutions.Count(),
-            ElapsedTimeInSec = elapsedTimeInSec
-        };
-    }
-
-    public SolutionMode SolutionMode { get; set; }
-
-    public DisplayMode DisplayMode { get; set; }
-
-    public HashSet<int[]> Solutions { get; set; } = [];
-    #endregion
-
-    #region PrivateMethods
-    private void Initialize(int boardSize = BoardSettings.DefaultBoardSize)
-    {
-        BoardSize = boardSize;
-        _cancellationTokenSource = new CancellationTokenSource();
-        HalfBoardSize = GetHalfSize();
-        QueenPositions = [.. Enumerable.Repeat(-1, BoardSize)];
-        Solutions = new HashSet<int[]>(new IntArrayComparer());
-    }
-
-    private async Task<IEnumerable<Solution>> SolveNQueenProblem()
-    {
-        switch (SolutionMode)
-        {
-            case SolutionMode.Single:
-                await SolveNQueenForModeAsync(0, SolutionMode.Single);
-                break;
-
-            case SolutionMode.Unique:
-                await SolveNQueenForModeAsync(0, SolutionMode.Unique);
-                break;
-
-            case SolutionMode.All:
-                await FindAllSolutions(0);
-                break;
-
-            default:
-                throw new NotImplementedException();
-        }
-
-        return Solutions.Select((s, index) => new Solution(s, index + 1));
-    }
-
-    private async Task SolveNQueenForModeAsync(int colIndex, SolutionMode solutionMode)
-    {
-        var totalNoOfSolutions =
-            NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode);
-
-        while (colIndex != -1)
-        {
-            if (IsSolverCanceled)
-                return;
-
-            if (QueenPositions[0] == HalfBoardSize)
-                return;
-
-            if (colIndex == BoardSize && solutionMode == SolutionMode.Single)
-            {
-                AddSolutionAndNotify();
-                NotifySolutionFound();
-                return;
-            }
-            if (colIndex == BoardSize && (solutionMode == SolutionMode.Unique || solutionMode == SolutionMode.All))
-            {
-                AddSolutionAndNotify();
-                NotifySolutionFound();
-
-                colIndex--;
-                continue;
-            }
-
-            QueenPositions[colIndex] = await FindQueenPositionAsync(colIndex);
-
-            if (QueenPositions[colIndex] == -1)
-            {
-                colIndex--;
-                continue;
-            }
-
-            if (DisplayMode == DisplayMode.Visualize)
-            {
-                QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(QueenPositions));
-                ReportProgress(totalNoOfSolutions);
-            }
-
-
-            colIndex++;
-        }
-
-        // Ensure final progress update after all solutions are processed
-        ReportProgress(totalNoOfSolutions);
-    }
-
-    private void ReportProgress(int totalNoOfSolutions)
-    {
-        if (totalNoOfSolutions > 0)
-        {
-            ProgressValue = Math.Clamp(Solutions.Count / (double)totalNoOfSolutions, 0.0, 1.0);
-            Debug.WriteLine($"[ReportProgress] Progress: {Solutions.Count}/{totalNoOfSolutions} = {ProgressValue}");
-            Debug.WriteLine($"[ReportProgress] Raising ProgressValueChanged: ProgressValue={ProgressValue}, _currentSimulationToken={_currentSimulationToken}");
-
-            Debug.WriteLine($"[AddSolutionAndNotify] BoardSize={BoardSize}, SolutionMode={SolutionMode}, ExpectedTotal={NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode)}, Solutions.Count={Solutions.Count}");
-            ProgressValueChanged?.Invoke(this, new ProgressValueChangedWithTokenEventArgs(
-                    ProgressValue, _currentSimulationToken));
-        }
-    }
-
-    private void NotifySolutionFound()
-    {
-        if (DisplayMode == DisplayMode.Visualize)
-            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(QueenPositions));
-    }
-
-    private void AddSolutionAndNotify()
-    {
-        var updateDTO = new SolutionUpdateDTO
-        {
-            BoardSize = BoardSize,
-            SolutionMode = SolutionMode,
-            Solutions = Solutions,
-            QueenPositions = (int[])QueenPositions.Clone()
-        };
-        SolutionManager.UpdateSolutions(updateDTO);
-
-        // Report progress, oevery SolutionsPerUpdate solutions
-        if (Solutions.Count % SolutionsPerUpdate == 0)
-            ReportProgress(NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode));
-    }
-
-    private async Task FindAllSolutions(int colIndex)
-    {
-        await SolveNQueenForModeAsync(colIndex, SolutionMode.Unique);
-
-        foreach (var solution in Solutions.ToList())
-        {
-            var updateDTO = new SolutionUpdateDTO
-            {
-                BoardSize = BoardSize,
-                SolutionMode = SolutionMode,
-                Solutions = Solutions,
-                QueenPositions = solution
-            };
-
-            SolutionManager.UpdateSolutions(updateDTO);
-        }
-    }
-
-    private async Task<int> FindQueenPositionAsync(int colIndex)
-    {
-        colIndex = Math.Min(colIndex, BoardSize - 1);
-        for (var pos = QueenPositions[colIndex] + 1; pos < BoardSize; pos++)
-        {
-            if (IsValidPosition(colIndex, pos))
-            {
-                if (DisplayMode == DisplayMode.Visualize && DelayInMilliseconds > 0)
-                    await Task.Delay(DelayInMilliseconds);
-
-                return pos;
-            }
-        }
-
-        return -1;
-    }
-
-    private bool IsValidPosition(int colIndex, int rowIndex)
-    {
-        for (var j = 0; j < colIndex; j++)
-        {
-            var lhs = Math.Abs(rowIndex - QueenPositions[j]);
-            var rhs = Math.Abs(colIndex - j);
-            if (lhs == 0 || lhs == rhs)
-                return false;
-        }
-        return true;
-    }
-    #endregion
+    public void RaiseProgressValueChangedForTest(double progress, Guid token) =>
+        ProgressValueChanged?.Invoke(this,
+            new ProgressValueChangedWithTokenEventArgs(progress, token));
 
     private bool _disposed = false;
-    private CancellationTokenSource _cancellationTokenSource;
-    private Guid _currentSimulationToken = Guid.Empty;
+    private readonly SolverEngine _solverEngine;
 }

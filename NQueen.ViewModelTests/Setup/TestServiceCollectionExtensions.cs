@@ -10,8 +10,12 @@ public static class TestServiceCollectionExtensions
         services.AddTransient<IDispatcher, TestDispatcher>();
         services.AddTransient<ISaveFileDialogService, MockSaveFileDialogService>();
 
-        // Shared NQueen-Related Services
-        services.AddNextGenNQueenServices();
+        // Register BoardState factory for dynamic board sizes
+        services.AddTransient<Func<int, BoardState>>(sp => size => new BoardState(size));
+        services.AddTransient<ISolutionManager, SolutionManager>();
+        services.AddTransient<SolverEngine>();
+        services.AddTransient<ISolver>(sp => sp.GetRequiredService<SolverEngine>());
+        services.AddTransient<SimulationOrchestrator>();
 
         // Register shared ViewModels
         services.AddNQueenViewModels();

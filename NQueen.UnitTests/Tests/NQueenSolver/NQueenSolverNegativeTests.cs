@@ -27,7 +27,11 @@ public class NQueenSolverNegativeTests : IDisposable
         Assert.Empty(actualSolutions.Solutions);
     }
 
-    public void Dispose() => _serviceProvider.Dispose();
+    public void Dispose()
+    {
+        _serviceProvider.Dispose();
+        GC.SuppressFinalize(this);
+    }
 
     private readonly ISolver _solver;
     private readonly ServiceProvider _serviceProvider;

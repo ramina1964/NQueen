@@ -77,8 +77,11 @@ public class NQueenSolverPositiveTests : IDisposable
         );
     }
 
-    public void Dispose() =>
+    public void Dispose()
+    {
         _serviceProvider.Dispose();
+        GC.SuppressFinalize(this);
+    }
     
     private readonly ISolver _solver;
     private readonly ServiceProvider _serviceProvider;

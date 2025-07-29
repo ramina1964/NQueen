@@ -4,13 +4,10 @@ public static class ServiceRegistration
 {
     public static void AddNextGenNQueenServices(this IServiceCollection services)
     {
-        // Register the main solver
-        services.AddSingleton<ISolver, SimulationOrchestrator>();
+        services.AddTransient<Func<int, BoardState>>(sp => size => new BoardState(size));
         services.AddTransient<ISolutionManager, SolutionManager>();
-
-        // Register supporting classes if you want to inject them directly elsewhere
-        services.AddTransient<BoardState>();
-        services.AddTransient<SolverCancellation>();
         services.AddTransient<SolverEngine>();
+        services.AddTransient<ISolver>(sp => sp.GetRequiredService<SolverEngine>());
+        services.AddTransient<SimulationOrchestrator>();
     }
 }
