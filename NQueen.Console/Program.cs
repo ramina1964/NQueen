@@ -18,13 +18,15 @@ public class Program
         var services = new ServiceCollection();
 
         // Specific dependencies for the Console App
+        services.AddTransient<Func<int, BoardState>>(sp => size => new BoardState(size));
         services.AddTransient<DispatchCommands>();
         services.AddTransient<IConsoleUtils, ConsoleUtils>();
         services.AddTransient<ICommandProcessor, CommandProcessor> ();
+        services.AddTransient<ISolutionManager, SolutionManager>();
         services.AddSingleton<App>();
 
         // Register shared services
-        services.AddNQueenServices();
+        services.AddSingleton<ISolverBackEnd, SolverEngine>();
 
         return services.BuildServiceProvider();
     }

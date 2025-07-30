@@ -7,7 +7,7 @@ public class SolverTests
     public async Task Solver_ShouldReturnValidResults_WhenBoardSizeIsValid()
     {
         // Arrange
-        var solver = new Mock<ISolver>();
+        var solver = new Mock<ISolverBackEnd>();
         solver.Setup(s => s.GetResultsForBoardAsync(
                 It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
             .ReturnsAsync(new SimulationResults([new Solution([1, 3, 0, 2])]));
@@ -24,7 +24,7 @@ public class SolverTests
     public async Task Solver_ShouldHandleNoSolutions()
     {
         // Arrange
-        var solver = new Mock<ISolver>();
+        var solver = new Mock<ISolverBackEnd>();
         solver.Setup(s => s.GetResultsForBoardAsync(    
                 It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
             .ReturnsAsync(new SimulationResults([]));

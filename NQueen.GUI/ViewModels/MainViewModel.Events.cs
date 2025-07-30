@@ -9,6 +9,9 @@ public sealed partial class MainViewModel
         // First, unsubscribe from any existing events to avoid duplicates
         UnsubscribeFromSimulationEvents();
 
+        if (_solver == null)
+            return;
+
         _solver.QueenPlaced += OnQueenPlacedEvent;
         _solver.SolutionFound += OnSolutionFoundEvent;
         _solver.ProgressValueChanged += OnProgressValueChangedEvent;

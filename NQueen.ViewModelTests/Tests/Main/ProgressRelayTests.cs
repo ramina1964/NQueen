@@ -31,7 +31,7 @@ public class ProgressRelayTests
         var serviceProvider = TestHelpers.CreateServiceProvider();
 
         // Get the orchestrator as ISolver and cast to SimulationOrchestrator if needed
-        var orchestrator = serviceProvider.GetRequiredService<ISolver>() as SimulationOrchestrator;
+        var orchestrator = serviceProvider.GetRequiredService<ISolverBackEnd>() as SimulationOrchestrator;
         var viewModel = serviceProvider.GetRequiredService<MainViewModel>();
 
         double testProgress = 0.66;

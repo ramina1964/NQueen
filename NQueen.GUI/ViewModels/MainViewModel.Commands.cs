@@ -43,6 +43,14 @@ public sealed partial class MainViewModel
     {
         Debug.WriteLine($"[SimulateAsync] Using solver instance: {_solver?.GetHashCode()}");
 
+        // Check for null before using _solver
+        if (_solver == null)
+        {
+            Debug.WriteLine("[SimulateAsync] Solver instance is null.");
+            MessageBox.Show("Solver is not initialized.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
         // Generate a new token for this simulation run
         _currentSimulationToken = Guid.NewGuid();
         _solver.SetSimulationToken(_currentSimulationToken);
@@ -57,13 +65,6 @@ public sealed partial class MainViewModel
 
             ManageSimulationStatus(SimulationStatus.Started);
             UpdateUiState();
-
-            if (_solver == null)
-            {
-                Debug.WriteLine("[SimulateAsync] Solver instance is null.");
-                MessageBox.Show("Solver is not initialized.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
 
             SimulationResults = await _solver.GetResultsForBoardAsync(boardSize, SolutionMode, DisplayMode);
 
