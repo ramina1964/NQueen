@@ -1,18 +1,9 @@
 ﻿namespace NQueen.NextGenKernel.Solvers;
 
-public class SolverEngine : ISolver, IDisposable
+public class SolverEngine(
+    ISolutionManager solutionManager,
+    Func<int, BoardState> boardStateFactory) : ISolver, IDisposable
 {
-    public SolverEngine(
-        Func<int, BoardState> boardStateFactory,
-        ISolutionManager solutionManager)
-    {
-        _boardStateFactory = boardStateFactory ??
-            throw new ArgumentNullException(nameof(boardStateFactory));
-
-        _solutionManager = solutionManager ??
-            throw new ArgumentNullException(nameof(solutionManager));
-    }
-
     #region ISolver Implementation
 
     public bool IsSolverCanceled
@@ -70,13 +61,17 @@ public class SolverEngine : ISolver, IDisposable
         SolutionMode = solutionMode;
         DisplayMode = displayMode;
 
-        return await Task.Run(GetResultsForCurrentConfigurationAsync);
+        // Pass the cancellation token to the async workflow
+        return await Task.Run(() => GetResultsForCurrentConfigurationAsync(_cancellationTokenSource.Token), _cancellationTokenSource.Token);
     }
 
     public async Task<SimulationResults> GetResultsForCurrentConfigurationAsync()
+        => await GetResultsForCurrentConfigurationAsync(_cancellationTokenSource.Token);
+
+    public async Task<SimulationResults> GetResultsForCurrentConfigurationAsync(CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
-        var solutions = await SolveNQueenProblem();
+        var solutions = await SolveNQueenProblem(cancellationToken);
         stopwatch.Stop();
         var elapsedTimeInSec = Math.Round(stopwatch.Elapsed.TotalSeconds, 1);
 
@@ -108,18 +103,18 @@ public class SolverEngine : ISolver, IDisposable
         _cancellationTokenSource = new CancellationTokenSource();
     }
 
-    private async Task<IEnumerable<Solution>> SolveNQueenProblem()
+    private async Task<IEnumerable<Solution>> SolveNQueenProblem(CancellationToken cancellationToken)
     {
         switch (SolutionMode)
         {
             case SolutionMode.Single:
-                await SolveNQueenForModeAsync(0, SolutionMode.Single);
+                await SolveNQueenForModeAsync(0, SolutionMode.Single, cancellationToken);
                 break;
             case SolutionMode.Unique:
-                await SolveNQueenForModeAsync(0, SolutionMode.Unique);
+                await SolveNQueenForModeAsync(0, SolutionMode.Unique, cancellationToken);
                 break;
             case SolutionMode.All:
-                await FindAllSolutions(0);
+                await FindAllSolutions(0, cancellationToken);
                 break;
             default:
                 throw new NotImplementedException();
@@ -128,14 +123,17 @@ public class SolverEngine : ISolver, IDisposable
         return Solutions.Select((s, index) => new Solution(s, index + 1));
     }
 
-    private async Task SolveNQueenForModeAsync(int colIndex, SolutionMode solutionMode)
+    private async Task<IEnumerable<Solution>> SolveNQueenProblem()
+        => await SolveNQueenProblem(_cancellationTokenSource.Token);
+
+    private async Task SolveNQueenForModeAsync(int colIndex, SolutionMode solutionMode, CancellationToken cancellationToken)
     {
         var totalNoOfSolutions =
             NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode);
 
         while (colIndex != -1)
         {
-            if (IsSolverCanceled)
+            if (cancellationToken.IsCancellationRequested)
                 return;
 
             if (QueenPositions[0] == HalfBoardSize)
@@ -156,7 +154,7 @@ public class SolverEngine : ISolver, IDisposable
                 continue;
             }
 
-            QueenPositions[colIndex] = await FindQueenPositionAsync(colIndex);
+            QueenPositions[colIndex] = await FindQueenPositionAsync(colIndex, cancellationToken);
 
             if (QueenPositions[colIndex] == -1)
             {
@@ -176,6 +174,9 @@ public class SolverEngine : ISolver, IDisposable
         // Ensure final progress update after all solutions are processed
         ReportProgress(totalNoOfSolutions);
     }
+
+    private async Task SolveNQueenForModeAsync(int colIndex, SolutionMode solutionMode)
+        => await SolveNQueenForModeAsync(colIndex, solutionMode, _cancellationTokenSource.Token);
 
     private void ReportProgress(int totalNoOfSolutions)
     {
@@ -213,12 +214,15 @@ public class SolverEngine : ISolver, IDisposable
             ReportProgress(NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode));
     }
 
-    private async Task FindAllSolutions(int colIndex)
+    private async Task FindAllSolutions(int colIndex, CancellationToken cancellationToken)
     {
-        await SolveNQueenForModeAsync(colIndex, SolutionMode.Unique);
+        await SolveNQueenForModeAsync(colIndex, SolutionMode.Unique, cancellationToken);
 
         foreach (var solution in Solutions.ToList())
         {
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
             var updateDTO = new SolutionUpdateDTO
             {
                 BoardSize = BoardSize,
@@ -231,15 +235,21 @@ public class SolverEngine : ISolver, IDisposable
         }
     }
 
-    private async Task<int> FindQueenPositionAsync(int colIndex)
+    private async Task FindAllSolutions(int colIndex)
+        => await FindAllSolutions(colIndex, _cancellationTokenSource.Token);
+
+    private async Task<int> FindQueenPositionAsync(int colIndex, CancellationToken cancellationToken)
     {
         colIndex = Math.Min(colIndex, BoardSize - 1);
         for (var pos = QueenPositions[colIndex] + 1; pos < BoardSize; pos++)
         {
+            if (cancellationToken.IsCancellationRequested)
+                return -1;
+
             if (_board.IsValidPosition(colIndex, pos))
             {
                 if (DisplayMode == DisplayMode.Visualize && DelayInMilliseconds > 0)
-                    await Task.Delay(DelayInMilliseconds);
+                    await Task.Delay(DelayInMilliseconds, cancellationToken);
 
                 return pos;
             }
@@ -247,6 +257,9 @@ public class SolverEngine : ISolver, IDisposable
 
         return -1;
     }
+
+    private async Task<int> FindQueenPositionAsync(int colIndex)
+        => await FindQueenPositionAsync(colIndex, _cancellationTokenSource.Token);
 
     #endregion
 
@@ -282,9 +295,15 @@ public class SolverEngine : ISolver, IDisposable
 
     #endregion
 
-    private readonly ISolutionManager _solutionManager;
-    private CancellationTokenSource _cancellationTokenSource = new();
-    private bool _disposed = false;
-    private readonly Func<int, BoardState> _boardStateFactory;
     private BoardState _board = null!;
+    
+    private readonly ISolutionManager _solutionManager = solutionManager ??
+            throw new ArgumentNullException(nameof(solutionManager));
+    
+    private CancellationTokenSource _cancellationTokenSource = new();
+    
+    private bool _disposed = false;
+    
+    private readonly Func<int, BoardState> _boardStateFactory = boardStateFactory ??
+            throw new ArgumentNullException(nameof(boardStateFactory));
 }

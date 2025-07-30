@@ -16,7 +16,8 @@ public class SolutionManager : ISolutionManager
         // Initialize with an empty delegate to avoid null.
         SolutionsUpdated = _ => { };
 
-        UpdateDTO = dto ?? throw new ArgumentNullException(nameof(dto));
+        UpdateDTO = dto ??
+            throw new ArgumentNullException(nameof(dto));
     }
 
     public event Action<SolutionUpdateDTO> SolutionsUpdated;

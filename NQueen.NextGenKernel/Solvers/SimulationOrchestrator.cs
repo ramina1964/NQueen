@@ -5,7 +5,8 @@ public class SimulationOrchestrator : ISolver, IDisposable
     public SimulationOrchestrator(
         SolverEngine solverEngine)
     {
-        _solverEngine = solverEngine ?? throw new ArgumentNullException(nameof(solverEngine));
+        _solverEngine = solverEngine ??
+            throw new ArgumentNullException(nameof(solverEngine));
 
         // Relay events from SolverEngine
         _solverEngine.QueenPlaced += (s, e) => QueenPlaced?.Invoke(this, e);
@@ -51,7 +52,8 @@ public class SimulationOrchestrator : ISolver, IDisposable
 
     #region Orchestrator API
 
-    public void SetSimulationToken(Guid token) => _solverEngine.SetSimulationToken(token);
+    public void SetSimulationToken(Guid token) =>
+        _solverEngine.SetSimulationToken(token);
 
     public int BoardSize => _solverEngine.BoardSize;
 
