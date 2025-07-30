@@ -5,6 +5,6 @@ public static class NQueenViewModels
     public static void AddNQueenViewModels(this IServiceCollection services)
     {
         services.AddTransient<ChessboardViewModel>();
-        services.AddTransient<MainViewModel>();
+        services.AddSingleton<MainViewModel>();
     }
 }

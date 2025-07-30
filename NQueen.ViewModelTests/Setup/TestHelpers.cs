@@ -5,6 +5,9 @@ public static class TestHelpers
     public static ServiceProvider CreateServiceProvider() =>
         TestServiceCollectionExtensions.InitializeForTests();
 
+    public static ServiceProvider CreateServiceProviderWithMock(ISolver mockSolver) =>
+        TestServiceCollectionExtensions.InitializeForTestsWithMock(mockSolver);
+
     public static MainViewModel CreateMainViewModel(
         int boardSize = 8,
         SolutionMode solutionMode = SolutionMode.Single,
@@ -12,6 +15,25 @@ public static class TestHelpers
         SimulationResults? simulationResults = null)
     {
         var serviceProvider = CreateServiceProvider();
+        var mainViewModel = serviceProvider.GetRequiredService<MainViewModel>();
+
+        // Configure the MainViewModel instance through dependency injection
+        mainViewModel.BoardSizeText = boardSize.ToString();
+        mainViewModel.SolutionMode = solutionMode;
+        mainViewModel.DisplayMode = displayMode;
+        mainViewModel.SimulationResults = simulationResults ?? new SimulationResults([]);
+
+        return mainViewModel;
+    }
+
+    public static MainViewModel CreateMainViewModelWithMock(
+        ISolver mockSolver,
+        int boardSize = 8,
+        SolutionMode solutionMode = SolutionMode.Single,
+        DisplayMode displayMode = DisplayMode.Hide,
+        SimulationResults? simulationResults = null)
+    {
+        var serviceProvider = CreateServiceProviderWithMock(mockSolver);
         var mainViewModel = serviceProvider.GetRequiredService<MainViewModel>();
 
         // Configure the MainViewModel instance through dependency injection
@@ -48,7 +70,8 @@ public static class TestHelpers
         SolutionMode solutionMode,
         MockSaveFileDialogService saveFileDialogService)
     {
-        var solver = new SimulationOrchestrator(new SolutionManager());
+        var serviceProvider = CreateServiceProvider();
+        var solver = serviceProvider.GetRequiredService<ISolver>();
         var mainVm = new MainViewModel(solver, new TestDispatcher(), saveFileDialogService)
         {
             BoardSizeText = boardSize.ToString(),

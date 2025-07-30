@@ -75,7 +75,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
             _lastValidBoardSize = ParsingUtils.ParseIntOrThrow(value);
             OnPropertyChanged(nameof(BoardSize));
             var boardDimension = Math.Min(ChessboardVm.WindowWidth, ChessboardVm.WindowHeight);
-            SetChessboard(boardDimension);
+            ResetChessboard(boardDimension);
         }
 
         RefreshCommandStates();
@@ -111,7 +111,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
             _lastValidBoardSize = ParsingUtils.ParseIntOrThrow(BoardSizeText);
             OnPropertyChanged(nameof(BoardSize));
             var boardDimension = Math.Min(ChessboardVm.WindowWidth, ChessboardVm.WindowHeight);
-            SetChessboard(boardDimension);
+            ResetChessboard(boardDimension);
         }
 
         RefreshCommandStates();
@@ -121,11 +121,19 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
     {
         ObservableSolutions.Clear();
         SelectedSolution = new([], null);
-        ProgressValue = 0;
+        ProgressValue = 0.0;
+        ProgressLabel = "0%";
         NoOfSolutions = "0";
         ElapsedTimeInSec = $"{0,0:N1}";
         MemoryUsage = "0";
         IsOutputReady = false;
         IsSimulating = false;
+
+        // Reset the chessboard as part of simulation state reset
+        if (ChessboardVm != null)
+        {
+            var boardDimension = Math.Min(ChessboardVm.WindowWidth, ChessboardVm.WindowHeight);
+            ResetChessboard(boardDimension);
+        }
     }
 }

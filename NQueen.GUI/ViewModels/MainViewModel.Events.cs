@@ -6,13 +6,15 @@ public sealed partial class MainViewModel
     {
         Debug.WriteLine($"[MainViewModel] Subscribing to: {_solver?.GetHashCode()}");
 
+        // First, unsubscribe from any existing events to avoid duplicates
         UnsubscribeFromSimulationEvents();
-        if (_solver is SimulationOrchestrator backTrackingSolver)
-        {
-            backTrackingSolver.QueenPlaced += OnQueenPlacedEvent;
-            backTrackingSolver.SolutionFound += OnSolutionFoundEvent;
-            backTrackingSolver.ProgressValueChanged += OnProgressValueChangedEvent;
-        }
+
+        if (_solver == null)
+            return;
+
+        _solver.QueenPlaced += OnQueenPlacedEvent;
+        _solver.SolutionFound += OnSolutionFoundEvent;
+        _solver.ProgressValueChanged += OnProgressValueChangedEvent;
 
         WeakReferenceMessenger.Default.Register<QueenPlacedMessage>(this, (r, m) =>
             OnQueenPlaced(m));
@@ -26,12 +28,13 @@ public sealed partial class MainViewModel
 
     private void UnsubscribeFromSimulationEvents()
     {
-        if (_solver is SimulationOrchestrator backTrackingSolver)
+        if (_solver != null)
         {
-            backTrackingSolver.QueenPlaced -= OnQueenPlacedEvent;
-            backTrackingSolver.SolutionFound -= OnSolutionFoundEvent;
-            backTrackingSolver.ProgressValueChanged -= OnProgressValueChangedEvent;
+            _solver.QueenPlaced -= OnQueenPlacedEvent;
+            _solver.SolutionFound -= OnSolutionFoundEvent;
+            _solver.ProgressValueChanged -= OnProgressValueChangedEvent;
         }
+
         WeakReferenceMessenger.Default.Unregister<ProgressValueChangedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<QueenPlacedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<SolutionFoundMessage>(this);

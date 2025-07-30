@@ -9,8 +9,7 @@ public sealed partial class MainViewModel :
         IDispatcher dispatcher,
         ISaveFileDialogService saveFileService)
     {
-        _solver = solver ??
-            throw new ArgumentNullException(nameof(solver));
+        _solver = solver;
 
         _uiDispatcher = dispatcher ??
             throw new ArgumentNullException(nameof(dispatcher));
@@ -65,7 +64,7 @@ public sealed partial class MainViewModel :
             : Enumerable.Empty<string>();
     }
 
-    public void SetChessboard(double boardDimension)
+    public void ResetChessboard(double boardDimension)
     {
         // If BoardSizeText is invalid, do not clear the chessboard, just return
         if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) == false)

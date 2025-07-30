@@ -6,10 +6,7 @@ public class ProgressRelayTests
     public async Task ProgressValue_IsUpdated_When_ProgressValueChangedMessage_Received()
     {
         // Arrange
-        var dispatcher = new TestDispatcher();
-        var solverMock = new Mock<ISolver>();
-        var saveFileServiceMock = new Mock<ISaveFileDialogService>();
-        var viewModel = new MainViewModel(solverMock.Object, dispatcher, saveFileServiceMock.Object);
+        var viewModel = TestHelpers.CreateMainViewModel();
 
         double testProgress = 0.42;
 
@@ -30,16 +27,17 @@ public class ProgressRelayTests
     {
         WeakReferenceMessenger.Default.Reset();
 
-        var dispatcher = new TestDispatcher();
-        var saveFileServiceMock = new Mock<ISaveFileDialogService>();
-        var solutionManagerMock = new Mock<ISolutionManager>();
-        var orchestrator = new SimulationOrchestrator(solutionManagerMock.Object, 8);
+        // Use DI to get orchestrator and viewmodel
+        var serviceProvider = TestHelpers.CreateServiceProvider();
 
-        var viewModel = new MainViewModel(orchestrator, dispatcher, saveFileServiceMock.Object);
+        // Get the orchestrator as ISolver and cast to SimulationOrchestrator if needed
+        var orchestrator = serviceProvider.GetRequiredService<ISolverBackEnd>() as SimulationOrchestrator;
+        var viewModel = serviceProvider.GetRequiredService<MainViewModel>();
 
         double testProgress = 0.66;
         var token = Guid.NewGuid();
 
+        // Set the token on the viewmodel if needed
         var tokenField = typeof(MainViewModel)
             .GetField("_currentSimulationToken", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         tokenField?.SetValue(viewModel, token);
@@ -48,17 +46,12 @@ public class ProgressRelayTests
             .GetMethod("SubscribeToSimulationEvents", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
             ?.Invoke(viewModel, null);
 
-        var eventField = typeof(SimulationOrchestrator)
-            .GetField("ProgressValueChanged", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-        var eventDelegate = eventField?.GetValue(orchestrator) as MulticastDelegate;
-
-        if (eventDelegate is not null)
-            eventDelegate.DynamicInvoke(orchestrator, new ProgressValueChangedWithTokenEventArgs(testProgress, token));
-        else
-            throw new InvalidOperationException("ProgressValueChanged event delegate not found.");
+        // Raise the event via orchestrator (if orchestrator is not null)
+        orchestrator?.RaiseProgressValueChangedForTest(testProgress, token);
 
         // Wait for the property to update
-        await TestHelpers.WaitForConditionAsync(() => viewModel.ProgressValue == testProgress, TimeSpan.FromSeconds(2));
+        await TestHelpers.WaitForConditionAsync(() =>
+            viewModel.ProgressValue == testProgress, TimeSpan.FromSeconds(2));
 
         // Assert
         viewModel.ProgressValue.Should().BeApproximately(testProgress, 0.0001,

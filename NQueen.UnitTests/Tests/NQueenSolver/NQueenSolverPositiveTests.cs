@@ -8,7 +8,7 @@ public class NQueenSolverPositiveTests : IDisposable
         services.AddApplicationServices();
         services.AddTestServices();
         _serviceProvider = services.BuildServiceProvider();
-        _solver = _serviceProvider.GetRequiredService<ISolver>();
+        _solver = _serviceProvider.GetRequiredService<ISolverBackEnd>();
     }
 
     [Theory]
@@ -77,10 +77,13 @@ public class NQueenSolverPositiveTests : IDisposable
         );
     }
 
-    public void Dispose() =>
+    public void Dispose()
+    {
         _serviceProvider.Dispose();
+        GC.SuppressFinalize(this);
+    }
     
-    private readonly ISolver _solver;
+    private readonly ISolverBackEnd _solver;
     private readonly ServiceProvider _serviceProvider;
 }
 

@@ -43,27 +43,28 @@ public sealed partial class MainViewModel
     {
         Debug.WriteLine($"[SimulateAsync] Using solver instance: {_solver?.GetHashCode()}");
 
+        // Check for null before using _solver
+        if (_solver == null)
+        {
+            Debug.WriteLine("[SimulateAsync] Solver instance is null.");
+            MessageBox.Show("Solver is not initialized.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
         // Generate a new token for this simulation run
         _currentSimulationToken = Guid.NewGuid();
-
-        // Synchronize the token with the orchestrator
-        if (_solver is SimulationOrchestrator orchestrator)
-            orchestrator.SetSimulationToken(_currentSimulationToken);
+        _solver.SetSimulationToken(_currentSimulationToken);
 
         try
         {
             if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) == false)
                 return;
 
+            // Reset all simulation state, including chessboard
+            ResetSimulationState();
+
             ManageSimulationStatus(SimulationStatus.Started);
             UpdateUiState();
-
-            if (_solver == null)
-            {
-                Debug.WriteLine("[SimulateAsync] Solver instance is null.");
-                MessageBox.Show("Solver is not initialized.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
 
             SimulationResults = await _solver.GetResultsForBoardAsync(boardSize, SolutionMode, DisplayMode);
 

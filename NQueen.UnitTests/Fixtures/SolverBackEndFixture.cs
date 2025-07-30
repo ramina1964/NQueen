@@ -2,7 +2,7 @@ namespace NQueen.UnitTests.Fixtures;
 
 public class SolverBackEndFixture
 {
-    public ISolver Sut { get; }
+    public ISolverBackEnd Sut { get; }
 
     public ServiceProvider ServiceProvider { get; }
 
@@ -18,6 +18,6 @@ public class SolverBackEndFixture
         ServiceProvider = services.BuildServiceProvider();
 
         // Resolve the ISolver instance
-        Sut = ServiceProvider.GetRequiredService<ISolver>();
+        Sut = ServiceProvider.GetRequiredService<ISolverBackEnd>();
     }
 }

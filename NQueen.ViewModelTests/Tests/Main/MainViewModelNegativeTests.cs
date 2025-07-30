@@ -8,7 +8,7 @@ public class MainViewModelNegativeTests
         int boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        var solver = new Mock<ISolver>();
+        var solver = new Mock<ISolverBackEnd>();
         solver.Setup(s => s.GetResultsForBoardAsync(boardSize, solutionMode, DisplayMode.Visualize))
             .ThrowsAsync(new ArgumentException("Invalid input"));
 
