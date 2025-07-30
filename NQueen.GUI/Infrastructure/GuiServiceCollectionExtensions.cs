@@ -1,29 +1,26 @@
 ﻿namespace NQueen.GUI.Infrastructure;
 
-public static class ServiceCollectionExtensions
+public static class GuiServiceCollectionExtensions
 {
     public static IServiceProvider Initialize()
     {
         var services = new ServiceCollection();
-
-        // WPF-specific services
         services.AddSingleton<IDispatcher, WpfDispatcher>();
         services.AddTransient<ISaveFileDialogService, SaveFileDialogService>();
-
-        // Shared NQueen-Related Services
         services.AddNextGenNQueenServices();
 
-        // Register shared ViewModels
-        services.AddNQueenViewModels();
+        // Register MainWindow for DI
+        services.AddSingleton<MainWindow>();
 
-        // Register specific services, i.e., views and view models
+        // Register MainViewModel for DI
+        services.AddTransient<MainViewModel>();
+
+        // Register User Controls for DI
         services.AddTransient<ChessboardUserControl>();
         services.AddTransient<InputPanelUserControl>();
         services.AddTransient<SimulationPanelUserControl>();
 
-        services.AddSingleton<MainWindow>();
-
-        // Build the service provider
+        // Other GUI-specific registrations...
         return services.BuildServiceProvider();
     }
 }
