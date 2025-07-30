@@ -25,9 +25,12 @@ public sealed partial class MainViewModel
 
     private void UnsubscribeFromSimulationEvents()
     {
-        _solver.QueenPlaced -= OnQueenPlacedEvent;
-        _solver.SolutionFound -= OnSolutionFoundEvent;
-        _solver.ProgressValueChanged -= OnProgressValueChangedEvent;
+        if (_solver != null)
+        {
+            _solver.QueenPlaced -= OnQueenPlacedEvent;
+            _solver.SolutionFound -= OnSolutionFoundEvent;
+            _solver.ProgressValueChanged -= OnProgressValueChangedEvent;
+        }
 
         WeakReferenceMessenger.Default.Unregister<ProgressValueChangedMessage>(this);
         WeakReferenceMessenger.Default.Unregister<QueenPlacedMessage>(this);

@@ -7,8 +7,8 @@ public static class TestServiceCollectionExtensions
         var services = new ServiceCollection();
 
         // Override IDispatcher with TestDispatcher for tests
-        services.AddTransient<IDispatcher, TestDispatcher>();
-        services.AddTransient<ISaveFileDialogService, MockSaveFileDialogService>();
+        services.AddSingleton<IDispatcher, TestDispatcher>();
+        services.AddSingleton<ISaveFileDialogService, MockSaveFileDialogService>();
 
         // Register BoardState factory for dynamic board sizes
         services.AddTransient<Func<int, BoardState>>(sp => size => new BoardState(size));
