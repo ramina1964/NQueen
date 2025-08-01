@@ -29,6 +29,7 @@ public class Solution
     #region PrivateMembers
     private int BoardSize { get; }
 
+    // Todo: Change the order of indices here.
     private string GetDetails(IndexingType indexingType = IndexingType.ZeroBased)
     {
         const int noOfQueensPerLine = 40;
@@ -57,10 +58,10 @@ public class Solution
 
                 if (indexingType == IndexingType.ZeroBased)
                     sb.Append($"({columnOrdered[posNo].ColumnNo,0:N0}," +
-                        $"{columnOrdered[posNo].RowNo,0:N0})");
+                        $"{columnOrdered[posNo].RowIndex,0:N0})");
                 else
                     sb.Append($"({columnOrdered[posNo].ColumnNo + 1,0:N0}," +
-                        $"{columnOrdered[posNo].RowNo + 1,0:N0})");
+                        $"{columnOrdered[posNo].RowIndex + 1,0:N0})");
 
                 if (posNo < BoardSize - 1)
                     sb.Append(", ");

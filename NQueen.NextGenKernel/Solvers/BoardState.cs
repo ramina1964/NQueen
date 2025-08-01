@@ -15,12 +15,12 @@ public class BoardState(int boardSize)
     public void Reset() =>
         QueenPositions = [.. Enumerable.Repeat(-1, BoardSize)];
 
-    public bool IsValidPosition(int col, int row)
+    public bool IsValidPosition(int colIndex, int rowIndex)
     {
-        for (var j = 0; j < col; j++)
+        for (var j = 0; j < colIndex; j++)
         {
-            var lhs = Math.Abs(row - QueenPositions[j]);
-            var rhs = Math.Abs(col - j);
+            var lhs = Math.Abs(rowIndex - QueenPositions[j]);
+            var rhs = Math.Abs(colIndex - j);
             if (lhs == 0 || lhs == rhs)
                 return false;
         }

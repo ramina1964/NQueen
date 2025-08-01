@@ -17,19 +17,20 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
     {
         ClearImages();
 
-        foreach (var pos in positions)
+        foreach (var position in positions)
         {
-            int rowIndex = pos.RowNo;
-            int colIndex = pos.ColumnNo;
+            int colIndex = position.ColumnNo;
+            int rowIndex = position.RowIndex;
 
-            // Todo: Fix the issue of invalid positions and then remove the following defensive code.
             if (rowIndex < 0 || colIndex < 0)
                 continue;
 
             try
             {
-                var square = Squares.First(sq => sq.Position.RowNo == rowIndex &&
-                                                 sq.Position.ColumnNo == colIndex);
+
+                var square = Squares.First(sq =>
+                    sq.Position.ColumnNo == colIndex && sq.Position.RowIndex == rowIndex);
+                
                 square.ImagePath = QueenImagePath;
             }
             catch (InvalidOperationException ex)
@@ -48,13 +49,12 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
         var width = WindowWidth / boardSize;
         var height = width;
 
-        // Fill columns left-to-right, and in each column from bottom (row 0) to top (row N-1)
-        for (var col = 0; col < boardSize; col++)
+        for (var colIndex = 0; colIndex < boardSize; colIndex++)
         {
-            for (var row = 0; row < boardSize; row++)
+            for (var rowIndex = 0; rowIndex < boardSize; rowIndex++)
             {
-                var pos = new Position(row, col);
-                var square = new SquareViewModel(pos, FindColor(pos))
+                var position = new Position(colIndex, rowIndex);
+                var square = new SquareViewModel(position, FindColor(position))
                 {
                     ImagePath = string.Empty,
                     Height = height,
@@ -85,13 +85,13 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
             sq.ImagePath = null!;
     }
 
-    private static SolidColorBrush FindColor(Position pos)
+    private static SolidColorBrush FindColor(Position position)
     {
-        var col = (pos.RowNo + pos.ColumnNo) % 2 == 1
+        var colIndex = (position.ColumnNo + position.RowIndex) % 2 == 1
             ? Colors.Wheat
             : Colors.Brown;
 
-        return new SolidColorBrush(col);
+        return new SolidColorBrush(colIndex);
     }
 
     private int _lastBoardSize = -1;

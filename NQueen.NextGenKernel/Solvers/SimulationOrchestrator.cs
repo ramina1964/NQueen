@@ -48,41 +48,10 @@ public class SimulationOrchestrator : ISolver, IDisposable
         DisplayMode displayMode = DisplayMode.Hide)
         => await _solverEngine.GetResultsForBoardAsync(boardSize, solutionMode, displayMode);
 
-    #endregion
-
-    #region Orchestrator API
+    #endregion Implementation
 
     public void SetSimulationToken(Guid token) =>
         _solverEngine.SetSimulationToken(token);
-
-    public int BoardSize => _solverEngine.BoardSize;
-
-    public int[] QueenPositions => _solverEngine.QueenPositions;
-
-    public int NoOfSolutions => _solverEngine.NoOfSolutions;
-
-    public int HalfBoardSize => _solverEngine.HalfBoardSize;
-
-    public int SolutionsPerUpdate => _solverEngine.SolutionsPerUpdate;
-
-    public SolutionMode SolutionMode
-    {
-        get => _solverEngine.SolutionMode;
-        set => _solverEngine.SolutionMode = value;
-    }
-    public DisplayMode DisplayMode
-    {
-        get => _solverEngine.DisplayMode;
-        set => _solverEngine.DisplayMode = value;
-    }
-    public HashSet<int[]> Solutions => _solverEngine.Solutions;
-
-    public int GetHalfSize() => _solverEngine.GetHalfSize();
-
-    public async Task<SimulationResults> GetResultsForCurrentConfigurationAsync()
-        => await _solverEngine.GetResultsForCurrentConfigurationAsync();
-
-    #endregion
 
     #region IDisposable Implementation
 
@@ -104,7 +73,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
         }
     }
 
-    #endregion
+    #endregion IDisposable Implementation
 
     public void RaiseProgressValueChangedForTest(double progress, Guid token) =>
         ProgressValueChanged?.Invoke(this,

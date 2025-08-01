@@ -1,10 +1,10 @@
 ﻿namespace NQueen.GUI.ViewModels;
 
-public class SquareViewModel(Position pos, Brush color) : ObservableObject
+public class SquareViewModel(Position position, Brush color) : ObservableObject
 {
     public Brush Color { get; } = color;
 
-    public Position Position { get; } = pos;
+    public Position Position { get; } = position;
 
     public double Width
     {
@@ -24,7 +24,8 @@ public class SquareViewModel(Position pos, Brush color) : ObservableObject
         set => SetProperty(ref _imagePath, value);
     }
 
-    public override string ToString() => $"{Position.RowNo}, {Position.ColumnNo}";
+    // Todo: Change the order of indices here.
+    public override string ToString() => $"{Position.RowIndex}, {Position.ColumnNo}";
 
     // --- Private Fields ---
     private double _width;

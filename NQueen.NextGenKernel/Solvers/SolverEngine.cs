@@ -123,9 +123,6 @@ public class SolverEngine(
         return Solutions.Select((s, index) => new Solution(s, index + 1));
     }
 
-    private async Task<IEnumerable<Solution>> SolveNQueenProblem()
-        => await SolveNQueenProblem(_cancellationTokenSource.Token);
-
     private async Task SolveNQueenForModeAsync(int colIndex, SolutionMode solutionMode, CancellationToken cancellationToken)
     {
         var totalNoOfSolutions =
@@ -174,9 +171,6 @@ public class SolverEngine(
         // Ensure final progress update after all solutions are processed
         ReportProgress(totalNoOfSolutions);
     }
-
-    private async Task SolveNQueenForModeAsync(int colIndex, SolutionMode solutionMode)
-        => await SolveNQueenForModeAsync(colIndex, solutionMode, _cancellationTokenSource.Token);
 
     private void ReportProgress(int totalNoOfSolutions)
     {
@@ -235,31 +229,25 @@ public class SolverEngine(
         }
     }
 
-    private async Task FindAllSolutions(int colIndex)
-        => await FindAllSolutions(colIndex, _cancellationTokenSource.Token);
-
     private async Task<int> FindQueenPositionAsync(int colIndex, CancellationToken cancellationToken)
     {
-        colIndex = Math.Min(colIndex, BoardSize - 1);
-        for (var pos = QueenPositions[colIndex] + 1; pos < BoardSize; pos++)
+        var minColIndex = Math.Min(colIndex, BoardSize - 1);
+        for (var rowIndex = QueenPositions[minColIndex] + 1; rowIndex < BoardSize; rowIndex++)
         {
             if (cancellationToken.IsCancellationRequested)
                 return -1;
 
-            if (_board.IsValidPosition(colIndex, pos))
+            if (_board.IsValidPosition(minColIndex, rowIndex))
             {
                 if (DisplayMode == DisplayMode.Visualize && DelayInMilliseconds > 0)
                     await Task.Delay(DelayInMilliseconds, cancellationToken);
 
-                return pos;
+                return rowIndex;
             }
         }
 
         return -1;
     }
-
-    private async Task<int> FindQueenPositionAsync(int colIndex)
-        => await FindQueenPositionAsync(colIndex, _cancellationTokenSource.Token);
 
     #endregion
 

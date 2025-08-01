@@ -4,7 +4,7 @@ public static class DispatchUtils
 {
     public static char WhiteQueen { get; } = BoardSettings.WhiteQueenChar;
 
-    // This is used for enabling dotnet-counters performance utility when you run the application.
+    // This enables dotnet-counters performance utility when running the application.
     public static readonly bool DotNetCountersEnabled = false;
 
     public static void LaunchConsoleMonitor(string extraSourceNames = "")
@@ -30,17 +30,17 @@ public static class DispatchUtils
         return (new string(option), n);
     }
 
+    // Todo: Change the order of indices here.
     public static string CreateChessBoard(int[] queens)
     {
         var arr = ChessBoardHelper(queens, WhiteQueen);
         var size = queens.Length;
         var board = string.Empty;
-        for (int row = size - 1; row >= 0; row--)
+        for (var rowIndex = size - 1; rowIndex >= 0; rowIndex--)
         {
-            for (int col = 0; col < size; col++)
-            {
-                board += arr[row, col];
-            }
+            for (var colIndex = 0; colIndex < size; colIndex++)
+                board += arr[rowIndex, colIndex];
+
             board += Environment.NewLine;
         }
 
@@ -52,18 +52,18 @@ public static class DispatchUtils
         var size = queens.Length;
         string[,] arr = new string[size, size];
 
-        for (int col = 0; col < size; col++)
+        for (var colIndex = 0; colIndex < size; colIndex++)
         {
-            var rowPlace = queens[col];
-            for (int row = 0; row < size; row++)
+            var rowIndex = queens[colIndex];
+            for (var rowCounter = 0; rowCounter < size; rowCounter++)
             {
-                if (row == rowPlace)
+                if (rowCounter == rowIndex)
                 {
-                    arr[row, col] = col == size - 1 ? $"|{whiteQueen}|" : $"|{whiteQueen}";
+                    arr[rowCounter, colIndex] = colIndex == size - 1 ? $"|{whiteQueen}|" : $"|{whiteQueen}";
                 }
                 else
                 {
-                    arr[row, col] = col == size - 1 ? "|-|" : "|-";
+                    arr[rowCounter, colIndex] = colIndex == size - 1 ? "|-|" : "|-";
                 }
             }
         }
