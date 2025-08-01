@@ -9,7 +9,7 @@ public class Solution
         Name = ToString();
         QueenPositions = queenPositions;
         Positions = MapQueenArrayToPositions(QueenPositions);
-        Details = SolutionFormatter.FormatSolutions(Positions, IndexingType.ZeroBased);
+        Details = SolutionFormatter.FormatSolutions(Positions);
     }
 
     public List<Position> Positions { get; set; }

@@ -4,7 +4,7 @@ public static class SolutionFormatter
 {
     public static string FormatSolutions(
         List<Position> positions,
-        IndexingType indexingType = IndexingType.ZeroBased,
+        IndexingType indexingType = IndexingType.OneBased,
         int noOfQueensPerLine = 40)
     {
         var columnOrdered = positions
@@ -14,7 +14,7 @@ public static class SolutionFormatter
         var lines = SplitIntoLines(columnOrdered, noOfQueensPerLine);
 
         var sb = new StringBuilder();
-        for (int i = 0; i < lines.Count; i++)
+        for (var i = 0; i < lines.Count; i++)
         {
             var formattedPositions = lines[i].Select(p => FormatPosition(p, indexingType));
             sb.Append(string.Join(", ", formattedPositions));
