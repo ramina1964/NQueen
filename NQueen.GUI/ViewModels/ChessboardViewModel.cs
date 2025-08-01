@@ -19,7 +19,7 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
 
         foreach (var position in positions)
         {
-            int colIndex = position.ColumnNo;
+            int colIndex = position.ColumnIndex;
             int rowIndex = position.RowIndex;
 
             if (rowIndex < 0 || colIndex < 0)
@@ -27,9 +27,8 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
 
             try
             {
-
                 var square = Squares.First(sq =>
-                    sq.Position.ColumnNo == colIndex && sq.Position.RowIndex == rowIndex);
+                    sq.Position.ColumnIndex == colIndex && sq.Position.RowIndex == rowIndex);
                 
                 square.ImagePath = QueenImagePath;
             }
@@ -87,7 +86,7 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
 
     private static SolidColorBrush FindColor(Position position)
     {
-        var colIndex = (position.ColumnNo + position.RowIndex) % 2 == 1
+        var colIndex = (position.ColumnIndex + position.RowIndex) % 2 == 1
             ? Colors.Wheat
             : Colors.Brown;
 

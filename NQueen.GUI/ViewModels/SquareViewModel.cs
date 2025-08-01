@@ -24,8 +24,7 @@ public class SquareViewModel(Position position, Brush color) : ObservableObject
         set => SetProperty(ref _imagePath, value);
     }
 
-    // Todo: Change the order of indices here.
-    public override string ToString() => $"{Position.RowIndex}, {Position.ColumnNo}";
+    public override string ToString() => $"{Position.ColumnIndex}, {Position.RowIndex}";
 
     // --- Private Fields ---
     private double _width;

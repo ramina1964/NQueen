@@ -1,9 +1,8 @@
 ﻿namespace NQueen.Domain.Models;
 
-// Todo: Change the order of parameters and properties.
-public class Position(int rowIndex, int colIndex)
+public class Position(int colIndex, int rowIndex)
 {
-    public int RowIndex { get; set; } = rowIndex;
+    public int ColumnIndex { get; set; } = colIndex;
 
-    public int ColumnNo { get; set; } = colIndex;
+    public int RowIndex { get; set; } = rowIndex;
 }

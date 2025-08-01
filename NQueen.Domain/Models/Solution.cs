@@ -29,14 +29,13 @@ public class Solution
     #region PrivateMembers
     private int BoardSize { get; }
 
-    // Todo: Change the order of indices here.
     private string GetDetails(IndexingType indexingType = IndexingType.ZeroBased)
     {
         const int noOfQueensPerLine = 40;
 
         // Order by column index ascending
         var columnOrdered = Positions
-            .OrderBy(p => p.ColumnNo)
+            .OrderBy(p => p.ColumnIndex)
             .ToList();
         
         var noOfLines = BoardSize % noOfQueensPerLine == 0 ?
@@ -57,10 +56,10 @@ public class Solution
                     break;
 
                 if (indexingType == IndexingType.ZeroBased)
-                    sb.Append($"({columnOrdered[posNo].ColumnNo,0:N0}," +
+                    sb.Append($"({columnOrdered[posNo].ColumnIndex,0:N0}," +
                         $"{columnOrdered[posNo].RowIndex,0:N0})");
                 else
-                    sb.Append($"({columnOrdered[posNo].ColumnNo + 1,0:N0}," +
+                    sb.Append($"({columnOrdered[posNo].ColumnIndex + 1,0:N0}," +
                         $"{columnOrdered[posNo].RowIndex + 1,0:N0})");
 
                 if (posNo < BoardSize - 1)
@@ -74,6 +73,7 @@ public class Solution
         return sb.ToString();
     }
 
+    // Todo: Check this, I think Position parameters should be reversed.
     private static List<Position> MapQueenArrayToPositions(int[] queenPositions) =>
         [.. queenPositions.Select((rowIndex, columnIndex) =>
             new Position(rowIndex, columnIndex))];

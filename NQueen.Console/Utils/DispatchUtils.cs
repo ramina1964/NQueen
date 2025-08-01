@@ -43,14 +43,15 @@ public static class DispatchUtils
 
             board += Environment.NewLine;
         }
-
         return board;
     }
 
     private static string[,] ChessBoardHelper(int[] queens, char whiteQueen)
     {
         var size = queens.Length;
-        string[,] arr = new string[size, size];
+
+        // Todo: Find a better data structu and variable name below.
+        string[,] boardCells = new string[size, size];
 
         for (var colIndex = 0; colIndex < size; colIndex++)
         {
@@ -59,15 +60,15 @@ public static class DispatchUtils
             {
                 if (rowCounter == rowIndex)
                 {
-                    arr[rowCounter, colIndex] = colIndex == size - 1 ? $"|{whiteQueen}|" : $"|{whiteQueen}";
+                    boardCells[rowCounter, colIndex] = colIndex == size - 1 ? $"|{whiteQueen}|" : $"|{whiteQueen}";
                 }
                 else
                 {
-                    arr[rowCounter, colIndex] = colIndex == size - 1 ? "|-|" : "|-";
+                    boardCells[rowCounter, colIndex] = colIndex == size - 1 ? "|-|" : "|-";
                 }
             }
         }
 
-        return arr;
+        return boardCells;
     }
 }
