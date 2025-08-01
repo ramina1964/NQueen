@@ -48,9 +48,9 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
         var width = WindowWidth / boardSize;
         var height = width;
 
-        for (var colIndex = 0; colIndex < boardSize; colIndex++)
+        for (var rowIndex = boardSize - 1; rowIndex >= 0; rowIndex--)
         {
-            for (var rowIndex = 0; rowIndex < boardSize; rowIndex++)
+            for (var colIndex = 0; colIndex < boardSize; colIndex++)
             {
                 var position = new Position(colIndex, rowIndex);
                 var square = new SquareViewModel(position, FindColor(position))

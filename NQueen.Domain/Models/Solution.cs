@@ -73,10 +73,9 @@ public class Solution
         return sb.ToString();
     }
 
-    // Todo: Check this, I think Position parameters should be reversed.
     private static List<Position> MapQueenArrayToPositions(int[] queenPositions) =>
         [.. queenPositions.Select((rowIndex, columnIndex) =>
-            new Position(rowIndex, columnIndex))];
+            new Position(columnIndex, rowIndex))];
 
     #endregion PrivateMembers
 }
