@@ -28,7 +28,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
         set => _solverEngine.DelayInMilliseconds = value;
     }
 
-    public double ProgressValue
+    public int ProgressValue
     {
         get => _solverEngine.ProgressValue;
         set => _solverEngine.ProgressValue = value;
@@ -75,7 +75,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
 
     #endregion IDisposable Implementation
 
-    public void RaiseProgressValueChangedForTest(double progress, Guid token) =>
+    public void RaiseProgressValueChangedForTest(int progress, Guid token) =>
         ProgressValueChanged?.Invoke(this,
             new ProgressValueChangedWithTokenEventArgs(progress, token));
 

@@ -8,7 +8,7 @@ public class ProgressRelayTests
         // Arrange
         var viewModel = TestHelpers.CreateMainViewModel();
 
-        double testProgress = 0.42;
+        int testProgress = 42; // Updated to int
 
         // Act: Simulate the message as if sent by the backend event handler
         WeakReferenceMessenger.Default
@@ -18,7 +18,7 @@ public class ProgressRelayTests
         await Task.Delay(50);
 
         // Assert
-        viewModel.ProgressValue.Should().BeApproximately(testProgress, 0.0001,
+        viewModel.ProgressValue.Should().Be(testProgress,
             "ProgressValue should be updated when ProgressValueChangedMessage is received");
     }
 
@@ -34,7 +34,7 @@ public class ProgressRelayTests
         var orchestrator = serviceProvider.GetRequiredService<ISolverBackEnd>() as SimulationOrchestrator;
         var viewModel = serviceProvider.GetRequiredService<MainViewModel>();
 
-        double testProgress = 0.66;
+        int testProgress = 42;
         var token = Guid.NewGuid();
 
         // Set the token on the viewmodel if needed

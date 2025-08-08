@@ -20,7 +20,7 @@ public class SolverEngine(
 
     public int DelayInMilliseconds { get; set; }
 
-    public double ProgressValue { get; set; }
+    public int ProgressValue { get; set; }
 
     public int BoardSize => _board.BoardSize;
 
@@ -29,8 +29,6 @@ public class SolverEngine(
     public int NoOfSolutions => Solutions.Count;
 
     public int HalfBoardSize => _board.HalfBoardSize;
-
-    public int SolutionsPerUpdate => SimulationSettings.SolutionCountPerUpdate(BoardSize);
 
     public SolutionMode SolutionMode { get; set; }
 
@@ -73,7 +71,7 @@ public class SolverEngine(
         var stopwatch = Stopwatch.StartNew();
         var solutions = await SolveNQueenProblem(cancellationToken);
         stopwatch.Stop();
-        var elapsedTimeInSec = Math.Round(stopwatch.Elapsed.TotalSeconds, 1);
+        var elapsedTimeInSec = Math.Round((double)stopwatch.Elapsed.TotalSeconds, 1);
 
         return new SimulationResults(solutions)
         {
@@ -172,17 +170,24 @@ public class SolverEngine(
         ReportProgress(totalNoOfSolutions);
     }
 
+    private int _lastReportedProgress = 0; // Tracks the last reported progress percentage
+
     private void ReportProgress(int totalNoOfSolutions)
     {
         if (totalNoOfSolutions > 0)
         {
-            ProgressValue = Math.Clamp(Solutions.Count / (double)totalNoOfSolutions, 0.0, 1.0);
-            Debug.WriteLine($"[ReportProgress] Progress: {Solutions.Count}/{totalNoOfSolutions} = {ProgressValue}");
-            Debug.WriteLine($"[ReportProgress] Raising ProgressValueChanged: ProgressValue={ProgressValue}, _currentSimulationToken={_currentSimulationToken}");
+            int currentProgress = (int)Math.Clamp(
+                (Solutions.Count / (double)totalNoOfSolutions) * 100, 0, 100);
 
-            Debug.WriteLine($"[AddSolutionAndNotify] BoardSize={BoardSize}, SolutionMode={SolutionMode}, ExpectedTotal={NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode)}, Solutions.Count={Solutions.Count}");
-            ProgressValueChanged?.Invoke(this, new ProgressValueChangedWithTokenEventArgs(
-                    ProgressValue, _currentSimulationToken));
+            // Trigger update if progress exceeds the threshold
+            if (currentProgress - _lastReportedProgress >= SimulationSettings.ProgressUpdateThresholdPercent)
+            {
+                _lastReportedProgress = currentProgress;
+                ProgressValue = currentProgress;
+                Debug.WriteLine($"[ReportProgress] Progress: {currentProgress}%");
+                ProgressValueChanged?.Invoke(this, new ProgressValueChangedWithTokenEventArgs(
+                    currentProgress, _currentSimulationToken));
+            }
         }
     }
 
@@ -203,9 +208,8 @@ public class SolverEngine(
         };
         _solutionManager.UpdateSolutions(updateDTO);
 
-        // Report progress, every SolutionsPerUpdate solutions
-        if (Solutions.Count % SolutionsPerUpdate == 0)
-            ReportProgress(NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode));
+        // Report progress after adding a solution
+        ReportProgress(NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode));
     }
 
     private async Task FindAllSolutions(int colIndex, CancellationToken cancellationToken)

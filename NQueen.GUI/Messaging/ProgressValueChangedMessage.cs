@@ -1,6 +1,6 @@
 ﻿namespace NQueen.GUI.Messaging;
 
-public class ProgressValueChangedMessage(double value)
+public class ProgressValueChangedMessage(int value)
 {
-    public double Value { get; } = value;
+    public int Value { get; } = value;
 }

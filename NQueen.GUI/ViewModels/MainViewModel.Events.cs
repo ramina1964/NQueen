@@ -49,7 +49,7 @@ public sealed partial class MainViewModel
     private void OnProgressValueChanged(ProgressValueChangedMessage message)
     {
         Debug.WriteLine($"[MainViewModel] ProgressValue received: {message.Value}");
-        UpdateProgress(message.Value, $"{Math.Round(message.Value * 100, 1)} %");
+        UpdateProgress(message.Value / 100.0, $"{message.Value}%"); // Convert to percentage
     }
 
     private void OnQueenPlaced(QueenPlacedMessage message)
