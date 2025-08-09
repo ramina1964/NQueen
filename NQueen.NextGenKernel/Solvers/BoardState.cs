@@ -15,11 +15,33 @@ public class BoardState(int boardSize)
     public void Reset() =>
         QueenPositions = [.. Enumerable.Repeat(-1, BoardSize)];
 
-    public bool IsValidPosition(int colIndex, int rowIndex)
+    public static async Task<int> FindValidQueenPositionAsync(
+        int colIndex, int boardSize, int[] queenPositions, CancellationToken cancellationToken,
+        int delayInMilliseconds = 0, DisplayMode displayMode = DisplayMode.Hide)
+    {
+        var minColIndex = Math.Min(colIndex, boardSize - 1);
+        for (var rowIndex = queenPositions[minColIndex] + 1; rowIndex < boardSize; rowIndex++)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                return -1;
+
+            if (IsValidPosition(colIndex, rowIndex, queenPositions))
+            {
+                if (displayMode == DisplayMode.Visualize && delayInMilliseconds > 0)
+                    await Task.Delay(delayInMilliseconds, cancellationToken);
+
+                return rowIndex;
+            }
+        }
+
+        return -1;
+    }
+
+    private static bool IsValidPosition(int colIndex, int rowIndex, int[] queenPositions)
     {
         for (var j = 0; j < colIndex; j++)
         {
-            var lhs = Math.Abs(rowIndex - QueenPositions[j]);
+            var lhs = Math.Abs(rowIndex - queenPositions[j]);
             var rhs = Math.Abs(colIndex - j);
             if (lhs == 0 || lhs == rhs)
                 return false;

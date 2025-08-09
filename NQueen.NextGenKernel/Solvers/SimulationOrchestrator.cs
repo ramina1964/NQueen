@@ -46,7 +46,8 @@ public class SimulationOrchestrator : ISolver, IDisposable
         int boardSize,
         SolutionMode solutionMode,
         DisplayMode displayMode = DisplayMode.Hide)
-        => await _solverEngine.GetResultsForBoardAsync(boardSize, solutionMode, displayMode);
+            => await _solverEngine.GetResultsForBoardAsync(
+                boardSize, solutionMode, displayMode);
 
     #endregion Implementation
 

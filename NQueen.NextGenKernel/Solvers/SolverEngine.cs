@@ -26,6 +26,7 @@ public class SolverEngine(
 
     public int[] QueenPositions { get; private set; } = [];
 
+    // Todo: Either use this property or remove it.
     public int NoOfSolutions => Solutions.Count;
 
     public int HalfBoardSize => _board.HalfBoardSize;
@@ -33,8 +34,6 @@ public class SolverEngine(
     public SolutionMode SolutionMode { get; set; }
 
     public DisplayMode DisplayMode { get; set; }
-
-    private static readonly HashSet<int[]> _hashSet = [];
 
     public HashSet<int[]> Solutions { get; private set; } = _hashSet;
 
@@ -47,7 +46,6 @@ public class SolverEngine(
     public event EventHandler<ProgressValueChangedWithTokenEventArgs>
         ProgressValueChanged = delegate { };
 
-    private Guid _currentSimulationToken = Guid.Empty;
     public void SetSimulationToken(Guid token) => _currentSimulationToken = token;
 
     public async Task<SimulationResults> GetResultsForBoardAsync(
@@ -84,11 +82,7 @@ public class SolverEngine(
 
     #endregion
 
-    #region Public Methods
-
     public int GetHalfSize() => _board.HalfBoardSize;
-
-    #endregion
 
     #region Private Methods
 
@@ -123,8 +117,7 @@ public class SolverEngine(
 
     private async Task SolveNQueenForModeAsync(int colIndex, SolutionMode solutionMode, CancellationToken cancellationToken)
     {
-        var totalNoOfSolutions =
-            NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode);
+        var totalNoOfSolutions = NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode);
 
         while (colIndex != -1)
         {
@@ -149,7 +142,8 @@ public class SolverEngine(
                 continue;
             }
 
-            QueenPositions[colIndex] = await FindQueenPositionAsync(colIndex, cancellationToken);
+            QueenPositions[colIndex] = await BoardState.FindValidQueenPositionAsync(
+                colIndex, BoardSize, QueenPositions, cancellationToken, DelayInMilliseconds, DisplayMode);
 
             if (QueenPositions[colIndex] == -1)
             {
@@ -170,22 +164,29 @@ public class SolverEngine(
         ReportProgress(totalNoOfSolutions);
     }
 
-    private int _lastReportedProgress = 0; // Tracks the last reported progress percentage
-
     private void ReportProgress(int totalNoOfSolutions)
     {
         if (totalNoOfSolutions > 0)
         {
-            int currentProgress = (int)Math.Clamp(
+            // Calculate the current progress as a percentage
+            var currentProgress = (int)Math.Clamp(
                 (Solutions.Count / (double)totalNoOfSolutions) * 100, 0, 100);
 
+            Debug.WriteLine($"[ReportProgress] TotalSolutions={totalNoOfSolutions}," +
+                $"CurrentProgress={currentProgress}, LastReportedProgress={_lastReportedProgress}");
+
             // Trigger update if progress exceeds the threshold
-            if (currentProgress - _lastReportedProgress >= SimulationSettings.ProgressUpdateThresholdPercent)
+            var threshold = SimulationSettings.ProgressUpdateThresholdPercent;
+            
+            if (currentProgress - _lastReportedProgress >= threshold)
             {
-                _lastReportedProgress = currentProgress;
-                ProgressValue = currentProgress;
-                Debug.WriteLine($"[ReportProgress] Progress: {currentProgress}%");
-                ProgressValueChanged?.Invoke(this, new ProgressValueChangedWithTokenEventArgs(
+                _lastReportedProgress = currentProgress; // Update the last reported progress
+                ProgressValue = currentProgress; // Update the progress value
+                Debug.WriteLine($"[ReportProgress] Progress Updated: {currentProgress}%");
+
+                // Raise the ProgressValueChanged event
+                ProgressValueChanged?.Invoke(this,
+                    new ProgressValueChangedWithTokenEventArgs(
                     currentProgress, _currentSimulationToken));
             }
         }
@@ -207,6 +208,8 @@ public class SolverEngine(
             QueenPositions = (int[])QueenPositions.Clone()
         };
         _solutionManager.UpdateSolutions(updateDTO);
+
+        Debug.WriteLine($"[AddSolutionAndNotify] Solutions.Count={Solutions.Count}");
 
         // Report progress after adding a solution
         ReportProgress(NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode));
@@ -231,26 +234,6 @@ public class SolverEngine(
 
             _solutionManager.UpdateSolutions(updateDTO);
         }
-    }
-
-    private async Task<int> FindQueenPositionAsync(int colIndex, CancellationToken cancellationToken)
-    {
-        var minColIndex = Math.Min(colIndex, BoardSize - 1);
-        for (var rowIndex = QueenPositions[minColIndex] + 1; rowIndex < BoardSize; rowIndex++)
-        {
-            if (cancellationToken.IsCancellationRequested)
-                return -1;
-
-            if (_board.IsValidPosition(minColIndex, rowIndex))
-            {
-                if (DisplayMode == DisplayMode.Visualize && DelayInMilliseconds > 0)
-                    await Task.Delay(DelayInMilliseconds, cancellationToken);
-
-                return rowIndex;
-            }
-        }
-
-        return -1;
     }
 
     #endregion
@@ -288,14 +271,16 @@ public class SolverEngine(
     #endregion
 
     private BoardState _board = null!;
-    
+    private static readonly HashSet<int[]> _hashSet = [];
+    private Guid _currentSimulationToken = Guid.Empty;
+    private int _lastReportedProgress = 0;
     private readonly ISolutionManager _solutionManager = solutionManager ??
             throw new ArgumentNullException(nameof(solutionManager));
-    
+
     private CancellationTokenSource _cancellationTokenSource = new();
-    
+
     private bool _disposed = false;
-    
+
     private readonly Func<int, BoardState> _boardStateFactory = boardStateFactory ??
             throw new ArgumentNullException(nameof(boardStateFactory));
 }

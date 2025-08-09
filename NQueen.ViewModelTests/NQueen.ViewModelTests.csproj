@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <RunSettingsFilePath>D:\Repos\Code\NQueen\NQueen.ViewModelTests\bin\Debug\net9.0-windows\fine-code-coverage\coverage-tool-output\NQueen.ViewModelTests-fcc-mscodecoverage-generated.runsettings</RunSettingsFilePath>
   </PropertyGroup>
 
   <ItemGroup>
