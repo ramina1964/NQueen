@@ -112,6 +112,7 @@ public class SolverEngine(
                 throw new NotImplementedException();
         }
 
+        // Return solutions directly without redundant processing
         return Solutions.Select((s, index) => new Solution(s, index + 1));
     }
 
@@ -174,7 +175,7 @@ public class SolverEngine(
             var adjustedTotalSolutions = totalNoOfSolutions / scalingFactor;
 
             // Use linear scaling for progress calculation
-            var scaledTotalSolutions = Math.Max(adjustedTotalSolutions, 1);
+            var scaledTotalSolutions = Math.Max(adjustedTotalSolutions, 1); // Avoid division by zero
 
             // Calculate progress as a percentage and round to 0 decimal places
             var currentProgress = Math.Clamp(
@@ -237,15 +238,14 @@ public class SolverEngine(
             if (cancellationToken.IsCancellationRequested)
                 return;
 
-            var updateDTO = new SolutionUpdateDTO
+            // Avoid redundant updates to the solution manager
+            _solutionManager.UpdateSolutions(new SolutionUpdateDTO
             {
                 BoardSize = BoardSize,
                 SolutionMode = SolutionMode,
                 Solutions = Solutions,
                 QueenPositions = solution
-            };
-
-            _solutionManager.UpdateSolutions(updateDTO);
+            });
         }
     }
 
