@@ -22,13 +22,13 @@ public class SimulationOrchestrator : ISolver, IDisposable
         set => _solverEngine.IsSolverCanceled = value;
     }
 
-    public int DelayInMilliseconds
+    public int DelayInMillisec
     {
-        get => _solverEngine.DelayInMilliseconds;
-        set => _solverEngine.DelayInMilliseconds = value;
+        get => _solverEngine.DelayInMillisec;
+        set => _solverEngine.DelayInMillisec = value;
     }
 
-    public int ProgressValue
+    public double ProgressValue
     {
         get => _solverEngine.ProgressValue;
         set => _solverEngine.ProgressValue = value;
@@ -39,7 +39,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
     public event EventHandler<SolutionFoundEventArgs>
         SolutionFound = delegate { };
 
-    public event EventHandler<ProgressValueChangedWithTokenEventArgs>
+    public event EventHandler<ProgressChangedWithTokenEventArgs>
         ProgressValueChanged = delegate { };
 
     public async Task<SimulationResults> GetResultsForBoardAsync(
@@ -78,7 +78,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
 
     public void RaiseProgressValueChangedForTest(int progress, Guid token) =>
         ProgressValueChanged?.Invoke(this,
-            new ProgressValueChangedWithTokenEventArgs(progress, token));
+            new ProgressChangedWithTokenEventArgs(progress, token));
 
     private bool _disposed = false;
     private readonly SolverEngine _solverEngine;

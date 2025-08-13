@@ -18,9 +18,9 @@ public class SolverEngine(
         }
     }
 
-    public int DelayInMilliseconds { get; set; }
+    public int DelayInMillisec { get; set; }
 
-    public int ProgressValue { get; set; }
+    public double ProgressValue { get; set; }
 
     public int BoardSize => _board.BoardSize;
 
@@ -43,10 +43,10 @@ public class SolverEngine(
     public event EventHandler<SolutionFoundEventArgs> SolutionFound
         = delegate { };
 
-    public event EventHandler<ProgressValueChangedWithTokenEventArgs>
+    public event EventHandler<ProgressChangedWithTokenEventArgs>
         ProgressValueChanged = delegate { };
 
-    public void SetSimulationToken(Guid token) => _currentSimulationToken = token;
+    public void SetSimulationToken(Guid token) => _currentSimToken = token;
 
     public async Task<SimulationResults> GetResultsForBoardAsync(
         int boardSize,
@@ -117,7 +117,7 @@ public class SolverEngine(
 
     private async Task SolveNQueenForModeAsync(int colIndex, SolutionMode solutionMode, CancellationToken cancellationToken)
     {
-        var totalNoOfSolutions = NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode);
+        var totalNoOfSolutions = NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, solutionMode);
 
         while (colIndex != -1)
         {
@@ -143,7 +143,8 @@ public class SolverEngine(
             }
 
             QueenPositions[colIndex] = await BoardState.FindValidQueenPositionAsync(
-                colIndex, BoardSize, QueenPositions, cancellationToken, DelayInMilliseconds, DisplayMode);
+                colIndex, BoardSize, QueenPositions, cancellationToken,
+                DelayInMillisec, DisplayMode);
 
             if (QueenPositions[colIndex] == -1)
             {
@@ -154,40 +155,52 @@ public class SolverEngine(
             if (DisplayMode == DisplayMode.Visualize)
             {
                 QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(QueenPositions));
-                ReportProgress(totalNoOfSolutions);
+                ReportProgress(totalNoOfSolutions, solutionMode); // Pass solutionMode here
             }
 
             colIndex++;
         }
 
         // Ensure final progress update after all solutions are processed
-        ReportProgress(totalNoOfSolutions);
+        ReportProgress(totalNoOfSolutions, solutionMode);
     }
 
-    private void ReportProgress(int totalNoOfSolutions)
+    private void ReportProgress(int totalNoOfSolutions, SolutionMode mode)
     {
         if (totalNoOfSolutions > 0)
         {
-            // Calculate the current progress as a percentage
-            var currentProgress = (int)Math.Clamp(
-                (Solutions.Count / (double)totalNoOfSolutions) * 100, 0, 100);
+            // Adjust progress calculation based on mode
+            var scalingFactor = mode == SolutionMode.All ? 1.0 : 8.0;
+            var adjustedTotalSolutions = totalNoOfSolutions / scalingFactor;
 
-            Debug.WriteLine($"[ReportProgress] TotalSolutions={totalNoOfSolutions}," +
-                $"CurrentProgress={currentProgress}, LastReportedProgress={_lastReportedProgress}");
+            // Use linear scaling for progress calculation
+            var scaledTotalSolutions = Math.Max(adjustedTotalSolutions, 1);
 
-            // Trigger update if progress exceeds the threshold
-            var threshold = SimulationSettings.ProgressUpdateThresholdPercent;
-            
-            if (currentProgress - _lastReportedProgress >= threshold)
+            // Calculate progress as a percentage and round to 0 decimal places
+            var currentProgress = Math.Clamp(
+                Math.Round((Solutions.Count / scaledTotalSolutions) * 100, 0), 0, 100);
+
+            // Ensure progress doesn't reach 100% until the simulation is complete
+            if (Solutions.Count < totalNoOfSolutions)
+                currentProgress = Math.Min(currentProgress, 99);
+
+            // Time-based update: Ensure updates occur at least every configured interval
+            var now = DateTime.UtcNow;
+            var timeSinceLastUpdate = (now - _lastUpdateTime).TotalSeconds;
+
+            // Extract the condition into a local variable
+            var shouldUpdateProgress =
+                currentProgress - _lastReported >= SimulationSettings.ProgressThresholdPct ||
+                Solutions.Count == totalNoOfSolutions ||
+                timeSinceLastUpdate >= SimulationSettings.ProgressIntervalInSeconds;
+
+            // Trigger updates only when the condition is met
+            if (shouldUpdateProgress)
             {
-                _lastReportedProgress = currentProgress; // Update the last reported progress
-                ProgressValue = currentProgress; // Update the progress value
-                Debug.WriteLine($"[ReportProgress] Progress Updated: {currentProgress}%");
-
-                // Raise the ProgressValueChanged event
+                _lastReported = currentProgress;
+                _lastUpdateTime = now;
                 ProgressValueChanged?.Invoke(this,
-                    new ProgressValueChangedWithTokenEventArgs(
-                    currentProgress, _currentSimulationToken));
+                    new ProgressChangedWithTokenEventArgs(currentProgress, _currentSimToken));
             }
         }
     }
@@ -212,7 +225,7 @@ public class SolverEngine(
         Debug.WriteLine($"[AddSolutionAndNotify] Solutions.Count={Solutions.Count}");
 
         // Report progress after adding a solution
-        ReportProgress(NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode));
+        ReportProgress(NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode), SolutionMode); // Pass SolutionMode here
     }
 
     private async Task FindAllSolutions(int colIndex, CancellationToken cancellationToken)
@@ -272,15 +285,15 @@ public class SolverEngine(
 
     private BoardState _board = null!;
     private static readonly HashSet<int[]> _hashSet = [];
-    private Guid _currentSimulationToken = Guid.Empty;
-    private int _lastReportedProgress = 0;
+    private Guid _currentSimToken = Guid.Empty;
+    private double _lastReported = 0;
     private readonly ISolutionManager _solutionManager = solutionManager ??
             throw new ArgumentNullException(nameof(solutionManager));
 
     private CancellationTokenSource _cancellationTokenSource = new();
-
     private bool _disposed = false;
-
     private readonly Func<int, BoardState> _boardStateFactory = boardStateFactory ??
             throw new ArgumentNullException(nameof(boardStateFactory));
+
+    private DateTime _lastUpdateTime = DateTime.MinValue;
 }

@@ -9,11 +9,22 @@ public sealed partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(ProgressLabel))]
     private double _progressValue = 0;
 
+    private void UpdateProgress(double value, string label)
+    {
+        value = Math.Clamp(value, 0, 1);
+        _uiDispatcher.Invoke(() =>
+        {
+            Debug.WriteLine($"[MainViewModel] ProgressValue set to: {value}");
+            ProgressValue = value;
+            ProgressLabel = label;
+        });
+    }
+
     [ObservableProperty]
     private string _progressLabel = string.Empty;
 
     [ObservableProperty]
-    private Visibility _progressVisibility;
+    private Visibility _progressVisibility = Visibility.Hidden;
 
     partial void OnProgressVisibilityChanged(Visibility value) =>
         IsProgressBarOffscreen = value != Visibility.Visible;
@@ -47,7 +58,7 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnDelayInMillisecondsChanged(int value)
     {
         if (_solver != null)
-            _solver.DelayInMilliseconds = value;
+            _solver.DelayInMillisec = value;
     }
 
     [ObservableProperty]

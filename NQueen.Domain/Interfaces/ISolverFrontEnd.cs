@@ -2,13 +2,13 @@ namespace NQueen.Domain.Interfaces;
 
 public interface ISolverFrontEnd
 {
-    int DelayInMilliseconds { get; set; }
+    int DelayInMillisec { get; set; }
 
-    int ProgressValue { get; set; }
+    double ProgressValue { get; set; }
 
     event EventHandler<QueenPlacedEventArgs> QueenPlaced;
     event EventHandler<SolutionFoundEventArgs> SolutionFound;
-    event EventHandler<ProgressValueChangedWithTokenEventArgs> ProgressValueChanged;
+    event EventHandler<ProgressChangedWithTokenEventArgs> ProgressValueChanged;
 
     void SetSimulationToken(Guid token);
 }

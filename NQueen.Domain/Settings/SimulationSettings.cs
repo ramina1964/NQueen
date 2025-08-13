@@ -7,6 +7,8 @@ public static class SimulationSettings
     public const SolutionMode DefaultSolutionMode = SolutionMode.Unique;
     public const DisplayMode DefaultDisplayMode = DisplayMode.Hide;
 
-    // Todo: Find a better way of adapting ProgressUpdateThresholdPercent
-    public const int ProgressUpdateThresholdPercent = 4;
+    public static int ProgressThresholdPct { get; set; } = 5;
+
+    // Time interval for progress updates (in seconds)
+    public const int ProgressIntervalInSeconds = 5;
 }

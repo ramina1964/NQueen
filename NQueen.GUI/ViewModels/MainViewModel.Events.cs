@@ -49,7 +49,7 @@ public sealed partial class MainViewModel
     private void OnProgressValueChanged(ProgressValueChangedMessage message)
     {
         Debug.WriteLine($"[MainViewModel] ProgressValue received: {message.Value}");
-        UpdateProgress(message.Value / 100.0, $"{message.Value}%"); // Convert to percentage
+        UpdateProgress(message.Value / 100.0, $"{message.Value}%");
     }
 
     private void OnQueenPlaced(QueenPlacedMessage message)
@@ -75,20 +75,6 @@ public sealed partial class MainViewModel
         SelectedSolution = newSolution;
     }
 
-    private void UpdateProgress(double value, string label)
-    {
-        value = Math.Clamp(value, 0, 1);
-        _uiDispatcher.Invoke(() =>
-        {
-            Debug.WriteLine($"[MainViewModel] ProgressValue set to: {value}");
-            if (IsSingleRunning == false)
-            {
-                ProgressValue = value;
-                ProgressLabel = label;
-            }
-        });
-    }
-
     private void UpdateSolutionCount() =>
         NoOfSolutions = NumericUtility.IncrementFormattedNumber(NoOfSolutions);
 
@@ -112,7 +98,7 @@ public sealed partial class MainViewModel
         WeakReferenceMessenger.Default.Send(new SolutionFoundMessage(e.Solution));
 
     private void OnProgressValueChangedEvent(object? sender,
-        ProgressValueChangedWithTokenEventArgs e)
+        ProgressChangedWithTokenEventArgs e)
     {
         Debug.WriteLine($"[MainViewModel] OnProgressValueChangedEvent: Received Token={e.SimulationToken}, Current Token={_currentSimulationToken}");
         if (e.SimulationToken != _currentSimulationToken)
