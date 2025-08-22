@@ -58,13 +58,15 @@ public class SolverEngine(
         DisplayMode = displayMode;
 
         // Pass the cancellation token to the async workflow
-        return await Task.Run(() => GetResultsForCurrentConfigurationAsync(_cancellationTokenSource.Token), _cancellationTokenSource.Token);
+        return await Task.Run(() => GetResultsForCurrentConfigurationAsync(
+            _cancellationTokenSource.Token), _cancellationTokenSource.Token);
     }
 
     public async Task<SimulationResults> GetResultsForCurrentConfigurationAsync()
         => await GetResultsForCurrentConfigurationAsync(_cancellationTokenSource.Token);
 
-    public async Task<SimulationResults> GetResultsForCurrentConfigurationAsync(CancellationToken cancellationToken)
+    public async Task<SimulationResults> GetResultsForCurrentConfigurationAsync(
+        CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
         var solutions = await SolveNQueenProblem(cancellationToken);
@@ -73,9 +75,7 @@ public class SolverEngine(
 
         return new SimulationResults(solutions)
         {
-            BoardSize = BoardSize,
             Solutions = solutions,
-            NoOfSolutions = solutions.Count(),
             ElapsedTimeInSec = elapsedTimeInSec
         };
     }
@@ -112,8 +112,13 @@ public class SolverEngine(
                 throw new NotImplementedException();
         }
 
-        // Return solutions directly without redundant processing
-        return Solutions.Select((s, index) => new Solution(s, index + 1));
+        var result = new List<Solution>();
+        var index = 1;
+        foreach (var solution in Solutions)
+        {
+            result.Add(new Solution(solution, index++));
+        }
+        return result;
     }
 
     private async Task SolveNQueenForModeAsync(int colIndex, SolutionMode solutionMode, CancellationToken cancellationToken)
@@ -219,7 +224,7 @@ public class SolverEngine(
             BoardSize = BoardSize,
             SolutionMode = SolutionMode,
             Solutions = Solutions,
-            QueenPositions = (int[])QueenPositions.Clone()
+            QueenPositions = [.. QueenPositions]
         };
         _solutionManager.UpdateSolutions(updateDTO);
 
@@ -233,7 +238,7 @@ public class SolverEngine(
     {
         await SolveNQueenForModeAsync(colIndex, SolutionMode.Unique, cancellationToken);
 
-        foreach (var solution in Solutions.ToList())
+        foreach (var solution in Solutions)
         {
             if (cancellationToken.IsCancellationRequested)
                 return;

@@ -95,7 +95,7 @@ public partial class DispatchCommands(
         var simulationResult = await _solver
             .GetResultsForBoardAsync(BoardSize, SolutionMode, DisplayMode.Hide);
 
-        var noOfSolutions = simulationResult.NoOfSolutions;
+        var noOfSolutions = simulationResult.Solutions.Count();
         var elapsedTime = simulationResult.ElapsedTimeInSec;
         if (noOfSolutions == 0)
         {

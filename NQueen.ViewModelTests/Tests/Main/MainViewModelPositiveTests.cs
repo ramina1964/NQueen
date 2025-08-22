@@ -235,7 +235,7 @@ public class MainViewModelPositiveTests : IDisposable
 
         dict.Should().ContainKey("Number of Solutions");
         dict["Number of Solutions"].Should()
-            .Be(simulationResults.NoOfSolutions.ToString());
+            .Be(simulationResults.Solutions.Count().ToString());
 
         dict.Should().ContainKey("Max Number of Solutions Included");
         dict["Max Number of Solutions Included"].Should()
