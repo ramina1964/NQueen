@@ -130,7 +130,7 @@ public class MainViewModelPositiveTests : IDisposable
             {
                 if (solutionMode == SolutionMode.Single)
                     await Task.Delay(10);
-                return new SimulationResults([new Solution([1, 3, 0, 2])]);
+                return new SimulationResults([new Solution([1, 3, 0, 2])], 1.0);
             });
 
         var mainVm = new MainViewModel(
