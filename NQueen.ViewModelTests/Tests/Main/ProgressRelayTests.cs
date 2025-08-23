@@ -8,7 +8,7 @@ public class ProgressRelayTests
         // Arrange
         var viewModel = TestHelpers.CreateMainViewModel();
 
-        int testProgress = 42;
+        int testProgress = 42; // Updated to int
 
         // Act: Simulate the message as if sent by the backend event handler
         WeakReferenceMessenger.Default
