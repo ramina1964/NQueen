@@ -73,11 +73,7 @@ public class SolverEngine(
         stopwatch.Stop();
         var elapsedTimeInSec = Math.Round((double)stopwatch.Elapsed.TotalSeconds, 1);
 
-        return new SimulationResults(solutions)
-        {
-            Solutions = solutions,
-            ElapsedTimeInSec = elapsedTimeInSec
-        };
+        return new SimulationResults(solutions, elapsedTimeInSec);
     }
 
     #endregion

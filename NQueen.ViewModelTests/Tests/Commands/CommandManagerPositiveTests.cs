@@ -54,7 +54,9 @@ public class CommandManagerPositiveTests : IDisposable
         var mainVm = TestHelpers.CreateMainViewModelWithBoardSizeText(
             boardSizeText, solutionMode, displayMode);
 
-        mainVm.SimulationResults = new SimulationResults([new([1, 3, 0, 2], 1)]);
+        var queenPositions = new int[] { 1, 3, 0, 2 };
+        var solution = new Solution(queenPositions, 1);
+        mainVm.SimulationResults = new SimulationResults([solution], 0.0);
         mainVm.NoOfSolutions = "1";
         mainVm.IsIdle = true;
 

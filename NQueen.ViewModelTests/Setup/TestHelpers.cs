@@ -21,7 +21,7 @@ public static class TestHelpers
         mainViewModel.BoardSizeText = boardSize.ToString();
         mainViewModel.SolutionMode = solutionMode;
         mainViewModel.DisplayMode = displayMode;
-        mainViewModel.SimulationResults = simulationResults ?? new SimulationResults([]);
+        mainViewModel.SimulationResults = simulationResults ?? new SimulationResults([], 0);
 
         return mainViewModel;
     }
@@ -40,7 +40,8 @@ public static class TestHelpers
         mainViewModel.BoardSizeText = boardSize.ToString();
         mainViewModel.SolutionMode = solutionMode;
         mainViewModel.DisplayMode = displayMode;
-        mainViewModel.SimulationResults = simulationResults ?? new SimulationResults([]);
+        mainViewModel.SimulationResults = simulationResults ??
+            new SimulationResults([], 0);
 
         return mainViewModel;
     }
@@ -93,7 +94,8 @@ public static class TestHelpers
         mockSolver.Setup(
             s => s.GetResultsForBoardAsync(
                         It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
-                  .ReturnsAsync(new SimulationResults(solutions));
+                  .ReturnsAsync(new SimulationResults(solutions, 0));
+        
         return mockSolver;
     }
 
