@@ -8,8 +8,7 @@ public static class SolutionFormatter
         int noOfQueensPerLine = 40)
     {
         var columnOrdered = positions
-            .OrderBy(p => p.ColumnIndex)
-            .ToList();
+            .OrderBy(p => p.ColumnIndex);
 
         var lines = SplitIntoLines(columnOrdered, noOfQueensPerLine);
 
@@ -26,11 +25,23 @@ public static class SolutionFormatter
     }
 
     private static List<List<Position>> SplitIntoLines(
-        List<Position> positions, int lineLength)
+        IEnumerable<Position> positions, int lineLength)
     {
         var lines = new List<List<Position>>();
-        for (int i = 0; i < positions.Count; i += lineLength)
-            lines.Add([.. positions.Skip(i).Take(lineLength)]);
+        var currentLine = new List<Position>();
+
+        foreach (var position in positions)
+        {
+            currentLine.Add(position);
+            if (currentLine.Count == lineLength)
+            {
+                lines.Add(currentLine);
+                currentLine = new List<Position>();
+            }
+        }
+
+        if (currentLine.Count > 0)
+            lines.Add(currentLine);
 
         return lines;
     }

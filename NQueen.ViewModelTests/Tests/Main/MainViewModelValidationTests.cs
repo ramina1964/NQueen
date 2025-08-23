@@ -14,8 +14,7 @@ public class MainViewModelValidationTests
 
         // Act
         var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText))
-            .Cast<string>()
-            .ToList();
+            .Cast<string>();
 
         // Assert
         if (isValid)

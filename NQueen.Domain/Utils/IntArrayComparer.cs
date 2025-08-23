@@ -4,16 +4,19 @@ public readonly struct IntArrayComparer : IEqualityComparer<int[]>, IComparer<in
 {
     public bool Equals(int[]? x, int[]? y)
     {
-        if (ReferenceEquals(x, y))
-            return true;
+        if (ReferenceEquals(x, y)) return true;
+        if (x is null || y is null || x.Length != y.Length) return false;
 
-        if (x is null || y is null)
+        // Compare only the first, middle, and last elements for early exit
+        if (x[0] != y[0] || x[^1] != y[^1] || x[x.Length / 2] != y[y.Length / 2])
             return false;
 
-        if (x.Length != y.Length)
-            return false;
-
-        return x.AsSpan().SequenceEqual(y.AsSpan());
+        // Fallback to full comparison
+        for (int i = 0; i < x.Length; i++)
+        {
+            if (x[i] != y[i]) return false;
+        }
+        return true;
     }
 
     public int GetHashCode(int[] obj)
@@ -24,15 +27,14 @@ public readonly struct IntArrayComparer : IEqualityComparer<int[]>, IComparer<in
         {
             var hash = 17;
 
-            // Combine the first few elements
-            var takeCount = Math.Min(3, obj.Length);
-            for (var i = 0; i < takeCount; i++)
-                hash = hash * 31 + obj[i];
+            // Combine the first, middle, and last elements
+            if (obj.Length > 0) hash = hash * 31 + obj[0];
+            if (obj.Length > 1) hash = hash * 31 + obj[obj.Length / 2];
+            if (obj.Length > 2) hash = hash * 31 + obj[^1];
 
-            // Combine the last few elements
-            var skipCount = Math.Max(0, obj.Length - 3);
-            for (var i = skipCount; i < obj.Length; i++)
-                hash = hash * 31 + obj[i];
+            // Optionally include more elements for better distribution
+            if (obj.Length > 3) hash = hash * 31 + obj[1];
+            if (obj.Length > 4) hash = hash * 31 + obj[obj.Length - 2];
 
             return hash;
         }
@@ -43,10 +45,10 @@ public readonly struct IntArrayComparer : IEqualityComparer<int[]>, IComparer<in
         ArgumentNullException.ThrowIfNull(x, nameof(x));
         ArgumentNullException.ThrowIfNull(y, nameof(y));
 
-        var length = Math.Min(x.Length, y.Length);
-        for (var i = 0; i < length; i++)
+        int length = Math.Min(x.Length, y.Length);
+        for (int i = 0; i < length; i++)
         {
-            var comparison = x[i].CompareTo(y[i]);
+            int comparison = x[i].CompareTo(y[i]);
             if (comparison != 0) return comparison;
         }
 

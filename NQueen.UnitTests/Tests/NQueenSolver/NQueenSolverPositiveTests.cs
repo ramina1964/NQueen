@@ -43,8 +43,7 @@ public class NQueenSolverPositiveTests : IDisposable
         // Act
         var actualSolutions = await _solver.GetResultsForBoardAsync(boardSize, solutionMode);
         var actualSolutionsList = actualSolutions.Solutions
-            .Select(solution => solution.QueenPositions.ToArray())
-            .ToList();
+            .Select(solution => solution.QueenPositions.ToArray());
 
         // Assert
         Assert.Equal(
@@ -65,8 +64,7 @@ public class NQueenSolverPositiveTests : IDisposable
         // Act
         var actualSolutions = await _solver.GetResultsForBoardAsync(boardSize, solutionMode);
         var actualSolutionsList = actualSolutions.Solutions
-            .Select(solution => solution.QueenPositions.ToArray())
-            .ToList();
+            .Select(solution => solution.QueenPositions.ToArray());
 
         // Assert
         Assert.Equal(

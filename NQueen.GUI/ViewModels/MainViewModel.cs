@@ -57,8 +57,7 @@ public sealed partial class MainViewModel :
     {
         if (string.IsNullOrEmpty(propertyName))
             return _errors.Values
-                .SelectMany(errors => errors)
-                .ToList();
+                .SelectMany(errors => errors);
 
         return _errors.TryGetValue(propertyName, out var propertyErrors)
             ? propertyErrors
