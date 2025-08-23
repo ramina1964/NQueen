@@ -123,8 +123,7 @@ public class SolverEngine(
 
     private async Task SolveNQueenForModeAsync(int colIndex, SolutionMode solutionMode, CancellationToken cancellationToken)
     {
-        var totalNoOfSolutions = NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, solutionMode);
-
+        var totalNoOfSolutions = ExpectedSolutionCount.GetCount(BoardSize, solutionMode);
         while (colIndex != -1)
         {
             if (cancellationToken.IsCancellationRequested)
@@ -231,7 +230,7 @@ public class SolverEngine(
         Debug.WriteLine($"[AddSolutionAndNotify] Solutions.Count={Solutions.Count}");
 
         // Report progress after adding a solution
-        ReportProgress(NQueenSolutionCounts.GetTotalNumberOfSolutions(BoardSize, SolutionMode), SolutionMode); // Pass SolutionMode here
+        ReportProgress(ExpectedSolutionCount.GetCount(BoardSize, SolutionMode), SolutionMode);
     }
 
     private async Task FindAllSolutions(int colIndex, CancellationToken cancellationToken)

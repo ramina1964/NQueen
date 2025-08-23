@@ -9,7 +9,8 @@ public sealed partial class MainViewModel :
         IDispatcher dispatcher,
         ISaveFileDialogService saveFileService)
     {
-        _solver = solver;
+        _solver = solver ??
+            throw new ArgumentNullException(nameof(solver));
 
         _uiDispatcher = dispatcher ??
             throw new ArgumentNullException(nameof(dispatcher));

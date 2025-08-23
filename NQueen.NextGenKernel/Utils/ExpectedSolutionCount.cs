@@ -1,17 +1,23 @@
 ﻿namespace NQueen.NextGenKernel.Utils;
 
-public static class NQueenSolutionCounts
+public static class ExpectedSolutionCount
 {
-    public static int GetTotalNumberOfSolutions(int boardSize, SolutionMode solutionMode) =>
+    public static int GetCount(int boardSize, SolutionMode solutionMode) =>
         solutionMode switch
         {
-            SolutionMode.Unique => _uniqueSolutions.TryGetValue(boardSize, out var unique) ? unique : 0,
-            SolutionMode.All => _allSolutions.TryGetValue(boardSize, out var all) ? all : 0,
+            SolutionMode.Unique => _uniqueSols.TryGetValue(boardSize, out var uniqueCount)
+                ? uniqueCount
+                : 0,
+
+            SolutionMode.All => _allSols.TryGetValue(boardSize, out var allCount)
+                ? allCount
+                : 0,
+
             _ => 0
         };
 
     // Unique no of solutions
-    private static readonly Dictionary<int, int> _uniqueSolutions = new()
+    private static readonly Dictionary<int, int> _uniqueSols = new()
     {
         { 1, 1 },
         { 2, 0 },
@@ -33,7 +39,7 @@ public static class NQueenSolutionCounts
     };
 
     // All no of solutions
-    private static readonly Dictionary<int, int> _allSolutions = new()
+    private static readonly Dictionary<int, int> _allSols = new()
     {
         { 1, 1 },
         { 2, 0 },
