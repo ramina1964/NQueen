@@ -34,7 +34,7 @@ public readonly struct IntArrayComparer : IEqualityComparer<int[]>, IComparer<in
 
             // Optionally include more elements for better distribution
             if (obj.Length > 3) hash = hash * 31 + obj[1];
-            if (obj.Length > 4) hash = hash * 31 + obj[obj.Length - 2];
+            if (obj.Length > 4) hash = hash * 31 + obj[^2];
 
             return hash;
         }

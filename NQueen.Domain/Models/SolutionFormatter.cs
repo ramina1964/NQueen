@@ -36,7 +36,7 @@ public static class SolutionFormatter
             if (currentLine.Count == lineLength)
             {
                 lines.Add(currentLine);
-                currentLine = new List<Position>();
+                currentLine = [];
             }
         }
 
