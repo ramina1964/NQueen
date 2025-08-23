@@ -218,15 +218,10 @@ public class SolverEngine(
 
     private void AddSolutionAndNotify()
     {
-        var updateDTO = new SolutionUpdateDTO
-        {
-            BoardSize = BoardSize,
-            SolutionMode = SolutionMode,
-            Solutions = Solutions,
-            QueenPositions = [.. QueenPositions]
-        };
+        var updateDTO = new SolutionUpdateDTO(BoardSize, SolutionMode,
+            [.. QueenPositions], Solutions);
+        
         _solutionManager.UpdateSolutions(updateDTO);
-
         Debug.WriteLine($"[AddSolutionAndNotify] Solutions.Count={Solutions.Count}");
 
         // Report progress after adding a solution
@@ -243,13 +238,10 @@ public class SolverEngine(
                 return;
 
             // Avoid redundant updates to the solution manager
-            _solutionManager.UpdateSolutions(new SolutionUpdateDTO
-            {
-                BoardSize = BoardSize,
-                SolutionMode = SolutionMode,
-                Solutions = Solutions,
-                QueenPositions = solution
-            });
+            var updateDTO = new SolutionUpdateDTO(BoardSize, SolutionMode,
+                solution, Solutions);
+
+            _solutionManager.UpdateSolutions(updateDTO);
         }
     }
 

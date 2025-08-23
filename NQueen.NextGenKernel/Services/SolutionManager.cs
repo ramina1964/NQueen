@@ -8,7 +8,8 @@ public class SolutionManager : ISolutionManager
         SolutionsUpdated = _ => { };
 
         // Initialize with a default instance.
-        UpdateDTO = new SolutionUpdateDTO();
+        UpdateDTO = new SolutionUpdateDTO(0, SolutionMode.Single, [],
+            new HashSet<int[]>(new IntArrayComparer()));
     }
 
     public SolutionManager(SolutionUpdateDTO dto)
