@@ -1,5 +1,6 @@
 ﻿namespace NQueen.Domain.Models;
 
+// Todo: Consider making this a record type, as well as reducing its properties.
 public class Solution
 {
     public Solution(int[] queenPositions, int? id = null)
