@@ -1,4 +1,4 @@
-namespace NQueen.Domain.Utils;
+﻿namespace NQueen.Domain.Models;
 
 public readonly struct IntArrayComparer : IEqualityComparer<int[]>, IComparer<int[]>
 {
@@ -23,21 +23,8 @@ public readonly struct IntArrayComparer : IEqualityComparer<int[]>, IComparer<in
     {
         if (obj is null) return 0;
 
-        unchecked
-        {
-            var hash = 17;
-
-            // Combine the first, middle, and last elements
-            if (obj.Length > 0) hash = hash * 31 + obj[0];
-            if (obj.Length > 1) hash = hash * 31 + obj[obj.Length / 2];
-            if (obj.Length > 2) hash = hash * 31 + obj[^1];
-
-            // Optionally include more elements for better distribution
-            if (obj.Length > 3) hash = hash * 31 + obj[1];
-            if (obj.Length > 4) hash = hash * 31 + obj[^2];
-
-            return hash;
-        }
+        // Use ComputeArrayHash logic for hashing
+        return ComputeArrayHash(obj);
     }
 
     public int Compare(int[]? x, int[]? y)
@@ -53,5 +40,19 @@ public readonly struct IntArrayComparer : IEqualityComparer<int[]>, IComparer<in
         }
 
         return x.Length.CompareTo(y.Length);
+    }
+
+    // Custom hash function for arrays
+    private static int ComputeArrayHash(int[] array)
+    {
+        unchecked
+        {
+            int hash = 17;
+            foreach (var item in array)
+            {
+                hash = hash * 31 + item;
+            }
+            return hash;
+        }
     }
 }
