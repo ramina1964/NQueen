@@ -2,9 +2,6 @@
 
 public static class TestServiceCollectionExtensions
 {
-    /// <summary>
-    /// Initializes the DI container for tests, using the real SolverEngine.
-    /// </summary>
     public static ServiceProvider InitializeForTests()
     {
         var services = new ServiceCollection();
@@ -20,20 +17,18 @@ public static class TestServiceCollectionExtensions
 
         // Register SolverEngine as both ISolver and ISolverBackEnd
         services.AddSingleton<ISolver, SolverEngine>();
-        services.AddSingleton<ISolverBackEnd>(sp => (ISolverBackEnd)sp.GetRequiredService<ISolver>());
+        services.AddSingleton<ISolverBackEnd>(sp => sp.GetRequiredService<ISolver>());
 
         services.AddTransient<SimulationOrchestrator>();
 
         // Register shared ViewModels
         services.AddNQueenViewModels();
-
+        services.AddSingleton<ISolutionFormatter, TestSolutionFormatter>();
+        
         // Build and return the service provider
         return services.BuildServiceProvider();
     }
 
-    /// <summary>
-    /// Initializes the DI container for tests, using a provided mock ISolver.
-    /// </summary>
     public static ServiceProvider InitializeForTestsWithMock(ISolver mockSolver)
     {
         var services = new ServiceCollection();
@@ -54,6 +49,7 @@ public static class TestServiceCollectionExtensions
 
         // Register shared ViewModels
         services.AddNQueenViewModels();
+        services.AddSingleton<ISolutionFormatter, TestSolutionFormatter>();
 
         // Build and return the service provider
         return services.BuildServiceProvider();

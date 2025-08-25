@@ -9,7 +9,8 @@ public class MainViewModelValidationTests
         string? boardSizeText, bool isValid, string? expectedErrorKey)
     {
         // Arrange
-        var mainVm = TestHelpers.CreateMainViewModel();
+        var mockFormatter = new Mock<ISolutionFormatter>().Object;
+        var mainVm = TestHelpers.CreateMainViewModel(solutionFormatter: mockFormatter);
         mainVm.BoardSizeText = boardSizeText!;
 
         // Act
@@ -51,6 +52,7 @@ public class MainViewModelValidationTests
         string boardSizeText, SolutionMode solutionMode)
     {
         // Arrange
+        var mockFormatter = new Mock<ISolutionFormatter>().Object;
         var mainVm = TestHelpers.CreateMainViewModelWithBoardSizeText(
             boardSizeText, solutionMode);
 
@@ -71,6 +73,7 @@ public class MainViewModelValidationTests
         string boardSizeText, SolutionMode solutionMode, bool isValid, string? expectedErrorKey)
     {
         // Arrange
+        var mockFormatter = new Mock<ISolutionFormatter>().Object;
         var mainVm = TestHelpers.CreateMainViewModel();
         mainVm.SolutionMode = solutionMode;
         mainVm.BoardSizeText = boardSizeText;
@@ -112,6 +115,7 @@ public class MainViewModelValidationTests
         SolutionMode finalSolutionMode)
     {
         // Arrange
+        var mockFormatter = new Mock<ISolutionFormatter>().Object;
         var mainVm = TestHelpers.CreateMainViewModel();
         mainVm.SolutionMode = originalSolutionMode;
         mainVm.BoardSizeText = originalBoardSizeText;
@@ -133,6 +137,7 @@ public class MainViewModelValidationTests
     public void ValidationError_ShouldClear_WhenInputBecomesValid()
     {
         // Arrange
+        var mockFormatter = new Mock<ISolutionFormatter>().Object;
         var mainVm = TestHelpers.CreateMainViewModel();
         mainVm.BoardSizeText = "abc";
 
@@ -158,6 +163,7 @@ public class MainViewModelValidationTests
         SolutionMode invalidMode, SolutionMode validMode, int expectedBoardSize)
     {
         // Arrange
+        var mockFormatter = new Mock<ISolutionFormatter>().Object;
         var mainVm = TestHelpers.CreateMainViewModel();
         mainVm.SolutionMode = invalidMode;
         mainVm.BoardSizeText = boardSizeText;
@@ -183,6 +189,7 @@ public class MainViewModelValidationTests
         string boardSizeText, SolutionMode validMode, SolutionMode invalidMode)
     {
         // Arrange: Start with a valid mode and board size
+        var mockFormatter = new Mock<ISolutionFormatter>().Object;
         var mainVm = TestHelpers.CreateMainViewModel();
         mainVm.SolutionMode = validMode;
         mainVm.BoardSizeText = boardSizeText;

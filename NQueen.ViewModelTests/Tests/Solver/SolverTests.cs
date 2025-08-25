@@ -10,7 +10,7 @@ public class SolverTests
         var solver = new Mock<ISolverBackEnd>();
         solver.Setup(s => s.GetResultsForBoardAsync(
                 It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
-            .ReturnsAsync(new SimulationResults([new Solution([1, 3, 0, 2])], 0.0));
+            .ReturnsAsync(new SimulationResults([new Solution(new int[] { 0, 1, 2 }, new DefaultSolutionFormatter(), null)], 0.0));
 
         // Act
         var results = await solver.Object.GetResultsForBoardAsync(

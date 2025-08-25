@@ -4,10 +4,9 @@ public class LazyPositionList : IReadOnlyList<Position>
 {
     private readonly int[] _queenPositions;
 
-    public LazyPositionList(int[] queenPositions)
-    {
-        _queenPositions = queenPositions ?? throw new ArgumentNullException(nameof(queenPositions));
-    }
+    public LazyPositionList(int[] queenPositions) =>
+        _queenPositions = queenPositions ??
+            throw new ArgumentNullException(nameof(queenPositions));
 
     public Position this[int index] => new(index, _queenPositions[index]);
 

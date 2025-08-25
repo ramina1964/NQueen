@@ -7,6 +7,7 @@ public static class DependencyInjectionConfig
         // Register application services
         services.AddNextGenNQueenServices();
         services.AddScoped<ISolverBackEnd, SimulationOrchestrator>();
+        services.AddSingleton<ISolutionFormatter, TestSolutionFormatter>();
 
         return services;
     }
@@ -14,9 +15,7 @@ public static class DependencyInjectionConfig
     // Todo: Consider adding test-specific services here, or removing it.
     public static IServiceCollection AddTestServices(this IServiceCollection services)
     {
-        // Register test-specific services (if any)
-        // Example: Mock services or test utilities
-        
+        // Register test-specific services
         return services;
     }
 }

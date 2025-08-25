@@ -3,7 +3,7 @@ global using FluentAssertions;
 global using Microsoft.Extensions.DependencyInjection;
 global using Moq;
 global using NQueen.Domain.Enums;
-global using NQueen.Domain.EventArgs;
+global using NQueen.Domain.Formatters;
 global using NQueen.Domain.Interfaces;
 global using NQueen.Domain.Models;
 global using NQueen.Domain.Settings;
@@ -18,9 +18,8 @@ global using NQueen.Shared.Utils;
 global using NQueen.TestShared.Constants;
 global using NQueen.TestShared.Data;
 global using NQueen.ViewModelTests.Helpers;
+global using NQueen.ViewModelTests.Mocks;
 global using NQueen.ViewModelTests.Setup;
 global using System.ComponentModel;
 global using System.Windows;
 global using System.Windows.Threading;
-
-

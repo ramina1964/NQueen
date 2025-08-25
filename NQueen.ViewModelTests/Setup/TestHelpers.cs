@@ -13,10 +13,11 @@ public static class TestHelpers
         SolutionMode solutionMode = SolutionMode.Single,
         DisplayMode displayMode = DisplayMode.Hide,
         SimulationResults? simulationResults = null,
-        ISolutionFormatter? solutionFormatter = null) // Add ISolutionFormatter parameter
+        ISolutionFormatter? solutionFormatter = null)
     {
         var serviceProvider = CreateServiceProvider();
-        solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>(); // Resolve ISolutionFormatter if not provided
+        solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>();
+
         var mainViewModel = new MainViewModel(
             serviceProvider.GetRequiredService<ISolver>(),
             serviceProvider.GetRequiredService<IDispatcher>(),
@@ -38,15 +39,16 @@ public static class TestHelpers
         SolutionMode solutionMode = SolutionMode.Single,
         DisplayMode displayMode = DisplayMode.Hide,
         SimulationResults? simulationResults = null,
-        ISolutionFormatter? solutionFormatter = null) // Add ISolutionFormatter parameter
+        ISolutionFormatter? solutionFormatter = null)
     {
         var serviceProvider = CreateServiceProviderWithMock(mockSolver);
-        solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>(); // Resolve ISolutionFormatter if not provided
+        solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>();
+
         var mainViewModel = new MainViewModel(
             mockSolver,
             serviceProvider.GetRequiredService<IDispatcher>(),
             serviceProvider.GetRequiredService<ISaveFileDialogService>(),
-            solutionFormatter); // Pass ISolutionFormatter
+            solutionFormatter);
 
         // Configure the MainViewModel instance
         mainViewModel.BoardSizeText = boardSize.ToString();
@@ -61,9 +63,10 @@ public static class TestHelpers
         string boardSizeText,
         SolutionMode solutionMode = SolutionMode.Single,
         DisplayMode displayMode = DisplayMode.Hide,
-        ISolutionFormatter? solutionFormatter = null) // Add ISolutionFormatter parameter
+        ISolutionFormatter? solutionFormatter = null)
     {
-        var mainVm = CreateMainViewModel(solutionFormatter: solutionFormatter); // Pass ISolutionFormatter
+        solutionFormatter ??= new TestSolutionFormatter();
+        var mainVm = CreateMainViewModel(solutionFormatter: solutionFormatter);
         mainVm.SolutionMode = solutionMode;
         mainVm.BoardSizeText = boardSizeText;
         mainVm.DisplayMode = displayMode;
@@ -75,26 +78,27 @@ public static class TestHelpers
         int boardSize,
         SolutionMode solutionMode = SolutionMode.Single,
         DisplayMode displayMode = DisplayMode.Hide,
-        ISolutionFormatter? solutionFormatter = null) // Add ISolutionFormatter parameter
+        ISolutionFormatter? solutionFormatter = null)
     {
         return CreateMainViewModelWithBoardSizeText(
-            boardSize.ToString(), solutionMode, displayMode, solutionFormatter); // Pass ISolutionFormatter
+            boardSize.ToString(), solutionMode, displayMode, solutionFormatter);
     }
 
     public static MainViewModel CreateMainViewModelWithSimulationResults(
         int boardSize,
         SolutionMode solutionMode,
         MockSaveFileDialogService saveFileDialogService,
-        ISolutionFormatter? solutionFormatter = null) // Add ISolutionFormatter parameter
+        ISolutionFormatter? solutionFormatter = null)
     {
         var serviceProvider = CreateServiceProvider();
         var solver = serviceProvider.GetRequiredService<ISolver>();
-        solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>(); // Resolve ISolutionFormatter if not provided
+        
+        solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>();
         var mainVm = new MainViewModel(
             solver,
             new TestDispatcher(),
             saveFileDialogService,
-            solutionFormatter) // Pass ISolutionFormatter
+            solutionFormatter)
         {
             BoardSizeText = boardSize.ToString(),
             SolutionMode = solutionMode,

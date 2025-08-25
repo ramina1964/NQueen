@@ -20,6 +20,9 @@ public static class GuiServiceCollectionExtensions
         services.AddTransient<InputPanelUserControl>();
         services.AddTransient<SimulationPanelUserControl>();
 
+        // Register Default formatter
+        services.AddSingleton<ISolutionFormatter, DefaultSolutionFormatter>();
+
         // Other GUI-specific registrations...
         return services.BuildServiceProvider();
     }
