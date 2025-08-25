@@ -6,7 +6,7 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        _serviceProvider = Infrastructure.GuiServiceCollectionExtensions.Initialize();
+        _serviceProvider = GuiServiceCollectionExtensions.Initialize();
         var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         mainWindow.Show();
     }

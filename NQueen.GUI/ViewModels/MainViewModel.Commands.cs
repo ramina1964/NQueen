@@ -75,7 +75,7 @@ public sealed partial class MainViewModel
             ExtractCorrectNoOfSols();
             NoOfSolutions = $"{SimulationResults.Solutions.Count(),0:N0}";
             ElapsedTimeInSec = $"{SimulationResults.ElapsedTimeInSec,0:N1}";
-            SelectedSolution = ObservableSolutions.FirstOrDefault() ?? new Solution([], null);
+            SelectedSolution = ObservableSolutions.FirstOrDefault() ?? new Solution([], null!);
             MemoryUsage = NumericUtility.UpdateMemoryUsage();
 
         }

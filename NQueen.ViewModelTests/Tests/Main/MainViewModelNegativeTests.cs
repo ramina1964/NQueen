@@ -20,8 +20,12 @@ public class MainViewModelNegativeTests
     [Fact]
     public void MainViewModel_ShouldThrowException_WhenSolverIsNull()
     {
+        // Arrange
+        var mockFormatter = new Mock<ISolutionFormatter>().Object;
+
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new MainViewModel(null!, new TestDispatcher(), new MockSaveFileDialogService()));
+            new MainViewModel(null!, new TestDispatcher(),
+            new MockSaveFileDialogService(), mockFormatter));
     }
 }

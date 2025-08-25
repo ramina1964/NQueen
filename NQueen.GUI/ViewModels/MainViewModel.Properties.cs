@@ -1,4 +1,6 @@
-﻿namespace NQueen.GUI.ViewModels;
+﻿using NQueen.Domain.Formatters;
+
+namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -68,7 +70,7 @@ public sealed partial class MainViewModel : ObservableObject
     private ObservableCollection<Solution> _observableSolutions = [];
 
     [ObservableProperty]
-    private Solution _selectedSolution = new([], null);
+    private Solution _selectedSolution = new([0], new DefaultSolutionFormatter());
 
     partial void OnSelectedSolutionChanged(Solution value)
     {

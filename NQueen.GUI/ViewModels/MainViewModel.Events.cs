@@ -69,7 +69,7 @@ public sealed partial class MainViewModel
     private void OnSolutionFound(SolutionFoundMessage message)
     {
         var solutionId = ObservableSolutions.Count + 1;
-        var newSolution = new Solution(message.Solution, solutionId);
+        var newSolution = new Solution(message.Solution, _solutionFormatter, solutionId);
         UpdateSolutionCount();
         AddSolutionToObservable(newSolution);
         SelectedSolution = newSolution;

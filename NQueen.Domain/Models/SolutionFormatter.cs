@@ -1,9 +1,9 @@
 namespace NQueen.Domain.Models;
 
-public static class SolutionFormatter
+public class SolutionFormatter : ISolutionFormatter
 {
-    public static string FormatSolutions(
-        List<Position> positions,
+    public string FormatSolutions(
+        IReadOnlyList<Position> positions,
         IndexingType indexingType = IndexingType.OneBased,
         int noOfQueensPerLine = 40)
     {
@@ -46,8 +46,10 @@ public static class SolutionFormatter
         return lines;
     }
 
-    private static string FormatPosition(Position p, IndexingType indexingType) =>
-        indexingType == IndexingType.ZeroBased
+    private static string FormatPosition(Position p, IndexingType indexingType)
+    {
+        return indexingType == IndexingType.ZeroBased
             ? $"({p.ColumnIndex},{p.RowIndex})"
             : $"({p.ColumnIndex + 1},{p.RowIndex + 1})";
+    }
 }

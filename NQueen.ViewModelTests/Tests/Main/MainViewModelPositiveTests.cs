@@ -11,8 +11,9 @@ public class MainViewModelPositiveTests : IDisposable
         int boardSize, SolutionMode solutionMode, DisplayMode displayMode)
     {
         // Arrange
+        var mockFormatter = new Mock<ISolutionFormatter>().Object;
         var mainVm = TestHelpers.CreateMainViewModel(
-            boardSize, solutionMode, displayMode);
+            boardSize, solutionMode, displayMode, null, mockFormatter); // Pass mockFormatter
 
         // Act
         await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
@@ -27,8 +28,9 @@ public class MainViewModelPositiveTests : IDisposable
         int boardSize, SolutionMode solutionMode, DisplayMode displayMode)
     {
         // Arrange
+        var mockFormatter = new Mock<ISolutionFormatter>().Object;
         var mainVm = TestHelpers.CreateMainViewModel(
-            boardSize, solutionMode, displayMode);
+            boardSize, solutionMode, displayMode, null, mockFormatter);
 
         // Act
         await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
@@ -40,14 +42,17 @@ public class MainViewModelPositiveTests : IDisposable
         AssertionHelpers.AssertSolutionsState(mainVm);
     }
 
+    // Fix for CS7036: Add the required 'solutionFormatter' argument when constructing MainViewModel
+
     [Theory]
     [InlineData(8, SolutionMode.Single, DisplayMode.Visualize)]
     public void Cancel_ShouldStopSimulation(
         int boardSize, SolutionMode solutionMode, DisplayMode displayMode)
     {
         // Arrange
+        var mockFormatter = new Mock<ISolutionFormatter>().Object;
         var mainVm = TestHelpers.CreateMainViewModel(
-            boardSize, solutionMode, displayMode);
+            boardSize, solutionMode, displayMode, null, mockFormatter);
 
         mainVm.IsSimulating = true;
 
@@ -64,8 +69,9 @@ public class MainViewModelPositiveTests : IDisposable
         int boardSize, SolutionMode solutionMode, DisplayMode displayMode)
     {
         // Arrange
+        var mockFormatter = new Mock<ISolutionFormatter>().Object;
         var mainVm = TestHelpers.CreateMainViewModel(
-            boardSize, solutionMode, displayMode);
+            boardSize, solutionMode, displayMode, null, mockFormatter);
 
         // Act
         await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
@@ -101,13 +107,16 @@ public class MainViewModelPositiveTests : IDisposable
     public async Task MainViewModel_ShouldUpdateSolutionsAfterSimulation()
     {
         // Arrange
-        List<Solution> solutions = [new([1, 3, 0, 2])];
+        var mockFormatter = new Mock<ISolutionFormatter>().Object;
+        List<Solution> solutions = [new([1, 3, 0, 2], mockFormatter, null)];
         var mockSolver = TestHelpers.CreateMockSolver(solutions);
 
         var mainViewModel = new MainViewModel(
             mockSolver.Object,
             new TestDispatcher(),
-            new MockSaveFileDialogService());
+            new MockSaveFileDialogService(),
+            mockFormatter
+        );
 
         // Act
         await mainViewModel.SimulateCommand.ExecuteAsync(null);
@@ -124,19 +133,21 @@ public class MainViewModelPositiveTests : IDisposable
         SolutionMode solutionMode, bool expectedIndeterminate)
     {
         var mockSolver = new Mock<ISolver>();
+        var mockFormatter = new Mock<ISolutionFormatter>().Object;
         mockSolver
             .Setup(s => s.GetResultsForBoardAsync(It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
             .Returns(async () =>
             {
                 if (solutionMode == SolutionMode.Single)
                     await Task.Delay(10);
-                return new SimulationResults([new Solution([1, 3, 0, 2])], 1.0);
+                return new SimulationResults([new Solution([1, 3, 0, 2], mockFormatter, null)], 1.0);
             });
 
         var mainVm = new MainViewModel(
             mockSolver.Object,
             new TestDispatcher(),
-            new MockSaveFileDialogService()
+            new MockSaveFileDialogService(),
+            mockFormatter // <-- Add this argument to fix CS7036
         )
         {
             SolutionMode = solutionMode

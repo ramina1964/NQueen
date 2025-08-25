@@ -12,12 +12,18 @@ public static class TestHelpers
         int boardSize = 8,
         SolutionMode solutionMode = SolutionMode.Single,
         DisplayMode displayMode = DisplayMode.Hide,
-        SimulationResults? simulationResults = null)
+        SimulationResults? simulationResults = null,
+        ISolutionFormatter? solutionFormatter = null) // Add ISolutionFormatter parameter
     {
         var serviceProvider = CreateServiceProvider();
-        var mainViewModel = serviceProvider.GetRequiredService<MainViewModel>();
+        solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>(); // Resolve ISolutionFormatter if not provided
+        var mainViewModel = new MainViewModel(
+            serviceProvider.GetRequiredService<ISolver>(),
+            serviceProvider.GetRequiredService<IDispatcher>(),
+            serviceProvider.GetRequiredService<ISaveFileDialogService>(),
+            solutionFormatter);
 
-        // Configure the MainViewModel instance through dependency injection
+        // Configure the MainViewModel instance
         mainViewModel.BoardSizeText = boardSize.ToString();
         mainViewModel.SolutionMode = solutionMode;
         mainViewModel.DisplayMode = displayMode;
@@ -31,17 +37,22 @@ public static class TestHelpers
         int boardSize = 8,
         SolutionMode solutionMode = SolutionMode.Single,
         DisplayMode displayMode = DisplayMode.Hide,
-        SimulationResults? simulationResults = null)
+        SimulationResults? simulationResults = null,
+        ISolutionFormatter? solutionFormatter = null) // Add ISolutionFormatter parameter
     {
         var serviceProvider = CreateServiceProviderWithMock(mockSolver);
-        var mainViewModel = serviceProvider.GetRequiredService<MainViewModel>();
+        solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>(); // Resolve ISolutionFormatter if not provided
+        var mainViewModel = new MainViewModel(
+            mockSolver,
+            serviceProvider.GetRequiredService<IDispatcher>(),
+            serviceProvider.GetRequiredService<ISaveFileDialogService>(),
+            solutionFormatter); // Pass ISolutionFormatter
 
-        // Configure the MainViewModel instance through dependency injection
+        // Configure the MainViewModel instance
         mainViewModel.BoardSizeText = boardSize.ToString();
         mainViewModel.SolutionMode = solutionMode;
         mainViewModel.DisplayMode = displayMode;
-        mainViewModel.SimulationResults = simulationResults ??
-            new SimulationResults([], 0);
+        mainViewModel.SimulationResults = simulationResults ?? new SimulationResults([], 0);
 
         return mainViewModel;
     }
@@ -49,9 +60,10 @@ public static class TestHelpers
     public static MainViewModel CreateMainViewModelWithBoardSizeText(
         string boardSizeText,
         SolutionMode solutionMode = SolutionMode.Single,
-        DisplayMode displayMode = DisplayMode.Hide)
+        DisplayMode displayMode = DisplayMode.Hide,
+        ISolutionFormatter? solutionFormatter = null) // Add ISolutionFormatter parameter
     {
-        var mainVm = CreateMainViewModel();
+        var mainVm = CreateMainViewModel(solutionFormatter: solutionFormatter); // Pass ISolutionFormatter
         mainVm.SolutionMode = solutionMode;
         mainVm.BoardSizeText = boardSizeText;
         mainVm.DisplayMode = displayMode;
@@ -62,18 +74,27 @@ public static class TestHelpers
     public static MainViewModel CreateMainViewModelWithBoardSize(
         int boardSize,
         SolutionMode solutionMode = SolutionMode.Single,
-        DisplayMode displayMode = DisplayMode.Hide) =>
-            CreateMainViewModelWithBoardSizeText(
-                boardSize.ToString(), solutionMode, displayMode);
+        DisplayMode displayMode = DisplayMode.Hide,
+        ISolutionFormatter? solutionFormatter = null) // Add ISolutionFormatter parameter
+    {
+        return CreateMainViewModelWithBoardSizeText(
+            boardSize.ToString(), solutionMode, displayMode, solutionFormatter); // Pass ISolutionFormatter
+    }
 
     public static MainViewModel CreateMainViewModelWithSimulationResults(
         int boardSize,
         SolutionMode solutionMode,
-        MockSaveFileDialogService saveFileDialogService)
+        MockSaveFileDialogService saveFileDialogService,
+        ISolutionFormatter? solutionFormatter = null) // Add ISolutionFormatter parameter
     {
         var serviceProvider = CreateServiceProvider();
         var solver = serviceProvider.GetRequiredService<ISolver>();
-        var mainVm = new MainViewModel(solver, new TestDispatcher(), saveFileDialogService)
+        solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>(); // Resolve ISolutionFormatter if not provided
+        var mainVm = new MainViewModel(
+            solver,
+            new TestDispatcher(),
+            saveFileDialogService,
+            solutionFormatter) // Pass ISolutionFormatter
         {
             BoardSizeText = boardSize.ToString(),
             SolutionMode = solutionMode,

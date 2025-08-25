@@ -5,6 +5,7 @@ global using FluentValidation;
 global using Microsoft.Extensions.DependencyInjection;
 global using NQueen.Domain.Enums;
 global using NQueen.Domain.EventArgs;
+global using NQueen.Domain.Formatters;
 global using NQueen.Domain.Interfaces;
 global using NQueen.Domain.Models;
 global using NQueen.Domain.Settings;
@@ -16,7 +17,6 @@ global using NQueen.GUI.Messaging;
 global using NQueen.GUI.ViewModels;
 global using NQueen.GUI.Views;
 global using NQueen.NextGenKernel.Services;
-global using NQueen.NextGenKernel.Solvers;
 global using NQueen.Shared.Utils;
 global using NQueen.Shared.Validation;
 global using System;
@@ -36,3 +36,5 @@ global using System.Windows.Data;
 global using System.Windows.Markup;
 global using System.Windows.Media;
 global using System.Windows.Threading;
+
+

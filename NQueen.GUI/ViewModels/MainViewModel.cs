@@ -7,7 +7,8 @@ public sealed partial class MainViewModel :
     public MainViewModel(
         ISolver solver,
         IDispatcher dispatcher,
-        ISaveFileDialogService saveFileService)
+        ISaveFileDialogService saveFileService,
+        ISolutionFormatter solutionFormatter) // Add ISolutionFormatter parameter
     {
         _solver = solver ??
             throw new ArgumentNullException(nameof(solver));
@@ -17,6 +18,9 @@ public sealed partial class MainViewModel :
 
         _saveFileService = saveFileService ??
             throw new ArgumentNullException(nameof(saveFileService));
+
+        _solutionFormatter = solutionFormatter ??
+            throw new ArgumentNullException(nameof(solutionFormatter)); // Assign to field
 
         InputViewModel = new InputViewModel(SolutionMode.Unique);
         CancellationTokenSource = new CancellationTokenSource();
@@ -150,4 +154,6 @@ public sealed partial class MainViewModel :
     private readonly IDispatcher _uiDispatcher;
 
     private readonly ISaveFileDialogService _saveFileService;
+
+    private readonly ISolutionFormatter _solutionFormatter;
 }

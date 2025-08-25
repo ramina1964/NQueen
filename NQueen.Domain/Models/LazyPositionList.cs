@@ -1,0 +1,25 @@
+namespace NQueen.Domain.Models;
+
+public class LazyPositionList : IReadOnlyList<Position>
+{
+    private readonly int[] _queenPositions;
+
+    public LazyPositionList(int[] queenPositions)
+    {
+        _queenPositions = queenPositions ?? throw new ArgumentNullException(nameof(queenPositions));
+    }
+
+    public Position this[int index] => new(index, _queenPositions[index]);
+
+    public int Count => _queenPositions.Length;
+
+    public IEnumerator<Position> GetEnumerator()
+    {
+        for (int i = 0; i < _queenPositions.Length; i++)
+        {
+            yield return this[i];
+        }
+    }
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+}

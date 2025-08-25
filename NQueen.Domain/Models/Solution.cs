@@ -1,33 +1,37 @@
 ﻿namespace NQueen.Domain.Models;
 
-// Todo: Consider making this a record type, as well as reducing its properties.
 public class Solution
 {
-    public Solution(int[] queenPositions, int? id = null)
+    public Solution(int[] queenPositions, ISolutionFormatter formatter, int? id = null)
     {
+        if (queenPositions == null || queenPositions.Length == 0)
+            throw new ArgumentException("Queen positions must be a non-empty array.", nameof(queenPositions));
+
+        if (queenPositions.Any(pos => pos < 0))
+            throw new ArgumentException("Queen positions must contain non-negative values.", nameof(queenPositions));
+
         BoardSize = queenPositions.Length;
         Id = id;
-        Name = ToString();
+        Name = $"No. {id}";
         QueenPositions = queenPositions;
         Positions = MapQueenArrayToPositions(QueenPositions);
-        Details = SolutionFormatter.FormatSolutions(Positions);
+        Details = formatter.FormatSolutions(Positions);
     }
 
-    public List<Position> Positions { get; set; }
+    public IReadOnlyList<Position> Positions { get; }
 
     public int? Id { get; }
 
-    public string Name { get; set; }
+    public string Name { get; }
 
     public int[] QueenPositions { get; }
 
-    public string Details { get; set; }
+    public string Details { get; }
 
-    public sealed override string ToString() => $"No. {Id}";
+    public sealed override string ToString() => Name;
 
     private int BoardSize { get; }
 
-    private static List<Position> MapQueenArrayToPositions(int[] queenPositions) =>
-        [.. queenPositions.Select((rowIndex, columnIndex) =>
-            new Position(columnIndex, rowIndex))];
+    private static LazyPositionList MapQueenArrayToPositions(int[] queenPositions) =>
+        new(queenPositions);
 }
