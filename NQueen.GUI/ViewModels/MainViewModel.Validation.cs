@@ -55,25 +55,38 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         return true;
     }
 
-    partial void OnBoardSizeTextChanged(string value)
+    partial void OnBoardSizeTextChanged(string value) =>
+        ResetAndValidateSimulationState(boardSizeText: value);
+
+    partial void OnSolutionModeChanged(SolutionMode value) =>
+        ResetAndValidateSimulationState(solutionMode: value);
+
+    private void ResetAndValidateSimulationState(string? boardSizeText = null,
+        SolutionMode? solutionMode = null)
     {
-        if (_solver == null)
-            return;
-
-        // Ensure previous simulation is cancelled
         Cancel();
-
-        // Replace subscription to the old events with the new ones
         SubscribeToSimulationEvents();
         ResetSimulationState();
 
-        if (ParsingUtils.TryParseInt(value, out var boardSize))
-            _lastValidBoardSize = boardSize;
+        // Update InputViewModel if SolutionMode is provided
+        if (solutionMode.HasValue)
+        {
+            InputViewModel = new InputViewModel(solutionMode.Value);
+            BoardSizeText = BoardSettings.DefaultBoardSize.ToString();
+        }
 
-        ValidateProperty(nameof(BoardSizeText));
+        // Validate the board size text
+        if (!string.IsNullOrEmpty(boardSizeText))
+        {
+            if (ParsingUtils.TryParseInt(boardSizeText, out var boardSize))
+                _lastValidBoardSize = boardSize;
+
+            ValidateProperty(nameof(BoardSizeText));
+        }
+
         if (ValidateAndSetUiState())
         {
-            _lastValidBoardSize = ParsingUtils.ParseIntOrThrow(value);
+            _lastValidBoardSize = ParsingUtils.ParseIntOrThrow(BoardSizeText);
             OnPropertyChanged(nameof(BoardSize));
             var boardDimension = Math.Min(ChessboardVm.WindowWidth, ChessboardVm.WindowHeight);
             ResetChessboard(boardDimension);
@@ -90,7 +103,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         var defaultFormatter = new DefaultSolutionFormatter();
 
         // Provide a valid queenPositions array to avoid exceptions
-        SelectedSolution = new([0], defaultFormatter);
+        SelectedSolution = null!;
 
         ProgressValue = 0.0;
         ProgressLabel = "0%";
@@ -108,41 +121,5 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
             ResetChessboard(boardDimension);
         }
-    }
-
-    partial void OnSolutionModeChanged(SolutionMode value)
-    {
-        if (_solver == null)
-            return;
-
-        // Ensure previous simulation is cancelled
-        Cancel();
-
-        // Replace subscription to the old events with the new ones
-        SubscribeToSimulationEvents();
-        ResetSimulationState();
-        InputViewModel = new InputViewModel(value);
-        ValidateProperty(nameof(BoardSizeText));
-
-        var maxNoOfSols = SimulationSettings.MaxNoOfSolutionsInOutput;
-        SolutionTitle = value switch
-        {
-            SolutionMode.All => $"All Sols. (Max: {maxNoOfSols})",
-            SolutionMode.Unique => $"Unique Sols. (Max: {maxNoOfSols})",
-            _ => "Single Solution"
-        };
-
-        // Ensure IsSingleRunning is updated when SolutionMode changes
-        IsSingleRunning = value == SolutionMode.Single && IsSimulating;
-
-        if (ValidateAndSetUiState())
-        {
-            _lastValidBoardSize = ParsingUtils.ParseIntOrThrow(BoardSizeText);
-            OnPropertyChanged(nameof(BoardSize));
-            var boardDimension = Math.Min(ChessboardVm.WindowWidth, ChessboardVm.WindowHeight);
-            ResetChessboard(boardDimension);
-        }
-
-        RefreshCommandStates();
     }
 }
