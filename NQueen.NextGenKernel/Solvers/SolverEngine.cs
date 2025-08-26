@@ -89,12 +89,12 @@ public class SolverEngine : ISolver, IDisposable
         {
             case SolutionMode.Single:
                 // Stop after finding the first solution
-                await SolveNQueenForModeAsync(0, SolutionMode.Single, cancellationToken);
+                await SolveNQueenByModeAsync(0, SolutionMode.Single, cancellationToken);
                 break;
 
             case SolutionMode.Unique:
                 // Find only unique, non-symmetrical solutions
-                await SolveNQueenForModeAsync(0, SolutionMode.Unique, cancellationToken);
+                await SolveNQueenByModeAsync(0, SolutionMode.Unique, cancellationToken);
                 break;
 
             case SolutionMode.All:
@@ -122,7 +122,7 @@ public class SolverEngine : ISolver, IDisposable
         return result;
     }
 
-    private async Task SolveNQueenForModeAsync(
+    private async Task SolveNQueenByModeAsync(
         int colIndex, SolutionMode solutionMode, CancellationToken cancellationToken)
     {
         while (colIndex != -1)
@@ -136,6 +136,11 @@ public class SolverEngine : ISolver, IDisposable
             if (colIndex == BoardSize)
             {
                 AddSolutionAndNotify();
+
+                // Terminate early for SolutionMode.Single
+                if (solutionMode == SolutionMode.Single)
+                    return;
+
                 NotifySolutionFound();
                 colIndex--;
                 continue;
@@ -161,7 +166,7 @@ public class SolverEngine : ISolver, IDisposable
 
     private async Task FindAllSolutions(int colIndex, CancellationToken cancellationToken)
     {
-        await SolveNQueenForModeAsync(colIndex, SolutionMode.Unique, cancellationToken);
+        await SolveNQueenByModeAsync(colIndex, SolutionMode.Unique, cancellationToken);
 
         foreach (var solution in Solutions)
         {
