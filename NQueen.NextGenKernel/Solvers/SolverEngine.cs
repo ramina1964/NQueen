@@ -57,16 +57,17 @@ public class SolverEngine : ISolver, IDisposable
         SolutionMode = solutionMode;
         DisplayMode = displayMode;
 
-        return await Task.Run(() => GetResultsForCurrentConfigurationAsync(_cancellationTokenSource.Token), _cancellationTokenSource.Token);
+        return await Task.Run(() => GetResultsForCurrentConfigurationAsync(solutionMode, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
     }
 
-    public async Task<SimulationResults> GetResultsForCurrentConfigurationAsync() =>
-        await GetResultsForCurrentConfigurationAsync(_cancellationTokenSource.Token);
+    //public async Task<SimulationResults> GetResultsForCurrentConfigurationAsync() =>
+    //    await GetResultsForCurrentConfigurationAsync(_cancellationTokenSource.Token);
 
-    public async Task<SimulationResults> GetResultsForCurrentConfigurationAsync(CancellationToken cancellationToken)
+    public async Task<SimulationResults> GetResultsForCurrentConfigurationAsync(
+        SolutionMode solutionMode, CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
-        var solutions = await SolveNQueenProblem(cancellationToken);
+        var solutions = await SolveNQueenProblem(solutionMode, cancellationToken);
         stopwatch.Stop();
         var elapsedTimeInSec = Math.Round(stopwatch.Elapsed.TotalSeconds, 1);
 
@@ -83,9 +84,9 @@ public class SolverEngine : ISolver, IDisposable
     }
 
     private async Task<IEnumerable<Solution>> SolveNQueenProblem(
-        CancellationToken cancellationToken)
+        SolutionMode solutionMode, CancellationToken cancellationToken)
     {
-        switch (SolutionMode)
+        switch (solutionMode)
         {
             case SolutionMode.Single:
                 // Stop after finding the first solution
@@ -166,16 +167,27 @@ public class SolverEngine : ISolver, IDisposable
 
     private async Task FindAllSolutions(int colIndex, CancellationToken cancellationToken)
     {
+        // Solve for unique solutions first
         await SolveNQueenByModeAsync(colIndex, SolutionMode.Unique, cancellationToken);
 
+        // Temporary list to collect updates
+        var updates = new List<SolutionUpdateDTO>();
+
+        // Enumerate the Solutions collection
         foreach (var solution in Solutions)
         {
             if (cancellationToken.IsCancellationRequested)
                 return;
 
-            // Avoid redundant updates to the solution manager
-            var updateDTO = new SolutionUpdateDTO(BoardSize, SolutionMode, solution, Solutions);
-            _solutionManager.UpdateSolutions(updateDTO);
+            // Collect updates in the temporary list
+            var updateDTO = new SolutionUpdateDTO(BoardSize, SolutionMode.All, solution, Solutions);
+            updates.Add(updateDTO);
+        }
+
+        // Apply updates after enumeration
+        foreach (var update in updates)
+        {
+            _solutionManager.UpdateSolutions(update);
         }
     }
 
