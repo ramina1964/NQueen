@@ -2,16 +2,6 @@
 
 public class SolverEngine : ISolver, IDisposable
 {
-    private readonly ISolutionManager _solutionManager;
-    private readonly ISolutionFormatter _solutionFormatter;
-    private readonly Func<int, BoardState> _boardStateFactory;
-
-    private BoardState _board = null!;
-    private CancellationTokenSource _cancellationTokenSource = new();
-    private HashSet<int[]> Solutions { get; set; } = new(new IntArrayComparer());
-    private Guid _currentSimToken = Guid.Empty;
-    private bool _disposed = false;
-
     public SolverEngine(
         ISolutionManager solutionManager,
         ISolutionFormatter solutionFormatter,
@@ -219,4 +209,18 @@ public class SolverEngine : ISolver, IDisposable
             _cancellationTokenSource?.Dispose();
         }
     }
+
+    private readonly ISolutionManager _solutionManager;
+    private readonly ISolutionFormatter _solutionFormatter;
+    private readonly Func<int, BoardState> _boardStateFactory;
+
+    private BoardState _board = null!;
+    private CancellationTokenSource _cancellationTokenSource = new();
+
+    private HashSet<int[]> Solutions { get; set; } = new(new IntArrayComparer());
+
+    // Todo: Find out why this field isn¨t used and fix/remove it.
+    private Guid _currentSimToken = Guid.Empty;
+
+    private bool _disposed = false;
 }
