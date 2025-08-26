@@ -58,8 +58,18 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
     partial void OnBoardSizeTextChanged(string value) =>
         ResetAndValidateSimulationState(boardSizeText: value);
 
-    partial void OnSolutionModeChanged(SolutionMode value) =>
+    // Todo: There is a bug here - when changing SolutionMode, the BoardSizeText is reset to
+    // default value, while it should retain its current valid value.
+    partial void OnSolutionModeChanged(SolutionMode value)
+    {
+        // Preserve the current value of BoardSizeText
+        var currentBoardSizeText = BoardSizeText;
+
         ResetAndValidateSimulationState(solutionMode: value);
+
+        // Restore the preserved value of BoardSizeText
+        BoardSizeText = currentBoardSizeText;
+    }
 
     private void ResetAndValidateSimulationState(string? boardSizeText = null,
         SolutionMode? solutionMode = null)
@@ -76,7 +86,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         }
 
         // Validate the board size text
-        if (!string.IsNullOrEmpty(boardSizeText))
+        if (string.IsNullOrEmpty(boardSizeText) == false)
         {
             if (ParsingUtils.TryParseInt(boardSizeText, out var boardSize))
                 _lastValidBoardSize = boardSize;
