@@ -12,8 +12,19 @@ public class MainViewModelPositiveTests : IDisposable
     {
         // Arrange
         var mockFormatter = new Mock<ISolutionFormatter>().Object;
-        var mainVm = TestHelpers.CreateMainViewModel(
-            boardSize, solutionMode, displayMode, null, mockFormatter); // Pass mockFormatter
+        var mockSolver = TestHelpers.CreateMockSolver(
+        [
+            new Solution([1, 3, 0, 2], mockFormatter, null)
+        ]);
+
+        var mainVm = TestHelpers.CreateMainViewModelWithMock(
+            mockSolver.Object,
+            boardSize,
+            solutionMode,
+            displayMode,
+            null,
+            mockFormatter
+        );
 
         // Act
         await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
@@ -146,7 +157,7 @@ public class MainViewModelPositiveTests : IDisposable
             mockSolver.Object,
             new TestDispatcher(),
             new MockSaveFileDialogService(),
-            mockFormatter // <-- Add this argument to fix CS7036
+            mockFormatter
         )
         {
             SolutionMode = solutionMode
