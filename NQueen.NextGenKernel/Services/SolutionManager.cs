@@ -1,5 +1,6 @@
 ﻿namespace NQueen.NextGenKernel.Services;
 
+// Todo: Consider renaming/splitting this class.
 public class SolutionManager : ISolutionManager
 {
     public SolutionManager()
@@ -37,7 +38,7 @@ public class SolutionManager : ISolutionManager
 
         // For each solution find all symmetrical counterparts, i.e., a list of maximum
         // eight items including the solution itself.
-        var symmetricalSolutions = SolverHelper.GetSymmetricalSolutions(queenPositions);
+        var symmetricalSolutions = SymmetryHelper.GetSymmetricalSolutions(queenPositions);
 
         // For SolutionMode.All: Add this solution and all its symmetrical counterparts to the Solutions.
         if (solutionUpdateDTO.SolutionMode == SolutionMode.All)

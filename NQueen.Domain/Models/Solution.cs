@@ -10,7 +10,6 @@ public class Solution
         if (queenPositions.Any(pos => pos < 0))
             throw new ArgumentException("Queen positions must contain non-negative values.", nameof(queenPositions));
 
-        BoardSize = queenPositions.Length;
         Id = id;
         Name = $"No. {id}";
         QueenPositions = queenPositions;
@@ -29,8 +28,6 @@ public class Solution
     public string Details { get; }
 
     public sealed override string ToString() => Name;
-
-    private int BoardSize { get; }
 
     private static LazyPositionList MapQueenArrayToPositions(int[] queenPositions) =>
         new(queenPositions);

@@ -1,6 +1,6 @@
 ﻿namespace NQueen.Domain.Utils;
 
-public static class SolverHelper
+public static class SymmetryHelper
 {
     public static HashSet<int[]> GetSymmetricalSolutions(int[] solution)
     {
@@ -40,13 +40,6 @@ public static class SolverHelper
             rotatedCounter270,
         };
     }
-
-    public static string UpdateSolutionTitle(SolutionMode solutionMode) =>
-        solutionMode == SolutionMode.Single
-                ? $"Solution"
-                : solutionMode == SolutionMode.Unique
-                ? $"Unique Solutions (Max: {SimulationSettings.MaxNoOfSolutionsInOutput})"
-                : $"All Solutions (Max: {SimulationSettings.MaxNoOfSolutionsInOutput})";
 
     public static string SolutionTitle(SolutionMode solutionMode, int noOfSolutions)
     {

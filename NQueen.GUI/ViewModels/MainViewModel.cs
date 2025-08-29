@@ -40,7 +40,8 @@ public sealed partial class MainViewModel :
             ? boardSize
             : _lastValidBoardSize;
 
-    public string ResultTitle => SolverHelper.UpdateSolutionTitle(SolutionMode);
+    public string ResultTitle =>
+        SolutionFormatter.UpdateSolutionTitle(SolutionMode);
 
     public ChessboardViewModel ChessboardVm { get; set; }
 

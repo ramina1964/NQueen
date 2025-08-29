@@ -1,4 +1,4 @@
-﻿namespace NQueen.Domain.Models;
+﻿namespace NQueen.Domain.Utils;
 
 public readonly struct IntArrayComparer : IEqualityComparer<int[]>, IComparer<int[]>
 {

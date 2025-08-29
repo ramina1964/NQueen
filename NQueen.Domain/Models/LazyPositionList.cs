@@ -1,11 +1,8 @@
 namespace NQueen.Domain.Models;
 
-public class LazyPositionList : IReadOnlyList<Position>
+public class LazyPositionList(int[] queenPositions) : IReadOnlyList<Position>
 {
-    private readonly int[] _queenPositions;
-
-    public LazyPositionList(int[] queenPositions) =>
-        _queenPositions = queenPositions ??
+    private readonly int[] _queenPositions = queenPositions ??
             throw new ArgumentNullException(nameof(queenPositions));
 
     public Position this[int index] => new(index, _queenPositions[index]);

@@ -1,6 +1,4 @@
-﻿global using NQueen.Domain.Settings;
-
-namespace NQueen.Shared.Utils;
+﻿namespace NQueen.Domain.Utils;
 
 public static class ErrorMessages
 {
