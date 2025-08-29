@@ -112,7 +112,7 @@ public partial class DispatchCommands(
         _consoleUtils.WriteLineColored(ConsoleColor.Gray, $"Elapsed time in seconds: {elapsedTime,14}");
 
         var example = simulationResult.Solutions.FirstOrDefault();
-        var solutionTitle = (example == null)
+        var solutionTitle = example == null
             ? "\nNo Solution Found!"
             : "\nFirst Solution Found - Numbers in parentheses: Column No. and Row No., Starting from the Lower Left Corner:";
 

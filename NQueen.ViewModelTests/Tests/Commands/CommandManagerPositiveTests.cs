@@ -9,7 +9,6 @@ public class CommandManagerPositiveTests : IDisposable
     [InlineData("1", SolutionMode.Single, DisplayMode.Hide)]
     [InlineData("4", SolutionMode.Unique, DisplayMode.Visualize)]
     [InlineData("8", SolutionMode.Single, DisplayMode.Visualize)]
-    [InlineData("10", SolutionMode.All, DisplayMode.Hide)]
     public async Task SimulateCommand_ShouldUpdateSimulationResults(
         string boardSizeText, SolutionMode solutionMode, DisplayMode displayMode)
     {

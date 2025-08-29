@@ -42,8 +42,7 @@ public class MainViewModelPositiveTests : IDisposable
         AssertionHelpers.AssertSolutionsState(mainVm);
     }
 
-    // Fix for CS7036: Add the required 'solutionFormatter' argument when constructing MainViewModel
-
+    // Todo: Fix for CS7036: Add the required 'solutionFormatter' argument when constructing MainViewModel
     [Theory]
     [InlineData(8, SolutionMode.Single, DisplayMode.Visualize)]
     public void Cancel_ShouldStopSimulation(
@@ -197,9 +196,8 @@ public class MainViewModelPositiveTests : IDisposable
             };
         }
         else
-        {
-            throw new InvalidOperationException("MainViewModel does not implement INotifyPropertyChanged");
-        }
+            throw new InvalidOperationException(
+                "MainViewModel does not implement INotifyPropertyChanged!");
 
         // Act
         mainVm.SimulateCommand.Execute(null);

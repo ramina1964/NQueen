@@ -1,17 +1,10 @@
 ﻿namespace NQueen.NextGenKernel.Solvers;
 
-public class SolverEngine : ISolver, IDisposable
+public class SolverEngine(
+    ISolutionManager solutionManager,
+    ISolutionFormatter solutionFormatter,
+    Func<int, BoardState> boardStateFactory) : ISolver, IDisposable
 {
-    public SolverEngine(
-        ISolutionManager solutionManager,
-        ISolutionFormatter solutionFormatter,
-        Func<int, BoardState> boardStateFactory)
-    {
-        _solutionManager = solutionManager ?? throw new ArgumentNullException(nameof(solutionManager));
-        _boardStateFactory = boardStateFactory ?? throw new ArgumentNullException(nameof(boardStateFactory));
-        _solutionFormatter = solutionFormatter ?? throw new ArgumentNullException(nameof(solutionFormatter));
-    }
-
     public bool IsSolverCanceled
     {
         get => _cancellationTokenSource?.IsCancellationRequested ?? false;
@@ -227,9 +220,9 @@ public class SolverEngine : ISolver, IDisposable
         }
     }
 
-    private readonly ISolutionManager _solutionManager;
-    private readonly ISolutionFormatter _solutionFormatter;
-    private readonly Func<int, BoardState> _boardStateFactory;
+    private readonly ISolutionManager _solutionManager = solutionManager ?? throw new ArgumentNullException(nameof(solutionManager));
+    private readonly ISolutionFormatter _solutionFormatter = solutionFormatter ?? throw new ArgumentNullException(nameof(solutionFormatter));
+    private readonly Func<int, BoardState> _boardStateFactory = boardStateFactory ?? throw new ArgumentNullException(nameof(boardStateFactory));
 
     private BoardState _board = null!;
     private CancellationTokenSource _cancellationTokenSource = new();
