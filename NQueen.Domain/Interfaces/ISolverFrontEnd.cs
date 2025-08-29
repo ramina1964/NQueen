@@ -4,7 +4,7 @@ public interface ISolverFrontEnd
 {
     int DelayInMillisec { get; set; }
 
-    double ProgressValue { get; set; }
+    int ProgressValue { get; set; }
 
     event EventHandler<QueenPlacedEventArgs> QueenPlaced;
     event EventHandler<SolutionFoundEventArgs> SolutionFound;

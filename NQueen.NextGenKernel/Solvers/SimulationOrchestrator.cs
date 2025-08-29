@@ -28,7 +28,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
         set => _solverEngine.DelayInMillisec = value;
     }
 
-    public double ProgressValue
+    public int ProgressValue
     {
         get => _solverEngine.ProgressValue;
         set => _solverEngine.ProgressValue = value;

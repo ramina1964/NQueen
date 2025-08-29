@@ -7,8 +7,22 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
     private void ValidateProperty(string propertyName)
     {
+        Console.WriteLine($"Validating property: {propertyName}");
+
         _errors.Remove(propertyName);
-        var validationResults = InputViewModel.ValidateBoardSize(BoardSizeText);;
+
+        // Explicitly handle empty BoardSizeText
+        if (propertyName == nameof(BoardSizeText) && string.IsNullOrWhiteSpace(BoardSizeText))
+        {
+            Console.WriteLine("BoardSizeText is empty or whitespace.");
+            _errors[propertyName] = [ErrorMessages.ValueNullOrWhiteSpaceMsg];
+            OnErrorsChanged(propertyName);
+            OnPropertyChanged(nameof(BoardSizeError));
+            return;
+        }
+
+        var validationResults = InputViewModel.ValidateBoardSize(BoardSizeText);
+        Console.WriteLine($"Validation results: {validationResults.IsValid}");
 
         var propertyErrors = validationResults.Errors
             .Where(error => error.PropertyName == nameof(BoardSizeText))
@@ -17,12 +31,13 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
         if (propertyErrors.Count != 0)
         {
+            Console.WriteLine($"Adding errors: {string.Join(", ", propertyErrors)}");
             _errors[propertyName] = propertyErrors;
             OnErrorsChanged(propertyName);
         }
         else
         {
-            // Notify UI that errors have been cleared
+            Console.WriteLine("No errors found.");
             OnErrorsChanged(propertyName);
         }
 
@@ -36,6 +51,18 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
     private bool ValidateAndSetUiState(bool updateOutputReady = true)
     {
+        // Explicitly check for empty BoardSizeText
+        if (string.IsNullOrWhiteSpace(BoardSizeText))
+        {
+            IsValid = false;
+            IsIdle = false;
+            IsSimulating = false;
+            if (updateOutputReady)
+                IsOutputReady = false;
+
+            return false;
+        }
+
         IsValid = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
         if (!IsValid)
         {

@@ -19,7 +19,7 @@ public class SolverEngine(
 
     public int DelayInMillisec { get; set; }
 
-    public double ProgressValue { get; set; }
+    public int ProgressValue { get; set; }
 
     public int BoardSize => _board.BoardSize;
 
@@ -53,9 +53,6 @@ public class SolverEngine(
         return await Task.Run(() => GetResultsForCurrentConfigurationAsync(solutionMode, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
     }
 
-    //public async Task<SimulationResults> GetResultsForCurrentConfigurationAsync() =>
-    //    await GetResultsForCurrentConfigurationAsync(_cancellationTokenSource.Token);
-
     public async Task<SimulationResults> GetResultsForCurrentConfigurationAsync(
         SolutionMode solutionMode, CancellationToken cancellationToken)
     {
@@ -82,17 +79,14 @@ public class SolverEngine(
         switch (solutionMode)
         {
             case SolutionMode.Single:
-                // Stop after finding the first solution
                 await SolveNQueenByModeAsync(0, SolutionMode.Single, cancellationToken);
                 break;
 
             case SolutionMode.Unique:
-                // Find only unique, non-symmetrical solutions
                 await SolveNQueenByModeAsync(0, SolutionMode.Unique, cancellationToken);
                 break;
 
             case SolutionMode.All:
-                // Find all solutions, including symmetrical ones
                 await FindAllSolutions(0, cancellationToken);
                 break;
 
@@ -100,13 +94,11 @@ public class SolverEngine(
                 throw new NotImplementedException();
         }
 
-        // Return solutions based on the mode
         var result = new List<Solution>();
         var index = 1;
 
         foreach (var solution in Solutions)
         {
-            // For Single mode, return only the first solution
             if (SolutionMode == SolutionMode.Single && result.Count == 1)
                 break;
 
@@ -119,6 +111,14 @@ public class SolverEngine(
     private async Task SolveNQueenByModeAsync(
         int colIndex, SolutionMode solutionMode, CancellationToken cancellationToken)
     {
+        if (solutionMode == SolutionMode.Single)
+        {
+            // For 'Single' mode, set the progress bar to indeterminate
+            ProgressValueChanged?.Invoke(this, new ProgressChangedWithTokenEventArgs(-1, _currentSimToken));
+        }
+
+        int solutionsFound = 0;
+
         while (colIndex != -1)
         {
             if (cancellationToken.IsCancellationRequested)
@@ -130,12 +130,16 @@ public class SolverEngine(
             if (colIndex == BoardSize)
             {
                 AddSolutionAndNotify();
+                solutionsFound++;
 
-                // Terminate early for SolutionMode.Single
                 if (solutionMode == SolutionMode.Single)
                     return;
 
                 NotifySolutionFound();
+
+                // Update progress based on solutions found
+                UpdateProgress(solutionsFound, BoardSize, solutionMode);
+
                 colIndex--;
                 continue;
             }
@@ -156,28 +160,48 @@ public class SolverEngine(
 
             colIndex++;
         }
+
+        // Ensure progress reaches 100% at the end of the simulation
+        UpdateProgress(solutionsFound, BoardSize, solutionMode);
+    }
+
+    private void UpdateProgress(int solutionsFound, int boardSize, SolutionMode solutionMode)
+    {
+        // Get the total number of solutions for the given board size and solution mode
+        int totalSolutions = ExpectedSolutionCount.GetCount(boardSize, solutionMode);
+
+        if (totalSolutions == 0)
+            return;
+
+        // Calculate progress percentage
+        int progress = Math.Min(solutionsFound * 100 / totalSolutions, 100); // Clamp progress to 100%
+
+        // Throttle progress updates
+        var now = DateTime.UtcNow;
+        if (progress - _lastReportedProgress >= SimulationSettings.ProgressThresholdPct ||
+            (now - _lastUpdateTime).TotalSeconds >= SimulationSettings.ProgressIntervalInSeconds)
+        {
+            ProgressValueChanged?.Invoke(this, new ProgressChangedWithTokenEventArgs(progress, _currentSimToken));
+            _lastReportedProgress = progress;
+            _lastUpdateTime = now;
+        }
     }
 
     private async Task FindAllSolutions(int colIndex, CancellationToken cancellationToken)
     {
-        // Solve for unique solutions first
         await SolveNQueenByModeAsync(colIndex, SolutionMode.Unique, cancellationToken);
 
-        // Temporary list to collect updates
         var updates = new List<SolutionUpdateDTO>();
 
-        // Enumerate the Solutions collection
         foreach (var solution in Solutions)
         {
             if (cancellationToken.IsCancellationRequested)
                 return;
 
-            // Collect updates in the temporary list
             var updateDTO = new SolutionUpdateDTO(BoardSize, SolutionMode.All, solution, Solutions);
             updates.Add(updateDTO);
         }
 
-        // Apply updates after enumeration
         foreach (var update in updates)
         {
             _solutionManager.UpdateSolutions(update);
@@ -229,8 +253,10 @@ public class SolverEngine(
 
     private HashSet<int[]> Solutions { get; set; } = new(new IntArrayComparer());
 
-    // Todo: Find out why this field isn¨t used and fix/remove it.
     private Guid _currentSimToken = Guid.Empty;
 
     private bool _disposed = false;
+
+    private int _lastReportedProgress = 0;
+    private DateTime _lastUpdateTime = DateTime.MinValue;
 }

@@ -9,13 +9,16 @@ public class MainViewModelValidationTests
         string? boardSizeText, bool isValid, string? expectedErrorKey)
     {
         // Arrange
+        Console.WriteLine($"Testing BoardSizeText: '{boardSizeText}'");
         var mockFormatter = new Mock<ISolutionFormatter>().Object;
         var mainVm = TestHelpers.CreateMainViewModel(solutionFormatter: mockFormatter);
         mainVm.BoardSizeText = boardSizeText!;
 
         // Act
         var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText))
-            .Cast<string>();
+            .Cast<string>()
+            .ToList();
+        Console.WriteLine($"Errors: {string.Join(", ", errors)}");
 
         // Assert
         if (isValid)
@@ -38,6 +41,7 @@ public class MainViewModelValidationTests
                     nameof(ErrorMessages.InvalidIntegerError) => ErrorMessages.InvalidIntegerError,
                     _ => null
                 };
+                Console.WriteLine($"Expected error: {expectedError}");
                 errors.Should().Contain(expectedError);
             }
         }
