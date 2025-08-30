@@ -8,7 +8,7 @@ public sealed partial class MainViewModel :
         ISolver solver,
         IDispatcher dispatcher,
         ISaveFileDialogService saveFileService,
-        ISolutionFormatter solutionFormatter) // Add ISolutionFormatter parameter
+        ISolutionFormatter solutionFormatter)
     {
         _solver = solver ??
             throw new ArgumentNullException(nameof(solver));
@@ -20,7 +20,7 @@ public sealed partial class MainViewModel :
             throw new ArgumentNullException(nameof(saveFileService));
 
         _solutionFormatter = solutionFormatter ??
-            throw new ArgumentNullException(nameof(solutionFormatter)); // Assign to field
+            throw new ArgumentNullException(nameof(solutionFormatter));
 
         InputViewModel = new InputViewModel(SolutionMode.Unique);
         CancellationTokenSource = new CancellationTokenSource();
@@ -79,6 +79,9 @@ public sealed partial class MainViewModel :
         var validationResult = InputViewModel.ValidateBoardSize(BoardSizeText);
         if (validationResult.IsValid == false)
             return;
+
+        // Explicitly clear any queen images before resetting the chessboard
+        ChessboardVm.ClearImages();
 
         ChessboardVm.WindowWidth = boardDimension;
         ChessboardVm.WindowHeight = boardDimension;

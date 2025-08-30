@@ -134,9 +134,6 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
     {
         ObservableSolutions.Clear();
 
-        // Use DefaultSolutionFormatter to avoid null formatter
-        var defaultFormatter = new DefaultSolutionFormatter();
-
         // Provide a valid queenPositions array to avoid exceptions
         SelectedSolution = null!;
 

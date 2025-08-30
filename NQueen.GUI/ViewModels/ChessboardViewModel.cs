@@ -69,16 +69,16 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
         _lastHeight = WindowHeight;
     }
 
-    // --- Private Methods and Fields ---
-
-    private bool IsBoardStateUpdatedAndSquaresPopulated(int boardSize) =>
+    public bool IsBoardStateUpdatedAndSquaresPopulated(int boardSize) =>
         boardSize > 0 &&
         boardSize == _lastBoardSize &&
         WindowWidth == _lastWidth &&
         WindowHeight == _lastHeight &&
         Squares.Count > 0;
 
-    private void ClearImages()
+    // --- Private Methods and Fields ---
+
+    public void ClearImages()
     {
         foreach (var sq in Squares)
             sq.ImagePath = null!;
