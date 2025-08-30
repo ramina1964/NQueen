@@ -62,8 +62,6 @@ public static class NQueenTestSets
             { 1, SolutionMode.Single },
             { 4, SolutionMode.Single },
             { 5, SolutionMode.Single },
-            { 4, SolutionMode.Single },
-            { 5, SolutionMode.Single },
             { 6, SolutionMode.Single },
             { 7, SolutionMode.Single },
             { 8, SolutionMode.Single },
