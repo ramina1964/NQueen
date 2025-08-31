@@ -218,7 +218,7 @@ public class MainViewModelPositiveTests : IDisposable
                 {
                     Console.WriteLine($"Triggering ProgressValueChanged with progress: {progress * 100}");
                     handler?.Invoke(mockSolver.Object, new ProgressChangedWithTokenEventArgs(progress * 100, Guid.NewGuid()));
-                    Task.Delay(50).Wait();
+                    Task.Delay(10).Wait();
                 }
             });
 
@@ -293,7 +293,7 @@ public class MainViewModelPositiveTests : IDisposable
                 for (var progress = 0.1; progress <= 1.0; progress += 0.1)
                 {
                     handler?.Invoke(mockSolver.Object, new ProgressChangedWithTokenEventArgs(progress * 100, Guid.NewGuid()));
-                    Task.Delay(50).Wait();
+                    Task.Delay(10).Wait();
                 }
             });
 
