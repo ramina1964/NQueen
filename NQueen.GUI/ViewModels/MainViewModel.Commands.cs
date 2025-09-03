@@ -66,7 +66,7 @@ public sealed partial class MainViewModel
             ManageSimulationStatus(SimulationStatus.Started);
             UpdateUiState();
 
-            SimulationResults = await _solver.GetResultsForBoardAsync(boardSize, SolutionMode, DisplayMode);
+            SimulationResults = await _solver.GetSimResultsAsync(boardSize, SolutionMode, DisplayMode);
 
             // After awaiting, check if this is still the current simulation
             if (SimulationResults == null || !SimulationResults.Solutions.Any() || _currentSimulationToken == Guid.Empty)

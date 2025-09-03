@@ -32,16 +32,21 @@ public class SolverEngine(
     public DisplayMode DisplayMode { get; set; }
 
     // Events
-    public event EventHandler<QueenPlacedEventArgs> QueenPlaced = delegate { };
-    public event EventHandler<SolutionFoundEventArgs> SolutionFound = delegate { };
-    public event EventHandler<ProgressChangedWithTokenEventArgs> ProgressValueChanged = delegate { };
+    public event EventHandler<QueenPlacedEventArgs> QueenPlaced
+        = delegate { };
+    
+    public event EventHandler<SolutionFoundEventArgs> SolutionFound
+        = delegate { };
+
+    public event EventHandler<ProgressChangedWithTokenEventArgs> ProgressValueChanged
+        = delegate { };
 
     // Public Methods
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
 
     public void CancelSimulation() => _cancellationTokenSource?.Cancel();
 
-    public async Task<SimulationResults> GetResultsForBoardAsync(
+    public async Task<SimulationResults> GetSimResultsAsync(
         int boardSize,
         SolutionMode solutionMode,
         DisplayMode displayMode = DisplayMode.Hide)
@@ -71,7 +76,8 @@ public class SolverEngine(
         _cancellationTokenSource = new CancellationTokenSource();
     }
 
-    private async Task<SimulationResults> RunSimulationAsync(SolutionMode solutionMode, CancellationToken cancellationToken)
+    private async Task<SimulationResults> RunSimulationAsync(
+        SolutionMode solutionMode, CancellationToken cancellationToken)
     {
         var elapsedTime = await MeasureExecutionTimeAsync(async () =>
             await SolveNQueenProblemAsync(solutionMode, cancellationToken));
@@ -85,7 +91,8 @@ public class SolverEngine(
         CancellationToken cancellationToken) =>
             await SolveByModeAsync(0, solutionMode, cancellationToken);
 
-    private async Task SolveByModeAsync(int colIndex, SolutionMode solutionMode, CancellationToken cancellationToken)
+    private async Task SolveByModeAsync(int colIndex, SolutionMode solutionMode,
+        CancellationToken cancellationToken)
     {
         if (solutionMode == SolutionMode.Single)
         {
@@ -139,12 +146,15 @@ public class SolverEngine(
     private async Task<int> FindNextRowAsync(int colIndex, int maxRow, CancellationToken cancellationToken)
     {
         return await BoardState.TryFindValidPosition(
-            colIndex, maxRow, QueenPositions, cancellationToken, DelayInMillisec, DisplayMode);
+            colIndex, maxRow, QueenPositions, cancellationToken,
+            DelayInMillisec, DisplayMode);
     }
 
-    private bool IsSymmetricalSolution() =>
-        SymmetryPruning.IsSymmetrical(QueenPositions, [.. Solutions],
+    private bool IsSymmetricalSolution()
+    {
+        return SymmetryPruning.IsSymmetrical(QueenPositions, [.. Solutions],
             new MemoryIntArrayComparer());
+    }
 
     private void AddSolutionAndNotify()
     {

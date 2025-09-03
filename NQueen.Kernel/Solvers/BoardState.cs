@@ -25,15 +25,31 @@ public class BoardState(int boardSize)
         int delayInMilliseconds = 0,
         DisplayMode displayMode = DisplayMode.Hide)
     {
-        var queenSpan = queenPositions.Span;
         var minColIndex = Math.Min(colIndex, boardSize - 1);
 
-        for (var rowIndex = queenSpan[minColIndex] + 1; rowIndex < boardSize; rowIndex++)
+        return await FindRowAsync(
+            minColIndex,
+            boardSize,
+            rowIndex => IsPositionValid(colIndex, rowIndex, queenPositions),
+            delayInMilliseconds,
+            displayMode,
+            cancellationToken);
+    }
+
+    private static async ValueTask<int> FindRowAsync(
+        int startRow,
+        int maxRow,
+        Func<int, bool> isValid,
+        int delayInMilliseconds,
+        DisplayMode displayMode,
+        CancellationToken cancellationToken)
+    {
+        for (var rowIndex = startRow + 1; rowIndex < maxRow; rowIndex++)
         {
             if (cancellationToken.IsCancellationRequested)
                 return -1;
 
-            if (IsPositionValid(colIndex, rowIndex, queenSpan))
+            if (isValid(rowIndex))
             {
                 await DelayIfVisualizing(displayMode, delayInMilliseconds, cancellationToken);
                 return rowIndex;
@@ -43,11 +59,12 @@ public class BoardState(int boardSize)
         return -1;
     }
 
-    private static bool IsPositionValid(int colIndex, int rowIndex, Span<int> queenPositions)
+    private static bool IsPositionValid(int colIndex, int rowIndex, Memory<int> queenPositions)
     {
+        var queenSpan = queenPositions.Span; // Access the Span here
         for (var j = 0; j < colIndex; j++)
         {
-            var rowDifference = Math.Abs(rowIndex - queenPositions[j]);
+            var rowDifference = Math.Abs(rowIndex - queenSpan[j]);
             var colDifference = Math.Abs(colIndex - j);
             if (rowDifference == 0 || rowDifference == colDifference)
                 return false;

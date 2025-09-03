@@ -141,7 +141,7 @@ public class MainViewModelPositiveTests : IDisposable
         var mockFormatter = new Mock<ISolutionFormatter>().Object;
 
         mockSolver
-            .Setup(s => s.GetResultsForBoardAsync(It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
+            .Setup(s => s.GetSimResultsAsync(It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
             .Returns(async () =>
             {
                 if (solutionMode == SolutionMode.Single)
@@ -201,7 +201,7 @@ public class MainViewModelPositiveTests : IDisposable
 
         // Configure the mock solver to return a valid SimulationResults object
         mockSolver
-            .Setup(s => s.GetResultsForBoardAsync(boardSize, SolutionMode.Unique, displayMode))
+            .Setup(s => s.GetSimResultsAsync(boardSize, SolutionMode.Unique, displayMode))
             .ReturnsAsync(new SimulationResults(
                 [
                     new Solution([1, 3, 0, 2], mockFormatter, null)
@@ -276,7 +276,7 @@ public class MainViewModelPositiveTests : IDisposable
         // Create a mock solver for All mode
         var mockSolver = new Mock<ISolver>();
         mockSolver
-            .Setup(s => s.GetResultsForBoardAsync(It.IsAny<int>(), SolutionMode.All, displayMode))
+            .Setup(s => s.GetSimResultsAsync(It.IsAny<int>(), SolutionMode.All, displayMode))
             .ReturnsAsync(new SimulationResults(
                 [
                     new Solution([1, 3, 0, 2], mockFormatter, null),

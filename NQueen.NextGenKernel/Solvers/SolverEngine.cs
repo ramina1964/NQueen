@@ -41,7 +41,7 @@ public class SolverEngine(
 
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
 
-    public async Task<SimulationResults> GetResultsForBoardAsync(
+    public async Task<SimulationResults> GetSimResultsAsync(
         int boardSize,
         SolutionMode solutionMode,
         DisplayMode displayMode = DisplayMode.Hide)

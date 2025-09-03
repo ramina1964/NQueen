@@ -22,7 +22,7 @@ public class NQueenSolverPositiveTests : IDisposable
         Assert.Single(expectedSolutions);
 
         // Act
-        var actualSolutions = await _solver.GetResultsForBoardAsync(boardSize, solutionMode);
+        var actualSolutions = await _solver.GetSimResultsAsync(boardSize, solutionMode);
         var actualSolutionsList = actualSolutions.Solutions
             .Select(solution => solution.QueenPositions.ToArray());
 
@@ -41,7 +41,7 @@ public class NQueenSolverPositiveTests : IDisposable
         var expectedSolutions = NQueenTestBase.FetchExpectedSols(boardSize, solutionMode);
 
         // Act
-        var actualSolutions = await _solver.GetResultsForBoardAsync(boardSize, solutionMode);
+        var actualSolutions = await _solver.GetSimResultsAsync(boardSize, solutionMode);
         var actualSolutionsList = actualSolutions.Solutions
             .Select(solution => solution.QueenPositions.ToArray());
 
@@ -62,7 +62,7 @@ public class NQueenSolverPositiveTests : IDisposable
         var expectedSolutions = NQueenTestBase.FetchExpectedSols(boardSize, solutionMode);
 
         // Act
-        var actualSolutions = await _solver.GetResultsForBoardAsync(boardSize, solutionMode);
+        var actualSolutions = await _solver.GetSimResultsAsync(boardSize, solutionMode);
         var actualSolutionsList = actualSolutions.Solutions
             .Select(solution => solution.QueenPositions.ToArray());
 

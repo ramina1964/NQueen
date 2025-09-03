@@ -42,11 +42,11 @@ public class SimulationOrchestrator : ISolver, IDisposable
     public event EventHandler<ProgressChangedWithTokenEventArgs>
         ProgressValueChanged = delegate { };
 
-    public async Task<SimulationResults> GetResultsForBoardAsync(
+    public async Task<SimulationResults> GetSimResultsAsync(
         int boardSize,
         SolutionMode solutionMode,
         DisplayMode displayMode = DisplayMode.Hide)
-            => await _solverEngine.GetResultsForBoardAsync(
+            => await _solverEngine.GetSimResultsAsync(
                 boardSize, solutionMode, displayMode);
 
     #endregion Implementation
