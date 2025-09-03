@@ -41,10 +41,7 @@ public class SolverEngine(
 
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
 
-    public void CancelSimulation()
-    {
-        _cancellationTokenSource?.Cancel();
-    }
+    public void CancelSimulation() => _cancellationTokenSource?.Cancel();
 
     public async Task<SimulationResults> GetResultsForBoardAsync(
         int boardSize,
@@ -75,13 +72,13 @@ public class SolverEngine(
         stopwatch.Stop();
         var elapsedTimeInSec = Math.Round(stopwatch.Elapsed.TotalSeconds, 1);
 
-        return new SimulationResults(Solutions.Select(s => new Solution(s.ToArray(), _solutionFormatter)).ToList(), elapsedTimeInSec);
+        return new SimulationResults(
+            [.. Solutions.Select(s => new Solution(s.ToArray(), _solutionFormatter))],
+            elapsedTimeInSec);
     }
 
-    private async Task SolveNQueenProblem(SolutionMode solutionMode, CancellationToken cancellationToken)
-    {
-        await SolveNQueenByModeAsync(0, solutionMode, cancellationToken);
-    }
+    private async Task SolveNQueenProblem(SolutionMode solutionMode,
+        CancellationToken cancellationToken) => await SolveNQueenByModeAsync(0, solutionMode, cancellationToken);
 
     private async Task SolveNQueenByModeAsync(
         int colIndex, SolutionMode solutionMode, CancellationToken cancellationToken)
@@ -102,7 +99,7 @@ public class SolverEngine(
             if (colIndex == BoardSize)
             {
                 if (solutionMode == SolutionMode.Unique &&
-                    SymmetryPruning.IsSymmetrical(QueenPositions, Solutions.ToList(), new MemoryIntArrayComparer()))
+                    SymmetryPruning.IsSymmetrical(QueenPositions, [.. Solutions], new MemoryIntArrayComparer()))
                 {
                     colIndex--;
                     continue;
