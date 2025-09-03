@@ -2,22 +2,16 @@ namespace NQueen.Kernel.Solvers;
 
 public class SimulationOrchestrator : ISolver, IDisposable
 {
+    // Constructor
     public SimulationOrchestrator(SolverEngine solverEngine)
     {
-        _solverEngine = solverEngine ??
-            throw new ArgumentNullException(nameof(solverEngine));
+        _solverEngine = solverEngine ?? throw new ArgumentNullException(nameof(solverEngine));
 
         // Relay events from SolverEngine
-        _solverEngine.QueenPlaced += (s, e) =>
-            QueenPlaced?.Invoke(this, e);
-
-        _solverEngine.SolutionFound += (s, e) =>
-            SolutionFound?.Invoke(this, e);
-
-        _solverEngine.ProgressValueChanged += (s, e) =>
-            ProgressValueChanged?.Invoke(this, e);
+        RelaySolverEngineEvents();
     }
 
+    // Properties
     public bool IsSolverCanceled
     {
         get => _solverEngine.IsSolverCanceled;
@@ -36,6 +30,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
         set => _solverEngine.ProgressValue = value;
     }
 
+    // Events
     public event EventHandler<QueenPlacedEventArgs> QueenPlaced =
         delegate { };
 
@@ -45,11 +40,12 @@ public class SimulationOrchestrator : ISolver, IDisposable
     public event EventHandler<ProgressChangedWithTokenEventArgs> ProgressValueChanged =
         delegate { };
 
+    // Public Methods
     public async Task<SimulationResults> GetResultsForBoardAsync(
         int boardSize,
         SolutionMode solutionMode,
-        DisplayMode displayMode = DisplayMode.Hide)
-        => await _solverEngine.GetResultsForBoardAsync(boardSize, solutionMode, displayMode);
+        DisplayMode displayMode = DisplayMode.Hide) =>
+        await _solverEngine.GetResultsForBoardAsync(boardSize, solutionMode, displayMode);
 
     public void SetSimulationToken(Guid token) =>
         _solverEngine.SetSimulationToken(token);
@@ -58,6 +54,19 @@ public class SimulationOrchestrator : ISolver, IDisposable
     {
         Dispose(true);
         GC.SuppressFinalize(this);
+    }
+
+    // Private Methods
+    private void RelaySolverEngineEvents()
+    {
+        _solverEngine.QueenPlaced += (s, e) =>
+            QueenPlaced?.Invoke(this, e);
+        
+        _solverEngine.SolutionFound += (s, e) =>
+            SolutionFound?.Invoke(this, e);
+        
+        _solverEngine.ProgressValueChanged += (s, e) =>
+            ProgressValueChanged?.Invoke(this, e);
     }
 
     protected virtual void Dispose(bool disposing)
@@ -72,6 +81,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
         }
     }
 
+    // Private Fields
     private bool _disposed = false;
     private readonly SolverEngine _solverEngine;
 }

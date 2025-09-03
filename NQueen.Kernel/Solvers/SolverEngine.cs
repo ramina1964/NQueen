@@ -4,6 +4,7 @@ public class SolverEngine(
     ISolutionFormatter solutionFormatter,
     Func<int, BoardState> boardStateFactory) : ISolver, IDisposable
 {
+    // Properties
     public bool IsSolverCanceled
     {
         get => _cancellationTokenSource?.IsCancellationRequested ?? false;
@@ -30,15 +31,12 @@ public class SolverEngine(
 
     public DisplayMode DisplayMode { get; set; }
 
-    public event EventHandler<QueenPlacedEventArgs> QueenPlaced =
-        delegate { };
+    // Events
+    public event EventHandler<QueenPlacedEventArgs> QueenPlaced = delegate { };
+    public event EventHandler<SolutionFoundEventArgs> SolutionFound = delegate { };
+    public event EventHandler<ProgressChangedWithTokenEventArgs> ProgressValueChanged = delegate { };
 
-    public event EventHandler<SolutionFoundEventArgs> SolutionFound =
-        delegate { };
-
-    public event EventHandler<ProgressChangedWithTokenEventArgs> ProgressValueChanged =
-        delegate { };
-
+    // Public Methods
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
 
     public void CancelSimulation() => _cancellationTokenSource?.Cancel();
@@ -52,9 +50,18 @@ public class SolverEngine(
         SolutionMode = solutionMode;
         DisplayMode = displayMode;
 
-        return await Task.Run(() => GetResultsForCurrentConfigurationAsync(solutionMode, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+        return await Task.Run(() =>
+            RunSimulationAsync(solutionMode, _cancellationTokenSource.Token),
+                _cancellationTokenSource.Token);
     }
 
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    // Private Methods
     private void Initialize(int boardSize)
     {
         _board = _boardStateFactory(boardSize);
@@ -64,42 +71,41 @@ public class SolverEngine(
         _cancellationTokenSource = new CancellationTokenSource();
     }
 
-    private async Task<SimulationResults> GetResultsForCurrentConfigurationAsync(
-        SolutionMode solutionMode, CancellationToken cancellationToken)
+    private async Task<SimulationResults> RunSimulationAsync(SolutionMode solutionMode, CancellationToken cancellationToken)
     {
-        var stopwatch = Stopwatch.StartNew();
-        await SolveNQueenProblem(solutionMode, cancellationToken);
-        stopwatch.Stop();
-        var elapsedTimeInSec = Math.Round(stopwatch.Elapsed.TotalSeconds, 1);
+        var elapsedTime = await MeasureExecutionTimeAsync(async () =>
+            await SolveNQueenProblemAsync(solutionMode, cancellationToken));
 
         return new SimulationResults(
             [.. Solutions.Select(s => new Solution(s.ToArray(), _solutionFormatter))],
-            elapsedTimeInSec);
+            elapsedTime);
     }
 
-    private async Task SolveNQueenProblem(SolutionMode solutionMode,
-        CancellationToken cancellationToken) => await SolveNQueenByModeAsync(0, solutionMode, cancellationToken);
+    private async Task SolveNQueenProblemAsync(SolutionMode solutionMode,
+        CancellationToken cancellationToken) =>
+            await SolveByModeAsync(0, solutionMode, cancellationToken);
 
-    private async Task SolveNQueenByModeAsync(
-        int colIndex, SolutionMode solutionMode, CancellationToken cancellationToken)
+    private async Task SolveByModeAsync(int colIndex, SolutionMode solutionMode, CancellationToken cancellationToken)
     {
         if (solutionMode == SolutionMode.Single)
         {
-            ProgressValueChanged?.Invoke(this, new ProgressChangedWithTokenEventArgs(-1, _currentSimToken));
+            NotifyProgress(-1);
         }
 
         while (colIndex != -1)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                ProgressValueChanged?.Invoke(this, new ProgressChangedWithTokenEventArgs(0, _currentSimToken));
+                NotifyProgress(0);
                 return;
             }
 
+            // Restrict the first column to HalfBoardSize
+            var maxRow = colIndex == 0 ? _board.HalfBoardSize : BoardSize;
+
             if (colIndex == BoardSize)
             {
-                if (solutionMode == SolutionMode.Unique &&
-                    SymmetryPruning.IsSymmetrical(QueenPositions, [.. Solutions], new MemoryIntArrayComparer()))
+                if (solutionMode == SolutionMode.Unique && IsSymmetricalSolution())
                 {
                     colIndex--;
                     continue;
@@ -113,8 +119,7 @@ public class SolverEngine(
                 continue;
             }
 
-            var nextRow = await BoardState.FindValidQueenPositionAsync(
-                colIndex, BoardSize, QueenPositions, cancellationToken, DelayInMillisec, DisplayMode);
+            var nextRow = await FindNextRowAsync(colIndex, maxRow, cancellationToken);
 
             if (nextRow == -1)
             {
@@ -125,11 +130,21 @@ public class SolverEngine(
             QueenPositions.Span[colIndex] = nextRow;
 
             if (DisplayMode == DisplayMode.Visualize)
-                QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(QueenPositions.ToArray()));
+                NotifyQueenPlaced();
 
             colIndex++;
         }
     }
+
+    private async Task<int> FindNextRowAsync(int colIndex, int maxRow, CancellationToken cancellationToken)
+    {
+        return await BoardState.TryFindValidPosition(
+            colIndex, maxRow, QueenPositions, cancellationToken, DelayInMillisec, DisplayMode);
+    }
+
+    private bool IsSymmetricalSolution() =>
+        SymmetryPruning.IsSymmetrical(QueenPositions, [.. Solutions],
+            new MemoryIntArrayComparer());
 
     private void AddSolutionAndNotify()
     {
@@ -137,10 +152,19 @@ public class SolverEngine(
         SolutionFound?.Invoke(this, new SolutionFoundEventArgs(QueenPositions.ToArray()));
     }
 
-    public void Dispose()
+    private void NotifyProgress(int progress) =>
+        ProgressValueChanged?.Invoke(this,
+            new ProgressChangedWithTokenEventArgs(progress, _currentSimToken));
+
+    private void NotifyQueenPlaced() =>
+        QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(QueenPositions.ToArray()));
+
+    private static async Task<double> MeasureExecutionTimeAsync(Func<Task> action)
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
+        var stopwatch = Stopwatch.StartNew();
+        await action();
+        stopwatch.Stop();
+        return Math.Round(stopwatch.Elapsed.TotalSeconds, 1);
     }
 
     protected virtual void Dispose(bool disposing)
@@ -159,6 +183,7 @@ public class SolverEngine(
         }
     }
 
+    // Fields
     private readonly ISolutionFormatter _solutionFormatter = solutionFormatter
         ?? throw new ArgumentNullException(nameof(solutionFormatter));
 
@@ -167,10 +192,7 @@ public class SolverEngine(
 
     private BoardState _board = null!;
     private CancellationTokenSource _cancellationTokenSource = new();
-
     private HashSet<Memory<int>> Solutions { get; set; } = new(new MemoryIntArrayComparer());
-
     private Guid _currentSimToken = Guid.Empty;
-
     private bool _disposed = false;
 }

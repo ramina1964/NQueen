@@ -6,6 +6,8 @@
 		<Nullable>enable</Nullable>
 
 		<IsPackable>false</IsPackable>
+
+		<RunSettingsFilePath>D:\Repos\Code\NQueen\NQueen.UnitTests\bin\Release\net9.0\fine-code-coverage\coverage-tool-output\NQueen.UnitTests-fcc-mscodecoverage-generated.runsettings</RunSettingsFilePath>
 	</PropertyGroup>
 
 	<ItemGroup>
