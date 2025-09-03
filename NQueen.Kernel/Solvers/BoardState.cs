@@ -15,8 +15,8 @@ public class BoardState(int boardSize)
     public void Reset() =>
         QueenPositions = new Memory<int>([.. Enumerable.Repeat(-1, BoardSize)]);
 
-    public static async ValueTask<int> FindValidQueenPositionAsync(
-        int colIndex, int boardSize, Memory<int> queenPositions, CancellationToken cancellationToken,
+    public static async ValueTask<int> FindValidQueenPositionAsync(int colIndex, int boardSize,
+        Memory<int> queenPositions, CancellationToken cancellationToken,
         int delayInMilliseconds = 0, DisplayMode displayMode = DisplayMode.Hide)
     {
         var queenSpan = queenPositions.Span;
