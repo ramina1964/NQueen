@@ -1,5 +1,6 @@
 ﻿namespace NQueen.ConsoleApp.Commands;
 
+// Todo: Fix a runtime error in NQueen.ConsolApp when it is set as startup project.
 public partial class DispatchCommands(
     ISolverBackEnd solver,
     IConsoleUtils consoleUtils,
@@ -93,13 +94,15 @@ public partial class DispatchCommands(
     public async Task<bool> RunApp()
     {
         var simulationResult = await _solver
-            .GetResultsForBoardAsync(BoardSize, SolutionMode, DisplayMode.Hide);
+            .GetSimResultsAsync(BoardSize, SolutionMode, DisplayMode.Hide);
 
         var noOfSolutions = simulationResult.Solutions.Count();
         var elapsedTime = simulationResult.ElapsedTimeInSec;
         if (noOfSolutions == 0)
         {
-            _consoleUtils.WriteLineColored(ConsoleColor.Blue, $"\n{ErrorMessages.NoSolutionMessage}");
+            _consoleUtils.WriteLineColored(ConsoleColor.Blue,
+                $"\n{ErrorMessages.NoSolutionMessage}");
+
             return true;
         }
 
