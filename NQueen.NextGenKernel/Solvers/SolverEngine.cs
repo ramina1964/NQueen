@@ -111,12 +111,6 @@ public class SolverEngine(
     private async Task SolveNQueenByModeAsync(
         int colIndex, SolutionMode solutionMode, CancellationToken cancellationToken)
     {
-        if (solutionMode == SolutionMode.Single)
-        {
-            // For 'Single' mode, set the progress bar to indeterminate
-            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(-1, _currentSimToken));
-        }
-
         int solutionsFound = 0;
 
         while (colIndex != -1)
@@ -124,7 +118,8 @@ public class SolverEngine(
             if (cancellationToken.IsCancellationRequested)
                 return;
 
-            if (QueenPositions[0] == HalfBoardSize)
+            // Terminate simulation if the first column's queen position exceeds HalfBoardSize
+            if (colIndex == 0 && QueenPositions[colIndex] >= HalfBoardSize)
                 return;
 
             if (colIndex == BoardSize)
@@ -136,8 +131,6 @@ public class SolverEngine(
                     return;
 
                 NotifySolutionFound();
-
-                // Update progress based on solutions found
                 UpdateProgress(solutionsFound, BoardSize, solutionMode);
 
                 colIndex--;
@@ -161,25 +154,22 @@ public class SolverEngine(
             colIndex++;
         }
 
-        // Ensure progress reaches 100% at the end of the simulation
         UpdateProgress(solutionsFound, BoardSize, solutionMode);
     }
 
     private void UpdateProgress(int solutionsFound, int boardSize, SolutionMode solutionMode)
     {
-        // Get the total number of solutions for the given board size and solution mode
         int totalSolutions = ExpectedSolutionCount.GetCount(boardSize, solutionMode);
 
         if (totalSolutions == 0)
             return;
 
-        // Calculate progress percentage
-        int progress = Math.Min(solutionsFound * 100 / totalSolutions, 100); // Clamp progress to 100%
+        int progress = Math.Min(solutionsFound * 100 / totalSolutions, 100);
 
-        // Throttle progress updates
         var now = DateTime.UtcNow;
         if (progress - _lastReportedProgress >= SimulationSettings.ProgressThresholdPct ||
-            (now - _lastUpdateTime).TotalSeconds >= SimulationSettings.ProgressIntervalInSeconds)
+            (now - _lastUpdateTime).TotalMilliseconds >=
+            SimulationSettings.ProgressIntervalInMilliSec)
         {
             ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(progress, _currentSimToken));
             _lastReportedProgress = progress;

@@ -15,38 +15,44 @@ public class BoardState(int boardSize)
     public void Reset() =>
         QueenPositions = [.. Enumerable.Repeat(-1, BoardSize)];
 
-    public static async ValueTask<int> FindValidQueenPositionAsync(
-        int colIndex, int boardSize, int[] queenPositions, CancellationToken cancellationToken,
+    public static ValueTask<int> FindValidQueenPositionAsync(
+        int colIndex, int boardSize, Memory<int> queenPositions, CancellationToken cancellationToken,
         int delayInMilliseconds = 0, DisplayMode displayMode = DisplayMode.Hide)
     {
-        var minColIndex = Math.Min(colIndex, boardSize - 1);
-        for (var rowIndex = queenPositions[minColIndex] + 1; rowIndex < boardSize; rowIndex++)
+        // Get the span for efficient access
+        var queenSpan = queenPositions.Span;
+
+        // Start from the next row after the current position
+        for (var rowIndex = queenSpan[colIndex] + 1; rowIndex < boardSize; rowIndex++)
         {
             if (cancellationToken.IsCancellationRequested)
-                return -1;
+                return ValueTask.FromResult(-1);
 
-            if (IsValidPosition(colIndex, rowIndex, queenPositions))
+            // Inline the IsValidPosition logic for better performance
+            bool isValid = true;
+            for (var j = 0; j < colIndex; j++)
+            {
+                var diffRow = Math.Abs(rowIndex - queenSpan[j]);
+                var diffCol = colIndex - j;
+                if (diffRow == 0 || diffRow == diffCol)
+                {
+                    isValid = false;
+                    break;
+                }
+            }
+
+            if (isValid)
             {
                 if (displayMode == DisplayMode.Visualize && delayInMilliseconds > 0)
-                    await Task.Delay(delayInMilliseconds, cancellationToken);
+                {
+                    return new ValueTask<int>(Task.Delay(delayInMilliseconds, cancellationToken)
+                        .ContinueWith(_ => rowIndex, cancellationToken));
+                }
 
-                return rowIndex;
+                return ValueTask.FromResult(rowIndex);
             }
         }
 
-        return -1;
-    }
-
-    private static bool IsValidPosition(int colIndex, int rowIndex, int[] queenPositions)
-    {
-        for (var j = 0; j < colIndex; j++)
-        {
-            var lhs = Math.Abs(rowIndex - queenPositions[j]);
-            var rhs = Math.Abs(colIndex - j);
-            if (lhs == 0 || lhs == rhs)
-                return false;
-        }
-
-        return true;
+        return ValueTask.FromResult(-1);
     }
 }

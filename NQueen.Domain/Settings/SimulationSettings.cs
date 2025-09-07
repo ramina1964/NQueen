@@ -9,6 +9,5 @@ public static class SimulationSettings
 
     public static int ProgressThresholdPct { get; set; } = 5;
 
-    // Time interval for progress updates (in seconds)
-    public const int ProgressIntervalInSeconds = 5;
+    public const int ProgressIntervalInMilliSec = 5000;
 }
