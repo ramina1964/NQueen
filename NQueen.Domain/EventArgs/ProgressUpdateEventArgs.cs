@@ -1,6 +1,6 @@
 ﻿namespace NQueen.Domain.EventArgs;
 
-public class ProgressChangedWithTokenEventArgs(
+public class ProgressUpdateEventArgs(
     double value, Guid simulationToken) : System.EventArgs
 {
     public double Value { get; } = value;

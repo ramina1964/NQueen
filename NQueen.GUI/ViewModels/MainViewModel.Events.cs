@@ -97,7 +97,7 @@ public sealed partial class MainViewModel
     private void OnSolutionFoundEvent(object? sender, SolutionFoundEventArgs e) =>
         WeakReferenceMessenger.Default.Send(new SolutionFoundMessage(e.Solution));
 
-    private void OnProgressValueChangedEvent(object? sender, ProgressChangedWithTokenEventArgs e)
+    private void OnProgressValueChangedEvent(object? sender, ProgressUpdateEventArgs e)
     {
         Debug.WriteLine($"[MainViewModel] OnProgressValueChangedEvent: Value={e.Value}");
         WeakReferenceMessenger.Default.Send(new ProgressValueChangedMessage(e.Value));

@@ -39,7 +39,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
     public event EventHandler<SolutionFoundEventArgs>
         SolutionFound = delegate { };
 
-    public event EventHandler<ProgressChangedWithTokenEventArgs>
+    public event EventHandler<ProgressUpdateEventArgs>
         ProgressValueChanged = delegate { };
 
     public async Task<SimulationResults> GetSimResultsAsync(
@@ -78,7 +78,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
 
     public void RaiseProgressValueChangedForTest(int progress, Guid token) =>
         ProgressValueChanged?.Invoke(this,
-            new ProgressChangedWithTokenEventArgs(progress, token));
+            new ProgressUpdateEventArgs(progress, token));
 
     private bool _disposed = false;
     private readonly SolverEngine _solverEngine;

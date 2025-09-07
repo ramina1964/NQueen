@@ -211,13 +211,13 @@ public class MainViewModelPositiveTests : IDisposable
 
         // Simulate progress updates
         mockSolver
-            .SetupAdd(s => s.ProgressValueChanged += It.IsAny<EventHandler<ProgressChangedWithTokenEventArgs>>())
-            .Callback<EventHandler<ProgressChangedWithTokenEventArgs>>(handler =>
+            .SetupAdd(s => s.ProgressValueChanged += It.IsAny<EventHandler<ProgressUpdateEventArgs>>())
+            .Callback<EventHandler<ProgressUpdateEventArgs>>(handler =>
             {
                 for (var progress = 0.1; progress <= 1.0; progress += 0.1)
                 {
                     Console.WriteLine($"Triggering ProgressValueChanged with progress: {progress * 100}");
-                    handler?.Invoke(mockSolver.Object, new ProgressChangedWithTokenEventArgs(progress * 100, Guid.NewGuid()));
+                    handler?.Invoke(mockSolver.Object, new ProgressUpdateEventArgs(progress * 100, Guid.NewGuid()));
                     Task.Delay(10).Wait();
                 }
             });
@@ -287,12 +287,12 @@ public class MainViewModelPositiveTests : IDisposable
 
         // Simulate progress updates
         mockSolver
-            .SetupAdd(s => s.ProgressValueChanged += It.IsAny<EventHandler<ProgressChangedWithTokenEventArgs>>())
-            .Callback<EventHandler<ProgressChangedWithTokenEventArgs>>(handler =>
+            .SetupAdd(s => s.ProgressValueChanged += It.IsAny<EventHandler<ProgressUpdateEventArgs>>())
+            .Callback<EventHandler<ProgressUpdateEventArgs>>(handler =>
             {
                 for (var progress = 0.1; progress <= 1.0; progress += 0.1)
                 {
-                    handler?.Invoke(mockSolver.Object, new ProgressChangedWithTokenEventArgs(progress * 100, Guid.NewGuid()));
+                    handler?.Invoke(mockSolver.Object, new ProgressUpdateEventArgs(progress * 100, Guid.NewGuid()));
                     Task.Delay(10).Wait();
                 }
             });

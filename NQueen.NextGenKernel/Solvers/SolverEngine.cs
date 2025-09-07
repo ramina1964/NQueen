@@ -37,7 +37,7 @@ public class SolverEngine(
 
     public event EventHandler<SolutionFoundEventArgs> SolutionFound = delegate { };
 
-    public event EventHandler<ProgressChangedWithTokenEventArgs> ProgressValueChanged = delegate { };
+    public event EventHandler<ProgressUpdateEventArgs> ProgressValueChanged = delegate { };
 
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
 
@@ -114,7 +114,7 @@ public class SolverEngine(
         if (solutionMode == SolutionMode.Single)
         {
             // For 'Single' mode, set the progress bar to indeterminate
-            ProgressValueChanged?.Invoke(this, new ProgressChangedWithTokenEventArgs(-1, _currentSimToken));
+            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(-1, _currentSimToken));
         }
 
         int solutionsFound = 0;
@@ -181,7 +181,7 @@ public class SolverEngine(
         if (progress - _lastReportedProgress >= SimulationSettings.ProgressThresholdPct ||
             (now - _lastUpdateTime).TotalSeconds >= SimulationSettings.ProgressIntervalInSeconds)
         {
-            ProgressValueChanged?.Invoke(this, new ProgressChangedWithTokenEventArgs(progress, _currentSimToken));
+            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(progress, _currentSimToken));
             _lastReportedProgress = progress;
             _lastUpdateTime = now;
         }

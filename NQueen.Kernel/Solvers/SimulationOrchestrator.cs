@@ -38,7 +38,7 @@ public class SimulationOrchestrator : ISolver, IDisposable
     public event EventHandler<SolutionFoundEventArgs> SolutionFound
         = delegate { };
 
-    public event EventHandler<ProgressChangedWithTokenEventArgs> ProgressValueChanged
+    public event EventHandler<ProgressUpdateEventArgs> ProgressValueChanged
         = delegate { };
 
     // Public Methods

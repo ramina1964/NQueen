@@ -13,7 +13,7 @@ public interface ISolverFrontEndPruning
 
     event EventHandler<EventArgsPruning.QueenPlacedEventArgs> QueenPlaced;
     event EventHandler<EventArgsPruning.SolutionFoundEventArgs> SolutionFound;
-    event EventHandler<EventArgsPruning.ProgressChangedWithTokenEventArgs> ProgressValueChanged;
+    event EventHandler<EventArgsPruning.ProgressUpdateEventArgs> ProgressValueChanged;
 
     void SetSimulationToken(Guid token);
 }

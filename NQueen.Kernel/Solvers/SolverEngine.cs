@@ -38,7 +38,7 @@ public class SolverEngine(
     public event EventHandler<SolutionFoundEventArgs> SolutionFound
         = delegate { };
 
-    public event EventHandler<ProgressChangedWithTokenEventArgs> ProgressValueChanged
+    public event EventHandler<ProgressUpdateEventArgs> ProgressValueChanged
         = delegate { };
 
     // Public Methods
@@ -164,7 +164,7 @@ public class SolverEngine(
 
     private void NotifyProgress(int progress) =>
         ProgressValueChanged?.Invoke(this,
-            new ProgressChangedWithTokenEventArgs(progress, _currentSimToken));
+            new ProgressUpdateEventArgs(progress, _currentSimToken));
 
     private void NotifyQueenPlaced() =>
         QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(QueenPositions.ToArray()));
