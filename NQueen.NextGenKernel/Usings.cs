@@ -6,5 +6,4 @@ global using NQueen.Domain.Models;
 global using NQueen.Domain.Settings;
 global using NQueen.Domain.Utils;
 global using NQueen.NextGenKernel.Solvers;
-global using NQueen.NextGenKernel.Utils;
 global using System.Diagnostics;

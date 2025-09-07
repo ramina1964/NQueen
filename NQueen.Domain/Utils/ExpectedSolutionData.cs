@@ -1,4 +1,4 @@
-﻿namespace NQueen.NextGenKernel.Utils;
+﻿namespace NQueen.Domain.Utils;
 
 public static class ExpectedSolutionData
 {
