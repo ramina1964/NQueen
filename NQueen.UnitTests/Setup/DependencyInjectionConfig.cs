@@ -6,7 +6,9 @@ public static class DependencyInjectionConfig
     {
         // Register application services
         services.NQueenServices();
-        services.AddScoped<ISolverBackEnd, SimulationOrchestrator>();
+
+        // Todo: Adjust this line to use NQuenn-Kernel.SolverEngine, instead
+        services.AddScoped<ISolver, SolverEngine>();
         services.AddSingleton<ISolutionFormatter, TestSolutionFormatter>();
 
         return services;
