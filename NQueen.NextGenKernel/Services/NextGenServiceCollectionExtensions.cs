@@ -1,8 +1,8 @@
 ﻿namespace NQueen.NextGenKernel.Services;
 
-public static class NQueenServiceCollectionExtensions
+public static class NextGenServiceCollectionExtensions
 {
-    public static void AddNextGenNQueenServices(this IServiceCollection services)
+    public static void NQueenServices(this IServiceCollection services)
     {
         services.AddTransient<Func<int, BoardState>>(sp => size => new BoardState(size));
         services.AddTransient<ISolutionManager, SolutionManager>();

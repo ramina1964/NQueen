@@ -7,7 +7,7 @@ public static class GuiServiceCollectionExtensions
         var services = new ServiceCollection();
         services.AddSingleton<IDispatcher, WpfDispatcher>();
         services.AddTransient<ISaveFileDialogService, SaveFileDialogService>();
-        services.AddNextGenNQueenServices();
+        services.NQueenServices();
 
         // Register MainWindow for DI
         services.AddSingleton<MainWindow>();

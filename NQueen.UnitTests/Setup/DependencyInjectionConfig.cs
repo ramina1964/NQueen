@@ -5,7 +5,7 @@ public static class DependencyInjectionConfig
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         // Register application services
-        services.AddNextGenNQueenServices();
+        services.NQueenServices();
         services.AddScoped<ISolverBackEnd, SimulationOrchestrator>();
         services.AddSingleton<ISolutionFormatter, TestSolutionFormatter>();
 

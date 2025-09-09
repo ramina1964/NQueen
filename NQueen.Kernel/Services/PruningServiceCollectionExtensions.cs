@@ -1,8 +1,8 @@
 ﻿namespace NQueen.Kernel.Services;
 
-public static class NQueenServiceCollectionExtensions
+public static class PruningServiceCollectionExtensions
 {
-    public static void AddNextGenNQueenServices(this IServiceCollection services)
+    public static void NQueenServices(this IServiceCollection services)
     {
         // Register BoardState as a factory function
         services.AddTransient<Func<int, BoardState>>(sp => size => new BoardState(size));
