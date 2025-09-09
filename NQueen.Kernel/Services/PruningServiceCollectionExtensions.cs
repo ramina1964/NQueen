@@ -12,7 +12,7 @@ public static class PruningServiceCollectionExtensions
 
         // Register SolverEngine as both itself and ISolver
         services.AddTransient<SolverEngine>();
-        services.AddTransient<ISolver, SolverEngine>();
+        services.AddTransient<ISolverPruning, SolverEngine>();
 
         // Register SimulationOrchestrator
         services.AddTransient<SimulationOrchestrator>();

@@ -1,6 +1,6 @@
 namespace NQueen.Kernel.Solvers;
 
-public class SimulationOrchestrator : ISolver, IDisposable
+public class SimulationOrchestrator : IDisposable
 {
     // Constructor
     public SimulationOrchestrator(SolverEngine solver)
@@ -32,13 +32,13 @@ public class SimulationOrchestrator : ISolver, IDisposable
     }
 
     // Events
-    public event EventHandler<QueenPlacedEventArgs> QueenPlaced
+    public event EventHandler<Domain.EventArgsPruning.QueenPlacedEventArgs> QueenPlaced
         = delegate { };
 
-    public event EventHandler<SolutionFoundEventArgs> SolutionFound
+    public event EventHandler<Domain.EventArgsPruning.SolutionFoundEventArgs> SolutionFound
         = delegate { };
 
-    public event EventHandler<ProgressUpdateEventArgs> ProgressValueChanged
+    public event EventHandler<Domain.EventArgsPruning.ProgressUpdateEventArgs> ProgressValueChanged
         = delegate { };
 
     // Public Methods
