@@ -13,18 +13,24 @@ public readonly struct IntArrayComparer : IEqualityComparer<int[]>, IComparer<in
 
         // Fallback to full comparison
         for (int i = 0; i < x.Length; i++)
-        {
             if (x[i] != y[i]) return false;
-        }
+
         return true;
     }
 
     public int GetHashCode(int[] obj)
     {
-        if (obj is null) return 0;
+        ArgumentNullException.ThrowIfNull(obj);
 
-        // Use ComputeArrayHash logic for hashing
-        return ComputeArrayHash(obj);
+        unchecked
+        {
+            int hash = 17;
+            foreach (var item in obj)
+            {
+                hash = hash * 31 + item.GetHashCode();
+            }
+            return hash;
+        }
     }
 
     public int Compare(int[]? x, int[]? y)

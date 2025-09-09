@@ -44,16 +44,15 @@ public static class SymmetryPruning
 
     public static bool IsSymmetrical(
         Memory<int> solution,
-        List<Memory<int>> uniqueSolutions,
-        MemoryIntArrayComparer comparer)
+        HashSet<Memory<int>> uniqueSolutions)
+    {
+        // Check if the solution or any of its symmetrical transformations already exists
+        foreach (var transformation in GetSymmetricalSolutions(solution))
         {
-            // Check if the solution or any of its symmetrical transformations already exists
-            foreach (var transformation in GetSymmetricalSolutions(solution))
-            {
-                if (uniqueSolutions.Contains(transformation, comparer))
-                    return true;
-            }
-
-            return false;
+            if (uniqueSolutions.Contains(transformation))
+                return true;
         }
+
+        return false;
+    }
 }

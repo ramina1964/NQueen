@@ -32,14 +32,9 @@ public class SolverEngine(
     public DisplayMode DisplayMode { get; set; }
 
     // Events
-    public event EventHandler<QueenPlacedEventArgs> QueenPlaced
-        = delegate { };
-    
-    public event EventHandler<SolutionFoundEventArgs> SolutionFound
-        = delegate { };
-
-    public event EventHandler<ProgressUpdateEventArgs> ProgressValueChanged
-        = delegate { };
+    public event EventHandler<QueenPlacedEventArgs> QueenPlaced = delegate { };
+    public event EventHandler<SolutionFoundEventArgs> SolutionFound = delegate { };
+    public event EventHandler<ProgressUpdateEventArgs> ProgressValueChanged = delegate { };
 
     // Public Methods
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
@@ -57,7 +52,7 @@ public class SolverEngine(
 
         return await Task.Run(() =>
             RunSimulationAsync(solutionMode, _cancellationTokenSource.Token),
-                _cancellationTokenSource.Token);
+            _cancellationTokenSource.Token);
     }
 
     public void Dispose()
@@ -83,21 +78,19 @@ public class SolverEngine(
             await SolveNQueenProblemAsync(solutionMode, cancellationToken));
 
         return new SimulationResults(
-            [.. Solutions.Select(s => new Solution(s.ToArray(), _solutionFormatter))],
-            elapsedTime);
+            [.. Solutions.Select(s => new Solution(s.Span.ToArray(),
+            _solutionFormatter))], elapsedTime);
     }
 
     private async Task SolveNQueenProblemAsync(SolutionMode solutionMode,
         CancellationToken cancellationToken) =>
-            await SolveByModeAsync(0, solutionMode, cancellationToken);
+        await SolveByModeAsync(0, solutionMode, cancellationToken);
 
     private async Task SolveByModeAsync(int colIndex, SolutionMode solutionMode,
         CancellationToken cancellationToken)
     {
         if (solutionMode == SolutionMode.Single)
-        {
             NotifyProgress(-1);
-        }
 
         while (colIndex != -1)
         {
@@ -150,16 +143,13 @@ public class SolverEngine(
             DelayInMillisec, DisplayMode);
     }
 
-    private bool IsSymmetricalSolution()
-    {
-        return SymmetryPruning.IsSymmetrical(QueenPositions, [.. Solutions],
-            new MemoryIntArrayComparer());
-    }
+    private bool IsSymmetricalSolution() =>
+        SymmetryPruning.IsSymmetrical(QueenPositions, Solutions);
 
     private void AddSolutionAndNotify()
     {
-        Solutions.Add(new Memory<int>(QueenPositions.ToArray()));
-        SolutionFound?.Invoke(this, new SolutionFoundEventArgs(QueenPositions.ToArray()));
+        Solutions.Add(QueenPositions);
+        SolutionFound?.Invoke(this, new SolutionFoundEventArgs(QueenPositions.Span.ToArray()));
     }
 
     private void NotifyProgress(int progress) =>
@@ -167,7 +157,7 @@ public class SolverEngine(
             new ProgressUpdateEventArgs(progress, _currentSimToken));
 
     private void NotifyQueenPlaced() =>
-        QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(QueenPositions.ToArray()));
+        QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(QueenPositions.Span.ToArray()));
 
     private static async Task<double> MeasureExecutionTimeAsync(Func<Task> action)
     {

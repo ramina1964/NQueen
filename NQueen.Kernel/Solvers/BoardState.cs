@@ -52,7 +52,8 @@ public class BoardState(int boardSize)
         for (var j = 0; j < colIndex; j++)
         {
             var placedRow = queenSpan[j];
-            if (placedRow == -1) continue;
+            if (placedRow == -1)
+                continue;
 
             var rowDifference = Math.Abs(rowIndex - placedRow);
             var colDifference = colIndex - j;
