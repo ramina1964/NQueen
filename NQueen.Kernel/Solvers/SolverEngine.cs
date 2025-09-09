@@ -2,7 +2,7 @@ namespace NQueen.Kernel.Solvers;
 
 public class SolverEngine(
     ISolutionFormatter solutionFormatter,
-    Func<int, BoardState> boardStateFactory) : ISolver, IDisposable
+    Func<int, BoardState> boardStateFactory) : ISolverPruning, IDisposable
 {
     // Properties
     public bool IsSolverCanceled
@@ -32,9 +32,9 @@ public class SolverEngine(
     public DisplayMode DisplayMode { get; set; }
 
     // Events
-    public event EventHandler<QueenPlacedEventArgs> QueenPlaced = delegate { };
-    public event EventHandler<SolutionFoundEventArgs> SolutionFound = delegate { };
-    public event EventHandler<ProgressUpdateEventArgs> ProgressValueChanged = delegate { };
+    public event EventHandler<Domain.EventArgsPruning.QueenPlacedEventArgs> QueenPlaced = delegate { };
+    public event EventHandler<Domain.EventArgsPruning.SolutionFoundEventArgs> SolutionFound = delegate { };
+    public event EventHandler<Domain.EventArgsPruning.ProgressUpdateEventArgs> ProgressValueChanged = delegate { };
 
     // Public Methods
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
@@ -149,15 +149,15 @@ public class SolverEngine(
     private void AddSolutionAndNotify()
     {
         Solutions.Add(QueenPositions);
-        SolutionFound?.Invoke(this, new SolutionFoundEventArgs(QueenPositions.Span.ToArray()));
+        SolutionFound?.Invoke(this, new Domain.EventArgsPruning.SolutionFoundEventArgs(QueenPositions.Span.ToArray()));
     }
 
     private void NotifyProgress(int progress) =>
         ProgressValueChanged?.Invoke(this,
-            new ProgressUpdateEventArgs(progress, _currentSimToken));
+            new Domain.EventArgsPruning.ProgressUpdateEventArgs(progress, _currentSimToken));
 
     private void NotifyQueenPlaced() =>
-        QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(QueenPositions.Span.ToArray()));
+        QueenPlaced?.Invoke(this, new Domain.EventArgsPruning.QueenPlacedEventArgs(QueenPositions.Span.ToArray()));
 
     private static async Task<double> MeasureExecutionTimeAsync(Func<Task> action)
     {
