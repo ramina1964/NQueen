@@ -23,6 +23,7 @@ public class Program
         services.AddTransient<IConsoleUtils, ConsoleUtils>();
         services.AddTransient<ICommandProcessor, CommandProcessor> ();
         services.AddTransient<ISolutionManager, SolutionManager>();
+        services.AddTransient<ISolutionFormatter, SolutionFormatter>();
         services.AddSingleton<App>();
 
         // Register shared services

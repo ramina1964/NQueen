@@ -4,6 +4,7 @@ global using NQueen.ConsoleApp.Interfaces;
 global using NQueen.ConsoleApp.Utils;
 global using NQueen.Domain.Enums;
 global using NQueen.Domain.Interfaces;
+global using NQueen.Domain.Models;
 global using NQueen.Domain.Settings;
 global using NQueen.Domain.Utils;
 global using NQueen.NextGenKernel.Services;
