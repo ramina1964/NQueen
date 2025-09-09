@@ -84,10 +84,10 @@ public class SolverEngine(
 
     private async Task SolveNQueenProblemAsync(SolutionMode solutionMode,
         CancellationToken cancellationToken) =>
-        await SolveByModeAsync(0, solutionMode, cancellationToken);
+        await SolveByModeAsync(0, solutionMode, DisplayMode, cancellationToken);
 
     private async Task SolveByModeAsync(int colIndex, SolutionMode solutionMode,
-        CancellationToken cancellationToken)
+        DisplayMode displayMode, CancellationToken cancellationToken)
     {
         if (solutionMode == SolutionMode.Single)
             NotifyProgress(-1);
@@ -129,14 +129,15 @@ public class SolverEngine(
 
             QueenPositions.Span[colIndex] = nextRow;
 
-            if (DisplayMode == DisplayMode.Visualize)
+            if (displayMode == DisplayMode.Visualize)
                 NotifyQueenPlaced();
 
             colIndex++;
         }
     }
 
-    private async Task<int> FindNextRowAsync(int colIndex, int maxRow, CancellationToken cancellationToken)
+    private async Task<int> FindNextRowAsync(int colIndex, int maxRow,
+        CancellationToken cancellationToken)
     {
         return await BoardState.TryFindValidPosition(
             colIndex, maxRow, QueenPositions, cancellationToken,
