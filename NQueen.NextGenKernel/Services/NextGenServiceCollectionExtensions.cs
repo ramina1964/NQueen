@@ -4,11 +4,13 @@ public static class NextGenServiceCollectionExtensions
 {
     public static void NQueenServices(this IServiceCollection services)
     {
-        services.AddTransient<Func<int, BoardState>>(sp => size => new BoardState(size));
+        services.AddTransient<Func<int, BoardState>>(sp => size =>
+            new BoardState(size));
+
         services.AddTransient<ISolutionManager, SolutionManager>();
         services.AddTransient<ISolutionFormatter, SolutionFormatter>();
 
-        // Register SolverEngine as both itself and ISolver (or ISolverPruning if updated)
+        // Register SolverEngine as both itself and ISolver (or ISolverPruning)
         services.AddTransient<SolverEngine>();
         services.AddTransient<ISolver, SolverEngine>();
 

@@ -5,7 +5,8 @@ public static class PruningServiceCollectionExtensions
     public static void NQueenServices(this IServiceCollection services)
     {
         // Register BoardState as a factory function
-        services.AddTransient<Func<int, BoardState>>(sp => size => new BoardState(size));
+        services.AddTransient<Func<int, BoardState>>(
+            sp => size => new BoardState(size));
 
         // Register SolutionFormatter
         services.AddTransient<ISolutionFormatter, SolutionFormatter>();
@@ -18,6 +19,7 @@ public static class PruningServiceCollectionExtensions
         services.AddTransient<SimulationOrchestrator>();
 
         // Register ISolverBackEnd as the same instance as ISolverPruning
-        services.AddTransient<ISolverBackEnd>(sp => sp.GetRequiredService<ISolverPruning>());
+        services.AddTransient<ISolverBackEnd>(
+            sp => sp.GetRequiredService<ISolverPruning>());
     }
 }
