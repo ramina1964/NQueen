@@ -1,9 +1,8 @@
 ﻿namespace NQueen.NextGenKernel.Solvers;
 
-public class SimulationOrchestrator : IDisposable
+public class SimulationOrchestrator : ISolver, IDisposable
 {
-    public SimulationOrchestrator(
-        SolverEngine solverEngine)
+    public SimulationOrchestrator(SolverEngine solverEngine)
     {
         _solverEngine = solverEngine ??
             throw new ArgumentNullException(nameof(solverEngine));

@@ -1,4 +1,4 @@
-namespace NQueen.Domain.Interfaces;
+﻿namespace NQueen.Domain.Interfaces;
 
-public interface ISolverPruning : ISolverBackEnd, ISolverFrontEndPruning
+public interface ISolverPruning: ISolverBackEndPruning, ISolverFrontEndPruning
 {}

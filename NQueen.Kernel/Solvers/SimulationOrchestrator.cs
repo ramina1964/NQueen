@@ -1,6 +1,6 @@
 namespace NQueen.Kernel.Solvers;
 
-public class SimulationOrchestrator : IDisposable
+public class SimulationOrchestrator : ISolverFrontEndPruning, IDisposable
 {
     // Constructor
     public SimulationOrchestrator(SolverEngine solver)
@@ -42,9 +42,8 @@ public class SimulationOrchestrator : IDisposable
         = delegate { };
 
     // Public Methods
-    public async Task<SimulationResults> GetSimResultsAsync(
-        int boardSize, SolutionMode solutionMode, DisplayMode displayMode = DisplayMode.Hide)
-            => await _solver.GetSimResultsAsync(boardSize, solutionMode, displayMode);
+    public async Task<SimulationResults> GetSimResultsAsync(SimulationContext simContext)
+        => await _solver.GetSimResultsAsync(simContext);
 
     public void SetSimulationToken(Guid token) =>
         _solver.SetSimulationToken(token);

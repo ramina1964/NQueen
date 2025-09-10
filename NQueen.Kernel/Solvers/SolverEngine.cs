@@ -41,17 +41,14 @@ public class SolverEngine(
 
     public void CancelSimulation() => _cancellationTokenSource?.Cancel();
 
-    public async Task<SimulationResults> GetSimResultsAsync(
-        int boardSize,
-        SolutionMode solutionMode,
-        DisplayMode displayMode = DisplayMode.Hide)
+    public async Task<SimulationResults> GetSimResultsAsync(SimulationContext simContext)
     {
-        Initialize(boardSize);
-        SolutionMode = solutionMode;
-        DisplayMode = displayMode;
+        Initialize(simContext.BoardSize);
+        SolutionMode = simContext.SolutionMode;
+        DisplayMode = simContext.DisplayMode;
 
         return await Task.Run(() =>
-            RunSimulationAsync(solutionMode, _cancellationTokenSource.Token),
+            RunSimulationAsync(simContext.SolutionMode, _cancellationTokenSource.Token),
             _cancellationTokenSource.Token);
     }
 
@@ -83,13 +80,22 @@ public class SolverEngine(
     }
 
     private async Task SolveNQueenProblemAsync(SolutionMode solutionMode,
-        CancellationToken cancellationToken) =>
-        await SolveByModeAsync(0, solutionMode, DisplayMode, cancellationToken);
-
-    private async Task SolveByModeAsync(int colIndex, SolutionMode solutionMode,
-        DisplayMode displayMode, CancellationToken cancellationToken)
+        CancellationToken cancellationToken)
     {
-        if (solutionMode == SolutionMode.Single)
+        var simContext = new SimulationContext
+        (
+            BoardSize,
+            solutionMode,
+            DisplayMode
+        );
+
+        await SolveByModeAsync(simContext, 0, cancellationToken);
+    }
+
+    private async Task SolveByModeAsync(SimulationContext simContext,
+        int colIndex, CancellationToken cancellationToken)
+    {
+        if (simContext.SolutionMode == SolutionMode.Single)
             NotifyProgress(-1);
 
         while (colIndex != -1)
@@ -105,14 +111,14 @@ public class SolverEngine(
 
             if (colIndex == BoardSize)
             {
-                if (solutionMode == SolutionMode.Unique && IsSymmetricalSolution())
+                if (simContext.SolutionMode == SolutionMode.Unique && IsSymmetricalSolution())
                 {
                     colIndex--;
                     continue;
                 }
 
                 AddSolutionAndNotify();
-                if (solutionMode == SolutionMode.Single)
+                if (simContext.SolutionMode == SolutionMode.Single)
                     return;
 
                 colIndex--;
@@ -129,7 +135,7 @@ public class SolverEngine(
 
             QueenPositions.Span[colIndex] = nextRow;
 
-            if (displayMode == DisplayMode.Visualize)
+            if (simContext.DisplayMode == DisplayMode.Visualize)
                 NotifyQueenPlaced();
 
             colIndex++;
