@@ -1,4 +1,6 @@
 ﻿namespace NQueen.Domain.Models;
 
 public record SimulationContext(
-    int BoardSize, SolutionMode SolutionMode, DisplayMode DisplayMode);
+    int BoardSize,
+    SolutionMode SolutionMode,
+    DisplayMode DisplayMode);
