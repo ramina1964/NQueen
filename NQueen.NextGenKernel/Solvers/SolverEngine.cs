@@ -25,8 +25,6 @@ public class SolverEngine(
 
     public int[] QueenPositions { get; private set; } = [];
 
-    public int NoOfSolutions => Solutions.Count;
-
     public int HalfBoardSize => _board.HalfBoardSize;
 
     public SolutionMode SolutionMode { get; set; }
@@ -50,14 +48,15 @@ public class SolverEngine(
         SolutionMode = solutionMode;
         DisplayMode = displayMode;
 
-        return await Task.Run(() => GetResultsForCurrentConfigurationAsync(solutionMode, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+        return await Task.Run(() => GetResultsForCurrentConfigurationAsync(solutionMode,
+            displayMode, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
     }
 
     public async Task<SimulationResults> GetResultsForCurrentConfigurationAsync(
-        SolutionMode solutionMode, CancellationToken cancellationToken)
+        SolutionMode solutionMode, DisplayMode displayMode, CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
-        var solutions = await SolveNQueenProblem(solutionMode, cancellationToken);
+        var solutions = await SolveNQueenProblem(solutionMode, displayMode, cancellationToken);
         stopwatch.Stop();
         var elapsedTimeInSec = Math.Round(stopwatch.Elapsed.TotalSeconds, 1);
 
@@ -73,21 +72,23 @@ public class SolverEngine(
         _cancellationTokenSource = new CancellationTokenSource();
     }
 
-    private async Task<IEnumerable<Solution>> SolveNQueenProblem(
-        SolutionMode solutionMode, CancellationToken cancellationToken)
+    private async Task<IEnumerable<Solution>> SolveNQueenProblem(SolutionMode solutionMode,
+        DisplayMode displayMode, CancellationToken cancellationToken)
     {
         switch (solutionMode)
         {
             case SolutionMode.Single:
-                await SolveNQueenByModeAsync(0, SolutionMode.Single, cancellationToken);
+                await SolveNQueenByModeAsync(0, SolutionMode.Single,
+                    displayMode, cancellationToken);
                 break;
 
             case SolutionMode.Unique:
-                await SolveNQueenByModeAsync(0, SolutionMode.Unique, cancellationToken);
+                await SolveNQueenByModeAsync(0, SolutionMode.Unique, displayMode,
+                    cancellationToken);
                 break;
 
             case SolutionMode.All:
-                await FindAllSolutions(0, cancellationToken);
+                await FindAllSolutions(0, displayMode, cancellationToken);
                 break;
 
             default:
@@ -108,8 +109,8 @@ public class SolverEngine(
         return result;
     }
 
-    private async Task SolveNQueenByModeAsync(
-        int colIndex, SolutionMode solutionMode, CancellationToken cancellationToken)
+    private async Task SolveNQueenByModeAsync(int colIndex, SolutionMode solutionMode,
+        DisplayMode displayMode, CancellationToken cancellationToken)
     {
         int solutionsFound = 0;
 
@@ -130,7 +131,7 @@ public class SolverEngine(
                 if (solutionMode == SolutionMode.Single)
                     return;
 
-                NotifySolutionFound();
+                NotifySolutionFound(displayMode);
                 UpdateProgress(solutionsFound, BoardSize, solutionMode);
 
                 colIndex--;
@@ -138,7 +139,8 @@ public class SolverEngine(
             }
 
             QueenPositions[colIndex] = await BoardState.FindValidQueenPositionAsync(
-                colIndex, BoardSize, QueenPositions, cancellationToken, DelayInMillisec, DisplayMode);
+                colIndex, BoardSize, QueenPositions, cancellationToken, DelayInMillisec,
+                displayMode);
 
             if (QueenPositions[colIndex] == -1)
             {
@@ -146,10 +148,8 @@ public class SolverEngine(
                 continue;
             }
 
-            if (DisplayMode == DisplayMode.Visualize)
-            {
+            if (displayMode == DisplayMode.Visualize)
                 QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(QueenPositions));
-            }
 
             colIndex++;
         }
@@ -177,9 +177,11 @@ public class SolverEngine(
         }
     }
 
-    private async Task FindAllSolutions(int colIndex, CancellationToken cancellationToken)
+    private async Task FindAllSolutions(int colIndex, DisplayMode displayMode,
+        CancellationToken cancellationToken)
     {
-        await SolveNQueenByModeAsync(colIndex, SolutionMode.Unique, cancellationToken);
+        await SolveNQueenByModeAsync(colIndex, SolutionMode.Unique,
+            displayMode, cancellationToken);
 
         var updates = new List<SolutionUpdateDTO>();
 
@@ -188,14 +190,14 @@ public class SolverEngine(
             if (cancellationToken.IsCancellationRequested)
                 return;
 
-            var updateDTO = new SolutionUpdateDTO(BoardSize, SolutionMode.All, solution, Solutions);
+            var updateDTO = new SolutionUpdateDTO(BoardSize, SolutionMode.All,
+                solution, Solutions);
+
             updates.Add(updateDTO);
         }
 
         foreach (var update in updates)
-        {
             _solutionManager.UpdateSolutions(update);
-        }
     }
 
     private void AddSolutionAndNotify()
@@ -206,9 +208,9 @@ public class SolverEngine(
         _solutionManager.UpdateSolutions(updateDTO);
     }
 
-    private void NotifySolutionFound()
+    private void NotifySolutionFound(DisplayMode displayMode)
     {
-        if (DisplayMode == DisplayMode.Visualize)
+        if (displayMode == DisplayMode.Visualize)
             SolutionFound?.Invoke(this, new SolutionFoundEventArgs(QueenPositions));
     }
 

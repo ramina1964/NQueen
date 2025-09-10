@@ -11,7 +11,8 @@ public class SimulationOrchestrator : IDisposable
         // Relay events from SolverEngine
         _solverEngine.QueenPlaced += (s, e) => QueenPlaced?.Invoke(this, e);
         _solverEngine.SolutionFound += (s, e) => SolutionFound?.Invoke(this, e);
-        _solverEngine.ProgressValueChanged += (s, e) => ProgressValueChanged?.Invoke(this, e);
+        _solverEngine.ProgressValueChanged += (s, e) =>
+            ProgressValueChanged?.Invoke(this, e);
     }
 
     #region ISolver Implementation
@@ -34,7 +35,8 @@ public class SimulationOrchestrator : IDisposable
         set => _solverEngine.ProgressValue = value;
     }
 
-    public event EventHandler<QueenPlacedEventArgs> QueenPlaced = delegate { };
+    public event EventHandler<QueenPlacedEventArgs>
+        QueenPlaced = delegate { };
 
     public event EventHandler<SolutionFoundEventArgs>
         SolutionFound = delegate { };
@@ -45,10 +47,8 @@ public class SimulationOrchestrator : IDisposable
     public async Task<SimulationResults> GetSimResultsAsync(
         int boardSize,
         SolutionMode solutionMode,
-        DisplayMode displayMode = DisplayMode.Hide)
-    {
-        return await _solverEngine.GetSimResultsAsync(boardSize, solutionMode, displayMode);
-    }
+        DisplayMode displayMode = DisplayMode.Hide) =>
+            await _solverEngine.GetSimResultsAsync(boardSize, solutionMode, displayMode);
 
     #endregion Implementation
 
