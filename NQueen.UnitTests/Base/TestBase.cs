@@ -1,6 +1,6 @@
 ﻿namespace NQueen.UnitTests.Base;
 
-public class NQueenTestBase(ISolverBackEnd sut)
+public class TestBase(ISolverBackEnd sut)
 {
     public List<int[]> ExpectedSolutions { get; set; } = [];
 

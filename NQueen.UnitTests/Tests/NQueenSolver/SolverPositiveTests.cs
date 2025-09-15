@@ -1,8 +1,8 @@
 namespace NQueen.UnitTests.Tests.NQueenSolver;
 
-public class NQueenSolverPositiveTests : IDisposable
+public class SolverPositiveTests : IDisposable
 {
-    public NQueenSolverPositiveTests()
+    public SolverPositiveTests()
     {
         var services = new ServiceCollection();
         services.AddApplicationServices();
@@ -18,7 +18,7 @@ public class NQueenSolverPositiveTests : IDisposable
         int boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        var expectedSolutions = NQueenTestBase.FetchExpectedSols(boardSize, solutionMode);
+        var expectedSolutions = TestBase.FetchExpectedSols(boardSize, solutionMode);
         Assert.Single(expectedSolutions);
 
         // Act
@@ -38,7 +38,7 @@ public class NQueenSolverPositiveTests : IDisposable
         int boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        var expectedSolutions = NQueenTestBase.FetchExpectedSols(boardSize, solutionMode);
+        var expectedSolutions = TestBase.FetchExpectedSols(boardSize, solutionMode);
 
         // Act
         var actualSolutions = await _solver.GetSimResultsAsync(boardSize, solutionMode);
@@ -59,7 +59,7 @@ public class NQueenSolverPositiveTests : IDisposable
         int boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        var expectedSolutions = NQueenTestBase.FetchExpectedSols(boardSize, solutionMode);
+        var expectedSolutions = TestBase.FetchExpectedSols(boardSize, solutionMode);
 
         // Act
         var actualSolutions = await _solver.GetSimResultsAsync(boardSize, solutionMode);
