@@ -2,7 +2,7 @@
 
 // Todo: Fix a runtime error in NQueen.ConsolApp when it is set as startup project.
 public partial class DispatchCommands(
-    ISolverBackEnd solver,
+    ISolverPruning solver,
     IConsoleUtils consoleUtils,
     ICommandProcessor commandProcessor)
 {
@@ -93,8 +93,11 @@ public partial class DispatchCommands(
     #region PrivateMethods
     public async Task<bool> RunApp()
     {
-        var simulationResult = await _solver
-            .GetSimResultsAsync(BoardSize, SolutionMode, DisplayMode.Hide);
+        // Create a SimulationContext object as required by the ISolverBackEndPruning interface
+        var simContext = new SimulationContext(
+            BoardSize, SolutionMode, DisplayMode.Hide);
+
+        var simulationResult = await _solver.GetSimResultsAsync(simContext);
 
         var noOfSolutions = simulationResult.Solutions.Count();
         var elapsedTime = simulationResult.ElapsedTimeInSec;
@@ -209,7 +212,7 @@ public partial class DispatchCommands(
 
     #endregion PrivateMethods
 
-    private readonly ISolverBackEnd _solver = solver
+    private readonly ISolverPruning _solver = solver
         ?? throw new ArgumentNullException(nameof(solver));
 
     private readonly IConsoleUtils _consoleUtils = consoleUtils

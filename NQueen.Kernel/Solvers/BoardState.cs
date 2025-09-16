@@ -46,7 +46,7 @@ public class BoardState(int boardSize)
         return -1;
     }
 
-    private static bool IsPositionValid(int colIndex, int rowIndex, Memory<int> queenPositions)
+    public static bool IsPositionValid(int colIndex, int rowIndex, Memory<int> queenPositions)
     {
         var queenSpan = queenPositions.Span;
         for (var j = 0; j < colIndex; j++)

@@ -9,7 +9,7 @@ public static class DependencyInjectionConfig
         services.NQueenServices();
 
         // Todo: Adjust this line to use NQuenn-Kernel.SolverEngine, instead
-        services.AddScoped<ISolver, SolverEngine>();
+        services.AddScoped<ISolverPruning, SolverEngine>();
         services.AddSingleton<ISolutionFormatter, TestSolutionFormatter>();
 
         return services;

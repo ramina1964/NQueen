@@ -47,8 +47,7 @@ public class SolverEngine(
         SolutionMode = simContext.SolutionMode;
         DisplayMode = simContext.DisplayMode;
 
-        return await Task.Run(() =>
-            RunSimulationAsync(simContext.SolutionMode, _cancellationTokenSource.Token),
+        return await RunSimulationAsync(simContext.SolutionMode,
             _cancellationTokenSource.Token);
     }
 
@@ -74,9 +73,34 @@ public class SolverEngine(
         var elapsedTime = await MeasureExecutionTimeAsync(async () =>
             await SolveNQueenProblemAsync(solutionMode, cancellationToken));
 
+        // Log the contents of the Solutions collection
+        Debug.WriteLine("Contents of Solutions:");
+        foreach (var solution in Solutions)
+        {
+            Debug.WriteLine(string.Join(",", solution.Span.ToArray()));
+        }
+
+        // Validate solutions before creating Solution objects
+        var validSolutions = Solutions.Where(s =>
+        {
+            var span = s.Span;
+            for (int i = 0; i < span.Length; i++)
+            {
+                if (span[i] < 0)
+                {
+                    Debug.WriteLine($"Invalid solution detected during validation: {string.Join(",", span.ToArray())}");
+                    return false;
+                }
+            }
+            return true;
+        }).ToList();
+
+        // Log the total number of valid solutions
+        Debug.WriteLine($"Total number of solutions found: {validSolutions.Count}");
+
         return new SimulationResults(
-            [.. Solutions.Select(s => new Solution(s.Span.ToArray(),
-            _solutionFormatter))], elapsedTime);
+            [.. validSolutions.Select(s => new Solution(s.Span.ToArray(), _solutionFormatter))],
+            elapsedTime);
     }
 
     private async Task SolveNQueenProblemAsync(SolutionMode solutionMode,
@@ -111,15 +135,17 @@ public class SolverEngine(
 
             if (colIndex == BoardSize)
             {
-                if (simContext.SolutionMode == SolutionMode.Unique && IsSymmetricalSolution())
+                // Validate the solution before adding it
+                if (AreAllPositionsValid(QueenPositions.Span))
                 {
-                    colIndex--;
-                    continue;
+                    AddSolutionAndNotify();
+                    if (simContext.SolutionMode == SolutionMode.Single)
+                        return;
                 }
-
-                AddSolutionAndNotify();
-                if (simContext.SolutionMode == SolutionMode.Single)
-                    return;
+                else
+                {
+                    Debug.WriteLine($"Invalid solution detected: {string.Join(",", QueenPositions.Span.ToArray())}");
+                }
 
                 colIndex--;
                 continue;
@@ -129,6 +155,8 @@ public class SolverEngine(
 
             if (nextRow == -1)
             {
+                // Reset the current column's position during backtracking
+                QueenPositions.Span[colIndex] = -1;
                 colIndex--;
                 continue;
             }
@@ -142,21 +170,178 @@ public class SolverEngine(
         }
     }
 
-    private async Task<int> FindNextRowAsync(int colIndex, int maxRow,
-        CancellationToken cancellationToken)
+    // Helper method to validate all positions in a Span<int>
+    private static bool AreAllPositionsValid(Span<int> positions)
     {
-        return await BoardState.TryFindValidPosition(
-            colIndex, maxRow, QueenPositions, cancellationToken,
-            DelayInMillisec, DisplayMode);
+        for (int i = 0; i < positions.Length; i++)
+        {
+            if (positions[i] < 0)
+                return false;
+        }
+        return true;
     }
 
-    private bool IsSymmetricalSolution() =>
-        SymmetryPruning.IsSymmetrical(QueenPositions, Solutions);
+    // Todo: Remove also useage of Task.FromResult in this method.
+    private Task<int> FindNextRowAsync(int colIndex, int maxRow, CancellationToken cancellationToken)
+    {
+        var currentRow = QueenPositions.Span[colIndex];
+        var startRow = currentRow == -1 ? 0 : currentRow + 1;
+
+        for (var row = startRow; row < maxRow; row++)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                return Task.FromResult(-1);
+
+            // Symmetry pruning: Restrict the first column to HalfBoardSize only for Unique mode
+            if (SolutionMode == SolutionMode.Unique && colIndex == 0 && row >= _board.HalfBoardSize)
+            {
+                Debug.WriteLine($"Symmetry pruning skipped row {row} in column {colIndex}");
+                continue;
+            }
+
+            if (BoardState.IsPositionValid(colIndex, row, QueenPositions))
+            {
+                // Debugging: Log valid row found
+                Debug.WriteLine($"Valid Row Found: Column {colIndex}, Row {row}");
+                return Task.FromResult(row);
+            }
+        }
+
+        // Debugging: Log no valid row found
+        Debug.WriteLine($"No Valid Row Found: Column {colIndex}");
+        return Task.FromResult(-1);
+    }
 
     private void AddSolutionAndNotify()
     {
-        Solutions.Add(QueenPositions);
-        SolutionFound?.Invoke(this, new Domain.EventArgsPruning.SolutionFoundEventArgs(QueenPositions.Span.ToArray()));
+        // Validate QueenPositions before adding to Solutions
+        if (!AreAllPositionsValid(QueenPositions.Span))
+        {
+            Debug.WriteLine($"Invalid solution detected: {string.Join(",", QueenPositions.Span.ToArray())}");
+            return; // Skip adding invalid solutions
+        }
+
+        // Create a copy of QueenPositions to avoid reference issues
+        var solutionCopy = new Memory<int>(QueenPositions.ToArray());
+
+        // Check for symmetry if in Unique mode
+        if (SolutionMode == SolutionMode.Unique && IsSymmetricalSolution(solutionCopy))
+        {
+            Debug.WriteLine($"Symmetrical solution skipped: {string.Join(",", solutionCopy.Span.ToArray())}");
+            return;
+        }
+
+        // Log the solution being added
+        Debug.WriteLine($"Attempting to add solution: {string.Join(",", solutionCopy.Span.ToArray())}");
+
+        // Add the solution directly since symmetry pruning is handled during solving
+        if (!Solutions.Add(solutionCopy))
+        {
+            Debug.WriteLine($"Solution already exists or failed to add: {string.Join(",", solutionCopy.Span.ToArray())}");
+        }
+        else
+        {
+            Debug.WriteLine($"Solution successfully added: {string.Join(",", solutionCopy.Span.ToArray())}");
+            SolutionFound?.Invoke(this, new Domain.EventArgsPruning.SolutionFoundEventArgs(solutionCopy.Span.ToArray()));
+        }
+    }
+
+    private bool IsSymmetricalSolution(Memory<int> solution)
+    {
+        var original = solution.Span.ToArray();
+
+        // Generate all symmetrical transformations
+        var transformations = GetSymmetricalTransformations(original);
+
+        // Check if any transformation already exists in the Solutions collection
+        foreach (var transformed in transformations)
+        {
+            if (Solutions.Contains(new Memory<int>(transformed)))
+            {
+                Debug.WriteLine($"Symmetry detected: {string.Join(",", transformed)} matches an existing solution.");
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Helper method to generate all symmetrical transformations of a solution
+    public IEnumerable<int[]> GetSymmetricalTransformations(int[] solution)
+    {
+        // Delegate the calculation of symmetrical transformations to SymmetryHelper
+        var symmetricalSolutions = SymmetryHelper.GetSymmetricalSolutions(solution);
+
+        // Log transformations for debugging
+        Debug.WriteLine("Generated symmetrical transformations:");
+        foreach (var transformation in symmetricalSolutions)
+            Debug.WriteLine(string.Join(",", transformation));
+
+
+        return symmetricalSolutions;
+    }
+
+    // Example implementations of Rotate and Reflect (to be implemented)
+    private int[] Rotate(int[] solution, int degrees)
+    {
+        int n = solution.Length;
+        int[] rotated = new int[n];
+
+        switch (degrees)
+        {
+            case 90:
+                for (int i = 0; i < n; i++)
+                    rotated[solution[i]] = n - 1 - i;
+                break;
+
+            case 180:
+                for (int i = 0; i < n; i++)
+                    rotated[n - 1 - i] = n - 1 - solution[i];
+                break;
+
+            case 270:
+                for (int i = 0; i < n; i++)
+                    rotated[n - 1 - solution[i]] = i;
+                break;
+
+            default:
+                throw new ArgumentException($"Invalid rotation angle: {degrees}. Only 90, 180, and 270 are supported.");
+        }
+
+        return rotated;
+    }
+    private int[] Reflect(int[] solution, string axis)
+    {
+        int n = solution.Length;
+        int[] reflected = new int[n];
+
+        switch (axis.ToLower())
+        {
+            case "horizontal":
+                for (int i = 0; i < n; i++)
+                    reflected[i] = n - 1 - solution[i];
+                break;
+
+            case "vertical":
+                for (int i = 0; i < n; i++)
+                    reflected[n - 1 - i] = solution[i];
+                break;
+
+            case "diagonal-primary": // Lower-left to upper-right
+                for (int i = 0; i < n; i++)
+                    reflected[solution[i]] = i;
+                break;
+
+            case "diagonal-secondary": // Lower-right to upper-left
+                for (int i = 0; i < n; i++)
+                    reflected[n - 1 - solution[i]] = n - 1 - i;
+                break;
+
+            default:
+                throw new ArgumentException($"Invalid reflection axis: {axis}. Only 'horizontal', 'vertical', 'diagonal-primary', and 'diagonal-secondary' are supported.");
+        }
+
+        return reflected;
     }
 
     private void NotifyProgress(int progress) =>

@@ -1,4 +1,6 @@
-﻿namespace NQueen.Domain.Utils;
+﻿using System.Diagnostics;
+
+namespace NQueen.Domain.Utils;
 
 public readonly struct MemoryIntArrayComparer :
     IEqualityComparer<Memory<int>>, IComparer<Memory<int>>
@@ -10,10 +12,14 @@ public readonly struct MemoryIntArrayComparer :
         var spanX = x.Span;
         var spanY = y.Span;
 
-        // Compare elements one by one
+        // Full comparison of all elements
         for (int i = 0; i < spanX.Length; i++)
         {
-            if (spanX[i] != spanY[i]) return false;
+            if (spanX[i] != spanY[i])
+            {
+                Debug.WriteLine($"Memory comparison failed at index {i}: {spanX[i]} != {spanY[i]}");
+                return false;
+            }
         }
 
         return true;
@@ -29,8 +35,9 @@ public readonly struct MemoryIntArrayComparer :
             int hash = 17;
             foreach (var item in span)
             {
-                hash = hash * 31 + item;
+                hash = hash * 31 + item.GetHashCode();
             }
+            Debug.WriteLine($"Generated hash code: {hash} for Memory<int>: {string.Join(",", span.ToArray())}");
             return hash;
         }
     }

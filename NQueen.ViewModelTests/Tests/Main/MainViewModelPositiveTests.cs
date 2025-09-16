@@ -1,4 +1,6 @@
-﻿namespace NQueen.ViewModelTests.Tests.Main;
+﻿using System.Diagnostics;
+
+namespace NQueen.ViewModelTests.Tests.Main;
 
 public class MainViewModelPositiveTests : IDisposable
 {
@@ -216,7 +218,7 @@ public class MainViewModelPositiveTests : IDisposable
             {
                 for (var progress = 0.1; progress <= 1.0; progress += 0.1)
                 {
-                    Console.WriteLine($"Triggering ProgressValueChanged with progress: {progress * 100}");
+                    Debug.WriteLine($"Triggering ProgressValueChanged with progress: {progress * 100}");
                     handler?.Invoke(mockSolver.Object, new ProgressUpdateEventArgs(progress * 100, Guid.NewGuid()));
                     Task.Delay(10).Wait();
                 }
@@ -236,13 +238,13 @@ public class MainViewModelPositiveTests : IDisposable
         {
             if (e.PropertyName == nameof(mainVm.ProgressValue))
             {
-                Console.WriteLine($"ProgressValue updated to: {mainVm.ProgressValue}");
+                Debug.WriteLine($"ProgressValue updated to: {mainVm.ProgressValue}");
                 progressDuringSimulation = mainVm.ProgressValue;
             }
         };
 
         // Act
-        Console.WriteLine("Starting simulation...");
+        Debug.WriteLine("Starting simulation...");
         mainVm.SimulateCommand.Execute(null);
 
         // Wait for the simulation to complete
@@ -251,12 +253,12 @@ public class MainViewModelPositiveTests : IDisposable
         // Wait for the progress value to be updated
         await TestHelpers.WaitForConditionAsync(() =>
         {
-            Console.WriteLine($"Checking progressDuringSimulation: {progressDuringSimulation}");
+            Debug.WriteLine($"Checking progressDuringSimulation: {progressDuringSimulation}");
             return progressDuringSimulation.HasValue;
         }, TimeSpan.FromSeconds(20));
 
         // Assert
-        Console.WriteLine("Asserting progressDuringSimulation...");
+        Debug.WriteLine("Asserting progressDuringSimulation...");
         progressDuringSimulation.Should().NotBeNull("ProgressValue should be updated during the simulation.");
         progressDuringSimulation.Should().BeGreaterThan(0, "ProgressValue should be greater than 0 during the simulation.");
 

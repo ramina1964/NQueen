@@ -7,13 +7,11 @@ public readonly struct IntArrayComparer : IEqualityComparer<int[]>, IComparer<in
         if (ReferenceEquals(x, y)) return true;
         if (x is null || y is null || x.Length != y.Length) return false;
 
-        // Compare only the first, middle, and last elements for early exit
-        if (x[0] != y[0] || x[^1] != y[^1] || x[x.Length / 2] != y[y.Length / 2])
-            return false;
-
-        // Fallback to full comparison
+        // Full comparison of all elements
         for (int i = 0; i < x.Length; i++)
+        {
             if (x[i] != y[i]) return false;
+        }
 
         return true;
     }

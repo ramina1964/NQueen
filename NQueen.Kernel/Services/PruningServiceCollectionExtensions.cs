@@ -14,10 +14,8 @@ public static class PruningServiceCollectionExtensions
         // Register SolverEngine as itself and its interfaces
         services.AddTransient<SolverEngine>();
         services.AddTransient<ISolverPruning, SolverEngine>();
-        services.AddTransient<ISolverBackEndPruning, SolverEngine>();
-        services.AddTransient<ISolverFrontEndPruning, SolverEngine>();
 
         // Register SimulationOrchestrator as ISolverFrontEndPruning
-        services.AddTransient<ISolverFrontEndPruning, SimulationOrchestrator>();
+        services.AddTransient<ISolverPruning, SimulationOrchestrator>();
     }
 }

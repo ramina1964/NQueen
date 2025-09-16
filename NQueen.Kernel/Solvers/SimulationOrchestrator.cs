@@ -1,9 +1,9 @@
 namespace NQueen.Kernel.Solvers;
 
-public class SimulationOrchestrator : ISolverFrontEndPruning, IDisposable
+public class SimulationOrchestrator : ISolverPruning, IDisposable
 {
     // Constructor
-    public SimulationOrchestrator(SolverEngine solver)
+    public SimulationOrchestrator(ISolverPruning solver)
     {
         _solver = solver
             ?? throw new ArgumentNullException(nameof(solver));
@@ -69,17 +69,16 @@ public class SimulationOrchestrator : ISolverFrontEndPruning, IDisposable
 
     protected virtual void Dispose(bool disposing)
     {
-        if (_disposed)
-            return;
-
-        _disposed = true;
-        if (disposing)
+        if (disposing && _disposed == false)
         {
-            _solver.Dispose();
+            _disposed = true;
+
+            if (_solver is IDisposable disposableSolver)
+                disposableSolver.Dispose();
         }
     }
 
     // Private Fields
     private bool _disposed = false;
-    private readonly SolverEngine _solver;
+    private readonly ISolverPruning _solver;
 }

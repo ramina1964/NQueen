@@ -21,14 +21,13 @@ public class Program
         services.AddTransient<Func<int, BoardState>>(sp => size => new BoardState(size));
         services.AddTransient<DispatchCommands>();
         services.AddTransient<IConsoleUtils, ConsoleUtils>();
-        services.AddTransient<ICommandProcessor, CommandProcessor> ();
-        services.AddTransient<ISolutionManager, SolutionManager>();
+        services.AddTransient<ICommandProcessor, CommandProcessor>();
         services.AddTransient<ISolutionFormatter, SolutionFormatter>();
         services.AddSingleton<App>();
 
-        // Register shared services
-        services.AddSingleton<ISolverBackEnd, SolverEngine>();
+        // Register SolverEngine as ISolverPruning
+        services.AddSingleton<ISolverPruning, SolverEngine>();
 
         return services.BuildServiceProvider();
     }
-}
+}   
