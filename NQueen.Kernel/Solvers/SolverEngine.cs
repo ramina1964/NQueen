@@ -1,5 +1,8 @@
 namespace NQueen.Kernel.Solvers;
 
+// Todo: In all core classes, avoid using Task.FromResult in a loop;
+// consider making the method synchronous or using ValueTask<int> for better performance.
+
 public class SolverEngine(
     ISolutionFormatter solutionFormatter,
     Func<int, BoardState> boardStateFactory) : ISolverPruning, IDisposable
