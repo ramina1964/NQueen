@@ -130,8 +130,10 @@ public class SolverEngine(
                 return;
             }
 
-            // Restrict the first column to HalfBoardSize
-            var maxRow = colIndex == 0 ? _board.HalfBoardSize : BoardSize;
+            // For 'Unique Solutions', restrict the first column to HalfBoardSize
+            var maxRow = (simContext.SolutionMode == SolutionMode.Unique && colIndex == 0)
+                ? _board.HalfBoardSize
+                : BoardSize;
 
             if (colIndex == BoardSize)
             {
