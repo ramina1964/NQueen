@@ -74,6 +74,7 @@ public static class TestHelpers
         return mainVm;
     }
 
+    // Todo: Fix compatibility of this method with the new Kernel project.
     public static MainViewModel CreateMainViewModelWithBoardSize(
         int boardSize,
         SolutionMode solutionMode = SolutionMode.Single,
