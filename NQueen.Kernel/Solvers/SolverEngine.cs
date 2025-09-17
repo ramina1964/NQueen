@@ -117,12 +117,12 @@ public class SolverEngine(
     }
 
     private async Task SolveByModeAsync(SimulationContext simContext,
-        int colIndex, CancellationToken cancellationToken)
+        int columnIndex, CancellationToken cancellationToken)
     {
         if (simContext.SolutionMode == SolutionMode.Single)
             NotifyProgress(-1);
 
-        while (colIndex != -1)
+        while (columnIndex != -1)
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -131,11 +131,11 @@ public class SolverEngine(
             }
 
             // For 'Unique Solutions', restrict the first column to HalfBoardSize
-            var maxRow = (simContext.SolutionMode == SolutionMode.Unique && colIndex == 0)
+            var maxRow = (simContext.SolutionMode == SolutionMode.Unique && columnIndex == 0)
                 ? _board.HalfBoardSize
                 : BoardSize;
 
-            if (colIndex == BoardSize)
+            if (columnIndex == BoardSize)
             {
                 // Validate the solution before adding it
                 if (AreAllPositionsValid(QueenPositions.Span))
@@ -149,26 +149,26 @@ public class SolverEngine(
                     Debug.WriteLine($"Invalid solution detected: {string.Join(",", QueenPositions.Span.ToArray())}");
                 }
 
-                colIndex--;
+                columnIndex--;
                 continue;
             }
 
-            var nextRow = await FindNextRowAsync(colIndex, maxRow, cancellationToken);
+            var nextRow = await FindNextRowAsync(columnIndex, maxRow, cancellationToken);
 
             if (nextRow == -1)
             {
                 // Reset the current column's position during backtracking
-                QueenPositions.Span[colIndex] = -1;
-                colIndex--;
+                QueenPositions.Span[columnIndex] = -1;
+                columnIndex--;
                 continue;
             }
 
-            QueenPositions.Span[colIndex] = nextRow;
+            QueenPositions.Span[columnIndex] = nextRow;
 
             if (simContext.DisplayMode == DisplayMode.Visualize)
                 NotifyQueenPlaced();
 
-            colIndex++;
+            columnIndex++;
         }
     }
 
@@ -184,9 +184,9 @@ public class SolverEngine(
     }
 
     // Todo: Remove also useage of Task.FromResult in this method.
-    private Task<int> FindNextRowAsync(int colIndex, int maxRow, CancellationToken cancellationToken)
+    private Task<int> FindNextRowAsync(int columnIndex, int maxRow, CancellationToken cancellationToken)
     {
-        var currentRow = QueenPositions.Span[colIndex];
+        var currentRow = QueenPositions.Span[columnIndex];
         var startRow = currentRow == -1 ? 0 : currentRow + 1;
 
         for (var row = startRow; row < maxRow; row++)
@@ -195,22 +195,22 @@ public class SolverEngine(
                 return Task.FromResult(-1);
 
             // Symmetry pruning: Restrict the first column to HalfBoardSize only for Unique mode
-            if (SolutionMode == SolutionMode.Unique && colIndex == 0 && row >= _board.HalfBoardSize)
+            if (SolutionMode == SolutionMode.Unique && columnIndex == 0 && row >= _board.HalfBoardSize)
             {
-                Debug.WriteLine($"Symmetry pruning skipped row {row} in column {colIndex}");
+                Debug.WriteLine($"Symmetry pruning skipped row {row} in column {columnIndex}");
                 continue;
             }
 
-            if (BoardState.IsPositionValid(colIndex, row, QueenPositions))
+            if (BoardState.IsPositionValid(columnIndex, row, QueenPositions))
             {
                 // Debugging: Log valid row found
-                Debug.WriteLine($"Valid Row Found: Column {colIndex}, Row {row}");
+                Debug.WriteLine($"Valid Row Found: Column {columnIndex}, Row {row}");
                 return Task.FromResult(row);
             }
         }
 
         // Debugging: Log no valid row found
-        Debug.WriteLine($"No Valid Row Found: Column {colIndex}");
+        Debug.WriteLine($"No Valid Row Found: Column {columnIndex}");
         return Task.FromResult(-1);
     }
 

@@ -16,24 +16,24 @@ public class BoardState(int boardSize)
         QueenPositions = [.. Enumerable.Repeat(-1, BoardSize)];
 
     public static ValueTask<int> FindValidQueenPositionAsync(
-        int colIndex, int boardSize, Memory<int> queenPositions, CancellationToken cancellationToken,
+        int columnIndex, int boardSize, Memory<int> queenPositions, CancellationToken cancellationToken,
         int delayInMilliseconds = 0, DisplayMode displayMode = DisplayMode.Hide)
     {
         // Get the span for efficient access
         var queenSpan = queenPositions.Span;
 
         // Start from the next row after the current position
-        for (var rowIndex = queenSpan[colIndex] + 1; rowIndex < boardSize; rowIndex++)
+        for (var rowIndex = queenSpan[columnIndex] + 1; rowIndex < boardSize; rowIndex++)
         {
             if (cancellationToken.IsCancellationRequested)
                 return ValueTask.FromResult(-1);
 
             // Inline the IsValidPosition logic for better performance
             bool isValid = true;
-            for (var j = 0; j < colIndex; j++)
+            for (var j = 0; j < columnIndex; j++)
             {
                 var diffRow = Math.Abs(rowIndex - queenSpan[j]);
-                var diffCol = colIndex - j;
+                var diffCol = columnIndex - j;
                 if (diffRow == 0 || diffRow == diffCol)
                 {
                     isValid = false;

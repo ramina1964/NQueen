@@ -38,8 +38,8 @@ public static class DispatchUtils
         var board = string.Empty;
         for (var rowIndex = size - 1; rowIndex >= 0; rowIndex--)
         {
-            for (var colIndex = 0; colIndex < size; colIndex++)
-                board += arr[rowIndex, colIndex];
+            for (var columnIndex = 0; columnIndex < size; columnIndex++)
+                board += arr[rowIndex, columnIndex];
 
             board += Environment.NewLine;
         }
@@ -53,18 +53,18 @@ public static class DispatchUtils
         // Todo: Find a better data structu and variable name below.
         string[,] boardCells = new string[size, size];
 
-        for (var colIndex = 0; colIndex < size; colIndex++)
+        for (var columnIndex = 0; columnIndex < size; columnIndex++)
         {
-            var rowIndex = queens[colIndex];
+            var rowIndex = queens[columnIndex];
             for (var rowCounter = 0; rowCounter < size; rowCounter++)
             {
                 if (rowCounter == rowIndex)
                 {
-                    boardCells[rowCounter, colIndex] = colIndex == size - 1 ? $"|{whiteQueen}|" : $"|{whiteQueen}";
+                    boardCells[rowCounter, columnIndex] = columnIndex == size - 1 ? $"|{whiteQueen}|" : $"|{whiteQueen}";
                 }
                 else
                 {
-                    boardCells[rowCounter, colIndex] = colIndex == size - 1 ? "|-|" : "|-";
+                    boardCells[rowCounter, columnIndex] = columnIndex == size - 1 ? "|-|" : "|-";
                 }
             }
         }

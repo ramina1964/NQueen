@@ -18,7 +18,7 @@ public class BoardState(int boardSize)
         QueenPositions.Span.Fill(-1);
 
     public static async ValueTask<int> TryFindValidPosition(
-        int colIndex,
+        int columnIndex,
         int boardSize,
         Memory<int> queenPositions,
         CancellationToken cancellationToken,
@@ -32,7 +32,7 @@ public class BoardState(int boardSize)
             if (cancellationToken.IsCancellationRequested)
                 return -1;
 
-            if (IsPositionValid(colIndex, startRow, queenPositions))
+            if (IsPositionValid(columnIndex, startRow, queenPositions))
             {
                 if (displayMode == DisplayMode.Visualize && delayInMilliseconds > 0)
                     await Task.Delay(delayInMilliseconds, cancellationToken);
@@ -46,17 +46,17 @@ public class BoardState(int boardSize)
         return -1;
     }
 
-    public static bool IsPositionValid(int colIndex, int rowIndex, Memory<int> queenPositions)
+    public static bool IsPositionValid(int columnIndex, int rowIndex, Memory<int> queenPositions)
     {
         var queenSpan = queenPositions.Span;
-        for (var j = 0; j < colIndex; j++)
+        for (var j = 0; j < columnIndex; j++)
         {
             var placedRow = queenSpan[j];
             if (placedRow == -1)
                 continue;
 
             var rowDifference = Math.Abs(rowIndex - placedRow);
-            var colDifference = colIndex - j;
+            var colDifference = columnIndex - j;
 
             if (rowDifference == 0 || rowDifference == colDifference)
                 return false;

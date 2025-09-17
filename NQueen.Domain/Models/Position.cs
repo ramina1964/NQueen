@@ -1,8 +1,8 @@
 ﻿namespace NQueen.Domain.Models;
 
-public readonly struct Position(int colIndex, int rowIndex)
+public readonly struct Position(int columnIndex, int rowIndex)
 {
-    public int ColumnIndex => colIndex;
+    public int ColumnIndex => columnIndex;
 
     public int RowIndex => rowIndex;
 }

@@ -109,21 +109,21 @@ public class SolverEngine(
         return result;
     }
 
-    private async Task SolveNQueenByModeAsync(int colIndex, SolutionMode solutionMode,
+    private async Task SolveNQueenByModeAsync(int columnIndex, SolutionMode solutionMode,
         DisplayMode displayMode, CancellationToken cancellationToken)
     {
         int solutionsFound = 0;
 
-        while (colIndex != -1)
+        while (columnIndex != -1)
         {
             if (cancellationToken.IsCancellationRequested)
                 return;
 
             // Terminate simulation if the first column's queen position exceeds HalfBoardSize
-            if (colIndex == 0 && QueenPositions[colIndex] >= HalfBoardSize)
+            if (columnIndex == 0 && QueenPositions[columnIndex] >= HalfBoardSize)
                 return;
 
-            if (colIndex == BoardSize)
+            if (columnIndex == BoardSize)
             {
                 AddSolutionAndNotify();
                 solutionsFound++;
@@ -134,24 +134,24 @@ public class SolverEngine(
                 NotifySolutionFound(displayMode);
                 UpdateProgress(solutionsFound, BoardSize, solutionMode);
 
-                colIndex--;
+                columnIndex--;
                 continue;
             }
 
-            QueenPositions[colIndex] = await BoardState.FindValidQueenPositionAsync(
-                colIndex, BoardSize, QueenPositions, cancellationToken, DelayInMillisec,
+            QueenPositions[columnIndex] = await BoardState.FindValidQueenPositionAsync(
+                columnIndex, BoardSize, QueenPositions, cancellationToken, DelayInMillisec,
                 displayMode);
 
-            if (QueenPositions[colIndex] == -1)
+            if (QueenPositions[columnIndex] == -1)
             {
-                colIndex--;
+                columnIndex--;
                 continue;
             }
 
             if (displayMode == DisplayMode.Visualize)
                 QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(QueenPositions));
 
-            colIndex++;
+            columnIndex++;
         }
 
         UpdateProgress(solutionsFound, BoardSize, solutionMode);
@@ -177,10 +177,10 @@ public class SolverEngine(
         }
     }
 
-    private async Task FindAllSolutions(int colIndex, DisplayMode displayMode,
+    private async Task FindAllSolutions(int columnIndex, DisplayMode displayMode,
         CancellationToken cancellationToken)
     {
-        await SolveNQueenByModeAsync(colIndex, SolutionMode.Unique,
+        await SolveNQueenByModeAsync(columnIndex, SolutionMode.Unique,
             displayMode, cancellationToken);
 
         var updates = new List<SolutionUpdateDTO>();

@@ -19,22 +19,22 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
 
         foreach (var position in positions)
         {
-            int colIndex = position.ColumnIndex;
-            int rowIndex = position.RowIndex;
+            var columnIndex = position.ColumnIndex;
+            var rowIndex = position.RowIndex;
 
-            if (rowIndex < 0 || colIndex < 0)
+            if (rowIndex < 0 || columnIndex < 0)
                 continue;
 
             try
             {
                 var square = Squares.First(sq =>
-                    sq.Position.ColumnIndex == colIndex && sq.Position.RowIndex == rowIndex);
+                    sq.Position.ColumnIndex == columnIndex && sq.Position.RowIndex == rowIndex);
                 
                 square.ImagePath = QueenImagePath;
             }
             catch (InvalidOperationException ex)
             {
-                Debug.WriteLine($"Error in PlaceQueens: No matching square found for position ({rowIndex}, {colIndex}). Exception: {ex.Message}");
+                Debug.WriteLine($"Error in PlaceQueens: No matching square found for position ({rowIndex}, {columnIndex}). Exception: {ex.Message}");
             }
         }
     }
@@ -50,9 +50,9 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
 
         for (var rowIndex = boardSize - 1; rowIndex >= 0; rowIndex--)
         {
-            for (var colIndex = 0; colIndex < boardSize; colIndex++)
+            for (var columnIndex = 0; columnIndex < boardSize; columnIndex++)
             {
-                var position = new Position(colIndex, rowIndex);
+                var position = new Position(columnIndex, rowIndex);
                 var square = new SquareViewModel(position, FindColor(position))
                 {
                     ImagePath = string.Empty,
