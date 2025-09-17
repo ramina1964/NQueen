@@ -6,11 +6,11 @@
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         using var serviceProvider = ConfigureServices();
         var app = serviceProvider.GetRequiredService<App>();
-        app.Run(args);
+        await app.Run(args);
     }
 
     private static ServiceProvider ConfigureServices()
