@@ -1,42 +1,43 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net9.0-windows</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <IsPackable>false</IsPackable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net10.0-windows</TargetFramework>
+		<LangVersion>preview</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="Tests\Commands\Negative\**" />
-    <EmbeddedResource Remove="Tests\Commands\Negative\**" />
-    <None Remove="Tests\Commands\Negative\**" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Remove="Tests\Commands\Negative\**" />
+		<EmbeddedResource Remove="Tests\Commands\Negative\**" />
+		<None Remove="Tests\Commands\Negative\**" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="coverlet.collector" Version="6.0.4">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="FluentAssertions" Version="8.6.0" />
-    <PackageReference Include="FluentValidation" Version="12.0.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-    <PackageReference Include="Moq" Version="4.20.72" />
-    <PackageReference Include="xunit" Version="2.9.3" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="coverlet.collector" Version="6.0.4">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="FluentAssertions" Version="8.6.0" />
+		<PackageReference Include="FluentValidation" Version="12.0.0" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+		<PackageReference Include="Moq" Version="4.20.72" />
+		<PackageReference Include="xunit" Version="2.9.3" />
+		<PackageReference Include="xunit.runner.visualstudio" Version="3.1.4">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\NQueen.Domain\NQueen.Domain.csproj" />
-    <ProjectReference Include="..\NQueen.GUI\NQueen.GUI.csproj" />
-    <ProjectReference Include="..\NQueen.TestShared\NQueen.TestShared.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\NQueen.Domain\NQueen.Domain.csproj" />
+		<ProjectReference Include="..\NQueen.GUI\NQueen.GUI.csproj" />
+		<ProjectReference Include="..\NQueen.TestShared\NQueen.TestShared.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Using Include="Xunit" />
-  </ItemGroup>
+	<ItemGroup>
+		<Using Include="Xunit" />
+	</ItemGroup>
 
 </Project>
