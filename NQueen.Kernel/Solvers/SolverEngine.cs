@@ -138,7 +138,7 @@ public class SolverEngine(
             if (columnIndex == BoardSize)
             {
                 // Validate the solution before adding it
-                if (AreAllPositionsValid(QueenPositions.Span))
+                if (ValidationHelper.AreAllPositionsValid(QueenPositions.Span))
                 {
                     AddSolutionAndNotify();
                     if (simContext.SolutionMode == SolutionMode.Single)
@@ -170,17 +170,6 @@ public class SolverEngine(
 
             columnIndex++;
         }
-    }
-
-    // Helper method to validate all positions in a Span<int>
-    private static bool AreAllPositionsValid(Span<int> positions)
-    {
-        for (int i = 0; i < positions.Length; i++)
-        {
-            if (positions[i] < 0)
-                return false;
-        }
-        return true;
     }
 
     private ValueTask<int> FindNextRowAsync(int columnIndex, int maxRow,
@@ -224,7 +213,7 @@ public class SolverEngine(
     private void AddSolutionAndNotify()
     {
         // Validate QueenPositions before adding to Solutions
-        if (!AreAllPositionsValid(QueenPositions.Span))
+        if (ValidationHelper.AreAllPositionsValid(QueenPositions.Span) == false)
         {
             Debug.WriteLine($"Invalid solution detected: {string.Join(",", QueenPositions.Span.ToArray())}");
             return; // Skip adding invalid solutions
