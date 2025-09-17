@@ -1,9 +1,9 @@
 namespace NQueen.Kernel.Solvers;
 
-public class SimulationOrchestrator : ISolverPruning, IDisposable
+public class SolverOrchestrator : ISolverPruning, IDisposable
 {
     // Constructor
-    public SimulationOrchestrator(ISolverPruning solver)
+    public SolverOrchestrator(ISolverPruning solver)
     {
         _solver = solver
             ?? throw new ArgumentNullException(nameof(solver));

@@ -16,6 +16,6 @@ public static class PruningServiceCollectionExtensions
         services.AddTransient<ISolverPruning, SolverEngine>();
 
         // Register SimulationOrchestrator as ISolverFrontEndPruning
-        services.AddTransient<ISolverPruning, SimulationOrchestrator>();
+        services.AddTransient<ISolverPruning, SolverOrchestrator>();
     }
 }
