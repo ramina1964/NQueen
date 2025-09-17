@@ -35,9 +35,9 @@ public class SolverEngine(
     public DisplayMode DisplayMode { get; set; }
 
     // Events
-    public event EventHandler<Domain.EventArgsPruning.QueenPlacedEventArgs> QueenPlaced = delegate { };
-    public event EventHandler<Domain.EventArgsPruning.SolutionFoundEventArgs> SolutionFound = delegate { };
-    public event EventHandler<Domain.EventArgsPruning.ProgressUpdateEventArgs> ProgressValueChanged = delegate { };
+    public event EventHandler<Domain.EventArgsPruning.QueenPlacedEventArgs>? QueenPlaced;
+    public event EventHandler<Domain.EventArgsPruning.SolutionFoundEventArgs>? SolutionFound;
+    public event EventHandler<Domain.EventArgsPruning.ProgressUpdateEventArgs>? ProgressValueChanged;
 
     // Public Methods
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
@@ -282,69 +282,6 @@ public class SolverEngine(
         return symmetricalSolutions;
     }
 
-    // Example implementations of Rotate and Reflect (to be implemented)
-    private int[] Rotate(int[] solution, int degrees)
-    {
-        int n = solution.Length;
-        int[] rotated = new int[n];
-
-        switch (degrees)
-        {
-            case 90:
-                for (int i = 0; i < n; i++)
-                    rotated[solution[i]] = n - 1 - i;
-                break;
-
-            case 180:
-                for (int i = 0; i < n; i++)
-                    rotated[n - 1 - i] = n - 1 - solution[i];
-                break;
-
-            case 270:
-                for (int i = 0; i < n; i++)
-                    rotated[n - 1 - solution[i]] = i;
-                break;
-
-            default:
-                throw new ArgumentException($"Invalid rotation angle: {degrees}. Only 90, 180, and 270 are supported.");
-        }
-
-        return rotated;
-    }
-    private int[] Reflect(int[] solution, string axis)
-    {
-        int n = solution.Length;
-        int[] reflected = new int[n];
-
-        switch (axis.ToLower())
-        {
-            case "horizontal":
-                for (int i = 0; i < n; i++)
-                    reflected[i] = n - 1 - solution[i];
-                break;
-
-            case "vertical":
-                for (int i = 0; i < n; i++)
-                    reflected[n - 1 - i] = solution[i];
-                break;
-
-            case "diagonal-primary": // Lower-left to upper-right
-                for (int i = 0; i < n; i++)
-                    reflected[solution[i]] = i;
-                break;
-
-            case "diagonal-secondary": // Lower-right to upper-left
-                for (int i = 0; i < n; i++)
-                    reflected[n - 1 - solution[i]] = n - 1 - i;
-                break;
-
-            default:
-                throw new ArgumentException($"Invalid reflection axis: {axis}. Only 'horizontal', 'vertical', 'diagonal-primary', and 'diagonal-secondary' are supported.");
-        }
-
-        return reflected;
-    }
-
     private void NotifyProgress(int progress) =>
         ProgressValueChanged?.Invoke(this,
             new Domain.EventArgsPruning.ProgressUpdateEventArgs(progress, _currentSimToken));
@@ -362,15 +299,13 @@ public class SolverEngine(
 
     protected virtual void Dispose(bool disposing)
     {
-        if (_disposed)
-            return;
-
+        if (_disposed) return;
         _disposed = true;
         if (disposing)
         {
-            QueenPlaced = null!;
-            SolutionFound = null!;
-            ProgressValueChanged = null!;
+            QueenPlaced = null;
+            SolutionFound = null;
+            ProgressValueChanged = null;
             Solutions?.Clear();
             _cancellationTokenSource?.Dispose();
         }

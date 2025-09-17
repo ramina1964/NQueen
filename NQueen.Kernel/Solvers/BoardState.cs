@@ -8,10 +8,7 @@ public class BoardState(int boardSize)
     public Memory<int> QueenPositions { get; private set; } =
         new Memory<int>(new int[boardSize]);
 
-    public int HalfBoardSize =>
-        BoardSize % 2 == 0
-        ? BoardSize / 2
-        : BoardSize / 2 + 1;
+    public int HalfBoardSize => (BoardSize + 1) / 2;
 
     // Methods
     public void Reset() =>

@@ -54,31 +54,43 @@ public class SolverOrchestrator : ISolverPruning, IDisposable
         GC.SuppressFinalize(this);
     }
 
-    // Private Methods
     private void RelaySolverEngineEvents()
     {
-        _solver.QueenPlaced += (s, e) =>
-            QueenPlaced?.Invoke(this, e);
+        _queenPlacedHandler = (s, e) => QueenPlaced?.Invoke(this, e);
+        _solutionFoundHandler = (s, e) => SolutionFound?.Invoke(this, e);
+        _progressValueChangedHandler = (s, e) => ProgressValueChanged?.Invoke(this, e);
 
-        _solver.SolutionFound += (s, e) =>
-            SolutionFound?.Invoke(this, e);
-
-        _solver.ProgressValueChanged += (s, e) =>
-            ProgressValueChanged?.Invoke(this, e);
+        _solver.QueenPlaced += _queenPlacedHandler;
+        _solver.SolutionFound += _solutionFoundHandler;
+        _solver.ProgressValueChanged += _progressValueChangedHandler;
     }
 
     protected virtual void Dispose(bool disposing)
     {
-        if (disposing && _disposed == false)
+        if (disposing && !_disposed)
         {
-            _disposed = true;
+            if (_queenPlacedHandler != null)
+                _solver.QueenPlaced -= _queenPlacedHandler;
+            if (_solutionFoundHandler != null)
+                _solver.SolutionFound -= _solutionFoundHandler;
+            if (_progressValueChangedHandler != null)
+                _solver.ProgressValueChanged -= _progressValueChangedHandler;
 
+            _queenPlacedHandler = null;
+            _solutionFoundHandler = null;
+            _progressValueChangedHandler = null;
+
+            _disposed = true;
             if (_solver is IDisposable disposableSolver)
                 disposableSolver.Dispose();
         }
     }
 
-    // Private Fields
+    // Private Methods
+    private EventHandler<Domain.EventArgsPruning.QueenPlacedEventArgs>? _queenPlacedHandler;
+    private EventHandler<Domain.EventArgsPruning.SolutionFoundEventArgs>? _solutionFoundHandler;
+    private EventHandler<Domain.EventArgsPruning.ProgressUpdateEventArgs>? _progressValueChangedHandler;
+
     private bool _disposed = false;
     private readonly ISolverPruning _solver;
 }
