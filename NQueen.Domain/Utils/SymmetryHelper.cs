@@ -2,6 +2,70 @@
 
 public static class SymmetryHelper
 {
+    // Helper method to generate all symmetrical transformations of a solution
+    public static IEnumerable<int[]> GetSymmetricalTransformations(int[] solution)
+    {
+        // Delegate the calculation of symmetrical transformations to SymmetryHelper
+        var symmetricalSolutions = SymmetryHelper.GetSymmetricalSolutions(solution);
+
+        // Log transformations for debugging
+        Debug.WriteLine("Generated symmetrical transformations:");
+        foreach (var transformation in symmetricalSolutions)
+            Debug.WriteLine(string.Join(",", transformation));
+
+        return symmetricalSolutions;
+    }
+
+    // --- Version 1: Used by NQueen.Domain.Utils.SymmetryPruning (Memory<int> based) ---
+
+    /// <summary>
+    /// Returns all symmetrical transformations of a solution (Memory&lt;int&gt; version).
+    /// </summary>
+    public static List<Memory<int>> GetSymmetricalSolutions(Memory<int> solution)
+    {
+        var boardSize = solution.Length;
+
+        var symmToMidHorizontal = new Memory<int>(new int[boardSize]);
+        var symmToMidVertical = new Memory<int>(new int[boardSize]);
+        var symmToMainDiag = new Memory<int>(new int[boardSize]);
+        var symmToBiDiag = new Memory<int>(new int[boardSize]);
+        var counter90 = new Memory<int>(new int[boardSize]);
+        var counter180 = new Memory<int>(new int[boardSize]);
+        var counter270 = new Memory<int>(new int[boardSize]);
+        var solutionSpan = solution.Span;
+
+        for (var rowIndex = 0; rowIndex < boardSize; rowIndex++)
+        {
+            var flippedRowIndex = boardSize - rowIndex - 1;
+            var flippedColIndex = boardSize - solutionSpan[rowIndex] - 1;
+
+            symmToMidHorizontal.Span[flippedRowIndex] = solutionSpan[rowIndex];
+            counter90.Span[flippedColIndex] = symmToMainDiag.Span[solutionSpan[rowIndex]] = rowIndex;
+
+            counter180.Span[flippedRowIndex] =
+                symmToMidVertical.Span[rowIndex] = flippedColIndex;
+
+            counter270.Span[solutionSpan[rowIndex]] =
+                symmToBiDiag.Span[flippedColIndex] = flippedRowIndex;
+        }
+
+        return
+        [
+            symmToMidVertical,
+            symmToMidHorizontal,
+            symmToMainDiag,
+            symmToBiDiag,
+            counter90,
+            counter180,
+            counter270
+        ];
+    }
+
+    // --- Version 2: Used by NQueen.Kernel.Solvers.SolverEngine (int[] based) ---
+
+    /// <summary>
+    /// Returns all symmetrical transformations of a solution (int[] version).
+    /// </summary>
     public static HashSet<int[]> GetSymmetricalSolutions(int[] solution)
     {
         var boardSize = solution.Length;
@@ -41,6 +105,61 @@ public static class SymmetryHelper
         };
     }
 
+    /// <summary>
+    /// Used by SolverEngine: Checks if the solution or any of its symmetrical transformations already exists in the Solutions collection.
+    /// </summary>
+    public static bool IsSymmetricalSolution(
+        Memory<int> solution,
+        HashSet<Memory<int>> solutions)
+    {
+        var original = solution.Span;
+        var transformations = GetSymmetricalTransformations(original.ToArray());
+
+        foreach (var transformed in transformations)
+        {
+            if (solutions.Contains(new Memory<int>(transformed)))
+            {
+                Debug.WriteLine($"Symmetry detected: {string.Join(",", transformed)} matches an existing solution.");
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if the solution or any of its symmetrical transformations already exists in the set (int[] version).
+    /// </summary>
+    public static bool IsSymmetricalSolution(
+        int[] solution,
+        HashSet<int[]> uniqueSolutions)
+    {
+        foreach (var transformation in GetSymmetricalSolutions(solution))
+        {
+            if (uniqueSolutions.Contains(transformation))
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if the solution or any of its symmetrical transformations already exists in the set (Memory&lt;int&gt; version).
+    /// </summary>
+    public static bool IsSymmetrical(
+        Memory<int> solution,
+        HashSet<Memory<int>> uniqueSolutions)
+    {
+        foreach (var transformation in GetSymmetricalSolutions(solution))
+        {
+            if (uniqueSolutions.Contains(transformation))
+                return true;
+        }
+
+        return false;
+    }
+
+    // --- Additional helpers (unchanged) ---
     public static string SolutionTitle(SolutionMode solutionMode, int noOfSolutions)
     {
         if (solutionMode == SolutionMode.Single)

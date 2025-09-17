@@ -5,4 +5,5 @@ global using NQueen.Domain.Models;
 global using NQueen.Domain.Settings;
 global using System.Collections;
 global using System.ComponentModel;
+global using System.Diagnostics;
 global using System.Text;

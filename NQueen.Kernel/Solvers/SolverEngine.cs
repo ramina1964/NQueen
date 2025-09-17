@@ -213,7 +213,8 @@ public class SolverEngine(
         var solutionCopy = new Memory<int>(QueenPositions.ToArray());
 
         // Check for symmetry if in Unique mode
-        if (SolutionMode == SolutionMode.Unique && IsSymmetricalSolution(solutionCopy))
+        if (SolutionMode == SolutionMode.Unique &&
+            SymmetryHelper.IsSymmetricalSolution(solutionCopy, Solutions))
         {
             Debug.WriteLine($"Symmetrical solution skipped: {string.Join(",", solutionCopy.Span.ToArray())}");
             return;
@@ -232,41 +233,6 @@ public class SolverEngine(
             Debug.WriteLine($"Solution successfully added: {string.Join(",", solutionCopy.Span.ToArray())}");
             SolutionFound?.Invoke(this, new Domain.EventArgsPruning.SolutionFoundEventArgs(solutionCopy.Span.ToArray()));
         }
-    }
-
-    private bool IsSymmetricalSolution(Memory<int> solution)
-    {
-        var original = solution.Span;
-
-        // Generate all symmetrical transformations
-        var transformations = GetSymmetricalTransformations(original.ToArray());
-
-        // Check if any transformation already exists in the Solutions collection
-        foreach (var transformed in transformations)
-        {
-            if (Solutions.Contains(new Memory<int>(transformed)))
-            {
-                Debug.WriteLine($"Symmetry detected: {string.Join(",", transformed)} matches an existing solution.");
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    // Helper method to generate all symmetrical transformations of a solution
-    public IEnumerable<int[]> GetSymmetricalTransformations(int[] solution)
-    {
-        // Delegate the calculation of symmetrical transformations to SymmetryHelper
-        var symmetricalSolutions = SymmetryHelper.GetSymmetricalSolutions(solution);
-
-        // Log transformations for debugging
-        Debug.WriteLine("Generated symmetrical transformations:");
-        foreach (var transformation in symmetricalSolutions)
-            Debug.WriteLine(string.Join(",", transformation));
-
-
-        return symmetricalSolutions;
     }
 
     private void NotifyProgress(int progress) =>

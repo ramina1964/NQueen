@@ -21,7 +21,7 @@ public class SolverSymmetryTests
         var solverEngine = new SolverEngine(mockSolutionFormatter, mockBoardStateFactory);
 
         // Generate symmetrical transformations
-        var symmetricalSolutions = solverEngine.GetSymmetricalTransformations(baseSolution.Span.ToArray());
+        var symmetricalSolutions = SymmetryHelper.GetSymmetricalTransformations(baseSolution.Span.ToArray());
 
         // Add symmetrical transformations to the solutions set
         foreach (var symmetrical in symmetricalSolutions)
