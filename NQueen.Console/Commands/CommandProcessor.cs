@@ -2,7 +2,7 @@
 
 public class CommandProcessor(IConsoleUtils consoleUtils) : ICommandProcessor
 {
-    public bool ProcessCommand(string key, string value, DispatchCommands dispatchCommands)
+    public async Task<bool> ProcessCommand(string key, string value, DispatchCommands dispatchCommands)
     {
         var returnValue = false;
         key = DispatchCommands.RegexSpaces().Replace(key, " ").Trim();
@@ -15,19 +15,19 @@ public class CommandProcessor(IConsoleUtils consoleUtils) : ICommandProcessor
 
         return key switch
         {
-            CommandConst.Run => dispatchCommands.RunApp().Result,
+            CommandConst.Run => await dispatchCommands.RunApp(),
             CommandConst.SolutionMode => dispatchCommands.CheckSolutionMode(value),
             CommandConst.BoardSize => dispatchCommands.CheckBoardSize(value),
             _ => returnValue,
         };
     }
 
-    public void ProcessCommandsFromArgs(string[] args, DispatchCommands dispatchCommands)
+    public async Task ProcessCommandsFromArgs(string[] args, DispatchCommands dispatchCommands)
     {
         for (var i = 0; i < args.Length; i++)
         {
             (string key, string value) = DispatchUtils.ParseInput(args[i]);
-            var ok = ProcessCommand(key, value, dispatchCommands);
+            var ok = await ProcessCommand(key, value, dispatchCommands);
             if (ok)
             {
                 dispatchCommands.Commands[key.ToUpper()] = true;
@@ -41,18 +41,18 @@ public class CommandProcessor(IConsoleUtils consoleUtils) : ICommandProcessor
         if (dispatchCommands.GetRequiredCommand() == CommandConst.Run)
         {
             _consoleUtils.WriteLineColored(ConsoleColor.Cyan, CommandConst.SolverRunning);
-            ProcessCommand(CommandConst.Run, "ok", dispatchCommands);
+            await ProcessCommand(CommandConst.Run, "ok", dispatchCommands);
         }
     }
 
-    public void ProcessCommandsInteractively(DispatchCommands dispatchCommands)
+    public async Task ProcessCommandsInteractively(DispatchCommands dispatchCommands)
     {
         while (dispatchCommands.Commands.Any(e => !e.Value))
         {
             var required = dispatchCommands.GetRequiredCommand();
             if (required == CommandConst.Run)
             {
-                dispatchCommands.RunSolver();
+                await dispatchCommands.RunSolver();
                 break;
             }
 
@@ -64,7 +64,7 @@ public class CommandProcessor(IConsoleUtils consoleUtils) : ICommandProcessor
                 HelpCommands.ProcessHelpCommand(userInput);
             else
             {
-                var ok = ProcessCommand(required, userInput, dispatchCommands);
+                var ok = await ProcessCommand(required, userInput, dispatchCommands);
                 if (ok)
                 {
                     dispatchCommands.Commands[required] = true;

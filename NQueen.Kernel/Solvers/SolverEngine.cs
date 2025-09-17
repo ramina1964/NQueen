@@ -183,8 +183,8 @@ public class SolverEngine(
         return true;
     }
 
-    // Todo: Remove also useage of Task.FromResult in this method.
-    private Task<int> FindNextRowAsync(int columnIndex, int maxRow, CancellationToken cancellationToken)
+    private ValueTask<int> FindNextRowAsync(int columnIndex, int maxRow,
+        CancellationToken cancellationToken)
     {
         var currentRow = QueenPositions.Span[columnIndex];
         var startRow = currentRow == -1 ? 0 : currentRow + 1;
@@ -192,7 +192,7 @@ public class SolverEngine(
         for (var row = startRow; row < maxRow; row++)
         {
             if (cancellationToken.IsCancellationRequested)
-                return Task.FromResult(-1);
+                return new ValueTask<int>(-1);
 
             // Symmetry pruning: Restrict the first column to HalfBoardSize only for Unique mode
             if (SolutionMode == SolutionMode.Unique && columnIndex == 0 && row >= _board.HalfBoardSize)
@@ -203,15 +203,22 @@ public class SolverEngine(
 
             if (BoardState.IsPositionValid(columnIndex, row, QueenPositions))
             {
-                // Debugging: Log valid row found
+                // If visualization is enabled and delay is set, perform async delay
+                if (DisplayMode == DisplayMode.Visualize && DelayInMillisec > 0)
+                    return new ValueTask<int>(Task.Run(async () =>
+                    {
+                        await Task.Delay(DelayInMillisec, cancellationToken);
+                        return row;
+                    }));
+
+                // Otherwise, return synchronously
                 Debug.WriteLine($"Valid Row Found: Column {columnIndex}, Row {row}");
-                return Task.FromResult(row);
+                return new ValueTask<int>(row);
             }
         }
 
-        // Debugging: Log no valid row found
         Debug.WriteLine($"No Valid Row Found: Column {columnIndex}");
-        return Task.FromResult(-1);
+        return new ValueTask<int>(-1);
     }
 
     private void AddSolutionAndNotify()

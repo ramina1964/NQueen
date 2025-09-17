@@ -84,7 +84,7 @@ public static class TestHelpers
             boardSize.ToString(), solutionMode, displayMode, solutionFormatter);
     }
 
-    public static MainViewModel CreateMainViewModelWithSimulationResults(
+    public static async Task<MainViewModel> MainViewModelCreateMainViewModelWithSimulationResults(
         int boardSize,
         SolutionMode solutionMode,
         MockSaveFileDialogService saveFileDialogService,
@@ -106,7 +106,7 @@ public static class TestHelpers
         };
 
         // Dynamically calculate simulation results
-        var simulationResults = solver.GetSimResultsAsync(boardSize, solutionMode).Result;
+        var simulationResults = await solver.GetSimResultsAsync(boardSize, solutionMode);
         mainVm.SimulationResults = simulationResults;
         mainVm.NoOfSolutions = simulationResults.Solutions.Count().ToString();
 

@@ -2,9 +2,9 @@
 
 public interface ICommandProcessor
 {
-    bool ProcessCommand(string key, string value, DispatchCommands dispatchCommands);
+    Task<bool> ProcessCommand(string key, string value, DispatchCommands dispatchCommands);
 
-    void ProcessCommandsFromArgs(string[] args, DispatchCommands dispatchCommands);
+    Task ProcessCommandsFromArgs(string[] args, DispatchCommands dispatchCommands);
 
-    void ProcessCommandsInteractively(DispatchCommands dispatchCommands);
+    Task ProcessCommandsInteractively(DispatchCommands dispatchCommands);
 }

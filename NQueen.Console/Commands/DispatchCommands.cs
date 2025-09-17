@@ -20,14 +20,14 @@ public partial class DispatchCommands(
 
     public Dictionary<string, string> AvailableCommands { get; set; } = [];
 
-    public bool ProcessCommand(string key, string value) =>
-        _commandProcessor.ProcessCommand(key, value, this);
+    public async Task<bool> ProcessCommand(string key, string value) =>
+        await _commandProcessor.ProcessCommand(key, value, this);
 
-    public void ProcessCommandsFromArgs(string[] args) =>
-        _commandProcessor.ProcessCommandsFromArgs(args, this);
+    public async Task ProcessCommandsFromArgs(string[] args) =>
+        await _commandProcessor.ProcessCommandsFromArgs(args, this);
 
-    public void ProcessCommandsInteractively() =>
-        _commandProcessor.ProcessCommandsInteractively(this);
+    public async Task ProcessCommandsInteractively() =>
+        await _commandProcessor.ProcessCommandsInteractively(this);
 
     public void InitCommands()
     {
@@ -68,10 +68,10 @@ public partial class DispatchCommands(
     public void WriteLineColored(ConsoleColor color, string message) =>
         _consoleUtils.WriteLineColored(color, message);
 
-    public void RunSolver()
+    public async Task RunSolver()
     {
         _consoleUtils.WriteLineColored(ConsoleColor.Cyan, CommandConst.SolverRunning);
-        ProcessCommand(CommandConst.Run, "ok");
+        await ProcessCommand(CommandConst.Run, "ok");
         var runAgain = true;
         while (runAgain)
         {
@@ -81,7 +81,7 @@ public partial class DispatchCommands(
             if (runAgainAnswer.Equals("yes") || runAgainAnswer.Equals("y"))
             {
                 Console.WriteLine();
-                ProcessCommand(CommandConst.Run, "ok");
+                await ProcessCommand(CommandConst.Run, "ok");
             }
             else
             {

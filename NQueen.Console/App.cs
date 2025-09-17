@@ -2,18 +2,18 @@
 
 public class App(DispatchCommands dispatchCommands)
 {
-    public void Run(string[] args)
+    public async Task Run(string[] args)
     {
         _dispatchCommands.InitCommands();
 
         switch (args.Length)
         {
             case > 0:
-                _dispatchCommands.ProcessCommandsFromArgs(args);
+                await _dispatchCommands.ProcessCommandsFromArgs(args);
                 return;
 
             default:
-                _dispatchCommands.ProcessCommandsInteractively();
+                await _dispatchCommands.ProcessCommandsInteractively();
                 return;
         }
     }
