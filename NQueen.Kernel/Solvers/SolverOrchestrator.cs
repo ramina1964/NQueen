@@ -71,8 +71,10 @@ public class SolverOrchestrator : ISolverPruning, IDisposable
         {
             if (_queenPlacedHandler != null)
                 _solver.QueenPlaced -= _queenPlacedHandler;
+
             if (_solutionFoundHandler != null)
                 _solver.SolutionFound -= _solutionFoundHandler;
+
             if (_progressValueChangedHandler != null)
                 _solver.ProgressValueChanged -= _progressValueChangedHandler;
 

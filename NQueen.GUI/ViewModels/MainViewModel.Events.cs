@@ -60,8 +60,7 @@ public sealed partial class MainViewModel
         var positions = message
             .Solution
             .Take(boardSize)
-            .Select((queenPosition, rowIndex) => new Position(rowIndex, queenPosition))
-            .ToList();
+            .Select((queenPosition, rowIndex) => new Position(rowIndex, queenPosition));
 
         ChessboardVm.PlaceQueens(positions);
     }

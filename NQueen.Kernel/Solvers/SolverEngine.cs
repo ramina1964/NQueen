@@ -91,19 +91,20 @@ public class SolverEngine(
             {
                 if (span[i] < 0)
                 {
-                    Debug.WriteLine($"Invalid solution detected during validation: {string.Join(",", span.ToArray())}");
+                    Debug.WriteLine($"Invalid solution detected during validation:" +
+                        $"{string.Join(",", span.ToArray())}");
+
                     return false;
                 }
             }
             return true;
-        }).ToList();
+        });
 
         // Log the total number of valid solutions
-        Debug.WriteLine($"Total number of solutions found: {validSolutions.Count}");
+        Debug.WriteLine($"Total number of solutions found: {validSolutions.Count()}");
 
         return new SimulationResults(
-            [.. validSolutions.Select(s => new Solution(s.Span.ToArray(), _solutionFormatter))],
-            elapsedTime);
+            [.. validSolutions.Select(s => new Solution(s.Span.ToArray(), _solutionFormatter))], elapsedTime);
     }
 
     private async Task SolveNQueenProblemAsync(SolutionMode solutionMode,
@@ -175,8 +176,7 @@ public class SolverEngine(
         }
     }
 
-    private ValueTask<int> FindNextRowAsync(int columnIndex, int maxRow,
-        CancellationToken cancellationToken)
+    private async ValueTask<int> FindNextRowAsync(int columnIndex, int maxRow, CancellationToken cancellationToken)
     {
         var currentRow = QueenPositions.Span[columnIndex];
         var startRow = currentRow == -1 ? 0 : currentRow + 1;
@@ -184,33 +184,20 @@ public class SolverEngine(
         for (var row = startRow; row < maxRow; row++)
         {
             if (cancellationToken.IsCancellationRequested)
-                return new ValueTask<int>(-1);
+                return -1;
 
-            // Symmetry pruning: Restrict the first column to HalfBoardSize only for Unique mode
             if (SolutionMode == SolutionMode.Unique && columnIndex == 0 && row >= _board.HalfBoardSize)
-            {
-                Debug.WriteLine($"Symmetry pruning skipped row {row} in column {columnIndex}");
                 continue;
-            }
 
             if (BoardState.IsPositionValid(columnIndex, row, QueenPositions))
             {
-                // If visualization is enabled and delay is set, perform async delay
                 if (DisplayMode == DisplayMode.Visualize && DelayInMillisec > 0)
-                    return new ValueTask<int>(Task.Run(async () =>
-                    {
-                        await Task.Delay(DelayInMillisec, cancellationToken);
-                        return row;
-                    }));
-
-                // Otherwise, return synchronously
-                Debug.WriteLine($"Valid Row Found: Column {columnIndex}, Row {row}");
-                return new ValueTask<int>(row);
+                    await Task.Delay(DelayInMillisec, cancellationToken);
+                return row;
             }
         }
 
-        Debug.WriteLine($"No Valid Row Found: Column {columnIndex}");
-        return new ValueTask<int>(-1);
+        return -1;
     }
 
     private void AddSolutionAndNotify()
@@ -249,10 +236,10 @@ public class SolverEngine(
 
     private bool IsSymmetricalSolution(Memory<int> solution)
     {
-        var original = solution.Span.ToArray();
+        var original = solution.Span;
 
         // Generate all symmetrical transformations
-        var transformations = GetSymmetricalTransformations(original);
+        var transformations = GetSymmetricalTransformations(original.ToArray());
 
         // Check if any transformation already exists in the Solutions collection
         foreach (var transformed in transformations)

@@ -18,6 +18,7 @@ public class MainViewModelValidationTests
         var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText))
             .Cast<string>()
             .ToList();
+        
         Console.WriteLine($"Errors: {string.Join(", ", errors)}");
 
         // Assert
