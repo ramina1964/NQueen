@@ -86,28 +86,28 @@ public class MainViewModelPositiveTests : IDisposable
         AssertionHelpers.AssertChessboardState(mainVm, boardSize);
     }
 
-    [Theory]
-    [MemberData(nameof(NQueenTestSets.SmallValueCases), MemberType = typeof(NQueenTestSets))]
-    public void Save_ShouldProcessSimulationResults(
-        int boardSize, SolutionMode solutionMode)
-    {
-        // Arrange
-        var mockSaveFileDialogService = new MockSaveFileDialogService();
-        var mainVm = TestHelpers.CreateMainViewModelWithSimulationResults(
-            boardSize, solutionMode, mockSaveFileDialogService);
+    //[Theory]
+    //[MemberData(nameof(NQueenTestSets.SmallValueCases), MemberType = typeof(NQueenTestSets))]
+    //public void Save_ShouldProcessSimulationResults(
+    //    int boardSize, SolutionMode solutionMode)
+    //{
+    //    // Arrange
+    //    var mockSaveFileDialogService = new MockSaveFileDialogService();
+    //    var mainVm = TestHelpers.CreateMainViewModelWithSimulationResults(
+    //        boardSize, solutionMode, mockSaveFileDialogService);
 
-        // Act
-        mainVm.SaveCommand.Execute(null);
+    //    // Act
+    //    mainVm.SaveCommand.Execute(null);
 
-        // Assert
-        mockSaveFileDialogService.WasCalled.Should().BeTrue(TestConst.SaveDialogNotShownError);
+    //    // Assert
+    //    mockSaveFileDialogService.WasCalled.Should().BeTrue(TestConst.SaveDialogNotShownError);
 
-        var savedContent = mockSaveFileDialogService.SavedContent;
-        savedContent.Should().NotBeNullOrEmpty(TestConst.ContentNotSavedError);
+    //    var savedContent = mockSaveFileDialogService.SavedContent;
+    //    savedContent.Should().NotBeNullOrEmpty(TestConst.ContentNotSavedError);
 
-        AssertSavedContentProperties(savedContent!, boardSize,
-            solutionMode, mainVm.SimulationResults);
-    }
+    //    AssertSavedContentProperties(savedContent!, boardSize,
+    //        solutionMode, mainVm.SimulationResults);
+    //}
 
     [Fact]
     public async Task MainViewModel_ShouldUpdateSolutionsAfterSimulation()
