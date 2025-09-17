@@ -17,35 +17,6 @@ public class BoardState(int boardSize)
     public void Reset() =>
         QueenPositions.Span.Fill(-1);
 
-    public static async ValueTask<int> TryFindValidPosition(
-        int columnIndex,
-        int boardSize,
-        Memory<int> queenPositions,
-        CancellationToken cancellationToken,
-        int delayInMilliseconds = 0,
-        DisplayMode displayMode = DisplayMode.Hide)
-    {
-        var startRow = 0;
-
-        while (startRow < boardSize)
-        {
-            if (cancellationToken.IsCancellationRequested)
-                return -1;
-
-            if (IsPositionValid(columnIndex, startRow, queenPositions))
-            {
-                if (displayMode == DisplayMode.Visualize && delayInMilliseconds > 0)
-                    await Task.Delay(delayInMilliseconds, cancellationToken);
-                
-                return startRow;
-            }
-
-            startRow++;
-        }
-
-        return -1;
-    }
-
     public static bool IsPositionValid(int columnIndex, int rowIndex, Memory<int> queenPositions)
     {
         var queenSpan = queenPositions.Span;
