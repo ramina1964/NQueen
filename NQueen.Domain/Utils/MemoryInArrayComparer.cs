@@ -3,56 +3,43 @@
 public readonly struct MemoryIntArrayComparer :
     IEqualityComparer<Memory<int>>, IComparer<Memory<int>>
 {
+    // Reusable instance to avoid allocations where a comparer instance is repeatedly requested
+    public static readonly MemoryIntArrayComparer Instance = new();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Equals(Memory<int> x, Memory<int> y)
     {
-        if (x.Length != y.Length) return false;
+        if (x.Length != y.Length)
+            return false;
 
-        var spanX = x.Span;
-        var spanY = y.Span;
-
-        // Full comparison of all elements
-        for (int i = 0; i < spanX.Length; i++)
-        {
-            if (spanX[i] != spanY[i])
-            {
-                Debug.WriteLine($"Memory comparison failed at index {i}: {spanX[i]} != {spanY[i]}");
-                return false;
-            }
-        }
-
-        return true;
+        return x.Span.SequenceEqual(y.Span);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int GetHashCode(Memory<int> obj)
     {
-        if (obj.IsEmpty) return 0;
-
         var span = obj.Span;
-        unchecked
-        {
-            int hash = 17;
-            foreach (var item in span)
-            {
-                hash = hash * 31 + item.GetHashCode();
-            }
-            Debug.WriteLine($"Generated hash code: {hash} for Memory<int>: {string.Join(",", span.ToArray())}");
-            return hash;
-        }
+        if (span.IsEmpty) return 0;
+
+        var hash = new HashCode();
+        foreach (var v in span)
+            hash.Add(v);
+
+        return hash.ToHashCode();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int Compare(Memory<int> x, Memory<int> y)
     {
         var spanX = x.Span;
         var spanY = y.Span;
-
-        int length = Math.Min(spanX.Length, spanY.Length);
-        for (int i = 0; i < length; i++)
+        int len = Math.Min(spanX.Length, spanY.Length);
+        for (int i = 0; i < len; i++)
         {
-            int comparison = spanX[i].CompareTo(spanY[i]);
-            if (comparison != 0) return comparison;
+            int a = spanX[i];
+            int b = spanY[i];
+            if (a != b) return a.CompareTo(b);
         }
-
-        // If all compared elements are equal, compare lengths
         return spanX.Length.CompareTo(spanY.Length);
     }
 }
