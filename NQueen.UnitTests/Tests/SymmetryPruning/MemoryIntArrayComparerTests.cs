@@ -22,12 +22,13 @@ public class MemoryIntArrayComparerTests
             $"{string.Join(",", second)} should be {expected}");
     }
 
-
     [Theory]
     [InlineData(new int[] { 0, 2, 4, 1, 3 }, 7)]
     [InlineData(new int[] { 1, 3, 0, 2, 4 }, 7)]
-    public void GetSymmetricalTransformations_ShouldReturnExpectedCount(int[] solution, int expectedCount)
+    public void GetSymmetricalTransformations_ShouldReturnExpectedCount(
+        int[] solutionArray, int expectedCount)
     {
+        var solution = new Memory<int>(solutionArray);
         var variants = SymmetryHelper.GetSymmetricalSolutions(solution);
         variants.Should().HaveCount(expectedCount);
     }

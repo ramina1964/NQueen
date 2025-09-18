@@ -115,29 +115,13 @@ public static class SymmetryHelper
         var original = solution.Span;
         var transformations = GetSymmetricalTransformations(original.ToArray());
 
-        foreach (var transformed in transformations)
+        foreach (var transformation in transformations)
         {
-            if (solutions.Contains(new Memory<int>(transformed)))
+            if (solutions.Contains(new Memory<int>(transformation)))
             {
-                Debug.WriteLine($"Symmetry detected: {string.Join(",", transformed)} matches an existing solution.");
+                Debug.WriteLine($"Symmetry detected: {string.Join(",", transformation)} matches an existing solution.");
                 return true;
             }
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Checks if the solution or any of its symmetrical transformations already exists in the set (int[] version).
-    /// </summary>
-    public static bool IsSymmetricalSolution(
-        int[] solution,
-        HashSet<int[]> uniqueSolutions)
-    {
-        foreach (var transformation in GetSymmetricalSolutions(solution))
-        {
-            if (uniqueSolutions.Contains(transformation))
-                return true;
         }
 
         return false;
@@ -148,11 +132,11 @@ public static class SymmetryHelper
     /// </summary>
     public static bool IsSymmetrical(
         Memory<int> solution,
-        HashSet<Memory<int>> uniqueSolutions)
+        HashSet<Memory<int>> solutions)
     {
         foreach (var transformation in GetSymmetricalSolutions(solution))
         {
-            if (uniqueSolutions.Contains(transformation))
+            if (solutions.Contains(transformation))
                 return true;
         }
 

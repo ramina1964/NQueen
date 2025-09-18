@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace NQueen.Domain.Utils;
+﻿namespace NQueen.Domain.Utils;
 
 public readonly struct MemoryIntArrayComparer :
     IEqualityComparer<Memory<int>>, IComparer<Memory<int>>
