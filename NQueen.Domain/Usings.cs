@@ -6,4 +6,5 @@ global using NQueen.Domain.Settings;
 global using System.Collections;
 global using System.ComponentModel;
 global using System.Diagnostics;
+global using System.Runtime.CompilerServices;
 global using System.Text;

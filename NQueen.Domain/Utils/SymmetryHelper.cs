@@ -1,26 +1,48 @@
 ﻿namespace NQueen.Domain.Utils;
 
-public static class SymmetryHelper
+public static partial class SymmetryHelper
 {
-    // Helper method to generate all symmetrical transformations of a solution
-    public static IEnumerable<int[]> GetSymmetricalTransformations(int[] solution)
+    // --- New span-based overload to avoid allocating an intermediate int[] when only a Memory/Span is available ---
+    public static IEnumerable<int[]> GetSymmetricalSolutions(ReadOnlySpan<int> solution)
     {
-        // Delegate the calculation of symmetrical transformations to SymmetryHelper
-        var symmetricalSolutions = SymmetryHelper.GetSymmetricalSolutions(solution);
+        int boardSize = solution.Length;
 
-        // Log transformations for debugging
-        Debug.WriteLine("Generated symmetrical transformations:");
-        foreach (var transformation in symmetricalSolutions)
-            Debug.WriteLine(string.Join(",", transformation));
+        var symmToMidHorizontal = new int[boardSize];
+        var symmToMidVertical   = new int[boardSize];
+        var symmToMainDiag      = new int[boardSize];
+        var symmToBiDiag        = new int[boardSize];
+        var counter90           = new int[boardSize];
+        var counter180          = new int[boardSize];
+        var counter270          = new int[boardSize];
 
-        return symmetricalSolutions;
+        for (int rowIndex = 0; rowIndex < boardSize; rowIndex++)
+        {
+            int flippedRowIndex = boardSize - rowIndex - 1;
+            int flippedColIndex = boardSize - solution[rowIndex] - 1;
+
+            symmToMidHorizontal[flippedRowIndex] = solution[rowIndex];
+            counter90[flippedColIndex] = symmToMainDiag[solution[rowIndex]] = rowIndex;
+
+            counter180[flippedRowIndex] =
+                symmToMidVertical[rowIndex] = flippedColIndex;
+
+            counter270[solution[rowIndex]] =
+                symmToBiDiag[flippedColIndex] = flippedRowIndex;
+        }
+
+        return
+        [
+            symmToMidVertical,
+            symmToMidHorizontal,
+            symmToMainDiag,
+            symmToBiDiag,
+            counter90,
+            counter180,
+            counter270
+        ];
     }
 
-    // --- Version 1: Used by NQueen.Domain.Utils.SymmetryPruning (Memory<int> based) ---
-
-    /// <summary>
-    /// Returns all symmetrical transformations of a solution (Memory&lt;int&gt; version).
-    /// </summary>
+    // --- Version 1 (Memory<int> based) used by symmetry pruning logic ---
     public static List<Memory<int>> GetSymmetricalSolutions(Memory<int> solution)
     {
         var boardSize = solution.Length;
@@ -61,11 +83,7 @@ public static class SymmetryHelper
         ];
     }
 
-    // --- Version 2: Used by NQueen.Kernel.Solvers.SolverEngine (int[] based) ---
-
-    /// <summary>
-    /// Returns all symmetrical transformations of a solution (int[] version).
-    /// </summary>
+    // --- Version 2 (int[] based) used by solver engine ---
     public static HashSet<int[]> GetSymmetricalSolutions(int[] solution)
     {
         var boardSize = solution.Length;
@@ -105,45 +123,47 @@ public static class SymmetryHelper
         };
     }
 
+    // Retained existing API: Get all symmetrical transformations (int[] entry point)
+    public static IEnumerable<int[]> GetSymmetricalTransformations(int[] solution)
+    {
+        var symmetricalSolutions = GetSymmetricalSolutions(solution);
+
+        return symmetricalSolutions;
+    }
+
     /// <summary>
-    /// Used by SolverEngine: Checks if the solution or any of its symmetrical transformations already exists in the Solutions collection.
+    /// Used by SolverEngine: Checks if any symmetrical transformation already exists in the set (Memory<int> version).
+    /// Now uses span overload to avoid one allocation.
     /// </summary>
     public static bool IsSymmetricalSolution(
         Memory<int> solution,
         HashSet<Memory<int>> solutions)
     {
-        var original = solution.Span;
-        var transformations = GetSymmetricalTransformations(original.ToArray());
-
-        foreach (var transformation in transformations)
+        var span = solution.Span;
+        foreach (var transformation in GetSymmetricalSolutions(span))
         {
             if (solutions.Contains(new Memory<int>(transformation)))
-            {
-                Debug.WriteLine($"Symmetry detected: {string.Join(",", transformation)} matches an existing solution.");
                 return true;
-            }
         }
 
         return false;
     }
 
     /// <summary>
-    /// Checks if the solution or any of its symmetrical transformations already exists in the set (Memory&lt;int&gt; version).
+    /// Checks if any symmetrical transformation already exists (Memory<int> direct version).
     /// </summary>
     public static bool IsSymmetrical(
         Memory<int> solution,
         HashSet<Memory<int>> solutions)
     {
         foreach (var transformation in GetSymmetricalSolutions(solution))
-        {
             if (solutions.Contains(transformation))
                 return true;
-        }
 
         return false;
     }
 
-    // --- Additional helpers (unchanged) ---
+    // --- Additional helpers (retained) ---
     public static string SolutionTitle(SolutionMode solutionMode, int noOfSolutions)
     {
         if (solutionMode == SolutionMode.Single)
@@ -152,11 +172,10 @@ public static class SymmetryHelper
         if (noOfSolutions <= SimulationSettings.MaxNoOfSolutionsInOutput)
         {
             return solutionMode == SolutionMode.All
-             ? $"List of All Solutions (Included Symmetrical Ones):"
-             : $"List of Unique Solutions (Excluded Symmetrical Ones):";
+                ? "List of All Solutions (Included Symmetrical Ones):"
+                : "List of Unique Solutions (Excluded Symmetrical Ones):";
         }
 
-        // Here is: NoOfSolutions > MaxNoOfSolutionsInOutput
         return solutionMode == SolutionMode.All
             ? $"List of First {SimulationSettings.MaxNoOfSolutionsInOutput} Solution(s), May Include Symmetrical Ones:"
             : $"List of First {SimulationSettings.MaxNoOfSolutionsInOutput} Unique Solution(s), Excluded Symmetrical Ones:";
@@ -187,7 +206,6 @@ public static class SymmetryHelper
             default:
                 throw new ArgumentException($"Invalid rotation angle: {degrees}. Only 90, 180, and 270 are supported.");
         }
-
         return rotated;
     }
 
@@ -208,12 +226,12 @@ public static class SymmetryHelper
                     reflected[n - 1 - i] = solution[i];
                 break;
 
-            case "diagonal-primary": // Lower-left to upper-right
+            case "diagonal-primary":
                 for (int i = 0; i < n; i++)
                     reflected[solution[i]] = i;
                 break;
 
-            case "diagonal-secondary": // Lower-right to upper-left
+            case "diagonal-secondary":
                 for (int i = 0; i < n; i++)
                     reflected[n - 1 - solution[i]] = n - 1 - i;
                 break;
@@ -221,7 +239,6 @@ public static class SymmetryHelper
             default:
                 throw new ArgumentException($"Invalid reflection axis: {axis}. Only 'horizontal', 'vertical', 'diagonal-primary', and 'diagonal-secondary' are supported.");
         }
-
         return reflected;
     }
 }
