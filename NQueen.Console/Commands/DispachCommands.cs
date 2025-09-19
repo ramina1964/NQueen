@@ -9,6 +9,7 @@ public record MenuState
 
 // Todo: Use input validation here, otherwise move input validation into ValidationHelper.
 // Todo: Use constants for menu options, messages, etc.
+// Todo: Remove the choice of Solver type when the only option is "Bitmask N-Queen Solver".
 
 public partial class DispatchCommands
 {
@@ -56,7 +57,7 @@ public partial class DispatchCommands
         var solverInput = Console.ReadLine();
         Console.WriteLine();
 
-        if (IsQuitInput(solverInput, state) == false)
+        if (IsQuitInput(solverInput, state))
         {
             state.ExitRequested = true;
             return -1;
@@ -112,7 +113,7 @@ public partial class DispatchCommands
         state.BlankInputCount = 0;
         Console.Write("Enter board size (1-32, or 0 to go back): ");
         var sizeInput = Console.ReadLine();
-        
+
         if (IsQuitInput(sizeInput, state))
         {
             state.ExitRequested = true;
@@ -202,14 +203,16 @@ public partial class DispatchCommands
         state.BlankInputCount = 0;
         var val = input.Trim().ToLower();
 
-        return val == "exit" || val == "quit" || val == "e" || val == "q" || val == "0";
+        return IsExitRequested(val);
     }
 
-    private static readonly Regex _whiteSpacesRegex =
-        genRegEx();
+    private static readonly Regex _whiteSpacesRegex = genRegEx();
 
     public static Regex RegexSpaces() => _whiteSpacesRegex;
     [GeneratedRegex(@"\s+", RegexOptions.Compiled)]
 
     private static partial Regex genRegEx();
+
+    private static bool IsExitRequested(string val) =>
+        val == "exit" || val == "quit" || val == "e" || val == "q" || val == "0";
 }
