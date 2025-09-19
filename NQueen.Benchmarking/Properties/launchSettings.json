@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "NQueen.Benchmarking": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
