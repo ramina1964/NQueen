@@ -1,21 +1,12 @@
 ﻿namespace NQueen.ConsoleApp;
 
-public class App(DispatchCommands dispatchCommands)
+public class App(DispatchCommands dispatchCommands, IServiceProvider serviceProvider)
 {
-    public async Task Run(string[] args)
+    public Task Run(string[] args)
     {
-        _dispatchCommands.InitCommands();
-
-        switch (args.Length)
-        {
-            case > 0:
-                await _dispatchCommands.ProcessCommandsFromArgs(args);
-                return;
-
-            default:
-                await _dispatchCommands.ProcessCommandsInteractively();
-                return;
-        }
+        // Use the new menu-driven entry point
+        DispatchCommands.RunInteractiveMenu(serviceProvider);
+        return Task.CompletedTask;
     }
 
     private readonly DispatchCommands _dispatchCommands = dispatchCommands

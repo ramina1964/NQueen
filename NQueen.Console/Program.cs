@@ -20,7 +20,6 @@ public class Program
         // Specific dependencies for the Console App
         services.AddTransient<Func<int, BoardState>>(sp => size => new BoardState(size));
         services.AddTransient<DispatchCommands>();
-        services.AddTransient<IConsoleUtils, ConsoleUtils>();
         services.AddTransient<ICommandProcessor, CommandProcessor>();
         services.AddTransient<ISolutionFormatter, SolutionFormatter>();
         services.AddSingleton<App>();

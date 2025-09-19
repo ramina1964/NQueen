@@ -117,6 +117,8 @@ public class BitmaskSolverEngineFull(
         uint cols = 0, diag1 = 0, diag2 = 0; // bitmasks for columns, main diag, anti-diag
         Stack<(int col, uint cols, uint diag1, uint diag2, int row)> stack = new();
         int maxRow0 = restrictFirstCol ? (n + 1) / 2 : n; // symmetry: only left half for col 0
+        int progressStep = Math.Max(1, n * n / 100);
+        int progressCounter = 0;
         while (true)
         {
             if (col == n)
@@ -148,6 +150,15 @@ public class BitmaskSolverEngineFull(
             // Place queen at (col, row)
             queenRows[col] = row;
             QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(new Memory<int>(queenRows)));
+
+            // Progress event usage
+            progressCounter++;
+            if (progressCounter % progressStep == 0)
+            {
+                ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(
+                    (double)progressCounter / (n * n), _currentSimToken));
+            }
+
             stack.Push((col, cols, diag1, diag2, row));
             cols |= (1u << row); // mark row as occupied
             diag1 = (diag1 | (1u << row)) << 1; // mark main diagonal
