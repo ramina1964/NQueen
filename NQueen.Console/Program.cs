@@ -24,8 +24,6 @@ public class Program
         services.AddTransient<ICommandProcessor, CommandProcessor>();
         services.AddTransient<ISolutionFormatter, SolutionFormatter>();
         services.AddSingleton<App>();
-
-        // Register SolverEngine as ISolverPruning
         services.AddSingleton<ISolverPruning, SolverEngine>();
 
         return services.BuildServiceProvider();

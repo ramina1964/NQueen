@@ -2,83 +2,123 @@
 
 public class CommandProcessor(IConsoleUtils consoleUtils) : ICommandProcessor
 {
-    public async Task<bool> ProcessCommand(string key, string value, DispatchCommands dispatchCommands)
+    // Map normalized user inputs (no spaces, lowercase) to canonical dictionary keys
+    private static readonly Dictionary<string, string> KeyMap = new(StringComparer.OrdinalIgnoreCase)
     {
-        var returnValue = false;
-        key = DispatchCommands.RegexSpaces().Replace(key, " ").Trim();
+        ["solutionmode"] = CommandConst.SolutionMode,
+        ["solutionsmode"] = CommandConst.SolutionMode, // forgiving typos (optional)
+        ["boardsize"] = CommandConst.BoardSize,
+        ["board"] = CommandConst.BoardSize,             // optional shorthand
+        ["run"] = CommandConst.Run,
+        ["bitmask"] = "bitmask"
+    };
 
-        if (string.IsNullOrEmpty(key))
+    private static string Normalize(string key) =>
+        key.Replace(" ", "").Trim().ToLowerInvariant();
+
+    public async Task<bool> ProcessCommand(string key, string value, DispatchCommands dispatch)
+    {
+        key = key.Trim();
+        if (string.IsNullOrWhiteSpace(key))
         {
             HelpCommands.ShowExitError(CommandConst.CommandEmptyError);
             return false;
         }
 
-        return key switch
+        var normalized = Normalize(key);
+
+        if (!KeyMap.TryGetValue(normalized, out var canonical))
         {
-            CommandConst.Run => await dispatchCommands.RunApp(),
-            CommandConst.SolutionMode => dispatchCommands.CheckSolutionMode(value),
-            CommandConst.BoardSize => dispatchCommands.CheckBoardSize(value),
-            _ => returnValue,
-        };
+            Console.WriteLine($"Unknown command: {key}");
+            return false;
+        }
+
+        switch (canonical)
+        {
+            case "bitmask":
+                dispatch.RunBitmaskSolver();
+                dispatch.Commands["bitmask"] = true;
+                return true;
+
+            case var k when k == CommandConst.SolutionMode:
+                {
+                    var ok = dispatch.CheckSolutionMode(value);
+                    if (ok) dispatch.Commands[CommandConst.SolutionMode] = true;
+                    return ok;
+                }
+
+            case var k when k == CommandConst.BoardSize:
+                {
+                    var ok = dispatch.CheckBoardSize(value);
+                    if (ok) dispatch.Commands[CommandConst.BoardSize] = true;
+                    return ok;
+                }
+
+            case var k when k == CommandConst.Run:
+                await dispatch.RunApp();
+                dispatch.Commands[CommandConst.Run] = true;
+                return true;
+
+            default:
+                Console.WriteLine($"Unknown command: {key}");
+                return false;
+        }
     }
 
-    public async Task ProcessCommandsFromArgs(string[] args, DispatchCommands dispatchCommands)
+    public async Task ProcessCommandsFromArgs(string[] args, DispatchCommands dispatch)
     {
         for (var i = 0; i < args.Length; i++)
         {
-            (string key, string value) = DispatchUtils.ParseInput(args[i]);
-            var ok = await ProcessCommand(key, value, dispatchCommands);
+            (string rawKey, string value) = DispatchUtils.ParseInput(args[i]);
+            var ok = await ProcessCommand(rawKey, value, dispatch);
             if (ok)
             {
-                dispatchCommands.Commands[key.ToUpper()] = true;
-                if (key.Equals(CommandConst.BoardSize))
+                var normalized = Normalize(rawKey);
+                if (KeyMap.TryGetValue(normalized, out var canonical))
                 {
-                    dispatchCommands.BoardSize = Convert.ToByte(value);
+                    if (canonical == CommandConst.BoardSize)
+                        dispatch.BoardSize = Convert.ToByte(value);
                 }
             }
         }
 
-        if (dispatchCommands.GetRequiredCommand() == CommandConst.Run)
+        if (dispatch.GetRequiredCommand() == CommandConst.Run)
         {
             _consoleUtils.WriteLineColored(ConsoleColor.Cyan, CommandConst.SolverRunning);
-            await ProcessCommand(CommandConst.Run, "ok", dispatchCommands);
+            await ProcessCommand(CommandConst.Run, "ok", dispatch);
         }
     }
 
-    public async Task ProcessCommandsInteractively(DispatchCommands dispatchCommands)
+    public async Task ProcessCommandsInteractively(DispatchCommands dispatch)
     {
-        while (dispatchCommands.Commands.Any(e => !e.Value))
+        Console.WriteLine("Available commands:");
+        foreach (var cmd in dispatch.AvailableCommands)
+            Console.WriteLine($"  {cmd.Key} - {cmd.Value}");
+        Console.WriteLine("Type a command (or 'exit'):");
+
+        while (true)
         {
-            var required = dispatchCommands.GetRequiredCommand();
-            if (required == CommandConst.Run)
+            Console.Write("> ");
+            var line = Console.ReadLine();
+            if (line is null) continue;
+            if (line.Equals("exit", StringComparison.OrdinalIgnoreCase)) break;
+
+            // Allow bare commands without '=' (e.g., run, bitmask)
+            string key, value;
+            if (line.Contains('='))
             {
-                await dispatchCommands.RunSolver();
-                break;
+                (key, value) = DispatchUtils.ParseInput(line);
             }
-
-            dispatchCommands.WriteLineColored(ConsoleColor.Cyan, $"Enter a {required} ");
-            Console.WriteLine($"\t{dispatchCommands.AvailableCommands[required]}");
-            var userInput = Console.ReadLine()?.Trim().ToLower() ?? string.Empty;
-
-            if (userInput.Equals("help") || userInput.Equals("-h"))
-                HelpCommands.ProcessHelpCommand(userInput);
             else
             {
-                var ok = await ProcessCommand(required, userInput, dispatchCommands);
-                if (ok)
-                {
-                    dispatchCommands.Commands[required] = true;
-                    if (required.Trim().Equals(
-                        CommandConst.BoardSize,
-                        StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        dispatchCommands.BoardSize = Convert.ToByte(userInput);
-                    }
-                }
+                key = line.Trim();
+                value = string.Empty;
             }
+
+            await ProcessCommand(key, value, dispatch);
         }
     }
 
     private readonly IConsoleUtils _consoleUtils = consoleUtils
-            ?? throw new ArgumentNullException(nameof(consoleUtils));
+        ?? throw new ArgumentNullException(nameof(consoleUtils));
 }

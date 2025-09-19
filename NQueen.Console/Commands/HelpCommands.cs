@@ -11,6 +11,8 @@ public static class HelpCommands
             Console.WriteLine();
             ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, "Available Subcommands");
             DumpAllHelp();
+            // Show bitmask command in help
+            ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, "Bitmask - Run the high-performance bitmask N-Queens solver");
         }
         else
         {
@@ -24,6 +26,10 @@ public static class HelpCommands
                     DumpHelpText(NQueen_Help_Board_Size);
                     break;
 
+                case "bitmask":
+                    DumpHelpText(Bitmask_Help);
+                    break;
+
                 default:
                     ShowExitError(
                         $"Unrecognized command {parts[1]}, try {Valid_Commands}");
@@ -33,7 +39,7 @@ public static class HelpCommands
     }
 
     public const string Valid_Commands =
-        $"{CommandConst.BoardSize}, {CommandConst.SolutionMode}";
+        $"{CommandConst.BoardSize}, {CommandConst.SolutionMode}, bitmask";
 
     public const string Command_Example =
         $"{CommandConst.BoardSize} = 8 {CommandConst.SolutionMode} = 2";
@@ -53,10 +59,16 @@ public static class HelpCommands
                 [1, {BoardSettings.MaxSizeForUnique}] for 'Unique',
                 [1, {BoardSettings.MaxSizeForAll}] for 'All' Solutions";
 
+    public static readonly string Bitmask_Help =
+        @" bitmask - Run the high-performance bitmask N-Queens solver\n\n" +
+        "You will be prompted for board size and solution mode (All, Unique, Single).\n" +
+        "The solver will display the number of solutions and elapsed time.";
+
     private static void DumpAllHelp()
     {
         DumpHelpText(NQueen_Solution_Mode);
         DumpHelpText(NQueen_Help_Board_Size);
+        DumpHelpText(Bitmask_Help);
     }
 
     private static void DumpHelpText(string text)
@@ -88,6 +100,7 @@ public static class HelpCommands
         ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, "Available Commands");
         Console.WriteLine($"\t{CommandConst.BoardSize}");
         Console.WriteLine($"\t{CommandConst.SolutionMode}");
+        Console.WriteLine($"\tbitmask"); // Add bitmask to help output
         Console.WriteLine();
         ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, "Example Command");
         Console.WriteLine($"\t{Command_Example}");
