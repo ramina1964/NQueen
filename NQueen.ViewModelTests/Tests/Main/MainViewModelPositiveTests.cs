@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace NQueen.ViewModelTests.Tests.Main;
+﻿namespace NQueen.ViewModelTests.Tests.Main;
 
 public class MainViewModelPositiveTests : IDisposable
 {

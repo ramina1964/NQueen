@@ -1,6 +1,4 @@
-﻿using NQueen.Domain.Models;
-
-namespace NQueen.UnitTests.Base;
+﻿namespace NQueen.UnitTests.Base;
 
 public class TestBase(ISolverBackEndPruning sut)
 {

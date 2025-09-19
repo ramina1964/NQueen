@@ -22,5 +22,6 @@ global using NQueen.TestShared.Data;
 global using NQueen.ViewModelTests.Helpers;
 global using NQueen.ViewModelTests.Mocks;
 global using NQueen.ViewModelTests.Setup;
+global using System.Diagnostics;
 global using System.Windows;
 global using System.Windows.Threading;
