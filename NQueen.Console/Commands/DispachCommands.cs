@@ -1,44 +1,52 @@
 ﻿namespace NQueen.ConsoleApp.Commands;
 
+public record MenuState
+{
+    public bool ExitRequested { get; set; }
+
+    public int BlankInputCount { get; set; }
+}
+
 // Todo: Use input validation here, otherwise move input validation into ValidationHelper.
 // Todo: Use constants for menu options, messages, etc.
+
 public partial class DispatchCommands
 {
     public static void RunInteractiveMenu(IServiceProvider services)
     {
         var solvers = new[] { "Bitmask" };
+        var state = new MenuState();
         var exitRequested = false;
-        var emptyInputCount = 0;
-        while (exitRequested == false)
+
+        while (state.ExitRequested == false)
         {
-            var solverIndex = ShowSolverMenu(solvers, ref emptyInputCount, ref exitRequested);
+            var solverIndex = ShowSolverMenu(solvers, state);
             if (exitRequested || solverIndex == -1)
                 break;
 
             while (exitRequested == false)
             {
-                var mode = ShowSolutionModeMenu(ref emptyInputCount, ref exitRequested);
+                var mode = ShowSolutionModeMenu(state);
                 if (exitRequested || mode == null)
                     break;
 
                 while (exitRequested == false)
                 {
-                    var boardSize = ShowBoardSizeMenu(ref emptyInputCount,
-                        ref exitRequested);
+                    var boardSize = ShowBoardSizeMenu(state);
 
                     if (exitRequested || boardSize == -1)
                         break;
 
-                    ShowAndHandleResults(services, boardSize, mode.Value,
-                        ref emptyInputCount, ref exitRequested);
+                    ShowAndHandleResults(services, boardSize, mode.Value, state);
                 }
             }
         }
     }
 
-    private static int ShowSolverMenu(string[] solvers, ref int emptyInputCount, ref bool exitRequested)
+    private static int ShowSolverMenu(string[] solvers, MenuState state)
     {
-        emptyInputCount = 0;
+        state.BlankInputCount = 0;
+
         Console.WriteLine("Select Solver Type:");
         for (int i = 0; i < solvers.Length; i++)
             Console.WriteLine($"  {i + 1}. {solvers[i]}");
@@ -48,7 +56,12 @@ public partial class DispatchCommands
         var solverInput = Console.ReadLine();
         Console.WriteLine();
 
-        if (IsQuitInput(solverInput, ref emptyInputCount)) { exitRequested = true; return -1; }
+        if (IsQuitInput(solverInput, state) == false)
+        {
+            state.ExitRequested = true;
+            return -1;
+        }
+
         if (int.TryParse(solverInput, out int solverIndex) == false || solverIndex < 1 ||
             solverIndex > solvers.Length)
         {
@@ -59,9 +72,9 @@ public partial class DispatchCommands
         return solverIndex;
     }
 
-    private static SolutionMode? ShowSolutionModeMenu(ref int emptyInputCount, ref bool exitRequested)
+    private static SolutionMode? ShowSolutionModeMenu(MenuState state)
     {
-        emptyInputCount = 0;
+        state.BlankInputCount = 0;
         Console.WriteLine("Select Solution Mode:");
         var modes = Enum.GetValues<SolutionMode>();
         for (int i = 0; i < modes.Length; i++)
@@ -72,8 +85,18 @@ public partial class DispatchCommands
         var modeInput = Console.ReadLine();
         Console.WriteLine();
 
-        if (IsQuitInput(modeInput, ref emptyInputCount)) { exitRequested = true; return null; }
-        if (modeInput == "0") { Console.WriteLine(); return null; }
+        if (IsQuitInput(modeInput, state))
+        {
+            state.ExitRequested = true;
+            return null;
+        }
+
+        if (modeInput == "0")
+        {
+            Console.WriteLine();
+            return null;
+        }
+
         if (int.TryParse(modeInput, out int modeIndex) == false || modeIndex < 1 ||
             modeIndex > modes.Length)
         {
@@ -84,14 +107,15 @@ public partial class DispatchCommands
         return modes[modeIndex - 1];
     }
 
-    private static int ShowBoardSizeMenu(ref int emptyInputCount, ref bool exitRequested)
+    private static int ShowBoardSizeMenu(MenuState state)
     {
-        emptyInputCount = 0;
+        state.BlankInputCount = 0;
         Console.Write("Enter board size (1-32, or 0 to go back): ");
         var sizeInput = Console.ReadLine();
-        if (IsQuitInput(sizeInput, ref emptyInputCount))
+        
+        if (IsQuitInput(sizeInput, state))
         {
-            exitRequested = true;
+            state.ExitRequested = true;
             return -1;
         }
 
@@ -111,13 +135,13 @@ public partial class DispatchCommands
         return boardSize;
     }
 
-    private static void ShowAndHandleResults(IServiceProvider services, int boardSize, SolutionMode mode, ref int emptyInputCount, ref bool exitRequested)
+    private static void ShowAndHandleResults(IServiceProvider services, int boardSize, SolutionMode mode, MenuState state)
     {
         var formatter = services.GetService(typeof(ISolutionFormatter)) as ISolutionFormatter;
         if (formatter == null)
         {
             Console.WriteLine("Error: ISolutionFormatter service not found.\n");
-            exitRequested = true;
+            state.ExitRequested = true;
             return;
         }
 
@@ -149,9 +173,9 @@ public partial class DispatchCommands
         Console.WriteLine();
         Console.WriteLine("Press Enter to run again, or type 'back' to change mode, or 'exit'/'quit'/'e'/'q' to quit.");
         var again = Console.ReadLine();
-        if (IsQuitInput(again, ref emptyInputCount))
+        if (IsQuitInput(again, state))
         {
-            exitRequested = true;
+            state.ExitRequested = true;
             return;
         }
 
@@ -164,16 +188,18 @@ public partial class DispatchCommands
         Console.WriteLine();
     }
 
-    private static bool IsQuitInput(string? input, ref int emptyInputCount)
+    private static bool IsQuitInput(string? input, MenuState state)
     {
         if (string.IsNullOrWhiteSpace(input))
         {
-            emptyInputCount++;
-            if (emptyInputCount >= 2) return true;
+            state.BlankInputCount++;
+            if (state.BlankInputCount >= 2)
+                return true;
 
             return false;
         }
-        emptyInputCount = 0;
+
+        state.BlankInputCount = 0;
         var val = input.Trim().ToLower();
 
         return val == "exit" || val == "quit" || val == "e" || val == "q" || val == "0";
