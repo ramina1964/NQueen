@@ -1,4 +1,6 @@
-﻿namespace NQueen.ConsoleApp.Services;
+﻿using NQueen.KernelBitmask.Services;
+
+namespace NQueen.ConsoleApp.Services;
 
 public static class ServiceRegistration
 {

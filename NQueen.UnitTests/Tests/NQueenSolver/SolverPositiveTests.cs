@@ -8,7 +8,7 @@ public class SolverPositiveTests : IDisposable
         services.AddApplicationServices();
         services.AddTestServices();
         _serviceProvider = services.BuildServiceProvider();
-        _solver = _serviceProvider.GetRequiredService<ISolverBackEnd>();
+        _solver = _serviceProvider.GetRequiredService<ISolverBackEndPruning>();
     }
 
     [Theory]
@@ -22,8 +22,8 @@ public class SolverPositiveTests : IDisposable
         Assert.Single(expectedSolutions);
 
         // Act
-        var actualSolutions = await _solver.GetSimResultsAsync(boardSize, solutionMode);
-        var actualSolutionsList = actualSolutions.Solutions
+        var actualResults = await _solver.GetSimResultsAsync(new SimulationContext(boardSize, solutionMode, DisplayMode.Hide));
+        var actualSolutionsList = actualResults.Solutions
             .Select(solution => solution.QueenPositions.ToArray());
 
         // Assert
@@ -41,8 +41,8 @@ public class SolverPositiveTests : IDisposable
         var expectedSolutions = TestBase.FetchExpectedSols(boardSize, solutionMode);
 
         // Act
-        var actualSolutions = await _solver.GetSimResultsAsync(boardSize, solutionMode);
-        var actualSolutionsList = actualSolutions.Solutions
+        var actualResults = await _solver.GetSimResultsAsync(new SimulationContext(boardSize, solutionMode, DisplayMode.Hide));
+        var actualSolutionsList = actualResults.Solutions
             .Select(solution => solution.QueenPositions.ToArray());
 
         // Assert
@@ -62,8 +62,8 @@ public class SolverPositiveTests : IDisposable
         var expectedSolutions = TestBase.FetchExpectedSols(boardSize, solutionMode);
 
         // Act
-        var actualSolutions = await _solver.GetSimResultsAsync(boardSize, solutionMode);
-        var actualSolutionsList = actualSolutions.Solutions
+        var actualResults = await _solver.GetSimResultsAsync(new SimulationContext(boardSize, solutionMode, DisplayMode.Hide));
+        var actualSolutionsList = actualResults.Solutions
             .Select(solution => solution.QueenPositions.ToArray());
 
         // Assert
@@ -81,7 +81,7 @@ public class SolverPositiveTests : IDisposable
         GC.SuppressFinalize(this);
     }
     
-    private readonly ISolverBackEnd _solver;
+    private readonly ISolverBackEndPruning _solver;
     private readonly ServiceProvider _serviceProvider;
 }
 

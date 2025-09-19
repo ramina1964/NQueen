@@ -10,7 +10,7 @@ public class SolverNegativeTests : IDisposable
         services.AddTestServices();
 
         _serviceProvider = services.BuildServiceProvider();
-        _solver = _serviceProvider.GetRequiredService<ISolverBackEnd>();
+        _solver = _serviceProvider.GetRequiredService<ISolverBackEndPruning>();
     }
 
     [Theory]
@@ -21,7 +21,7 @@ public class SolverNegativeTests : IDisposable
     {
         // Act
         var actualSolutions = await _solver
-            .GetSimResultsAsync(boardSize, solutionMode);
+            .GetSimResultsAsync(new SimulationContext(boardSize, solutionMode, DisplayMode.Hide));
 
         // Assert
         Assert.Empty(actualSolutions.Solutions);
@@ -33,6 +33,6 @@ public class SolverNegativeTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private readonly ISolverBackEnd _solver;
+    private readonly ISolverBackEndPruning _solver;
     private readonly ServiceProvider _serviceProvider;
 }

@@ -5,11 +5,10 @@ public static class DependencyInjectionConfig
     public static IServiceCollection AddApplicationServices(
         this IServiceCollection services)
     {
-        // Register application services
-        services.NQueenServices();
+        // Register application services (tests want full solution sets -> disableCap = true)
+        services.AddBitmaskSolverServices(disableCap: true);
 
-        // Todo: Adjust this line to use NQuenn-Kernel.SolverEngine, instead
-        services.AddScoped<ISolverPruning, SolverEngine>();
+        // Register test solution formatter (overrides default if necessary)
         services.AddSingleton<ISolutionFormatter, TestSolutionFormatter>();
 
         return services;

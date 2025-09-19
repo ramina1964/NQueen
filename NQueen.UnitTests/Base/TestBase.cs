@@ -1,12 +1,14 @@
-﻿namespace NQueen.UnitTests.Base;
+﻿using NQueen.Domain.Models;
 
-public class TestBase(ISolverBackEnd sut)
+namespace NQueen.UnitTests.Base;
+
+public class TestBase(ISolverBackEndPruning sut)
 {
     public List<int[]> ExpectedSolutions { get; set; } = [];
 
     public List<int[]> ActualSolutions { get; set; } = [];
 
-    protected readonly ISolverBackEnd Sut = sut
+    protected readonly ISolverBackEndPruning Sut = sut
         ?? throw new ArgumentNullException(nameof(sut));
 
     public static List<int[]> FetchExpectedSols(int boardSize, SolutionMode solutionMode) =>
@@ -31,7 +33,7 @@ public class TestBase(ISolverBackEnd sut)
         };
 
     public async Task<IEnumerable<int[]>> FetchActualSolsAsync(int boardSize, SolutionMode solutionMode) =>
-        (await Sut.GetSimResultsAsync(boardSize, solutionMode)).Solutions
+        (await Sut.GetSimResultsAsync(new SimulationContext(boardSize, solutionMode, DisplayMode.Hide))).Solutions
             .Select(sol => sol.QueenPositions);
 
     // Helper method for assertions
