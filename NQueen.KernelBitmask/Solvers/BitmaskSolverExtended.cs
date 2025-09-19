@@ -5,7 +5,7 @@
 
 namespace NQueen.KernelBitmask.Solvers;
 
-public class BitmaskSolverEngineFull(
+public class BitmaskSolverExtended(
     int boardSize,
     SolutionMode solutionMode,
     DisplayMode displayMode,
@@ -68,7 +68,7 @@ public class BitmaskSolverEngineFull(
             _solutions.Add((int[])solution.Clone());
             _solutionCount++;
             SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(solution)));
-            return false; // keep searching
+            return false;
         });
     }
 

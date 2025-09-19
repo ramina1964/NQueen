@@ -146,7 +146,7 @@ public partial class DispatchCommands
             return;
         }
 
-        var solver = new BitmaskSolverEngineFull(
+        var solver = new BitmaskSolverExtended(
             boardSize,
             mode,
             DisplayMode.Hide,

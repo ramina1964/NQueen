@@ -1,6 +1,6 @@
 namespace NQueen.KernelBitmask.Solvers;
 
-public class BitmaskSolverEngine(int boardSize)
+public class BitmaskSolver(int boardSize)
 {
     // Main iterative bitmask solver (all solutions, no symmetry pruning)
     public int SolveAll(bool collectSolutions = false)
