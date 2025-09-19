@@ -7,7 +7,7 @@ public class BitmaskSolverEngine(int boardSize)
     {
         SolutionCount = 0;
         Solutions.Clear();
-        if (BoardSize < 1 || BoardSize > 32) // ulong supports up to 64, int[] stack up to 32 for safety
+        if (BoardSize < 1 || BoardSize > 32)
             throw new ArgumentOutOfRangeException(nameof(BoardSize),
                 "Supported N is 1..32");
 
