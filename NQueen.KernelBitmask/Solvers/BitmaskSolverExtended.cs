@@ -65,8 +65,9 @@ public class BitmaskSolverExtended(
     {
         BitmaskIterative((solution) =>
         {
-            _solutions.Add((int[])solution.Clone());
             _solutionCount++;
+            if (_solutions.Count < SimulationSettings.MaxNoOfSolutionsInOutput)
+                _solutions.Add((int[])solution.Clone());
             SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(solution)));
             return false;
         });
@@ -77,8 +78,9 @@ public class BitmaskSolverExtended(
     {
         BitmaskIterative((solution) =>
         {
-            _solutions.Add((int[])solution.Clone());
             _solutionCount++;
+            if (_solutions.Count < SimulationSettings.MaxNoOfSolutionsInOutput)
+                _solutions.Add((int[])solution.Clone());
             SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(solution)));
             return true; // stop after first
         });
@@ -90,12 +92,12 @@ public class BitmaskSolverExtended(
         var seen = new HashSet<int[]>(new IntArrayComparer());
         BitmaskIterative((solution) =>
         {
-            // Use SymmetryHelper to check if any symmetrical transformation is already seen
             if (!SymmetryHelper.GetSymmetricalSolutions(solution).Any(seen.Contains))
             {
                 seen.Add((int[])solution.Clone());
-                _solutions.Add((int[])solution.Clone());
                 _solutionCount++;
+                if (_solutions.Count < SimulationSettings.MaxNoOfSolutionsInOutput)
+                    _solutions.Add((int[])solution.Clone());
                 SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(solution)));
             }
             return false;
