@@ -1,0 +1,22 @@
+namespace NQueen.Benchmarking;
+
+[CPUUsageDiagnoser]
+public class BitmaskSolverUniqueBenchmarks
+{
+    [GlobalSetup]
+    public void Setup()
+    {
+        _formatter = new SolutionFormatter();
+        _boardSize = 12;
+    }
+
+    [Benchmark]
+    public SimulationResults SolveUnique()
+    {
+        var solver = new BitmaskSolverExtended(_boardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter);
+        return solver.Solve();
+    }
+
+    private SolutionFormatter _formatter = null!;
+    private int _boardSize;
+}

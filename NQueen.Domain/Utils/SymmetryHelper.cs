@@ -3,7 +3,9 @@
 public static partial class SymmetryHelper
 {
     // --- New span-based overload to avoid allocating an intermediate int[] when only a Memory/Span is available ---
-    public static IEnumerable<int[]> GetSymmetricalSolutions(ReadOnlySpan<int> solution)
+    // Changed from iterator (IEnumerable with yield) to materializing List<int[]> because ReadOnlySpan<T> (ref struct)
+    // cannot be used in an iterator method (CS4007).
+    public static List<int[]> GetSymmetricalSolutions(ReadOnlySpan<int> solution)
     {
         int boardSize = solution.Length;
 
@@ -30,8 +32,8 @@ public static partial class SymmetryHelper
                 symmToBiDiag[flippedColIndex] = flippedRowIndex;
         }
 
-        return
-        [
+        return new List<int[]>(7)
+        {
             symmToMidVertical,
             symmToMidHorizontal,
             symmToMainDiag,
@@ -39,7 +41,7 @@ public static partial class SymmetryHelper
             counter90,
             counter180,
             counter270
-        ];
+        };
     }
 
     // --- Version 1 (Memory<int> based) used by symmetry pruning logic ---
