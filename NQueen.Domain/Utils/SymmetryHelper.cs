@@ -1,142 +1,17 @@
 ﻿namespace NQueen.Domain.Utils;
 
+// Todo: Keep methods used in NQueen.KernelBitmask only in this class, remove all others.
 public static partial class SymmetryHelper
 {
-    // --- New span-based overload to avoid allocating an intermediate int[] when only a Memory/Span is available ---
-    // Changed from iterator (IEnumerable with yield) to materializing List<int[]> because ReadOnlySpan<T> (ref struct)
-    // cannot be used in an iterator method (CS4007).
-    public static List<int[]> GetSymmetricalSolutions(ReadOnlySpan<int> solution)
-    {
-        int boardSize = solution.Length;
-
-        var symmToMidHorizontal = new int[boardSize];
-        var symmToMidVertical   = new int[boardSize];
-        var symmToMainDiag      = new int[boardSize];
-        var symmToBiDiag        = new int[boardSize];
-        var counter90           = new int[boardSize];
-        var counter180          = new int[boardSize];
-        var counter270          = new int[boardSize];
-
-        for (int rowIndex = 0; rowIndex < boardSize; rowIndex++)
-        {
-            int flippedRowIndex = boardSize - rowIndex - 1;
-            int flippedColIndex = boardSize - solution[rowIndex] - 1;
-
-            symmToMidHorizontal[flippedRowIndex] = solution[rowIndex];
-            counter90[flippedColIndex] = symmToMainDiag[solution[rowIndex]] = rowIndex;
-
-            counter180[flippedRowIndex] =
-                symmToMidVertical[rowIndex] = flippedColIndex;
-
-            counter270[solution[rowIndex]] =
-                symmToBiDiag[flippedColIndex] = flippedRowIndex;
-        }
-
-        return new List<int[]>(7)
-        {
-            symmToMidVertical,
-            symmToMidHorizontal,
-            symmToMainDiag,
-            symmToBiDiag,
-            counter90,
-            counter180,
-            counter270
-        };
-    }
-
-    // --- Version 1 (Memory<int> based) used by symmetry pruning logic ---
-    public static List<Memory<int>> GetSymmetricalSolutions(Memory<int> solution)
-    {
-        var boardSize = solution.Length;
-
-        var symmToMidHorizontal = new Memory<int>(new int[boardSize]);
-        var symmToMidVertical = new Memory<int>(new int[boardSize]);
-        var symmToMainDiag = new Memory<int>(new int[boardSize]);
-        var symmToBiDiag = new Memory<int>(new int[boardSize]);
-        var counter90 = new Memory<int>(new int[boardSize]);
-        var counter180 = new Memory<int>(new int[boardSize]);
-        var counter270 = new Memory<int>(new int[boardSize]);
-        var solutionSpan = solution.Span;
-
-        for (var rowIndex = 0; rowIndex < boardSize; rowIndex++)
-        {
-            var flippedRowIndex = boardSize - rowIndex - 1;
-            var flippedColIndex = boardSize - solutionSpan[rowIndex] - 1;
-
-            symmToMidHorizontal.Span[flippedRowIndex] = solutionSpan[rowIndex];
-            counter90.Span[flippedColIndex] = symmToMainDiag.Span[solutionSpan[rowIndex]] = rowIndex;
-
-            counter180.Span[flippedRowIndex] =
-                symmToMidVertical.Span[rowIndex] = flippedColIndex;
-
-            counter270.Span[solutionSpan[rowIndex]] =
-                symmToBiDiag.Span[flippedColIndex] = flippedRowIndex;
-        }
-
-        return
-        [
-            symmToMidVertical,
-            symmToMidHorizontal,
-            symmToMainDiag,
-            symmToBiDiag,
-            counter90,
-            counter180,
-            counter270
-        ];
-    }
-
-    // --- Version 2 (int[] based) used by solver engine ---
-    public static HashSet<int[]> GetSymmetricalSolutions(int[] solution)
-    {
-        var boardSize = solution.Length;
-
-        var symmetricalToMidHorizontal = new int[boardSize];
-        var symmetricalToMidVertical = new int[boardSize];
-        var symmetricalToMainDiag = new int[boardSize];
-        var symmetricalToBiDiag = new int[boardSize];
-        var rotatedCounter90 = new int[boardSize];
-        var rotatedCounter180 = new int[boardSize];
-        var rotatedCounter270 = new int[boardSize];
-
-        for (var rowIndex = 0; rowIndex < boardSize; rowIndex++)
-        {
-            var flippedRowIndex = boardSize - rowIndex - 1;
-            var flippedColIndex = boardSize - solution[rowIndex] - 1;
-
-            symmetricalToMidHorizontal[flippedRowIndex] = solution[rowIndex];
-            rotatedCounter90[flippedColIndex] = symmetricalToMainDiag[solution[rowIndex]] = rowIndex;
-
-            rotatedCounter180[flippedRowIndex] =
-                symmetricalToMidVertical[rowIndex] = flippedColIndex;
-
-            rotatedCounter270[solution[rowIndex]] =
-                symmetricalToBiDiag[flippedColIndex] = flippedRowIndex;
-        }
-
-        return new HashSet<int[]>(new IntArrayComparer())
-        {
-            symmetricalToMidVertical,
-            symmetricalToMidHorizontal,
-            symmetricalToMainDiag,
-            symmetricalToBiDiag,
-            rotatedCounter90,
-            rotatedCounter180,
-            rotatedCounter270,
-        };
-    }
-
-    // Retained existing API: Get all symmetrical transformations (int[] entry point)
-    public static IEnumerable<int[]> GetSymmetricalTransformations(int[] solution)
-    {
-        var symmetricalSolutions = GetSymmetricalSolutions(solution);
-
-        return symmetricalSolutions;
-    }
-
     /// <summary>
     /// Add a solution to a uniqueness set if none of its symmetrical transformations exist.
     /// This avoids allocating 7 temporary arrays + HashSet per check by reusing a single scratch buffer.
     /// Returns true if the (original) solution was added as unique; false if any symmetry already existed.
+    /// 
+    /// Memory: Excellent (single scratch buffer, only clones if unique)
+    /// Performance: Excellent (early exit, no closures, inlined transforms)
+    /// 
+    /// Used for symmetry handling in NQueen.KernelBitmask (core unique solution detection).
     /// </summary>
     public static bool AddIfUnique(int[] solution, HashSet<int[]> uniqueSolutions, int[] scratch)
     {
@@ -191,8 +66,32 @@ public static partial class SymmetryHelper
     }
 
     /// <summary>
+    /// Checks if any symmetrical transformation already exists (Memory<int> direct version).
+    /// 
+    /// Memory: Good (uses Memory<int>, but allocates 7 arrays per call)
+    /// Performance: Good (simple loop, but not as optimal as AddIfUnique)
+    /// 
+    /// Not used for symmetry handling in NQueen.KernelBitmask.
+    /// </summary>
+    public static bool IsSymmetrical(
+        Memory<int> solution,
+        HashSet<Memory<int>> solutions)
+    {
+        foreach (var transformation in GetSymmetricalSolutions(solution))
+            if (solutions.Contains(transformation))
+                return true;
+
+        return false;
+    }
+
+    /// <summary>
     /// Used by SolverEngine: Checks if any symmetrical transformation already exists in the set (Memory<int> version).
     /// Now uses span overload to avoid one allocation.
+    /// 
+    /// Memory: Moderate (allocates 7 arrays per call, wraps in Memory<int>)
+    /// Performance: Moderate (multiple allocations and lookups)
+    /// 
+    /// Not used for symmetry handling in NQueen.KernelBitmask.
     /// </summary>
     public static bool IsSymmetricalSolution(
         Memory<int> solution,
@@ -209,17 +108,159 @@ public static partial class SymmetryHelper
     }
 
     /// <summary>
-    /// Checks if any symmetrical transformation already exists (Memory<int> direct version).
+    /// Returns all 7 symmetrical solutions as int[] (span-based, no iterator).
+    /// 
+    /// Memory: Moderate (allocates 7 arrays per call)
+    /// Performance: Good for generating all variants, not for repeated checks
+    /// 
+    /// Not used for symmetry handling in NQueen.KernelBitmask.
     /// </summary>
-    public static bool IsSymmetrical(
-        Memory<int> solution,
-        HashSet<Memory<int>> solutions)
+    public static List<int[]> GetSymmetricalSolutions(ReadOnlySpan<int> solution)
     {
-        foreach (var transformation in GetSymmetricalSolutions(solution))
-            if (solutions.Contains(transformation))
-                return true;
+        int boardSize = solution.Length;
 
-        return false;
+        var symmToMidHorizontal = new int[boardSize];
+        var symmToMidVertical   = new int[boardSize];
+        var symmToMainDiag      = new int[boardSize];
+        var symmToBiDiag        = new int[boardSize];
+        var counter90           = new int[boardSize];
+        var counter180          = new int[boardSize];
+        var counter270          = new int[boardSize];
+
+        for (int rowIndex = 0; rowIndex < boardSize; rowIndex++)
+        {
+            int flippedRowIndex = boardSize - rowIndex - 1;
+            int flippedColIndex = boardSize - solution[rowIndex] - 1;
+
+            symmToMidHorizontal[flippedRowIndex] = solution[rowIndex];
+            counter90[flippedColIndex] = symmToMainDiag[solution[rowIndex]] = rowIndex;
+
+            counter180[flippedRowIndex] =
+                symmToMidVertical[rowIndex] = flippedColIndex;
+
+            counter270[solution[rowIndex]] =
+                symmToBiDiag[flippedColIndex] = flippedRowIndex;
+        }
+
+        return new List<int[]>(7)
+        {
+            symmToMidVertical,
+            symmToMidHorizontal,
+            symmToMainDiag,
+            symmToBiDiag,
+            counter90,
+            counter180,
+            counter270
+        };
+    }
+
+    /// <summary>
+    /// Returns all 7 symmetrical solutions as Memory<int> (used by symmetry pruning logic).
+    /// 
+    /// Memory: Moderate (allocates 7 arrays per call)
+    /// Performance: Good for generating all variants, not for repeated checks
+    /// 
+    /// Not used for symmetry handling in NQueen.KernelBitmask.
+    /// </summary>
+    public static List<Memory<int>> GetSymmetricalSolutions(Memory<int> solution)
+    {
+        var boardSize = solution.Length;
+
+        var symmToMidHorizontal = new Memory<int>(new int[boardSize]);
+        var symmToMidVertical = new Memory<int>(new int[boardSize]);
+        var symmToMainDiag = new Memory<int>(new int[boardSize]);
+        var symmToBiDiag = new Memory<int>(new int[boardSize]);
+        var counter90 = new Memory<int>(new int[boardSize]);
+        var counter180 = new Memory<int>(new int[boardSize]);
+        var counter270 = new Memory<int>(new int[boardSize]);
+        var solutionSpan = solution.Span;
+
+        for (var rowIndex = 0; rowIndex < boardSize; rowIndex++)
+        {
+            var flippedRowIndex = boardSize - rowIndex - 1;
+            var flippedColIndex = boardSize - solutionSpan[rowIndex] - 1;
+
+            symmToMidHorizontal.Span[flippedRowIndex] = solutionSpan[rowIndex];
+            counter90.Span[flippedColIndex] = symmToMainDiag.Span[solutionSpan[rowIndex]] = rowIndex;
+
+            counter180.Span[flippedRowIndex] =
+                symmToMidVertical.Span[rowIndex] = flippedColIndex;
+
+            counter270.Span[solutionSpan[rowIndex]] =
+                symmToBiDiag.Span[flippedColIndex] = flippedRowIndex;
+        }
+
+        return
+        [
+            symmToMidVertical,
+            symmToMidHorizontal,
+            symmToMainDiag,
+            symmToBiDiag,
+            counter90,
+            counter180,
+            counter270
+        ];
+    }
+
+    /// <summary>
+    /// Returns all 7 symmetrical solutions as int[] in a HashSet (used by solver engine).
+    /// 
+    /// Memory: Poor (allocates 7 arrays and a HashSet per call)
+    /// Performance: Poor for repeated use
+    /// 
+    /// Not used for symmetry handling in NQueen.KernelBitmask.
+    /// </summary>
+    public static HashSet<int[]> GetSymmetricalSolutions(int[] solution)
+    {
+        var boardSize = solution.Length;
+
+        var symmetricalToMidHorizontal = new int[boardSize];
+        var symmetricalToMidVertical = new int[boardSize];
+        var symmetricalToMainDiag = new int[boardSize];
+        var symmetricalToBiDiag = new int[boardSize];
+        var rotatedCounter90 = new int[boardSize];
+        var rotatedCounter180 = new int[boardSize];
+        var rotatedCounter270 = new int[boardSize];
+
+        for (var rowIndex = 0; rowIndex < boardSize; rowIndex++)
+        {
+            var flippedRowIndex = boardSize - rowIndex - 1;
+            var flippedColIndex = boardSize - solution[rowIndex] - 1;
+
+            symmetricalToMidHorizontal[flippedRowIndex] = solution[rowIndex];
+            rotatedCounter90[flippedColIndex] = symmetricalToMainDiag[solution[rowIndex]] = rowIndex;
+
+            rotatedCounter180[flippedRowIndex] =
+                symmetricalToMidVertical[rowIndex] = flippedColIndex;
+
+            rotatedCounter270[solution[rowIndex]] =
+                symmetricalToBiDiag[flippedColIndex] = flippedRowIndex;
+        }
+
+        return new HashSet<int[]>(new IntArrayComparer())
+        {
+            symmetricalToMidVertical,
+            symmetricalToMidHorizontal,
+            symmetricalToMainDiag,
+            symmetricalToBiDiag,
+            rotatedCounter90,
+            rotatedCounter180,
+            rotatedCounter270,
+        };
+    }
+
+    /// <summary>
+    /// Get all symmetrical transformations (int[] entry point, legacy API).
+    /// 
+    /// Memory: Poor (calls GetSymmetricalSolutions(int[]), so inherits its inefficiency)
+    /// Performance: Poor for repeated use
+    /// 
+    /// Not used for symmetry handling in NQueen.KernelBitmask.
+    /// </summary>
+    public static IEnumerable<int[]> GetSymmetricalTransformations(int[] solution)
+    {
+        var symmetricalSolutions = GetSymmetricalSolutions(solution);
+        return symmetricalSolutions;
     }
 
     // --- Additional helpers (retained) ---
