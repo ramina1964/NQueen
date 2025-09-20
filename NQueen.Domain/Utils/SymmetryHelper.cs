@@ -134,6 +134,63 @@ public static partial class SymmetryHelper
     }
 
     /// <summary>
+    /// Add a solution to a uniqueness set if none of its symmetrical transformations exist.
+    /// This avoids allocating 7 temporary arrays + HashSet per check by reusing a single scratch buffer.
+    /// Returns true if the (original) solution was added as unique; false if any symmetry already existed.
+    /// </summary>
+    public static bool AddIfUnique(int[] solution, HashSet<int[]> uniqueSolutions, int[] scratch)
+    {
+        ArgumentNullException.ThrowIfNull(solution);
+        ArgumentNullException.ThrowIfNull(uniqueSolutions);
+        ArgumentNullException.ThrowIfNull(scratch);
+        if (scratch.Length < solution.Length)
+            throw new ArgumentException("Scratch buffer too small", nameof(scratch));
+
+        if (uniqueSolutions.Contains(solution))
+            return false;
+
+        int n = solution.Length;
+
+        // 1. Vertical reflection: row i -> column n-1 - solution[i]
+        for (int i = 0; i < n; i++)
+            scratch[i] = n - 1 - solution[i];
+        if (uniqueSolutions.Contains(scratch)) return false;
+
+        // 2. Horizontal reflection: row (n-1 - i) = solution[i]
+        for (int i = 0; i < n; i++)
+            scratch[n - 1 - i] = solution[i];
+        if (uniqueSolutions.Contains(scratch)) return false;
+
+        // 3. Main diagonal reflection: row solution[i] = i
+        for (int i = 0; i < n; i++)
+            scratch[solution[i]] = i;
+        if (uniqueSolutions.Contains(scratch)) return false;
+
+        // 4. Anti-diagonal reflection: row (n-1 - solution[i]) = n-1 - i
+        for (int i = 0; i < n; i++)
+            scratch[n - 1 - solution[i]] = n - 1 - i;
+        if (uniqueSolutions.Contains(scratch)) return false;
+
+        // 5. Rot 90: row (n-1 - solution[i]) = i
+        for (int i = 0; i < n; i++)
+            scratch[n - 1 - solution[i]] = i;
+        if (uniqueSolutions.Contains(scratch)) return false;
+
+        // 6. Rot 180: row (n-1 - i) = n-1 - solution[i]
+        for (int i = 0; i < n; i++)
+            scratch[n - 1 - i] = n - 1 - solution[i];
+        if (uniqueSolutions.Contains(scratch)) return false;
+
+        // 7. Rot 270: row solution[i] = n-1 - i
+        for (int i = 0; i < n; i++)
+            scratch[solution[i]] = n - 1 - i;
+        if (uniqueSolutions.Contains(scratch)) return false;
+
+        uniqueSolutions.Add((int[])solution.Clone());
+        return true;
+    }
+
+    /// <summary>
     /// Used by SolverEngine: Checks if any symmetrical transformation already exists in the set (Memory<int> version).
     /// Now uses span overload to avoid one allocation.
     /// </summary>

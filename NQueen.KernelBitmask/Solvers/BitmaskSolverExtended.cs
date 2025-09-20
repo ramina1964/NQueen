@@ -118,21 +118,11 @@ public class BitmaskSolverExtended(ISolutionFormatter solutionFormatter)
     private void SolveUnique()
     {
         var uniqueSolutions = new HashSet<int[]>(new IntArrayComparer());
+        var scratch = new int[BoardSize]; // reusable buffer for symmetry checks
         BitmaskIterative(solution =>
         {
-            // Replace LINQ Any with manual for-loop for symmetry check
-            bool isSymmetrical = false;
-            foreach (var sym in SymmetryHelper.GetSymmetricalSolutions(solution))
+            if (SymmetryHelper.AddIfUnique(solution, uniqueSolutions, scratch))
             {
-                if (uniqueSolutions.Contains(sym))
-                {
-                    isSymmetrical = true;
-                    break;
-                }
-            }
-            if (!isSymmetrical)
-            {
-                uniqueSolutions.Add((int[])solution.Clone());
                 _solutionCount++;
                 var canStoreSolution = _disableCap ||
                     _solutions.Count < SimulationSettings.MaxNoOfSolutionsInOutput;
@@ -143,7 +133,6 @@ public class BitmaskSolverExtended(ISolutionFormatter solutionFormatter)
                 SolutionFound?.Invoke(this, new SolutionFoundEventArgs(
                     new Memory<int>(solution)));
             }
-
             return false;
         }, restrictFirstCol: true);
     }
