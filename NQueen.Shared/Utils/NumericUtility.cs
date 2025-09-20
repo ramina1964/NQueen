@@ -1,6 +1,6 @@
 ﻿namespace NQueen.Shared.Utils;
 
-public class NumericUtil
+public class NumericUtils
 {
     public static string UpdateMemoryUsage()
     {
