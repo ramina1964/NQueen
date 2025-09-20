@@ -1,6 +1,5 @@
 ﻿namespace NQueen.ConsoleApp.Commands;
 
-// Todo: Remove ctor parameter
 public class CommandProcessor() : ICommandProcessor
 {
 
