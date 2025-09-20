@@ -1,7 +1,9 @@
 ﻿namespace NQueen.ConsoleApp.Commands;
 
+// Todo: Extract string constants and add it to CommandConst.
 public static class HelpCommands
 {
+    // Todo: Either use this method or remove it.
     public static void ProcessHelpCommand(string cmd)
     {
         cmd = cmd.Trim().ToUpper();
@@ -11,6 +13,7 @@ public static class HelpCommands
             Console.WriteLine();
             ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, "Available Subcommands");
             DumpAllHelp();
+
             // Show bitmask command in help
             ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, "Bitmask - Run the high-performance bitmask N-Queens solver");
         }
@@ -108,16 +111,16 @@ public static class HelpCommands
 
     public const string Banner =
         @"
-                |====================================================|
-                | NQueen.ConsoleApp - A .NET 8.0 Console Application |
-                |                                                    |
-                | (c) 2022 - Ramin Anvar and Lars Erik Pedersen      |
-                |                                                    |
-                | App Developed for Solving N-Queen Problem          |
-                | Using the Iterative Backtracking Algorithm         |
-                |                                                    |
-                | Version 0.90. Use help to list available commands. |
-                |                                                    |
-                |====================================================|
-            ";
+                |=============================================================|
+                | NQueen.ConsoleApp - A .NET 10.0 Console Application         |
+                |                                                             |
+                | (c) 2025 - Ramin Anvar and Lars Erik Pedersen               |
+                |                                                             |
+                | App Developed for Solving N-Queen Problem                   |
+                | Using the Iterative Symmetry Pruning Backtracking Algorithm |
+                |                                                             |
+                | Version 0.90. Use help to list available commands.          |
+                |                                                             |
+                |=============================================================|
+        ";
 }

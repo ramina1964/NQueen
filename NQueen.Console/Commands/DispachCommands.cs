@@ -15,6 +15,9 @@ public partial class DispatchCommands
 {
     public static void RunInteractiveMenu(IServiceProvider services)
     {
+        // Display banner at startup
+        Console.WriteLine(HelpCommands.Banner);
+
         var solvers = new[] { "Bitmask" };
         var state = new MenuState();
         var exitRequested = false;
@@ -27,10 +30,12 @@ public partial class DispatchCommands
 
             while (exitRequested == false)
             {
+                // Check SolutionMode
                 var mode = ShowSolutionModeMenu(state);
                 if (exitRequested || mode == null)
                     break;
 
+                // Check BoardSize
                 while (exitRequested == false)
                 {
                     var boardSize = ShowBoardSizeMenu(state);
@@ -38,6 +43,7 @@ public partial class DispatchCommands
                     if (exitRequested || boardSize == -1)
                         break;
 
+                    // Show Results
                     ShowAndHandleResults(services, boardSize, mode.Value, state);
                 }
             }
@@ -48,11 +54,13 @@ public partial class DispatchCommands
     {
         state.BlankInputCount = 0;
 
+        Console.WriteLine();
         Console.WriteLine("Select Solver Type:");
         for (int i = 0; i < solvers.Length; i++)
             Console.WriteLine($"  {i + 1}. {solvers[i]}");
 
         Console.WriteLine("  0. Exit");
+        Console.WriteLine();
         Console.Write("Choice: ");
         var solverInput = Console.ReadLine();
         Console.WriteLine();
@@ -76,12 +84,14 @@ public partial class DispatchCommands
     private static SolutionMode? ShowSolutionModeMenu(MenuState state)
     {
         state.BlankInputCount = 0;
+        Console.WriteLine();
         Console.WriteLine("Select Solution Mode:");
         var modes = Enum.GetValues<SolutionMode>();
         for (int i = 0; i < modes.Length; i++)
             Console.WriteLine($"  {i + 1}. {modes[i]}");
 
         Console.WriteLine("  0. Back to Solver Selection");
+        Console.WriteLine();
         Console.Write("Choice: ");
         var modeInput = Console.ReadLine();
         Console.WriteLine();
@@ -111,8 +121,10 @@ public partial class DispatchCommands
     private static int ShowBoardSizeMenu(MenuState state)
     {
         state.BlankInputCount = 0;
+        Console.WriteLine();
         Console.Write("Enter board size (1-32, or 0 to go back): ");
         var sizeInput = Console.ReadLine();
+        Console.WriteLine();
 
         if (IsQuitInput(sizeInput, state))
         {
@@ -138,42 +150,26 @@ public partial class DispatchCommands
 
     private static void ShowAndHandleResults(IServiceProvider services, int boardSize, SolutionMode mode, MenuState state)
     {
-        var formatter = services.GetService(typeof(ISolutionFormatter)) as ISolutionFormatter;
-        if (formatter == null)
+        if (services.GetService(typeof(ISolutionFormatter))
+            is not ISolutionFormatter formatter)
         {
             Console.WriteLine("Error: ISolutionFormatter service not found.\n");
             state.ExitRequested = true;
             return;
         }
 
-        var solver = new BitmaskSolverExtended(
-            boardSize,
-            mode,
-            DisplayMode.Hide,
-            formatter);
+        var solver = new BitmaskSolverExtended(boardSize, mode, DisplayMode.Hide, formatter);
         var results = solver.Solve();
 
-        string formattedTotal = NumericUtility.IncrementFormattedNumber(results.TotalSolutions.ToString());
-        string memoryUsage = NumericUtility.UpdateMemoryUsage();
-        int elapsedSec = (int)Math.Round(results.ElapsedTimeInSec);
-        string elapsedStr = $"{results.ElapsedTimeInSec:0.0} sec (rounded: {elapsedSec})";
+        PrintResultsSummary(boardSize, mode, results);
 
         Console.WriteLine();
-        Console.WriteLine($"Board Size: {boardSize}");
-        Console.WriteLine($"Solution Mode: {mode}");
-        Console.WriteLine($"No. of Solutions: {formattedTotal}");
-        Console.WriteLine($"Memory Consumption: {memoryUsage} MB");
-        Console.WriteLine($"Elapsed Time: {elapsedStr}");
+        Console.WriteLine("" +
+            "Press Enter to run again, or type 'back' to change mode, or 'exit'/'quit'/'e'/'q' to quit.");
+        
         Console.WriteLine();
-
-        Console.WriteLine("Some of Solutions:");
-        foreach (var sol in results.Solutions.Take(3))
-            Console.WriteLine(string.Join(", ", sol.QueenPositions));
-
-        Console.WriteLine();
-        Console.WriteLine();
-        Console.WriteLine("Press Enter to run again, or type 'back' to change mode, or 'exit'/'quit'/'e'/'q' to quit.");
         var again = Console.ReadLine();
+        Console.WriteLine();
         if (IsQuitInput(again, state))
         {
             state.ExitRequested = true;
@@ -186,6 +182,30 @@ public partial class DispatchCommands
             return;
         }
 
+        Console.WriteLine();
+    }
+
+    private static void PrintResultsSummary(int boardSize, SolutionMode mode,
+        SimulationResults  results)
+    {
+        var formattedTotal = NumericUtil.IncFormattedNumber(results.TotalSolutions.ToString());
+        var memoryUsage = NumericUtil.UpdateMemoryUsage();
+        var elapsedSec = Math.Round(results.ElapsedTimeInSec, 1);
+        var elapsedStr = $"{results.ElapsedTimeInSec:0.0} s (rounded: {elapsedSec})";
+
+        Console.WriteLine();
+        Console.WriteLine($"Board Size: {boardSize}");
+        Console.WriteLine($"Solution Mode: {mode}");
+        Console.WriteLine($"No. of Solutions: {formattedTotal}");
+        Console.WriteLine($"Elapsed Time: {elapsedStr}");
+        Console.WriteLine($"Memory Consumption: {memoryUsage} MB");
+        Console.WriteLine();
+
+        // Display some solutions
+        Console.WriteLine("Some of Solutions:");
+        foreach (var sol in results.Solutions.Take(3))
+            Console.WriteLine(string.Join(", ", sol.QueenPositions));
+        
         Console.WriteLine();
     }
 

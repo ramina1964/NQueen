@@ -1,6 +1,6 @@
 ﻿namespace NQueen.Shared.Utils;
 
-public class NumericUtility
+public class NumericUtil
 {
     public static string UpdateMemoryUsage()
     {
@@ -11,7 +11,7 @@ public class NumericUtility
         return FormatWithSpaceSeparator(roundedMemoryUsageInMB, 0);
     }
 
-    public static string IncrementFormattedNumber(string formattedNumber)
+    public static string IncFormattedNumber(string formattedNumber)
     {
         if (string.IsNullOrWhiteSpace(formattedNumber))
             throw new ArgumentException("Input cannot be null or empty.",
