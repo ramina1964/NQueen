@@ -32,8 +32,8 @@ public static partial class SymmetryHelper
                 symmToBiDiag[flippedColIndex] = flippedRowIndex;
         }
 
-        return
-        [
+        return new List<int[]>(7)
+        {
             symmToMidVertical,
             symmToMidHorizontal,
             symmToMainDiag,
@@ -41,7 +41,7 @@ public static partial class SymmetryHelper
             counter90,
             counter180,
             counter270
-        ];
+        };
     }
 
     // --- Version 1 (Memory<int> based) used by symmetry pruning logic ---
