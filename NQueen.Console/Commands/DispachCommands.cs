@@ -34,9 +34,10 @@ public partial class DispatchCommands
             {
                 var boardSize = ShowBoardSizeMenu(state);
                 if (state.ExitRequested)
-                    break; // quit input
+                    break;
+
                 if (boardSize == -1)
-                    break; // user entered 0 -> back to mode selection
+                    break;
 
                 ShowAndHandleResults(services, boardSize, mode.Value, state);
             }
@@ -64,7 +65,7 @@ public partial class DispatchCommands
         }
 
         if (modeInput == "0")
-            return null; // signal exit
+            return null;
 
         if (int.TryParse(modeInput, out int modeIndex) == false || modeIndex < 1 ||
             modeIndex > modes.Length)
@@ -91,7 +92,7 @@ public partial class DispatchCommands
         if (sizeInput == "0")
         {
             Console.WriteLine();
-            return -1; // back to mode selection
+            return -1;
         }
 
         if (int.TryParse(sizeInput, out int boardSize) == false || boardSize < 1 ||
@@ -114,13 +115,49 @@ public partial class DispatchCommands
             return;
         }
 
-        Console.WriteLine("Starting Simulation...");
+        Console.WriteLine("Starting started...");
         Console.WriteLine();
 
         var solver = new BitmaskSolverExtended(boardSize, mode, DisplayMode.Hide, formatter);
         var results = solver.Solve();
 
-        // (Optional) Could display a summary here if desired in future
+        // Gather memory info after run (force GC collect only for measurement consistency? prefer not - just measure)
+        var proc = Process.GetCurrentProcess();
+        long workingSet = proc.WorkingSet64; // bytes
+        double workingMB = workingSet / (1024d * 1024d);
+
+        // Format numbers with space group separator
+        var culture = (System.Globalization.CultureInfo)System.Globalization.CultureInfo.InvariantCulture.Clone();
+        culture.NumberFormat.NumberGroupSeparator = " ";
+
+        string fmtInt(long v) => v.ToString("N0", culture);
+        string fmtDouble(double d) => d.ToString("N2", culture);
+
+        // --- Aligned Output summary ---
+        Console.WriteLine("Summary:");
+        Console.WriteLine($"  Board Size      : {fmtInt(boardSize)}");
+        Console.WriteLine($"  Mode            : {mode}");
+        Console.WriteLine($"  Total Solutions : {fmtInt(results.SolutionsCount)}{(results.IsTruncated ? $" (showing first {results.Solutions.Count})" : string.Empty)}");
+        Console.WriteLine($"  Elapsed (sec)   : {fmtDouble(results.ElapsedTimeInSec)}");
+        Console.WriteLine($"  Memory (MB)     : {fmtDouble(workingMB)}");
+        Console.WriteLine();
+
+        if (results.SolutionsCount == 0)
+        {
+            Console.WriteLine("No solutions found.");
+        }
+        else
+        {
+            var title = SymmetryHelper.SolutionTitle(mode, results.SolutionsCount);
+            Console.WriteLine(title);
+            Console.WriteLine();
+
+            foreach (var solution in results.Solutions)
+            {
+                Console.WriteLine($"Solution {solution.Id}: {solution.Details}");
+            }
+        }
+
         Console.WriteLine();
         Console.WriteLine("Press Enter to run again, or type 'back' to change mode, or 'exit'/'quit'/'e'/'q' to quit.");
         Console.WriteLine();
@@ -135,7 +172,7 @@ public partial class DispatchCommands
         if (again?.ToLower() == "back")
         {
             Console.WriteLine();
-            return; // back to board size selection loop -> will break and reselect mode
+            return;
         }
 
         Console.WriteLine();
@@ -153,6 +190,7 @@ public partial class DispatchCommands
 
         state.BlankInputCount = 0;
         var val = input.Trim().ToLower();
+       
         return IsExitRequested(val);
     }
 

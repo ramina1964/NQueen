@@ -1,18 +1,44 @@
 ﻿namespace NQueen.Domain.Utils;
 
 // Todo: Keep methods used in NQueen.KernelBitmask only in this class, remove all others.
+/// <summary>
+/// Symmetry utilities for the N-Queens problem.
+/// Focuses on efficient uniqueness detection via transformation generation and
+/// in-place scratch-buffer comparisons. Multiple API layers retained for backward
+/// compatibility; <see cref="AddIfUnique"/> is the preferred high-performance path.
+/// </summary>
 public static partial class SymmetryHelper
 {
     /// <summary>
-    /// Add a solution to a uniqueness set if none of its symmetrical transformations exist.
-    /// This avoids allocating 7 temporary arrays + HashSet per check by reusing a single scratch buffer.
-    /// Returns true if the (original) solution was added as unique; false if any symmetry already existed.
-    /// 
-    /// Memory: Excellent (single scratch buffer, only clones if unique)
-    /// Performance: Excellent (early exit, no closures, inlined transforms)
-    /// 
-    /// Used for symmetry handling in NQueen.KernelBitmask (core unique solution detection).
+    /// Determines maximum (exclusive) row index to explore for a given column under enhanced symmetry pruning.
+    /// Used by advanced solvers to restrict search (horizontal + secondary pruning).
     /// </summary>
+    /// <param name="boardSize">Board dimension (N).</param>
+    /// <param name="column">Current column index.</param>
+    /// <param name="queenRows">Working queen row placements.</param>
+    /// <returns>Exclusive upper bound for row iteration.</returns>
+    public static int MaxRowExclusiveForColumn(int boardSize, int column, int[] queenRows)
+    {
+        if (column == 0)
+            return (boardSize + 1) / 2;
+        if (column == 1)
+        {
+            int firstRow = queenRows[0];
+            if ((boardSize & 1) == 1 && firstRow == boardSize / 2)
+                return boardSize / 2; // strictly above center
+        }
+        return boardSize;
+    }
+
+    /// <summary>
+    /// Adds a solution to a uniqueness set if none of its eight symmetry transformations
+    /// (4 rotations + 4 reflections) already exist. Uses a single reusable scratch buffer to
+    /// avoid per-check allocations. Early exits upon first detected duplicate transform.
+    /// </summary>
+    /// <param name="solution">Original solution (row positions per column).</param>
+    /// <param name="uniqueSolutions">Set of canonical stored solutions.</param>
+    /// <param name="scratch">Scratch array (length &gt;= N) reused for transformations.</param>
+    /// <returns><c>true</c> if the solution was unique and added; otherwise <c>false</c>.</returns>
     public static bool AddIfUnique(int[] solution, HashSet<int[]> uniqueSolutions, int[] scratch)
     {
         ArgumentNullException.ThrowIfNull(solution);
@@ -66,13 +92,7 @@ public static partial class SymmetryHelper
     }
 
     /// <summary>
-    /// Checks if any symmetrical transformation already exists (Memory<int> direct version).
-    /// 
-    /// Memory: Good (uses Memory<int>, but allocates 7 arrays per call)
-    /// Performance: Good (simple loop, but not as optimal as AddIfUnique)
-    /// 
-    /// Not used for symmetry handling in NQueen.KernelBitmask.
-    /// </summary>
+    /// Checks if any symmetrical transformation already exists (Memory<int> direct version).</summary>
     public static bool IsSymmetrical(
         Memory<int> solution,
         HashSet<Memory<int>> solutions)
@@ -85,14 +105,7 @@ public static partial class SymmetryHelper
     }
 
     /// <summary>
-    /// Used by SolverEngine: Checks if any symmetrical transformation already exists in the set (Memory<int> version).
-    /// Now uses span overload to avoid one allocation.
-    /// 
-    /// Memory: Moderate (allocates 7 arrays per call, wraps in Memory<int>)
-    /// Performance: Moderate (multiple allocations and lookups)
-    /// 
-    /// Not used for symmetry handling in NQueen.KernelBitmask.
-    /// </summary>
+    /// Alternate memory-based symmetry presence check (allocates 7 arrays per call).</summary>
     public static bool IsSymmetricalSolution(
         Memory<int> solution,
         HashSet<Memory<int>> solutions)
@@ -108,12 +121,8 @@ public static partial class SymmetryHelper
     }
 
     /// <summary>
-    /// Returns all 7 symmetrical solutions as int[] (span-based, no iterator).
-    /// 
-    /// Memory: Moderate (allocates 7 arrays per call)
-    /// Performance: Good for generating all variants, not for repeated checks
-    /// 
-    /// Not used for symmetry handling in NQueen.KernelBitmask.
+    /// Generates all 7 non-identity symmetrical variants for a given solution.
+    /// (Identity is not included here – caller can add original if needed.)
     /// </summary>
     public static List<int[]> GetSymmetricalSolutions(ReadOnlySpan<int> solution)
     {
@@ -155,13 +164,7 @@ public static partial class SymmetryHelper
     }
 
     /// <summary>
-    /// Returns all 7 symmetrical solutions as Memory<int> (used by symmetry pruning logic).
-    /// 
-    /// Memory: Moderate (allocates 7 arrays per call)
-    /// Performance: Good for generating all variants, not for repeated checks
-    /// 
-    /// Not used for symmetry handling in NQueen.KernelBitmask.
-    /// </summary>
+    /// Memory-based variants (allocates 7 arrays wrapped in <see cref="Memory{T}"/>).</summary>
     public static List<Memory<int>> GetSymmetricalSolutions(Memory<int> solution)
     {
         var boardSize = solution.Length;
@@ -203,13 +206,7 @@ public static partial class SymmetryHelper
     }
 
     /// <summary>
-    /// Returns all 7 symmetrical solutions as int[] in a HashSet (used by solver engine).
-    /// 
-    /// Memory: Poor (allocates 7 arrays and a HashSet per call)
-    /// Performance: Poor for repeated use
-    /// 
-    /// Not used for symmetry handling in NQueen.KernelBitmask.
-    /// </summary>
+    /// HashSet-based variant construction (least efficient; retained for legacy callers).</summary>
     public static HashSet<int[]> GetSymmetricalSolutions(int[] solution)
     {
         var boardSize = solution.Length;
@@ -250,13 +247,7 @@ public static partial class SymmetryHelper
     }
 
     /// <summary>
-    /// Get all symmetrical transformations (int[] entry point, legacy API).
-    /// 
-    /// Memory: Poor (calls GetSymmetricalSolutions(int[]), so inherits its inefficiency)
-    /// Performance: Poor for repeated use
-    /// 
-    /// Not used for symmetry handling in NQueen.KernelBitmask.
-    /// </summary>
+    /// Legacy enumerable wrapper.</summary>
     public static IEnumerable<int[]> GetSymmetricalTransformations(int[] solution)
     {
         var symmetricalSolutions = GetSymmetricalSolutions(solution);
@@ -264,6 +255,8 @@ public static partial class SymmetryHelper
     }
 
     // --- Additional helpers (retained) ---
+    /// <summary>
+    /// Builds a title for solution listings with truncation / mode awareness.</summary>
     public static string SolutionTitle(SolutionMode solutionMode, int noOfSolutions)
     {
         if (solutionMode == SolutionMode.Single)
@@ -281,6 +274,7 @@ public static partial class SymmetryHelper
             : $"List of First {SimulationSettings.MaxNoOfSolutionsInOutput} Unique Solution(s), Excluded Symmetrical Ones:";
     }
 
+    /// <summary>Returns a rotated solution (creates a new array).</summary>
     public static int[] Rotate(int[] solution, int degrees)
     {
         int n = solution.Length;
@@ -309,6 +303,7 @@ public static partial class SymmetryHelper
         return rotated;
     }
 
+    /// <summary>Returns a new reflected solution across the specified axis.</summary>
     public static int[] Reflect(int[] solution, string axis)
     {
         int n = solution.Length;

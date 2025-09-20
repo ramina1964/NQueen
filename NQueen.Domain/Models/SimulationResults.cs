@@ -20,20 +20,20 @@ public class SimulationResults
 
     public IReadOnlyList<Solution> Solutions { get; }
 
-    public int TotalSolutions { get; }
+    public int SolutionsCount { get; }
 
     public bool IsTotalInferred { get; }
 
     public double ElapsedTimeInSec { get; }
 
-    public bool IsTruncated => TotalSolutions > Solutions.Count;
+    public bool IsTruncated => SolutionsCount > Solutions.Count;
 
     private SimulationResults(IEnumerable<Solution> solutions,
         int totalSolutions, double ElapsedTimeInSec, bool inferred)
     {
         var list = solutions.ToList();
         Solutions = list;
-        TotalSolutions = totalSolutions;
+        SolutionsCount = totalSolutions;
         this.ElapsedTimeInSec = ElapsedTimeInSec;
         IsTotalInferred = inferred;
     }
