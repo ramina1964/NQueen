@@ -1,5 +1,6 @@
 namespace NQueen.UnitTests.Tests.SymmetryPruning;
 
+// Todo : Find out which of these methods has the best resource management and performance.
 public class MemoryIntArrayComparerTests
 {
     [Theory]

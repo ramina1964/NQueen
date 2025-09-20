@@ -120,8 +120,17 @@ public class BitmaskSolverExtended(ISolutionFormatter solutionFormatter)
         var uniqueSolutions = new HashSet<int[]>(new IntArrayComparer());
         BitmaskIterative(solution =>
         {
-            if (SymmetryHelper.GetSymmetricalSolutions(solution)
-                .Any(uniqueSolutions.Contains) == false)
+            // Replace LINQ Any with manual for-loop for symmetry check
+            bool isSymmetrical = false;
+            foreach (var sym in SymmetryHelper.GetSymmetricalSolutions(solution))
+            {
+                if (uniqueSolutions.Contains(sym))
+                {
+                    isSymmetrical = true;
+                    break;
+                }
+            }
+            if (!isSymmetrical)
             {
                 uniqueSolutions.Add((int[])solution.Clone());
                 _solutionCount++;
