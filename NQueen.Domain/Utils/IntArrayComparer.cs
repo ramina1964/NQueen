@@ -1,5 +1,6 @@
 ﻿namespace NQueen.Domain.Utils;
 
+// Todo: Remove this class after integration of project NQueen.KernelBitmask.
 public readonly struct IntArrayComparer : IEqualityComparer<int[]>, IComparer<int[]>
 {
     public bool Equals(int[]? x, int[]? y)

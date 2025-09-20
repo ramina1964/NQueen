@@ -76,7 +76,7 @@ public sealed partial class MainViewModel
             NoOfSolutions = $"{SimulationResults.Solutions.Count(),0:N0}";
             ElapsedTimeInSec = $"{SimulationResults.ElapsedTimeInSec,0:N1}";
             SelectedSolution = ObservableSolutions.FirstOrDefault() ?? new Solution([], null!);
-            MemoryUsage = NumericUtility.UpdateMemoryUsage();
+            MemoryUsage = NumericUtil.UpdateMemoryUsage();
 
         }
         catch (Exception ex)
