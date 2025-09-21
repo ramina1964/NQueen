@@ -133,8 +133,17 @@ public sealed partial class MainViewModel
         if (solution is null)
             return;
 
+        // Prevent late (post-cancel) or stray additions:
+        //  - If solver canceled, ignore.
+        //  - If simulation not running AND output not finalized (IsOutputReady == false), ignore.
+        if (_solver.IsSolverCanceled || (IsSimulating == false && IsOutputReady == false))
+            return;
+
         _uiDispatcher.Invoke(() =>
         {
+            if (_solver.IsSolverCanceled || (IsSimulating == false && IsOutputReady == false))
+                return;
+
             if (ObservableSolutions.Any(s => s.Id == solution.Id))
                 return;
 
@@ -149,8 +158,13 @@ public sealed partial class MainViewModel
     private void OnQueenPlacedEvent(object? sender, NQueen.Domain.EventArgsPruning.QueenPlacedEventArgs e) =>
         WeakReferenceMessenger.Default.Send(new QueenPlacedMessage(e.Solution, 0));
 
-    private void OnSolutionFoundEvent(object? sender, NQueen.Domain.EventArgsPruning.SolutionFoundEventArgs e) =>
+    private void OnSolutionFoundEvent(object? sender, NQueen.Domain.EventArgsPruning.SolutionFoundEventArgs e)
+    {
+        if (_solver.IsSolverCanceled || IsSimulating == false && IsOutputReady == false)
+            return;
+
         WeakReferenceMessenger.Default.Send(new SolutionFoundMessage(e.Solution));
+    }
 
     private void OnProgressValueChangedEvent(object? sender, NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs e)
     {
