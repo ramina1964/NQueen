@@ -11,7 +11,6 @@ public sealed partial class MainViewModel
         if (_solver == null)
             return;
 
-        // The solver (Bitmask) raises events with args in NQueen.Domain.EventArgsPruning
         _solver.QueenPlaced += OnQueenPlacedEvent;
         _solver.SolutionFound += OnSolutionFoundEvent;
         _solver.ProgressValueChanged += OnProgressValueChangedEvent;
@@ -49,9 +48,6 @@ public sealed partial class MainViewModel
     private void OnProgressValueChanged(ProgressValueChangedMessage message)
     {
         Debug.WriteLine($"[MainViewModel] ProgressValue received: {message.Value}");
-        
-        // If message.Value now already in [0..100]; convert to 0..1 for ProgressBar.
-        // UpdateProgress(message.Value / 100.0, $"{message.Value:0.#}%");
     }
 
     private void OnQueenPlaced(QueenPlacedMessage message)
@@ -63,14 +59,48 @@ public sealed partial class MainViewModel
         if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) == false)
             return;
 
-        var solutionSpan = message.Solution.Span;
-        var length = Math.Min(boardSize, solutionSpan.Length);
-        var positions = new List<Position>(length);
-        for (int colIndex = 0; colIndex < length; colIndex++)
+        var span = message.Solution.Span;
+        var max = Math.Min(boardSize, span.Length);
+
+        // Heuristic to determine current active (valid) depth of the partial solution.
+        // The solver reuses the same queenRows array and does NOT clear deeper columns when backtracking,
+        // so stale (now invalid) placements can remain beyond the current search depth.
+        // We build the longest valid prefix (no row or diagonal conflicts). Anything after the first conflict
+        // is considered stale and ignored for visualization to prevent “extra” queens remaining on the board.
+        int depth = 0;
+        for (int col = 0; col < max; col++)
         {
-            int queenRow = solutionSpan[colIndex];
-            positions.Add(new Position(colIndex, queenRow));
+            int row = span[col];
+            if (row < 0)
+                break;
+
+            bool conflict = false;
+            for (int prev = 0; prev < col; prev++)
+            {
+                int prow = span[prev];
+                // same row or diagonal clash -> stale remainder starts here
+                if (prow == row || Math.Abs(prow - row) == col - prev)
+                {
+                    conflict = true;
+                    break;
+                }
+            }
+
+            if (conflict)
+                break;
+
+            depth = col + 1;
         }
+
+        if (depth == 0)
+        {
+            ChessboardVm.ClearImages();
+            return;
+        }
+
+        List<Position> positions = new(depth);
+        for (int c = 0; c < depth; c++)
+            positions.Add(new Position(c, span[c]));
 
         ChessboardVm.PlaceQueens(positions);
     }
@@ -94,21 +124,17 @@ public sealed partial class MainViewModel
 
         _uiDispatcher.Invoke(() =>
         {
-            // Reject duplicates (Id uniqueness is assumed stable)
             if (ObservableSolutions.Any(s => s.Id == solution.Id))
                 return;
 
             int cap = SimulationSettings.MaxNoOfSolutionsInOutput;
-
-            // cap <= 0 means "no cap" (per comment in SimulationSettings)
             if (cap > 0 && ObservableSolutions.Count >= cap)
-                return; // Do not add; keep oldest solutions
+                return;
 
             ObservableSolutions.Add(solution);
         });
     }
 
-    // Fully qualify event arg types to match Bitmask solver namespace (EventArgsPruning)
     private void OnQueenPlacedEvent(object? sender, NQueen.Domain.EventArgsPruning.QueenPlacedEventArgs e) =>
         WeakReferenceMessenger.Default.Send(new QueenPlacedMessage(e.Solution, 0));
 
@@ -121,17 +147,19 @@ public sealed partial class MainViewModel
         WeakReferenceMessenger.Default.Send(new ProgressValueChangedMessage(e.Value));
     }
 
+    // Always show selected solution (even if DisplayMode == Hide) so user can inspect results after simulation.
+    // Hide mode suppresses only live incremental visualization (OnQueenPlaced).
     partial void OnSelectedSolutionChanged(Solution value)
     {
         if (ChessboardVm == null)
             return;
 
-        // Allow displaying a solution even when DisplayMode == Hide.
-        // Hide mode suppresses incremental visualization only (see OnQueenPlaced).
         if (value == null)
+        {
+            ChessboardVm.ClearImages();
             return;
+        }
 
-        // Ensure board squares exist / are correct for current board size.
         if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize))
         {
             if (ChessboardVm.Squares.Count == 0 ||
@@ -141,23 +169,46 @@ public sealed partial class MainViewModel
             }
         }
 
-        Debug.WriteLine($"[MainViewModel] SelectedSolution changed -> Id={value.Id}, placing queens.");
         ChessboardVm.PlaceQueens(value.Positions);
     }
 
-    // Todo: Remove if unused.
-    //private void RefreshVisualization()
-    //{
-    //    if (ChessboardVm == null)
-    //        return;
+    partial void OnDisplayModeChanged(DisplayMode value)
+    {
+        if (_solver == null)
+            return;
 
-    //    if (DisplayMode == DisplayMode.Hide)
-    //    {
-    //        ChessboardVm.ClearImages();
-    //        return;
-    //    }
+        if (ValidateAndSetUiState() == false)
+            return;
 
-    //    if (SelectedSolution != null)
-    //        ChessboardVm.PlaceQueens(SelectedSolution.Positions);
-    //}
+        OnPropertyChanged(nameof(BoardSizeText));
+
+        // If a solution is available, re-render (or clear for live simulation only)
+        if (IsOutputReady && SelectedSolution != null)
+        {
+            if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize))
+                ChessboardVm?.CreateSquares(boardSize);
+
+            // We still show the selected solution even if Hide,
+            // because Hide only suppresses live incremental placement.
+            ChessboardVm?.PlaceQueens(SelectedSolution.Positions);
+        }
+        else
+        {
+            UpdateUiState();
+        }
+    }
+
+    private void RefreshVisualization()
+    {
+        if (ChessboardVm == null)
+            return;
+
+        if (SelectedSolution == null)
+        {
+            ChessboardVm.ClearImages();
+            return;
+        }
+
+        ChessboardVm.PlaceQueens(SelectedSolution.Positions);
+    }
 }

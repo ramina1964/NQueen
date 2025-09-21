@@ -77,18 +77,6 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private DisplayMode _displayMode;
 
-    partial void OnDisplayModeChanged(DisplayMode value)
-    {
-        if (_solver == null)
-            return;
-
-        if (ValidateAndSetUiState() == false)
-            return;
-
-        OnPropertyChanged(nameof(BoardSizeText));
-        UpdateUiState();
-    }
-
     [ObservableProperty]
     private bool _isValid = false;
 

@@ -196,6 +196,5 @@ public sealed partial class MainViewModel
             ProgressValue = 0;
     }
 
-
     private Guid _currentSimulationToken = Guid.Empty;
 }
