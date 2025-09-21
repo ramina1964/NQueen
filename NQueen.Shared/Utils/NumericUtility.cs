@@ -32,11 +32,22 @@ public class NumericUtils
         return int.Parse(formattedNumber, NumberStyles.Number, numberFormat);
     }
 
-    private static string FormatWithSpaceSeparator(double value, int decimalPlaces)
+    public static string FormatWithSpaceSeparator(long value)
     {
         var numberFormat = new NumberFormatInfo
         {
-            NumberGroupSeparator = " ",
+            NumberGroupSeparator = _thousandSeparator,
+            NumberDecimalDigits = 0
+        };
+
+        return value.ToString("N0", numberFormat);
+    }
+
+    public static string FormatWithSpaceSeparator(double value, int decimalPlaces = 2)
+    {
+        var numberFormat = new NumberFormatInfo
+        {
+            NumberGroupSeparator = _thousandSeparator,
             NumberDecimalDigits = decimalPlaces
         };
 
@@ -47,4 +58,5 @@ public class NumericUtils
         Math.Round(value / 10) * 10;
 
     private const double _megaByte = 1024.0 * 1024.0;
+    private const string _thousandSeparator = " ";
 }

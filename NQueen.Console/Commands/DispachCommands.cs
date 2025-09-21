@@ -7,10 +7,13 @@ public record MenuState
 }
 
 // Todo: Use input validation here, otherwise move input validation into ValidationHelper.
-// Todo: Use constants for menu options, messages, etc.
+// Todo: Use constants for menu options, messages, etc from Utils/Constants.cs
 
 public partial class DispatchCommands
 {
+    private const string RunAgainPrompt =
+        "Enter to run again, or 'back' to change mode, or 'exit (e), quit (q)' to quit: ";
+
     public static void RunInteractiveMenu(IServiceProvider services)
     {
         var state = new MenuState();
@@ -39,7 +42,8 @@ public partial class DispatchCommands
                 if (boardSize == -1)
                     break;
 
-                ShowAndHandleResults(services, boardSize, mode.Value, state);
+                var context = new SimulationContext(boardSize, mode.Value, DisplayMode.Hide);
+                ShowAndHandleResults(services, context, state);
             }
         }
     }
@@ -105,64 +109,28 @@ public partial class DispatchCommands
         return boardSize;
     }
 
-    private static void ShowAndHandleResults(IServiceProvider services, int boardSize, SolutionMode mode, MenuState state)
+    private static void ShowAndHandleResults(
+        IServiceProvider services, SimulationContext context, MenuState state)
     {
-        var formatter = services.GetService(typeof(ISolutionFormatter)) as ISolutionFormatter;
-        if (formatter == null)
+        if (services.GetService(typeof(ISolutionFormatter)) is not ISolutionFormatter formatter)
         {
             Console.WriteLine("Error: ISolutionFormatter service not found.\n");
             state.ExitRequested = true;
             return;
         }
 
-        Console.WriteLine("Starting started...");
+        Console.WriteLine("Simulation started...");
         Console.WriteLine();
 
-        var solver = new BitmaskSolverExtended(boardSize, mode, DisplayMode.Hide, formatter);
+        var solver = new BitmaskSolverExtended(context.BoardSize, context.SolutionMode, context.DisplayMode, formatter);
         var results = solver.Solve();
 
-        // Gather memory info after run (force GC collect only for measurement consistency? prefer not - just measure)
-        var proc = Process.GetCurrentProcess();
-        long workingSet = proc.WorkingSet64; // bytes
-        double workingMB = workingSet / (1024d * 1024d);
+        // Get the summary string and print it at the top level
+        var summary = GetSummaryString(context, results);
+        Console.WriteLine(summary);
 
-        // Format numbers with space group separator
-        var culture = (System.Globalization.CultureInfo)System.Globalization.CultureInfo.InvariantCulture.Clone();
-        culture.NumberFormat.NumberGroupSeparator = " ";
-
-        string fmtInt(long v) => v.ToString("N0", culture);
-        string fmtDouble(double d) => d.ToString("N2", culture);
-
-        // --- Aligned Output summary ---
-        Console.WriteLine("Summary:");
-        Console.WriteLine($"  Board Size      : {fmtInt(boardSize)}");
-        Console.WriteLine($"  Mode            : {mode}");
-        Console.WriteLine($"  Total Solutions : {fmtInt(results.SolutionsCount)}{(results.IsTruncated ? $" (showing first {results.Solutions.Count})" : string.Empty)}");
-        Console.WriteLine($"  Elapsed (sec)   : {fmtDouble(results.ElapsedTimeInSec)}");
-        Console.WriteLine($"  Memory (MB)     : {fmtDouble(workingMB)}");
-        Console.WriteLine();
-
-        if (results.SolutionsCount == 0)
-        {
-            Console.WriteLine("No solutions found.");
-        }
-        else
-        {
-            var title = SymmetryHelper.SolutionTitle(mode, results.SolutionsCount);
-            Console.WriteLine(title);
-            Console.WriteLine();
-
-            foreach (var solution in results.Solutions)
-            {
-                Console.WriteLine($"Solution {solution.Id}: {solution.Details}");
-            }
-        }
-
-        Console.WriteLine();
-        Console.WriteLine("Press Enter to run again, or type 'back' to change mode, or 'exit'/'quit'/'e'/'q' to quit.");
-        Console.WriteLine();
+        Console.WriteLine(RunAgainPrompt);
         var again = Console.ReadLine();
-        Console.WriteLine();
         if (IsQuitInput(again, state))
         {
             state.ExitRequested = true;
@@ -170,12 +138,44 @@ public partial class DispatchCommands
         }
 
         if (again?.ToLower() == "back")
-        {
-            Console.WriteLine();
             return;
-        }
 
         Console.WriteLine();
+    }
+
+    // This method now only returns the summary string, does not write to the console
+    public static string GetSummaryString(
+        SimulationContext context,
+        SimulationResults results)
+    {
+        var sb = new System.Text.StringBuilder();
+
+        sb.AppendLine("Summary:");
+        sb.AppendLine($"  Board Size      : {NumericUtils.FormatWithSpaceSeparator(context.BoardSize)}");
+        sb.AppendLine($"  Mode            : {context.SolutionMode}");
+        sb.AppendLine($"  Total Solutions : {NumericUtils.FormatWithSpaceSeparator(results.SolutionsCount)}{(results.IsTruncated ? $" (showing first {results.Solutions.Count})" : string.Empty)}");
+        sb.AppendLine($"  Elapsed (sec)   : {NumericUtils.FormatWithSpaceSeparator(results.ElapsedTimeInSec, 2)}");
+        sb.AppendLine($"  Memory (MB)     : {NumericUtils.UpdateMemoryUsage()}");
+        sb.AppendLine();
+
+        if (results.SolutionsCount == 0)
+        {
+            sb.AppendLine("No solutions found.");
+        }
+        else
+        {
+            var title = SymmetryHelper.SolutionTitle(context.SolutionMode, results.SolutionsCount);
+            sb.AppendLine(title);
+            sb.AppendLine();
+
+            foreach (var solution in results.Solutions)
+            {
+                sb.AppendLine($"Solution {solution.Id}: {solution.Details}");
+            }
+        }
+        sb.AppendLine();
+
+        return sb.ToString();
     }
 
     private static bool IsQuitInput(string? input, MenuState state)
@@ -190,15 +190,17 @@ public partial class DispatchCommands
 
         state.BlankInputCount = 0;
         var val = input.Trim().ToLower();
-       
+
         return IsExitRequested(val);
     }
 
-    private static readonly Regex _whiteSpacesRegex = genRegEx();
     public static Regex RegexSpaces() => _whiteSpacesRegex;
+
     [GeneratedRegex("\\s+", RegexOptions.Compiled)]
     private static partial Regex genRegEx();
 
     private static bool IsExitRequested(string val) =>
         val == "exit" || val == "quit" || val == "e" || val == "q" || val == "0";
+
+    private static readonly Regex _whiteSpacesRegex = genRegEx();
 }
