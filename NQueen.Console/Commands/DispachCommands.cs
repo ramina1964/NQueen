@@ -11,9 +11,6 @@ public record MenuState
 
 public partial class DispatchCommands
 {
-    private const string RunAgainPrompt =
-        "Enter to run again, or 'back' to change mode, or 'exit (e), quit (q)' to quit: ";
-
     public static void RunInteractiveMenu(IServiceProvider services)
     {
         var state = new MenuState();
@@ -129,7 +126,7 @@ public partial class DispatchCommands
         var summary = GetSummaryString(context, results);
         Console.WriteLine(summary);
 
-        Console.WriteLine(RunAgainPrompt);
+        Console.WriteLine(UiMessages.RunAgainPrompt);
         var again = Console.ReadLine();
         if (IsQuitInput(again, state))
         {
@@ -203,4 +200,7 @@ public partial class DispatchCommands
         val == "exit" || val == "quit" || val == "e" || val == "q" || val == "0";
 
     private static readonly Regex _whiteSpacesRegex = genRegEx();
+
+    //private const string UiMessages.RunAgainPrompt =
+    //    "Enter to run again, or 'back' to change mode, or 'exit (e), quit (q)' to quit: ";
 }
