@@ -121,18 +121,43 @@ public sealed partial class MainViewModel
         WeakReferenceMessenger.Default.Send(new ProgressValueChangedMessage(e.Value));
     }
 
-    private void RefreshVisualization()
+    partial void OnSelectedSolutionChanged(Solution value)
     {
         if (ChessboardVm == null)
             return;
 
-        if (DisplayMode == DisplayMode.Hide)
-        {
-            ChessboardVm.ClearImages();
+        // Allow displaying a solution even when DisplayMode == Hide.
+        // Hide mode suppresses incremental visualization only (see OnQueenPlaced).
+        if (value == null)
             return;
+
+        // Ensure board squares exist / are correct for current board size.
+        if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize))
+        {
+            if (ChessboardVm.Squares.Count == 0 ||
+                ChessboardVm.IsBoardStateUpdatedAndSquaresPopulated(boardSize) == false)
+            {
+                ChessboardVm.CreateSquares(boardSize);
+            }
         }
 
-        if (SelectedSolution != null)
-            ChessboardVm.PlaceQueens(SelectedSolution.Positions);
+        Debug.WriteLine($"[MainViewModel] SelectedSolution changed -> Id={value.Id}, placing queens.");
+        ChessboardVm.PlaceQueens(value.Positions);
     }
+
+    // Todo: Remove if unused.
+    //private void RefreshVisualization()
+    //{
+    //    if (ChessboardVm == null)
+    //        return;
+
+    //    if (DisplayMode == DisplayMode.Hide)
+    //    {
+    //        ChessboardVm.ClearImages();
+    //        return;
+    //    }
+
+    //    if (SelectedSolution != null)
+    //        ChessboardVm.PlaceQueens(SelectedSolution.Positions);
+    //}
 }
