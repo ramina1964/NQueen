@@ -7,7 +7,7 @@ public static class GuiServiceCollectionExtensions
         var services = new ServiceCollection();
         services.AddSingleton<IDispatcher, WpfDispatcher>();
         services.AddTransient<ISaveFileDialogService, SaveFileDialogService>();
-        services.NQueenServices();
+        services.AddBitmaskSolverServices(disableCap: true);
 
         // Register MainWindow for DI
         services.AddSingleton<MainWindow>();
@@ -19,9 +19,6 @@ public static class GuiServiceCollectionExtensions
         services.AddTransient<ChessboardUserControl>();
         services.AddTransient<InputPanelUserControl>();
         services.AddTransient<SimulationPanelUserControl>();
-
-        // Register Default formatter
-        services.AddSingleton<ISolutionFormatter, DefaultSolutionFormatter>();
 
         // Other GUI-specific registrations...
         return services.BuildServiceProvider();

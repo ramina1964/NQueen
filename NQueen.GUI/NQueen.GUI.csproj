@@ -21,7 +21,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\NQueen.Domain\NQueen.Domain.csproj" />
-		<ProjectReference Include="..\NQueen.NextGenKernel\NQueen.NextGenKernel.csproj" />
+		<ProjectReference Include="..\NQueen.KernelBitmask\NQueen.KernelBitmask.csproj" />
 		<ProjectReference Include="..\NQueen.Shared\NQueen.Shared.csproj" />
 	</ItemGroup>
 

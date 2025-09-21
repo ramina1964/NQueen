@@ -5,7 +5,7 @@ public sealed partial class MainViewModel :
 {
     // --- Constructor ---
     public MainViewModel(
-        ISolver solver,
+        ISolverPruning solver,
         IDispatcher dispatcher,
         ISaveFileDialogService saveFileService,
         ISolutionFormatter solutionFormatter)
@@ -153,7 +153,7 @@ public sealed partial class MainViewModel :
 
     private CancellationTokenSource CancellationTokenSource { get; set; }
 
-    private readonly ISolver _solver;
+    private readonly ISolverPruning _solver;
 
     private readonly IDispatcher _uiDispatcher;
 

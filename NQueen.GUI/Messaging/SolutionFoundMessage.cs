@@ -1,6 +1,6 @@
 ﻿namespace NQueen.GUI.Messaging;
 
-public class SolutionFoundMessage(int[] solution)
+public class SolutionFoundMessage(Memory<int> solution)
 {
-    public int[] Solution { get; } = solution;
+    public Memory<int> Solution { get; } = solution;
 }

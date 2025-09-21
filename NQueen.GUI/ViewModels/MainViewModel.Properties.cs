@@ -72,7 +72,17 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnSelectedSolutionChanged(Solution value)
     {
-        if (value != null && ChessboardVm != null)
+        if (ChessboardVm == null)
+            return;
+
+        if (DisplayMode == DisplayMode.Hide)
+        {
+            // When hidden, ensure board is cleared (optional; remove if you want it frozen instead)
+            ChessboardVm.ClearImages();
+            return;
+        }
+
+        if (value != null)
             ChessboardVm.PlaceQueens(value.Positions);
     }
 
