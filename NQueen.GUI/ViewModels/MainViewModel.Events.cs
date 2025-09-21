@@ -41,8 +41,25 @@ public sealed partial class MainViewModel
 
     private void OnSimulationCompleted()
     {
-        UpdateSolutionCount();
         SimulationCompleted?.Invoke(this, EventArgs.Empty);
+
+        // After simulation finishes always visualize the FIRST solution (if any)
+        if (ObservableSolutions.Count > 0)
+        {
+            var first = ObservableSolutions[0];
+
+            // If SelectedSolution was already the first (but hidden during simulation), force a redraw
+            if (SelectedSolution == first)
+            {
+                EnsureBoardSized();
+                ChessboardVm?.PlaceQueens(first.Positions);
+            }
+            else
+            {
+                // Setting SelectedSolution will trigger OnSelectedSolutionChanged and render
+                SelectedSolution = first;
+            }
+        }
     }
 
     private void OnProgressValueChanged(ProgressValueChangedMessage message)
@@ -52,7 +69,7 @@ public sealed partial class MainViewModel
 
     private void OnQueenPlaced(QueenPlacedMessage message)
     {
-        // Suppress incremental visualization when hidden
+        // Suppress incremental visualization while simulating if Hide mode
         if (DisplayMode == DisplayMode.Hide)
             return;
 
@@ -62,11 +79,6 @@ public sealed partial class MainViewModel
         var span = message.Solution.Span;
         var max = Math.Min(boardSize, span.Length);
 
-        // Heuristic to determine current active (valid) depth of the partial solution.
-        // The solver reuses the same queenRows array and does NOT clear deeper columns when backtracking,
-        // so stale (now invalid) placements can remain beyond the current search depth.
-        // We build the longest valid prefix (no row or diagonal conflicts). Anything after the first conflict
-        // is considered stale and ignored for visualization to prevent “extra” queens remaining on the board.
         int depth = 0;
         for (int col = 0; col < max; col++)
         {
@@ -78,7 +90,6 @@ public sealed partial class MainViewModel
             for (int prev = 0; prev < col; prev++)
             {
                 int prow = span[prev];
-                // same row or diagonal clash -> stale remainder starts here
                 if (prow == row || Math.Abs(prow - row) == col - prev)
                 {
                     conflict = true;
@@ -109,13 +120,13 @@ public sealed partial class MainViewModel
     {
         var solutionId = ObservableSolutions.Count + 1;
         var newSolution = new Solution(message.Solution.ToArray(), _solutionFormatter, solutionId);
-        UpdateSolutionCount();
         AddSolutionToObservable(newSolution);
-        SelectedSolution = newSolution;
-    }
+        NoOfSolutions = $"{ObservableSolutions.Count,0:N0}";
 
-    private void UpdateSolutionCount() =>
-        NoOfSolutions = NumericUtils.IncFormattedNumber(NoOfSolutions);
+        // Always set SelectedSolution to the first discovered one only.
+        if (solutionId == 1)
+            SelectedSolution = newSolution;
+    }
 
     private void AddSolutionToObservable(Solution solution)
     {
@@ -147,8 +158,8 @@ public sealed partial class MainViewModel
         WeakReferenceMessenger.Default.Send(new ProgressValueChangedMessage(e.Value));
     }
 
-    // Always show selected solution (even if DisplayMode == Hide) so user can inspect results after simulation.
-    // Hide mode suppresses only live incremental visualization (OnQueenPlaced).
+    // Show selected solution after simulation regardless of DisplayMode.
+    // Hide suppresses only incremental updates (OnQueenPlaced) while IsSimulating.
     partial void OnSelectedSolutionChanged(Solution value)
     {
         if (ChessboardVm == null)
@@ -160,14 +171,11 @@ public sealed partial class MainViewModel
             return;
         }
 
-        if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize))
-        {
-            if (ChessboardVm.Squares.Count == 0 ||
-                ChessboardVm.IsBoardStateUpdatedAndSquaresPopulated(boardSize) == false)
-            {
-                ChessboardVm.CreateSquares(boardSize);
-            }
-        }
+        EnsureBoardSized();
+
+        // If still simulating and Hide -> do not visualize yet
+        if (IsSimulating && DisplayMode == DisplayMode.Hide)
+            return;
 
         ChessboardVm.PlaceQueens(value.Positions);
     }
@@ -182,19 +190,20 @@ public sealed partial class MainViewModel
 
         OnPropertyChanged(nameof(BoardSizeText));
 
-        // If a solution is available, re-render (or clear for live simulation only)
-        if (IsOutputReady && SelectedSolution != null)
+        // Switching modes should not clear existing solution visualization after simulation.
+        if (IsSimulating)
         {
-            if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize))
-                ChessboardVm?.CreateSquares(boardSize);
-
-            // We still show the selected solution even if Hide,
-            // because Hide only suppresses live incremental placement.
-            ChessboardVm?.PlaceQueens(SelectedSolution.Positions);
+            // During simulation: Hide -> just clear; Visualize -> leave incremental logic to events
+            if (value == DisplayMode.Hide)
+                ChessboardVm?.ClearImages();
+            return;
         }
-        else
+
+        // Simulation finished: always show currently selected solution (if any)
+        if (SelectedSolution != null)
         {
-            UpdateUiState();
+            EnsureBoardSized();
+            ChessboardVm?.PlaceQueens(SelectedSolution.Positions);
         }
     }
 
@@ -209,6 +218,22 @@ public sealed partial class MainViewModel
             return;
         }
 
+        EnsureBoardSized();
         ChessboardVm.PlaceQueens(SelectedSolution.Positions);
+    }
+
+    private void EnsureBoardSized()
+    {
+        if (ChessboardVm == null)
+            return;
+
+        if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize))
+        {
+            if (ChessboardVm.Squares.Count == 0 ||
+                ChessboardVm.IsBoardStateUpdatedAndSquaresPopulated(boardSize) == false)
+            {
+                ChessboardVm.CreateSquares(boardSize);
+            }
+        }
     }
 }
