@@ -8,6 +8,8 @@ namespace NQueen.KernelBitmask.Solvers;
 public class BitmaskSolverExtended(ISolutionFormatter solutionFormatter)
     : ISolverPruning, IDisposable
 {
+    #region Ctors
+
     public BitmaskSolverExtended(ISolutionFormatter solutionFormatter, bool disableCap)
         : this(solutionFormatter) => _disableCap = disableCap;
 
@@ -20,16 +22,24 @@ public class BitmaskSolverExtended(ISolutionFormatter solutionFormatter)
         DisplayMode = displayMode;
     }
 
+    #endregion Ctors
+
     public event EventHandler<QueenPlacedEventArgs>? QueenPlaced;
     public event EventHandler<SolutionFoundEventArgs>? SolutionFound;
     public event EventHandler<ProgressUpdateEventArgs>? ProgressValueChanged;
 
     public int DelayInMillisec { get; set; }
+
     public int ProgressValue { get; set; }
+
     public int BoardSize { get; private set; }
+
     public SolutionMode SolutionMode { get; private set; }
+
     public DisplayMode DisplayMode { get; private set; }
+
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
+
     public bool IsSolverCanceled { get; set; }
 
     public Task<SimulationResults> GetSimResultsAsync(SimulationContext simContext)
@@ -56,14 +66,17 @@ public class BitmaskSolverExtended(ISolutionFormatter solutionFormatter)
             case SolutionMode.All:
                 SolveAll();
                 break;
+
             case SolutionMode.Unique:
                 SolveUnique();
                 break;
+
             case SolutionMode.Single:
                 SolveSingle();
                 break;
+
             default:
-                throw new ArgumentOutOfRangeException(nameof(SolutionMode), SolutionMode, "Unsupported SolutionMode value.");
+                throw new NotImplementedException("Unsupported SolutionMode value.");
         }
 
         sw.Stop();
