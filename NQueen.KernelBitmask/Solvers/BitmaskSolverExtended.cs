@@ -1,21 +1,27 @@
-// BitmaskSolverEngineFull: High-performance iterative N-Queens solver using bitmasks (bitboards)
-// Supports All, Unique, and Single solution modes, and emits events for UI/visualization.
-// Bitmask/bitboard technique allows O(1) pruning for queen placement.
-// Symmetry pruning is handled for Unique mode using SymmetryHelper.
-
 namespace NQueen.KernelBitmask.Solvers;
 
-public class BitmaskSolverExtended(ISolutionFormatter solutionFormatter)
-    : ISolverPruning, IDisposable
+public class BitmaskSolverExtended : ISolverPruning, IDisposable
 {
+    private readonly ISolutionFormatter _solutionFormatter;
+    private readonly List<int[]> _solutions = [];
+    private int _solutionCount;
+    private Guid _currentSimToken = Guid.Empty;
+    private readonly bool _disableCap = false;
+    private bool _disposed;
+    private readonly int _maxSolutionsInOutput;
+
     #region Ctors
 
     public BitmaskSolverExtended(ISolutionFormatter solutionFormatter, bool disableCap)
-        : this(solutionFormatter) => _disableCap = disableCap;
+        : this(solutionFormatter, SimulationSettings.MaxNoOfSolutionsInOutput) => _disableCap = disableCap;
 
-    public BitmaskSolverExtended(int boardSize, SolutionMode solutionMode,
-        DisplayMode displayMode, ISolutionFormatter solutionFormatter)
-            : this(solutionFormatter)
+    public BitmaskSolverExtended(
+        int boardSize,
+        SolutionMode solutionMode,
+        DisplayMode displayMode,
+        ISolutionFormatter solutionFormatter,
+        int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput)
+        : this(solutionFormatter, maxSolutionsInOutput)
     {
         BoardSize = boardSize;
         SolutionMode = solutionMode;
@@ -23,6 +29,35 @@ public class BitmaskSolverExtended(ISolutionFormatter solutionFormatter)
     }
 
     #endregion Ctors
+
+    #region IDisposable
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+        if (disposing)
+        {
+            _solutions.Clear();
+            QueenPlaced = null;
+            SolutionFound = null;
+            ProgressValueChanged = null;
+        }
+        _disposed = true;
+    }
+
+    #endregion IDisposable
+
+    public BitmaskSolverExtended(ISolutionFormatter solutionFormatter, int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput)
+    {
+        _solutionFormatter = solutionFormatter;
+        _maxSolutionsInOutput = maxSolutionsInOutput;
+    }
 
     public event EventHandler<QueenPlacedEventArgs>? QueenPlaced;
     public event EventHandler<SolutionFoundEventArgs>? SolutionFound;
@@ -44,7 +79,6 @@ public class BitmaskSolverExtended(ISolutionFormatter solutionFormatter)
 
     public Task<SimulationResults> GetSimResultsAsync(SimulationContext simContext)
     {
-        // Offload full solve to a background thread to keep UI responsive.
         return Task.Run(() =>
         {
             BoardSize = simContext.BoardSize;
@@ -81,7 +115,6 @@ public class BitmaskSolverExtended(ISolutionFormatter solutionFormatter)
 
         sw.Stop();
 
-        // No truncation here; let UI decide what/how many to display.
         var resultSolutions = _solutions
             .Select((sol, idx) => new Solution(sol, _solutionFormatter, idx + 1));
 
@@ -91,12 +124,17 @@ public class BitmaskSolverExtended(ISolutionFormatter solutionFormatter)
             Math.Round(sw.Elapsed.TotalSeconds, 1));
     }
 
+    private bool ShouldAddSolution() =>
+        _maxSolutionsInOutput <= 0 || _solutions.Count < _maxSolutionsInOutput;
+
     private void SolveAll()
     {
         BitmaskIterative(solution =>
         {
             _solutionCount++;
-            _solutions.Add((int[])solution.Clone());
+            if (ShouldAddSolution())
+                _solutions.Add((int[])solution.Clone());
+            
             SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(solution)));
             return false;
         });
@@ -109,7 +147,6 @@ public class BitmaskSolverExtended(ISolutionFormatter solutionFormatter)
             _solutionCount++;
             if (_solutions.Count == 0)
                 _solutions.Add((int[])solution.Clone());
-
             SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(solution)));
             return true;
         });
@@ -124,7 +161,8 @@ public class BitmaskSolverExtended(ISolutionFormatter solutionFormatter)
             if (SymmetryHelper.AddIfUnique(solution, uniqueSolutions, scratch))
             {
                 _solutionCount++;
-                _solutions.Add((int[])solution.Clone());
+                if (ShouldAddSolution())
+                    _solutions.Add((int[])solution.Clone());
                 SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(solution)));
             }
             return false;
@@ -150,7 +188,7 @@ public class BitmaskSolverExtended(ISolutionFormatter solutionFormatter)
         Stack<(int col, uint cols, uint diag1, uint diag2, int row)> stack = new();
         var maxRow0 = restrictFirstCol ? (N + 1) / 2 : N;
 
-        var progressStep = Math.Max(1, N * N / 200); // finer granularity
+        var progressStep = Math.Max(1, N * N / 200);
         var progressCounter = 0;
 
         var visualize = DisplayMode == DisplayMode.Visualize;
@@ -226,30 +264,4 @@ public class BitmaskSolverExtended(ISolutionFormatter solutionFormatter)
             row = 0;
         }
     }
-
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (_disposed) return;
-        if (disposing)
-        {
-            _solutions.Clear();
-            QueenPlaced = null;
-            SolutionFound = null;
-            ProgressValueChanged = null;
-        }
-        _disposed = true;
-    }
-
-    private readonly ISolutionFormatter _solutionFormatter = solutionFormatter;
-    private readonly List<int[]> _solutions = [];
-    private int _solutionCount;
-    private Guid _currentSimToken = Guid.Empty;
-    private readonly bool _disableCap = false; // kept (unused in new logic) for compatibility
-    private bool _disposed;
 }

@@ -4,15 +4,21 @@ public static class BitmaskCollectionExtensions
 {
     public static IServiceCollection AddBitmaskSolverServices(
         this IServiceCollection services,
-        bool disableCap = false)
+        bool disableCap = false,
+        int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput)
     {
         services.AddTransient<ISolutionFormatter, SolutionFormatter>();
 
         if (disableCap)
             services.AddTransient(sp =>
-                new BitmaskSolverExtended(sp.GetRequiredService<ISolutionFormatter>(), disableCap: true));
+                new BitmaskSolverExtended(
+                    sp.GetRequiredService<ISolutionFormatter>(),
+                    maxSolutionsInOutput: 0)); // 0 disables cap
         else
-            services.AddTransient<BitmaskSolverExtended>();
+            services.AddTransient<BitmaskSolverExtended>(sp =>
+                new BitmaskSolverExtended(
+                    sp.GetRequiredService<ISolutionFormatter>(),
+                    maxSolutionsInOutput: maxSolutionsInOutput));
 
         // Register all needed abstractions to same implementation
         services.AddTransient<ISolverPruning, BitmaskSolverExtended>();
