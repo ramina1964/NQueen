@@ -3,7 +3,8 @@
 public record MenuState
 {
     public bool ExitRequested { get; set; }
-    public int BlankInputCount { get; set; }
+
+        public int BlankInputCount { get; set; }
 }
 
 // Todo: Use input validation here, otherwise move input validation into ValidationHelper.
@@ -42,17 +43,30 @@ public partial class DispatchCommands
                 var context = new SimulationContext(boardSize, mode.Value, DisplayMode.Hide);
                 ShowAndHandleResults(services, context, state);
 
-                // Prompt for next action
-                Console.WriteLine("Enter to run again with the same mode, or 'back' to change mode, or 'exit (e), quit (q)' to quit:");
-                var again = Console.ReadLine();
-                if (IsQuitInput(again, state))
+                // Prompt for next action (inline, after summary)
+                while (true)
                 {
-                    state.ExitRequested = true;
-                    break;
+                    Console.Write("Enter a board size to run again with the same mode, or 'back' to change mode, or 'exit (e), quit (q)' to quit: ");
+                    var input = Console.ReadLine();
+                    if (IsQuitInput(input, state))
+                    {
+                        state.ExitRequested = true;
+                        break;
+                    }
+                    if (input?.ToLower() == "back")
+                        break;
+
+                    if (int.TryParse(input, out int nextBoardSize) && nextBoardSize >= 1 && nextBoardSize <= 32)
+                    {
+                        var nextContext = new SimulationContext(nextBoardSize, mode.Value, DisplayMode.Hide);
+                        ShowAndHandleResults(services, nextContext, state);
+                        
+                        // After running, return to prompt for the next action
+                        continue;
+                    }
                 }
-                if (again?.ToLower() == "back")
-                    break; // Return to mode selection
-                // If Enter or any other input, continue with same mode and prompt for new board size
+
+                break;
             }
         }
     }
@@ -131,32 +145,24 @@ public partial class DispatchCommands
         Console.WriteLine("Simulation started...");
         Console.WriteLine();
 
-        var solver = new BitmaskSolverExtended(context.BoardSize, context.SolutionMode, context.DisplayMode, formatter);
-        solver.EnableEvents = false; // Disable event firing for performance in Console
+        var solver = new BitmaskSolverExtended(
+            context.BoardSize, context.SolutionMode, context.DisplayMode, formatter)
+        {
+            EnableEvents = false
+        };
+
         var results = solver.Solve();
 
         // Get the summary string and print it at the top level
         var summary = GetSummaryString(context, results);
         Console.WriteLine(summary);
-
-        Console.WriteLine(UiMessages.RunAgainPrompt);
-        var again = Console.ReadLine();
-        if (IsQuitInput(again, state))
-        {
-            state.ExitRequested = true;
-            return;
-        }
-
-        if (again?.ToLower() == "back")
-            return;
-
+        // Only two blank lines before the next prompt
         Console.WriteLine();
     }
 
     // This method now only returns the summary string, does not write to the console
     public static string GetSummaryString(
-        SimulationContext context,
-        SimulationResults results)
+        SimulationContext context, SimulationResults results)
     {
         var sb = new System.Text.StringBuilder();
 
@@ -213,7 +219,4 @@ public partial class DispatchCommands
         val == "exit" || val == "quit" || val == "e" || val == "q" || val == "0";
 
     private static readonly Regex _whiteSpacesRegex = genRegEx();
-
-    //private const string UiMessages.RunAgainPrompt =
-    //    "Enter to run again, or 'back' to change mode, or 'exit (e), quit (q)' to quit: ";
 }
