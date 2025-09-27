@@ -40,15 +40,15 @@ public sealed partial class MainViewModel
     }
 
     private List<Solution> _batchedSolutions = new();
+    private int _actualTotalSolutions = 0;
 
     private void OnSolutionFound(SolutionFoundMessage message)
     {
+        _actualTotalSolutions++;
         var solutionId = _batchedSolutions.Count + 1;
         var newSolution = new Solution(message.Solution.ToArray(), _solutionFormatter, solutionId);
         _batchedSolutions.Add(newSolution);
-        NoOfSolutions = $"{_batchedSolutions.Count,0:N0}";
-
-        // Always set SelectedSolution to the first discovered one only.
+        // Do NOT update NoOfSolutions here; only update after simulation completes
         if (solutionId == 1)
             SelectedSolution = newSolution;
     }
@@ -65,6 +65,9 @@ public sealed partial class MainViewModel
                 ObservableSolutions.Clear();
                 foreach (var sol in _batchedSolutions)
                     ObservableSolutions.Add(sol);
+                // Update NoOfSolutions with the actual total from SimulationResults
+                if (SimulationResults != null)
+                    NoOfSolutions = $"{SimulationResults.SolutionsCount,0:N0}";
             });
             var first = _batchedSolutions[0];
             if (SelectedSolution == first)
@@ -78,6 +81,7 @@ public sealed partial class MainViewModel
             }
         }
         _batchedSolutions.Clear();
+        _actualTotalSolutions = 0;
     }
 
     private void OnProgressValueChanged(ProgressValueChangedMessage message)
