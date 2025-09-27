@@ -199,6 +199,10 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
         int queenPlacedCounter = 0;
         int lastDepth = -1;
 
+        // --- Progress event batching ---
+        int progressBatchStep = N >= 12 ? 10000 : Math.Max(1, N * N / 200);
+        // Use progressCounter for batching (already declared above)
+
         while (true)
         {
             if (IsSolverCanceled)
@@ -260,7 +264,7 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
             }
 
             progressCounter++;
-            if (progressCounter % progressStep == 0)
+            if (progressCounter % progressBatchStep == 0)
             {
                 var pct = (double)progressCounter / (N * N) * 100.0;
                 ProgressValueChanged?.Invoke(this,
