@@ -82,7 +82,12 @@ public sealed partial class MainViewModel
 
     private void OnProgressValueChanged(ProgressValueChangedMessage message)
     {
-        Debug.WriteLine($"[MainViewModel] ProgressValue received: {message.Value}");
+        int progressInt = Math.Clamp((int)message.Value, 0, 100);
+        double progressDouble = progressInt / 100.0;
+        ProgressVisibility = Visibility.Visible;
+        ProgressValue = progressDouble;
+        ProgressLabel = $"{progressInt}%";
+        Debug.WriteLine($"[MainViewModel] ProgressValueChanged event received: raw={message.Value}, int={progressInt}, double={progressDouble}");
     }
 
     private void OnQueenPlaced(QueenPlacedMessage message)

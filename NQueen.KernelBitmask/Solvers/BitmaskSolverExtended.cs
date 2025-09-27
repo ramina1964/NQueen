@@ -121,17 +121,38 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
 
     private void SolveAll()
     {
+        int progressBatchStep = BoardSize switch
+        {
+            <= 8 => 1,
+            <= 12 => 10,
+            <= 16 => 100,
+            _ => 1000
+        };
+        int progressCurrent = 0;
+        ProgressValueChanged?.Invoke(this,
+            new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(0.0, _currentSimToken));
+
         BitmaskIterative(solution =>
         {
             _solutionCount++;
+            progressCurrent++;
+            if (progressCurrent % progressBatchStep == 0)
+            {
+                // Emit progress as a fraction of solutions found (never 100 until end)
+                var pct = Math.Min((double)progressCurrent / (progressCurrent + progressBatchStep) * 100.0, 99.0);
+                ProgressValueChanged?.Invoke(this,
+                    new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(pct, _currentSimToken));
+            }
             if (ShouldAddSolution())
             {
                 _solutions.Add((int[])solution.Clone());
                 SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(solution)));
             }
-            // After cap reached, do not emit SolutionFound
             return false;
         });
+        // Emit final 100% progress event
+        ProgressValueChanged?.Invoke(this,
+            new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 
     private void SolveSingle()
@@ -188,20 +209,17 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
         Stack<(int col, uint cols, uint diag1, uint diag2, int row)> stack = new();
         var maxRow0 = restrictFirstCol ? (N + 1) / 2 : N;
 
-        var progressStep = Math.Max(1, N * N / 200);
-        var progressCounter = 0;
+        // --- Progress based on root-level placements ---
+        int rootPlacements = 0;
+        int rootTotal = restrictFirstCol ? maxRow0 : N;
+        ProgressValueChanged?.Invoke(this,
+            new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(0.0, _currentSimToken));
 
         var visualize = DisplayMode == DisplayMode.Visualize;
         var delay = visualize && DelayInMillisec > 0 ? DelayInMillisec : 0;
-
-        // --- QueenPlaced event sampling ---
-        int queenPlacedSampleRate = N >= 12 ? 1000 : 1; // Only emit every 1000 placements for N >= 12
+        int queenPlacedSampleRate = N >= 12 ? 1000 : 1;
         int queenPlacedCounter = 0;
         int lastDepth = -1;
-
-        // --- Progress event batching ---
-        int progressBatchStep = N >= 12 ? 10000 : Math.Max(1, N * N / 200);
-        // Use progressCounter for batching (already declared above)
 
         while (true)
         {
@@ -250,10 +268,18 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
 
             queenRows[col] = row;
 
+            // Progress: count root-level placements
+            if (col == 0)
+            {
+                rootPlacements++;
+                var pct = (double)rootPlacements / rootTotal * 100.0;
+                ProgressValueChanged?.Invoke(this,
+                    new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(pct, _currentSimToken));
+            }
+
             if (visualize)
             {
                 queenPlacedCounter++;
-                // Only emit event every queenPlacedSampleRate placements, or when depth increases
                 if (queenPlacedCounter % queenPlacedSampleRate == 0 || col > lastDepth)
                 {
                     QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(new Memory<int>(queenRows)));
@@ -263,14 +289,6 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
                     Thread.Sleep(delay);
             }
 
-            progressCounter++;
-            if (progressCounter % progressBatchStep == 0)
-            {
-                var pct = (double)progressCounter / (N * N) * 100.0;
-                ProgressValueChanged?.Invoke(this,
-                    new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(pct, _currentSimToken));
-            }
-
             stack.Push((col, cols, diag1, diag2, row));
             cols |= (1u << row);
             diag1 = (diag1 | (1u << row)) << 1;
@@ -278,6 +296,9 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
             col++;
             row = 0;
         }
+        // Emit final 100% progress event
+        ProgressValueChanged?.Invoke(this,
+            new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 
     private readonly ISolutionFormatter _solutionFormatter;

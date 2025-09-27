@@ -177,7 +177,8 @@ public sealed partial class MainViewModel
                 IsOutputReady = false;
                 ProgressVisibility = Visibility.Visible;
                 ProgressLabelVisibility = Visibility.Visible;
-                ProgressValue = 0;
+                ProgressValue = 0; // Ensure progress starts at 0
+                ProgressLabel = "0%"; // Ensure label starts at 0%
                 IsSingleRunning = SolutionMode == SolutionMode.Single;
                 break;
 
