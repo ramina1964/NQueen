@@ -121,28 +121,9 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
 
     private void SolveAll()
     {
-        int progressBatchStep = BoardSize switch
-        {
-            <= 8 => 1,
-            <= 12 => 10,
-            <= 16 => 100,
-            _ => 1000
-        };
-        int progressCurrent = 0;
-        ProgressValueChanged?.Invoke(this,
-            new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(0.0, _currentSimToken));
-
         BitmaskIterative(solution =>
         {
             _solutionCount++;
-            progressCurrent++;
-            if (progressCurrent % progressBatchStep == 0)
-            {
-                // Emit progress as a fraction of solutions found (never 100 until end)
-                var pct = Math.Min((double)progressCurrent / (progressCurrent + progressBatchStep) * 100.0, 99.0);
-                ProgressValueChanged?.Invoke(this,
-                    new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(pct, _currentSimToken));
-            }
             if (ShouldAddSolution())
             {
                 _solutions.Add((int[])solution.Clone());
@@ -150,9 +131,6 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
             }
             return false;
         });
-        // Emit final 100% progress event
-        ProgressValueChanged?.Invoke(this,
-            new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 
     private void SolveSingle()
