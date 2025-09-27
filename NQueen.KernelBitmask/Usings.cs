@@ -7,3 +7,4 @@ global using NQueen.Domain.Settings;
 global using NQueen.Domain.Utils;
 global using NQueen.KernelBitmask.Solvers;
 global using System.Diagnostics;
+global using System.Numerics;
