@@ -1,6 +1,10 @@
 ﻿namespace NQueen.Domain.EventArgsPruning;
 
-public class QueenPlacedEventArgs(Memory<int> solution) : System.EventArgs
+public readonly struct QueenPlacedEventArgs
 {
-    public Memory<int> Solution { get; } = solution;
+    public QueenPlacedEventArgs(Memory<int> solution)
+    {
+        Solution = solution;
+    }
+    public Memory<int> Solution { get; }
 }
