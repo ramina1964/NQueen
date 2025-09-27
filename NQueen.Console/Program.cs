@@ -17,14 +17,15 @@ public class Program
     {
         var services = new ServiceCollection();
 
-        // Specific dependencies for the Console App
+        // Core dependencies for the Console App
         services.AddTransient<Func<int, BoardState>>(sp => size => new BoardState(size));
         services.AddTransient<DispatchCommands>();
         services.AddTransient<ICommandProcessor, CommandProcessor>();
-        services.AddTransient<ISolutionFormatter, SolutionFormatter>();
-        services.AddSingleton<App>();
-        services.AddSingleton<ISolverPruning, SolverEngine>();
 
+        // Bitmask solver + formatter registrations (provides ISolverPruning etc.)
+        services.AddBitmaskSolverServices(disableCap: false);
+
+        services.AddSingleton<App>();
         return services.BuildServiceProvider();
     }
 }   

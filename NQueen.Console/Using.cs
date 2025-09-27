@@ -8,6 +8,7 @@ global using NQueen.Domain.Settings;
 global using NQueen.Domain.Utils;
 global using NQueen.Kernel.Services;
 global using NQueen.Kernel.Solvers;
+global using NQueen.KernelBitmask.Services;
 global using NQueen.KernelBitmask.Solvers;
 global using NQueen.Shared.Utils;
 global using System;
@@ -15,3 +16,4 @@ global using System.Diagnostics;
 global using System.Linq;
 global using System.Text.RegularExpressions;
 global using System.Threading.Tasks;
+
