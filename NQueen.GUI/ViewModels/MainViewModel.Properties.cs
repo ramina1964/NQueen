@@ -122,4 +122,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnIsOutputReadyChanged(bool value) =>
         RefreshCommandStates();
+
+    [ObservableProperty]
+    private bool _enableParallelization = true;
 }

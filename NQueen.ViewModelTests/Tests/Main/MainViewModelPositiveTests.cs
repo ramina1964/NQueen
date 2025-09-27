@@ -47,7 +47,6 @@ public class MainViewModelPositiveTests : IDisposable
         AssertionHelpers.AssertSolutionsState(mainVm);
     }
 
-    // Todo: Fix for CS7036: Add the required 'solutionFormatter' argument when constructing MainViewModel
     [Theory]
     [InlineData(8, SolutionMode.Single, DisplayMode.Visualize)]
     public void Cancel_ShouldStopSimulation(
@@ -84,29 +83,6 @@ public class MainViewModelPositiveTests : IDisposable
         AssertionHelpers.AssertChessboardState(mainVm, boardSize);
     }
 
-    //[Theory]
-    //[MemberData(nameof(NQueenTestSets.SmallValueCases), MemberType = typeof(NQueenTestSets))]
-    //public void Save_ShouldProcessSimulationResults(
-    //    int boardSize, SolutionMode solutionMode)
-    //{
-    //    // Arrange
-    //    var mockSaveFileDialogService = new MockSaveFileDialogService();
-    //    var mainVm = TestHelpers.CreateMainViewModelWithSimulationResults(
-    //        boardSize, solutionMode, mockSaveFileDialogService);
-
-    //    // Act
-    //    mainVm.SaveCommand.Execute(null);
-
-    //    // Assert
-    //    mockSaveFileDialogService.WasCalled.Should().BeTrue(TestConst.SaveDialogNotShownError);
-
-    //    var savedContent = mockSaveFileDialogService.SavedContent;
-    //    savedContent.Should().NotBeNullOrEmpty(TestConst.ContentNotSavedError);
-
-    //    AssertSavedContentProperties(savedContent!, boardSize,
-    //        solutionMode, mainVm.SimulationResults);
-    //}
-
     [Fact]
     public async Task MainViewModel_ShouldUpdateSolutionsAfterSimulation()
     {
@@ -137,11 +113,11 @@ public class MainViewModelPositiveTests : IDisposable
         SolutionMode solutionMode, bool expectedIndeterminate)
     {
         // Arrange
-        var mockSolver = new Mock<ISolver>();
+        var mockSolver = new Mock<ISolverPruning>();
         var mockFormatter = new Mock<ISolutionFormatter>().Object;
 
         mockSolver
-            .Setup(s => s.GetSimResultsAsync(It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
+            .Setup(s => s.GetSimResultsAsync(It.IsAny<SimulationContext>()))
             .Returns(async () =>
             {
                 if (solutionMode == SolutionMode.Single)
@@ -197,11 +173,11 @@ public class MainViewModelPositiveTests : IDisposable
         var mockFormatter = new Mock<ISolutionFormatter>().Object;
 
         // Create a mock solver for Unique mode
-        var mockSolver = new Mock<ISolver>();
+        var mockSolver = new Mock<ISolverPruning>();
 
         // Configure the mock solver to return a valid SimulationResults object
         mockSolver
-            .Setup(s => s.GetSimResultsAsync(boardSize, SolutionMode.Unique, displayMode))
+            .Setup(s => s.GetSimResultsAsync(It.IsAny<SimulationContext>()))
             .ReturnsAsync(new SimulationResults(
                 [
                     new Solution([1, 3, 0, 2], mockFormatter, null)
@@ -211,13 +187,12 @@ public class MainViewModelPositiveTests : IDisposable
 
         // Simulate progress updates
         mockSolver
-            .SetupAdd(s => s.ProgressValueChanged += It.IsAny<EventHandler<ProgressUpdateEventArgs>>())
-            .Callback<EventHandler<ProgressUpdateEventArgs>>(handler =>
+            .SetupAdd(s => s.ProgressValueChanged += It.IsAny<EventHandler<NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs>>())
+            .Callback<EventHandler<NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs>>(handler =>
             {
                 for (var progress = 0.1; progress <= 1.0; progress += 0.1)
                 {
-                    Debug.WriteLine($"Triggering ProgressValueChanged with progress: {progress * 100}");
-                    handler?.Invoke(mockSolver.Object, new ProgressUpdateEventArgs(progress * 100, Guid.NewGuid()));
+                    handler?.Invoke(mockSolver.Object, new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(progress * 100, Guid.NewGuid()));
                     Task.Delay(10).Wait();
                 }
             });
@@ -236,13 +211,11 @@ public class MainViewModelPositiveTests : IDisposable
         {
             if (e.PropertyName == nameof(mainVm.ProgressValue))
             {
-                Debug.WriteLine($"ProgressValue updated to: {mainVm.ProgressValue}");
                 progressDuringSimulation = mainVm.ProgressValue;
             }
         };
 
         // Act
-        Debug.WriteLine("Starting simulation...");
         mainVm.SimulateCommand.Execute(null);
 
         // Wait for the simulation to complete
@@ -251,12 +224,10 @@ public class MainViewModelPositiveTests : IDisposable
         // Wait for the progress value to be updated
         await TestHelpers.WaitForConditionAsync(() =>
         {
-            Debug.WriteLine($"Checking progressDuringSimulation: {progressDuringSimulation}");
             return progressDuringSimulation.HasValue;
         }, TimeSpan.FromSeconds(20));
 
         // Assert
-        Debug.WriteLine("Asserting progressDuringSimulation...");
         progressDuringSimulation.Should().NotBeNull("ProgressValue should be updated during the simulation.");
         progressDuringSimulation.Should().BeGreaterThan(0, "ProgressValue should be greater than 0 during the simulation.");
 
@@ -274,9 +245,9 @@ public class MainViewModelPositiveTests : IDisposable
         var mockFormatter = new Mock<ISolutionFormatter>().Object;
                 
         // Create a mock solver for All mode
-        var mockSolver = new Mock<ISolver>();
+        var mockSolver = new Mock<ISolverPruning>();
         mockSolver
-            .Setup(s => s.GetSimResultsAsync(It.IsAny<int>(), SolutionMode.All, displayMode))
+            .Setup(s => s.GetSimResultsAsync(It.IsAny<SimulationContext>()))
             .ReturnsAsync(new SimulationResults(
                 [
                     new Solution([1, 3, 0, 2], mockFormatter, null),
@@ -287,12 +258,12 @@ public class MainViewModelPositiveTests : IDisposable
 
         // Simulate progress updates
         mockSolver
-            .SetupAdd(s => s.ProgressValueChanged += It.IsAny<EventHandler<ProgressUpdateEventArgs>>())
-            .Callback<EventHandler<ProgressUpdateEventArgs>>(handler =>
+            .SetupAdd(s => s.ProgressValueChanged += It.IsAny<EventHandler<NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs>>())
+            .Callback<EventHandler<NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs>>(handler =>
             {
                 for (var progress = 0.1; progress <= 1.0; progress += 0.1)
                 {
-                    handler?.Invoke(mockSolver.Object, new ProgressUpdateEventArgs(progress * 100, Guid.NewGuid()));
+                    handler?.Invoke(mockSolver.Object, new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(progress * 100, Guid.NewGuid()));
                     Task.Delay(10).Wait();
                 }
             });

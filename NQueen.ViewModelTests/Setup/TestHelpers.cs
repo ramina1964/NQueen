@@ -5,7 +5,7 @@ public static class TestHelpers
     public static ServiceProvider CreateServiceProvider() =>
         TestServiceCollectionExtensions.InitializeForTests();
 
-    public static ServiceProvider CreateServiceProviderWithMock(ISolver mockSolver) =>
+    public static ServiceProvider CreateServiceProviderWithMock(ISolverPruning mockSolver) =>
         TestServiceCollectionExtensions.InitializeForTestsWithMock(mockSolver);
 
     public static MainViewModel CreateMainViewModel(
@@ -19,7 +19,7 @@ public static class TestHelpers
         solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>();
 
         var mainViewModel = new MainViewModel(
-            serviceProvider.GetRequiredService<ISolver>(),
+            serviceProvider.GetRequiredService<ISolverPruning>(),
             serviceProvider.GetRequiredService<IDispatcher>(),
             serviceProvider.GetRequiredService<ISaveFileDialogService>(),
             solutionFormatter);
@@ -34,7 +34,7 @@ public static class TestHelpers
     }
 
     public static MainViewModel CreateMainViewModelWithMock(
-        ISolver mockSolver,
+        ISolverPruning mockSolver,
         int boardSize = 8,
         SolutionMode solutionMode = SolutionMode.Single,
         DisplayMode displayMode = DisplayMode.Hide,
@@ -88,11 +88,12 @@ public static class TestHelpers
     public static async Task<MainViewModel> MainViewModelCreateMainViewModelWithSimulationResults(
         int boardSize,
         SolutionMode solutionMode,
+        DisplayMode displayMode,
         MockSaveFileDialogService saveFileDialogService,
         ISolutionFormatter? solutionFormatter = null)
     {
         var serviceProvider = CreateServiceProvider();
-        var solver = serviceProvider.GetRequiredService<ISolver>();
+        var solver = serviceProvider.GetRequiredService<ISolverPruning>();
         
         solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>();
         var mainVm = new MainViewModel(
@@ -103,23 +104,24 @@ public static class TestHelpers
         {
             BoardSizeText = boardSize.ToString(),
             SolutionMode = solutionMode,
+            DisplayMode = displayMode,
             IsIdle = true,
         };
 
         // Dynamically calculate simulation results
-        var simulationResults = await solver.GetSimResultsAsync(boardSize, solutionMode);
+        var simulationResults = await solver.GetSimResultsAsync(new SimulationContext(boardSize, solutionMode, displayMode, true));
         mainVm.SimulationResults = simulationResults;
         mainVm.NoOfSolutions = simulationResults.Solutions.Count().ToString();
 
         return mainVm;
     }
 
-    public static Mock<ISolver> CreateMockSolver(IEnumerable<Solution> solutions)
+    public static Mock<ISolverPruning> CreateMockSolver(IEnumerable<Solution> solutions)
     {
-        var mockSolver = new Mock<ISolver>();
+        var mockSolver = new Mock<ISolverPruning>();
         mockSolver.Setup(
             s => s.GetSimResultsAsync(
-                        It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
+                        It.IsAny<SimulationContext>()))
                   .ReturnsAsync(new SimulationResults(solutions, 0));
         
         return mockSolver;
