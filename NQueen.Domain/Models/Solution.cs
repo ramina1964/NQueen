@@ -14,7 +14,7 @@ public class Solution
         Name = $"No. {id}";
         QueenPositions = queenPositions;
         Positions = MapQueenArrayToPositions(QueenPositions);
-        Details = formatter.FormatSolutions(Positions);
+        _formatter = formatter;
     }
 
     public IReadOnlyList<Position> Positions { get; }
@@ -25,10 +25,14 @@ public class Solution
 
     public int[] QueenPositions { get; }
 
-    public string Details { get; }
+    public string Details => _details ??= _formatter.FormatSolutions(Positions);
 
     public sealed override string ToString() => Name;
 
     private static LazyPositionList MapQueenArrayToPositions(int[] queenPositions) =>
         new(queenPositions);
+
+    // --- Lazy formatting fields ---
+    private readonly ISolutionFormatter _formatter;
+    private string? _details;
 }
