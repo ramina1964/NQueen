@@ -2,14 +2,6 @@ namespace NQueen.KernelBitmask.Solvers;
 
 public class BitmaskSolverExtended : ISolverPruning, IDisposable
 {
-    private readonly ISolutionFormatter _solutionFormatter;
-    private readonly List<int[]> _solutions = [];
-    private int _solutionCount;
-    private Guid _currentSimToken = Guid.Empty;
-    private readonly bool _disableCap = false;
-    private bool _disposed;
-    private readonly int _maxSolutionsInOutput;
-
     #region Ctors
 
     public BitmaskSolverExtended(ISolutionFormatter solutionFormatter, bool disableCap)
@@ -194,6 +186,11 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
         var visualize = DisplayMode == DisplayMode.Visualize;
         var delay = visualize && DelayInMillisec > 0 ? DelayInMillisec : 0;
 
+        // --- QueenPlaced event sampling ---
+        int queenPlacedSampleRate = N >= 12 ? 1000 : 1; // Only emit every 1000 placements for N >= 12
+        int queenPlacedCounter = 0;
+        int lastDepth = -1;
+
         while (true)
         {
             if (IsSolverCanceled)
@@ -243,7 +240,13 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
 
             if (visualize)
             {
-                QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(new Memory<int>(queenRows)));
+                queenPlacedCounter++;
+                // Only emit event every queenPlacedSampleRate placements, or when depth increases
+                if (queenPlacedCounter % queenPlacedSampleRate == 0 || col > lastDepth)
+                {
+                    QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(new Memory<int>(queenRows)));
+                    lastDepth = col;
+                }
                 if (delay > 0)
                     Thread.Sleep(delay);
             }
@@ -253,7 +256,7 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
             {
                 var pct = (double)progressCounter / (N * N) * 100.0;
                 ProgressValueChanged?.Invoke(this,
-                    new ProgressUpdateEventArgs(pct, _currentSimToken));
+                    new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(pct, _currentSimToken));
             }
 
             stack.Push((col, cols, diag1, diag2, row));
@@ -264,4 +267,12 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
             row = 0;
         }
     }
+
+    private readonly ISolutionFormatter _solutionFormatter;
+    private readonly List<int[]> _solutions = [];
+    private int _solutionCount;
+    private Guid _currentSimToken = Guid.Empty;
+    private readonly bool _disableCap = false;
+    private bool _disposed;
+    private readonly int _maxSolutionsInOutput;
 }
