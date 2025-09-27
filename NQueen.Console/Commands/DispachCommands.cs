@@ -41,6 +41,18 @@ public partial class DispatchCommands
 
                 var context = new SimulationContext(boardSize, mode.Value, DisplayMode.Hide);
                 ShowAndHandleResults(services, context, state);
+
+                // Prompt for next action
+                Console.WriteLine("Enter to run again with the same mode, or 'back' to change mode, or 'exit (e), quit (q)' to quit:");
+                var again = Console.ReadLine();
+                if (IsQuitInput(again, state))
+                {
+                    state.ExitRequested = true;
+                    break;
+                }
+                if (again?.ToLower() == "back")
+                    break; // Return to mode selection
+                // If Enter or any other input, continue with same mode and prompt for new board size
             }
         }
     }
@@ -120,6 +132,7 @@ public partial class DispatchCommands
         Console.WriteLine();
 
         var solver = new BitmaskSolverExtended(context.BoardSize, context.SolutionMode, context.DisplayMode, formatter);
+        solver.EnableEvents = false; // Disable event firing for performance in Console
         var results = solver.Solve();
 
         // Get the summary string and print it at the top level

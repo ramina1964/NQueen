@@ -127,7 +127,9 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
             if (ShouldAddSolution())
             {
                 _solutions.Add((int[])solution.Clone());
-                SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(solution)));
+                if (EnableEvents)
+                    SolutionFound?.Invoke(this,
+                        new SolutionFoundEventArgs(new Memory<int>(solution)));
             }
             return false;
         });
@@ -141,7 +143,8 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
             if (_solutions.Count == 0)
             {
                 _solutions.Add((int[])solution.Clone());
-                SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(solution)));
+                if (EnableEvents)
+                    SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(solution)));
             }
             // After first solution, do not emit SolutionFound
             return true;
@@ -160,7 +163,8 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
                 if (ShouldAddSolution())
                 {
                     _solutions.Add((int[])solution.Clone());
-                    SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(solution)));
+                    if (EnableEvents)
+                        SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(solution)));
                 }
                 // After cap reached, do not emit SolutionFound
             }
@@ -286,4 +290,6 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
     private readonly bool _disableCap = false;
     private bool _disposed;
     private readonly int _maxSolutionsInOutput;
+
+    public bool EnableEvents { get; set; } = true;
 }
