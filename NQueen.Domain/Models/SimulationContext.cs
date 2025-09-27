@@ -3,4 +3,5 @@
 public record SimulationContext(
     int BoardSize,
     SolutionMode SolutionMode,
-    DisplayMode DisplayMode);
+    DisplayMode DisplayMode,
+    bool EnableParallelization = true);

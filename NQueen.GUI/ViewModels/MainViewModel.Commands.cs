@@ -111,7 +111,7 @@ public sealed partial class MainViewModel
             ManageSimulationStatus(SimulationStatus.Started);
             UpdateUiState();
 
-            var simContext = new SimulationContext(boardSize, SolutionMode, DisplayMode);
+            var simContext = new SimulationContext(boardSize, SolutionMode, DisplayMode, EnableParallelization);
             _solver.DelayInMillisec = DelayInMilliseconds;
 
             SimulationResults = await _solver.GetSimResultsAsync(simContext);

@@ -1,4 +1,6 @@
-﻿namespace NQueen.ViewModelTests.Setup;
+﻿using NQueen.KernelBitmask.Services;
+
+namespace NQueen.ViewModelTests.Setup;
 
 public static class TestServiceCollectionExtensions
 {
@@ -15,9 +17,8 @@ public static class TestServiceCollectionExtensions
         services.AddTransient<ISolutionManager, SolutionManager>();
         services.AddTransient<SolverEngine>();
 
-        // Register SolverEngine as both ISolver and ISolverBackEnd
-        services.AddSingleton<ISolver, SolverEngine>();
-        services.AddSingleton<ISolverBackEnd>(sp => sp.GetRequiredService<ISolver>());
+        // Register BitmaskSolverExtended as ISolverPruning
+        services.AddBitmaskSolverServices(disableCap: true);
 
         services.AddTransient<SimulationOrchestrator>();
 
@@ -29,7 +30,7 @@ public static class TestServiceCollectionExtensions
         return services.BuildServiceProvider();
     }
 
-    public static ServiceProvider InitializeForTestsWithMock(ISolver mockSolver)
+    public static ServiceProvider InitializeForTestsWithMock(ISolverPruning mockSolver)
     {
         var services = new ServiceCollection();
 
@@ -41,9 +42,8 @@ public static class TestServiceCollectionExtensions
         services.AddTransient<Func<int, BoardState>>(sp => size => new BoardState(size));
         services.AddTransient<ISolutionManager, SolutionManager>();
 
-        // Register the mock as both ISolver and ISolverBackEnd
-        services.AddSingleton<ISolver>(mockSolver);
-        services.AddSingleton<ISolverBackEnd>(mockSolver);
+        // Register the mock as ISolverPruning
+        services.AddSingleton<ISolverPruning>(mockSolver);
 
         services.AddTransient<SimulationOrchestrator>();
 
