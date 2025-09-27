@@ -136,18 +136,12 @@
                     Value="{Binding DelayInMilliseconds, Mode=TwoWay}" />
 
                 <!--  Parallelization  -->
-                <Label
-                    Grid.Row="4"
-                    Grid.Column="0"
-                    Margin="5,2"
-                    Content="Parallel"
-                    Style="{StaticResource LabelStyle}" />
-
                 <CheckBox
                     Grid.Row="4"
-                    Grid.Column="1"
-                    Margin="0,2,5,2"
+                    Grid.Column="0"
+                    Margin="5,10"
                     HorizontalAlignment="Right"
+                    Content="Enable Parallelization"
                     IsEnabled="{Binding IsInInputMode}"
                     IsChecked="{Binding EnableParallelization, Mode=TwoWay}" />
 

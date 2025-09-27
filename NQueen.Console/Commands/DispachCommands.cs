@@ -4,7 +4,9 @@ public record MenuState
 {
     public bool ExitRequested { get; set; }
 
-        public int BlankInputCount { get; set; }
+    public int BlankInputCount { get; set; }
+
+    public bool EnableParallelization { get; set; } = true;
 }
 
 // Todo: Use input validation here, otherwise move input validation into ValidationHelper.
@@ -15,9 +17,11 @@ public partial class DispatchCommands
     public static void RunInteractiveMenu(IServiceProvider services)
     {
         var state = new MenuState();
-
+        Console.WriteLine($"Parallelization is ENABLED by default. Type 'toggle' at any prompt to switch.");
         while (state.ExitRequested == false)
         {
+            // Option to toggle parallelization
+            Console.WriteLine($"Current parallelization: {(state.EnableParallelization ? "ENABLED" : "DISABLED")}");
             // Select Solution Mode (Bitmask solver is implicit)
             var mode = ShowSolutionModeMenu(state);
             if (state.ExitRequested)
@@ -40,13 +44,13 @@ public partial class DispatchCommands
                 if (boardSize == -1)
                     break;
 
-                var context = new SimulationContext(boardSize, mode.Value, DisplayMode.Hide);
+                var context = new SimulationContext(boardSize, mode.Value, DisplayMode.Hide, state.EnableParallelization);
                 ShowAndHandleResults(services, context, state);
 
                 // Prompt for next action (inline, after summary)
                 while (true)
                 {
-                    Console.Write("Enter a board size to run again with the same mode, or 'back' to change mode, or 'exit (e), quit (q)' to quit: ");
+                    Console.Write("Enter a board size, 'back', 'exit', or 'toggle' to switch parallelization: ");
                     var input = Console.ReadLine();
                     if (IsQuitInput(input, state))
                     {
@@ -55,10 +59,16 @@ public partial class DispatchCommands
                     }
                     if (input?.ToLower() == "back")
                         break;
+                    if (input?.ToLower() == "toggle")
+                    {
+                        state.EnableParallelization = !state.EnableParallelization;
+                        Console.WriteLine($"Parallelization is now {(state.EnableParallelization ? "ENABLED" : "DISABLED")}");
+                        continue;
+                    }
 
                     if (int.TryParse(input, out int nextBoardSize) && nextBoardSize >= 1 && nextBoardSize <= 32)
                     {
-                        var nextContext = new SimulationContext(nextBoardSize, mode.Value, DisplayMode.Hide);
+                        var nextContext = new SimulationContext(nextBoardSize, mode.Value, DisplayMode.Hide, state.EnableParallelization);
                         ShowAndHandleResults(services, nextContext, state);
                         
                         // After running, return to prompt for the next action
