@@ -39,16 +39,34 @@ public sealed partial class MainViewModel
         WeakReferenceMessenger.Default.Unregister<SolutionFoundMessage>(this);
     }
 
+    private List<Solution> _batchedSolutions = new();
+
+    private void OnSolutionFound(SolutionFoundMessage message)
+    {
+        var solutionId = _batchedSolutions.Count + 1;
+        var newSolution = new Solution(message.Solution.ToArray(), _solutionFormatter, solutionId);
+        _batchedSolutions.Add(newSolution);
+        NoOfSolutions = $"{_batchedSolutions.Count,0:N0}";
+
+        // Always set SelectedSolution to the first discovered one only.
+        if (solutionId == 1)
+            SelectedSolution = newSolution;
+    }
+
     private void OnSimulationCompleted()
     {
         SimulationCompleted?.Invoke(this, EventArgs.Empty);
 
-        // After simulation finishes always visualize the FIRST solution (if any)
-        if (ObservableSolutions.Count > 0)
+        // Batch add all solutions after simulation
+        if (_batchedSolutions.Count > 0)
         {
-            var first = ObservableSolutions[0];
-
-            // If SelectedSolution was already the first (but hidden during simulation), force a redraw
+            _uiDispatcher.Invoke(() =>
+            {
+                ObservableSolutions.Clear();
+                foreach (var sol in _batchedSolutions)
+                    ObservableSolutions.Add(sol);
+            });
+            var first = _batchedSolutions[0];
             if (SelectedSolution == first)
             {
                 EnsureBoardSized();
@@ -56,10 +74,10 @@ public sealed partial class MainViewModel
             }
             else
             {
-                // Setting SelectedSolution will trigger OnSelectedSolutionChanged and render
                 SelectedSolution = first;
             }
         }
+        _batchedSolutions.Clear();
     }
 
     private void OnProgressValueChanged(ProgressValueChangedMessage message)
@@ -114,62 +132,6 @@ public sealed partial class MainViewModel
             positions.Add(new Position(c, span[c]));
 
         ChessboardVm.PlaceQueens(positions);
-    }
-
-    private void OnSolutionFound(SolutionFoundMessage message)
-    {
-        var solutionId = ObservableSolutions.Count + 1;
-        var newSolution = new Solution(message.Solution.ToArray(), _solutionFormatter, solutionId);
-        AddSolutionToObservable(newSolution);
-        NoOfSolutions = $"{ObservableSolutions.Count,0:N0}";
-
-        // Always set SelectedSolution to the first discovered one only.
-        if (solutionId == 1)
-            SelectedSolution = newSolution;
-    }
-
-    private void AddSolutionToObservable(Solution solution)
-    {
-        if (solution is null)
-            return;
-
-        // Prevent late (post-cancel) or stray additions:
-        //  - If solver canceled, ignore.
-        //  - If simulation not running AND output not finalized (IsOutputReady == false), ignore.
-        if (_solver.IsSolverCanceled || (IsSimulating == false && IsOutputReady == false))
-            return;
-
-        _uiDispatcher.Invoke(() =>
-        {
-            if (_solver.IsSolverCanceled || (IsSimulating == false && IsOutputReady == false))
-                return;
-
-            if (ObservableSolutions.Any(s => s.Id == solution.Id))
-                return;
-
-            int cap = SimulationSettings.MaxNoOfSolutionsInOutput;
-            if (cap > 0 && ObservableSolutions.Count >= cap)
-                return;
-
-            ObservableSolutions.Add(solution);
-        });
-    }
-
-    private void OnQueenPlacedEvent(object? sender, NQueen.Domain.EventArgsPruning.QueenPlacedEventArgs e) =>
-        WeakReferenceMessenger.Default.Send(new QueenPlacedMessage(e.Solution, 0));
-
-    private void OnSolutionFoundEvent(object? sender, NQueen.Domain.EventArgsPruning.SolutionFoundEventArgs e)
-    {
-        if (_solver.IsSolverCanceled || IsSimulating == false && IsOutputReady == false)
-            return;
-
-        WeakReferenceMessenger.Default.Send(new SolutionFoundMessage(e.Solution));
-    }
-
-    private void OnProgressValueChangedEvent(object? sender, NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs e)
-    {
-        Debug.WriteLine($"[MainViewModel] OnProgressValueChangedEvent: Value={e.Value}");
-        WeakReferenceMessenger.Default.Send(new ProgressValueChangedMessage(e.Value));
     }
 
     // Show selected solution after simulation regardless of DisplayMode.
@@ -249,5 +211,22 @@ public sealed partial class MainViewModel
                 ChessboardVm.CreateSquares(boardSize);
             }
         }
+    }
+
+    // Restore event handler methods for event wiring
+    private void OnQueenPlacedEvent(object? sender, NQueen.Domain.EventArgsPruning.QueenPlacedEventArgs e) =>
+        WeakReferenceMessenger.Default.Send(new QueenPlacedMessage(e.Solution, 0));
+
+    private void OnSolutionFoundEvent(object? sender, NQueen.Domain.EventArgsPruning.SolutionFoundEventArgs e)
+    {
+        if (_solver.IsSolverCanceled || IsSimulating == false && IsOutputReady == false)
+            return;
+        WeakReferenceMessenger.Default.Send(new SolutionFoundMessage(e.Solution));
+    }
+
+    private void OnProgressValueChangedEvent(object? sender, NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs e)
+    {
+        Debug.WriteLine($"[MainViewModel] OnProgressValueChangedEvent: Value={e.Value}");
+        WeakReferenceMessenger.Default.Send(new ProgressValueChangedMessage(e.Value));
     }
 }
