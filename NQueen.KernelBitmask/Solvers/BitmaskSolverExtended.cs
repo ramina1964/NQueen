@@ -188,26 +188,6 @@ public class BitmaskSolverExtended(
     private void SolveAllParallel() =>
         ParallelRootSplit(onSolution: rows => { _solutionCount++; if (ShouldAddSolution()) { lock (_solutions) { _solutions.Add(rows); if (EnableEvents) SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows))); } } return false; }, restrictFirstCol: false, enhancedSymmetry: false);
 
-    private void SolveSingleParallel() =>
-        ParallelRootSplit(onSolution: rows =>
-        {
-            _solutionCount++;
-            if (_solutions.Count == 0)
-            {
-                lock (_solutions)
-                {
-                    if (_solutions.Count == 0)
-                    {
-                        _solutions.Add(rows);
-                        if (EnableEvents)
-                            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows)));
-                    }
-                }
-                return true;
-            }
-            return true;
-        }, restrictFirstCol: false, enhancedSymmetry: false);
-
     private void SolveUniqueParallel()
     {
         int N = BoardSize;
