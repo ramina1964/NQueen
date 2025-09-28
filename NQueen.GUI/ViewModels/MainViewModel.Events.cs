@@ -205,9 +205,14 @@ public sealed partial class MainViewModel
 
     partial void OnDisplayModeChanged(DisplayMode value)
     {
+        // First attempt to clear any stale visualization constraint error
+        // (defined in Validation partial; safe no-op if it didn’t exist earlier).
+        ClearVisualizationConstraintIfSatisfied();
+
         if (_solver == null)
             return;
 
+        // Re-run validation (this will also re-set IsValid and command states).
         if (ValidateAndSetUiState() == false)
             return;
 
@@ -218,7 +223,7 @@ public sealed partial class MainViewModel
             if (value == DisplayMode.Hide)
                 ChessboardVm?.ClearImages();
 
-            // If switched to Visualize mid single-mode run, ensure label remains hidden.
+            // If switching to Visualize in a single-solution run, keep percentage hidden.
             if (SolutionMode == SolutionMode.Single && value == DisplayMode.Visualize)
             {
                 ProgressLabelVisibility = Visibility.Hidden;
@@ -227,6 +232,7 @@ public sealed partial class MainViewModel
             return;
         }
 
+        // Not simulating: re-render current selection (if any)
         RenderSelectedSolution();
     }
 

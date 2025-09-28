@@ -25,7 +25,7 @@ public static class ErrorMessages
 
     // DisplayMode.Visualize limit message
     public static string VisualizeSizeTooLarge =>
-        $"Visualization is only supported for board sizes up to {SimulationSettings.MaxVisualizeBoardSize}. Switch to Hide mode for larger boards.";
+        $"Visualization is only supported for boards up to {SimulationSettings.MaxVisualizeBoardSize}. Switch to Hide mode for larger boards.";
 
     public static string GetTimeoutMessage(TimeSpan timeout) =>
         $"Condition was not met within the timeout period of {timeout.TotalSeconds} seconds.";

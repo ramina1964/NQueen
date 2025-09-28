@@ -7,70 +7,140 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
     private void ValidateProperty(string propertyName)
     {
-        Console.WriteLine($"Validating property: {propertyName}");
+        if (propertyName != nameof(BoardSizeText))
+            return;
 
         _errors.Remove(propertyName);
 
-        // Explicitly handle empty BoardSizeText
-        if (propertyName == nameof(BoardSizeText) && string.IsNullOrWhiteSpace(BoardSizeText))
+        if (string.IsNullOrWhiteSpace(BoardSizeText))
         {
-            Console.WriteLine("BoardSizeText is empty or whitespace.");
-            _errors[propertyName] = [ErrorMessages.ValueNullOrWhiteSpaceMsg];
-            OnErrorsChanged(propertyName);
-            OnPropertyChanged(nameof(BoardSizeError));
+            AddBoardSizeError(ErrorMessages.ValueNullOrWhiteSpaceMsg);
+            FinalizeBoardSizeValidation(propertyName);
             return;
         }
 
         var validationResults = InputViewModel.ValidateBoardSize(BoardSizeText);
-        Console.WriteLine($"Validation results: {validationResults.IsValid}");
-
         var propertyErrors = validationResults.Errors
-            .Where(error => error.PropertyName == nameof(BoardSizeText))
-            .Select(error => error.ErrorMessage)
+            .Where(e => e.PropertyName == nameof(BoardSizeText))
+            .Select(e => e.ErrorMessage)
             .ToList();
 
-        if (propertyErrors.Count != 0)
+        foreach (var err in propertyErrors)
+            AddBoardSizeError(err);
+
+        // Visualization constraint
+        if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize)
+            && DisplayMode == DisplayMode.Visualize
+            && boardSize > SimulationSettings.MaxVisualizeBoardSize)
         {
-            Console.WriteLine($"Adding errors: {string.Join(", ", propertyErrors)}");
-            _errors[propertyName] = propertyErrors;
+            AddBoardSizeError(ErrorMessages.VisualizeSizeTooLarge);
+        }
+
+        FinalizeBoardSizeValidation(propertyName);
+    }
+
+    private void AddBoardSizeError(string message)
+    {
+        if (_errors.TryGetValue(nameof(BoardSizeText), out var list) == false)
+        {
+            list = new List<string>();
+            _errors[nameof(BoardSizeText)] = list;
+        }
+        if (list.Contains(message) == false)
+            list.Add(message);
+    }
+
+    private void FinalizeBoardSizeValidation(string propertyName)
+    {
+        if (_errors.TryGetValue(propertyName, out var errs) && errs.Count > 0)
+        {
             OnErrorsChanged(propertyName);
+            OnPropertyChanged(nameof(BoardSizeError));
+            IsValid = false;
+            InvalidateVisualizationState();
         }
         else
         {
-            Console.WriteLine("No errors found.");
+            // No errors -> mark valid and re-enable commands
+            IsValid = true;
             OnErrorsChanged(propertyName);
-        }
-
-        // Notify UI that BoardSizeError may have changed
-        if (propertyName == nameof(BoardSizeText))
             OnPropertyChanged(nameof(BoardSizeError));
+            RefreshCommandStates();
+        }
     }
 
-    private void OnErrorsChanged(string propertyName) =>
-        ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
+    private void InvalidateVisualizationState()
+    {
+        ObservableSolutions.Clear();
+        SelectedSolution = null!;
+        ChessboardVm?.ClearImages();
+        NoOfSolutions = "0";
+        IsOutputReady = false;
+        IsSimulating = false;
+        RefreshCommandStates();
+    }
+
+    // Clears ONLY the visualization constraint error if the condition is no longer violated.
+    private void ClearVisualizationConstraintIfSatisfied()
+    {
+        if (_errors.TryGetValue(nameof(BoardSizeText), out var list) == false || list.Count == 0)
+            return;
+
+        if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) == false)
+            return;
+
+        // Condition satisfied (either not visualizing, or within allowed size)
+        if (DisplayMode != DisplayMode.Visualize ||
+            boardSize <= SimulationSettings.MaxVisualizeBoardSize)
+        {
+            if (list.Remove(ErrorMessages.VisualizeSizeTooLarge))
+            {
+                if (list.Count == 0)
+                {
+                    _errors.Remove(nameof(BoardSizeText));
+                    IsValid = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
+                }
+                OnErrorsChanged(nameof(BoardSizeText));
+                OnPropertyChanged(nameof(BoardSizeError));
+                RefreshCommandStates();
+            }
+        }
+    }
 
     private bool ValidateAndSetUiState(bool updateOutputReady = true)
     {
-        // Explicitly check for empty BoardSizeText
         if (string.IsNullOrWhiteSpace(BoardSizeText))
         {
             IsValid = false;
-            IsIdle = false;
-            IsSimulating = false;
-            if (updateOutputReady)
-                IsOutputReady = false;
-
+            InvalidateVisualizationState();
+            if (updateOutputReady) IsOutputReady = false;
             return false;
         }
 
-        IsValid = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
+        var valid = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
+
+        if (valid &&
+            DisplayMode == DisplayMode.Visualize &&
+            ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) &&
+            boardSize > SimulationSettings.MaxVisualizeBoardSize)
+        {
+            AddBoardSizeError(ErrorMessages.VisualizeSizeTooLarge);
+            OnErrorsChanged(nameof(BoardSizeText));
+            OnPropertyChanged(nameof(BoardSizeError));
+            valid = false;
+        }
+        else
+        {
+            // If visualization constraint is no longer broken, clear that specific error
+            ClearVisualizationConstraintIfSatisfied();
+        }
+
+        IsValid = valid;
+
         if (!IsValid)
         {
-            IsIdle = false;
-            IsSimulating = false;
-            if (updateOutputReady)
-                IsOutputReady = false;
-
+            InvalidateVisualizationState();
+            if (updateOutputReady) IsOutputReady = false;
             return false;
         }
 
@@ -79,6 +149,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         if (updateOutputReady)
             IsOutputReady = false;
 
+        RefreshCommandStates();
         return true;
     }
 
@@ -87,12 +158,8 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
     partial void OnSolutionModeChanged(SolutionMode value)
     {
-        // Preserve the current value of BoardSizeText
         var currentBoardSizeText = BoardSizeText;
-
         ResetAndValidateSimulationState(solutionMode: value);
-
-        // Restore the preserved value of BoardSizeText
         BoardSizeText = currentBoardSizeText;
     }
 
@@ -103,19 +170,20 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         SubscribeToSimulationEvents();
         ResetSimulationState();
 
-        // Update InputViewModel if SolutionMode is provided
         if (solutionMode.HasValue)
         {
             InputViewModel = new InputViewModel(solutionMode.Value);
             BoardSizeText = BoardSettings.DefaultBoardSize.ToString();
         }
 
-        // Validate the board size text
         if (string.IsNullOrEmpty(boardSizeText) == false)
         {
             if (ParsingUtils.TryParseInt(boardSizeText, out var boardSize))
                 _lastValidBoardSize = boardSize;
-
+            ValidateProperty(nameof(BoardSizeText));
+        }
+        else
+        {
             ValidateProperty(nameof(BoardSizeText));
         }
 
@@ -133,10 +201,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
     private void ResetSimulationState()
     {
         ObservableSolutions.Clear();
-
-        // Provide a valid queenPositions array to avoid exceptions
         SelectedSolution = null!;
-
         ProgressValue = 0.0;
         ProgressLabel = "0%";
         NoOfSolutions = "0";
@@ -145,13 +210,14 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         IsOutputReady = false;
         IsSimulating = false;
 
-        // Reset the chessboard as part of simulation state reset
         if (ChessboardVm != null)
         {
             var boardDimension = Math.Min(
                 ChessboardVm.WindowWidth, ChessboardVm.WindowHeight);
-
             ResetChessboard(boardDimension);
         }
     }
+
+    private void OnErrorsChanged(string propertyName) =>
+        ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
 }
