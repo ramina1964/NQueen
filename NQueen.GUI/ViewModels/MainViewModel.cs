@@ -71,21 +71,26 @@ public sealed partial class MainViewModel :
 
     public void ResetChessboard(double boardDimension)
     {
-        // If BoardSizeText is invalid, do not clear the chessboard, just return
-        if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) == false)
+        // Treat "DisplayMode=Visualize && BoardSize > MaxVisualizeBoardSize" exactly like
+        // any other invalid input: do NOT mutate the current board (prevents distortion).
+        // Also skip if parse fails or base validator fails.
+        if (!ParsingUtils.TryParseInt(BoardSizeText, out var parsedSize))
             return;
 
-        // Validate board size for the current solution mode, if invalid, just return
-        var validationResult = InputViewModel.ValidateBoardSize(BoardSizeText);
-        if (validationResult.IsValid == false)
-            return;
+        var baseValidationOk = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
+        var visualizationInvalid =
+            DisplayMode == DisplayMode.Visualize &&
+            parsedSize > SimulationSettings.MaxVisualizeBoardSize;
 
-        // Explicitly clear any queen images before resetting the chessboard
+        if (!baseValidationOk || visualizationInvalid)
+            return; // Leave existing board state untouched (matches invalid input behavior).
+
+        // At this point the combination is valid; proceed with a proper rebuild.
         ChessboardVm.ClearImages();
-
         ChessboardVm.WindowWidth = boardDimension;
         ChessboardVm.WindowHeight = boardDimension;
-        ChessboardVm.CreateSquares(boardSize);
+        ChessboardVm.CreateSquares(parsedSize);
+
         IsIdle = true;
         IsSimulating = false;
     }

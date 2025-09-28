@@ -61,7 +61,6 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         }
         else
         {
-            // No errors -> mark valid and re-enable commands
             IsValid = true;
             OnErrorsChanged(propertyName);
             OnPropertyChanged(nameof(BoardSizeError));
@@ -80,7 +79,6 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         RefreshCommandStates();
     }
 
-    // Clears ONLY the visualization constraint error if the condition is no longer violated.
     private void ClearVisualizationConstraintIfSatisfied()
     {
         if (_errors.TryGetValue(nameof(BoardSizeText), out var list) == false || list.Count == 0)
@@ -89,7 +87,6 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) == false)
             return;
 
-        // Condition satisfied (either not visualizing, or within allowed size)
         if (DisplayMode != DisplayMode.Visualize ||
             boardSize <= SimulationSettings.MaxVisualizeBoardSize)
         {
@@ -131,7 +128,6 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         }
         else
         {
-            // If visualization constraint is no longer broken, clear that specific error
             ClearVisualizationConstraintIfSatisfied();
         }
 
@@ -158,9 +154,23 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
     partial void OnSolutionModeChanged(SolutionMode value)
     {
-        var currentBoardSizeText = BoardSizeText;
+        var previousBoardSizeText = BoardSizeText;
+
         ResetAndValidateSimulationState(solutionMode: value);
-        BoardSizeText = currentBoardSizeText;
+
+        if (string.IsNullOrWhiteSpace(previousBoardSizeText))
+            return;
+        if (!ParsingUtils.TryParseInt(previousBoardSizeText, out var prevSize))
+            return;
+
+        var validationResult = InputViewModel.ValidateBoardSize(previousBoardSizeText);
+        bool validForNewMode = validationResult.IsValid;
+        bool visualizationOk =
+            DisplayMode != DisplayMode.Visualize ||
+            prevSize <= SimulationSettings.MaxVisualizeBoardSize;
+
+        if (validForNewMode && visualizationOk && previousBoardSizeText != BoardSizeText)
+            BoardSizeText = previousBoardSizeText;
     }
 
     private void ResetAndValidateSimulationState(string? boardSizeText = null,
