@@ -2,9 +2,10 @@
 
 public sealed partial class MainViewModel
 {
-    // Batching of solutions discovered during simulation
+    // Batching / state fields
     private List<Solution> _batchedSolutions = new();
     private int _actualTotalSolutions = 0;
+    private bool _hasProgressTick;
 
     private void SubscribeToSimulationEvents()
     {
@@ -15,9 +16,20 @@ public sealed partial class MainViewModel
         if (_solver == null)
             return;
 
+        _hasProgressTick = false;
+
         _solver.QueenPlaced += OnQueenPlacedEvent;
         _solver.SolutionFound += OnSolutionFoundEvent;
         _solver.ProgressValueChanged += OnProgressValueChangedEvent;
+
+        // Ensure visible baseline progress immediately
+        _uiDispatcher.Invoke(() =>
+        {
+            ProgressVisibility = Visibility.Visible;
+            ProgressLabelVisibility = Visibility.Visible;
+            ProgressValue = 0;
+            ProgressLabel = "0%";
+        });
     }
 
     private void UnsubscribeFromSimulationEvents()
@@ -30,7 +42,7 @@ public sealed partial class MainViewModel
         _solver.ProgressValueChanged -= OnProgressValueChangedEvent;
     }
 
-    // Called by ManageSimulationStatus when transitioning to Finished
+    // Called from ManageSimulationStatus(Finished)
     private void OnSimulationCompleted()
     {
         SimulationCompleted?.Invoke(this, EventArgs.Empty);
@@ -39,7 +51,6 @@ public sealed partial class MainViewModel
         {
             _uiDispatcher.Invoke(() =>
             {
-                // Replace list with full batched list
                 ObservableSolutions.Clear();
                 foreach (var sol in _batchedSolutions)
                     ObservableSolutions.Add(sol);
@@ -48,12 +59,9 @@ public sealed partial class MainViewModel
                     NoOfSolutions = $"{SimulationResults.SolutionsCount,0:N0}";
 
                 var first = _batchedSolutions[0];
-
-                // Ensure SelectedSolution references the instance now stored in ObservableSolutions
                 if (!ReferenceEquals(SelectedSolution, first))
                     SelectedSolution = first;
 
-                // Unconditionally render the (already) selected solution after simulation completed.
                 RenderSelectedSolution();
             });
         }
@@ -62,26 +70,23 @@ public sealed partial class MainViewModel
         _actualTotalSolutions = 0;
     }
 
-    #region Solver Event Handlers (direct, no messenger)
-
+    // Solution found event (batched)
     private void OnSolutionFoundEvent(object? sender, NQueen.Domain.EventArgsPruning.SolutionFoundEventArgs e)
     {
         if (_solver.IsSolverCanceled || (IsSimulating == false && IsOutputReady == false))
             return;
 
-        // Pure data work can stay on worker thread
         _actualTotalSolutions++;
 
         var solutionId = _batchedSolutions.Count + 1;
         var newSolution = new Solution(e.Solution.ToArray(), _solutionFormatter, solutionId);
         _batchedSolutions.Add(newSolution);
 
-        // UI-affecting property set must be on UI thread
         if (solutionId == 1)
         {
+            // Only store selection; rendering may be suppressed while simulating/hide mode
             _uiDispatcher.Invoke(() =>
             {
-                // Guard again in case of cancel between enqueue & invoke
                 if (_solver.IsSolverCanceled)
                     return;
                 SelectedSolution = newSolution;
@@ -89,17 +94,58 @@ public sealed partial class MainViewModel
         }
     }
 
+    // Progress handling
+    private void OnProgressValueChangedEvent(object? sender, NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs e)
+    {
+        _uiDispatcher.Invoke(() =>
+        {
+            int progressInt = Math.Clamp((int)e.Value, 0, 100);
+            double progressDouble = progressInt / 100.0;
+
+            ProgressVisibility = Visibility.Visible;
+            ProgressLabelVisibility = Visibility.Visible;
+            ProgressValue = progressDouble;
+            ProgressLabel = $"{progressInt}%";
+
+            if (progressInt is > 0 and < 100)
+                _hasProgressTick = true;
+
+            Debug.WriteLine($"[MainViewModel] Progress event: raw={e.Value}, mapped={progressInt}%");
+        });
+    }
+
+    // Early tick if solver finishes too fast
+    private void MaybeForceEarlyProgress()
+    {
+        if (_hasProgressTick || IsSingleRunning)
+            return;
+
+        _hasProgressTick = true;
+        _uiDispatcher.Invoke(() =>
+        {
+            if (ProgressValue < 0.01)
+            {
+                ProgressVisibility = Visibility.Visible;
+                ProgressLabelVisibility = Visibility.Visible;
+                ProgressValue = 0.01;
+                ProgressLabel = "1%";
+                Debug.WriteLine("[MainViewModel] Forced early progress tick at 1%.");
+            }
+        });
+    }
+
     private void OnQueenPlacedEvent(object? sender, NQueen.Domain.EventArgsPruning.QueenPlacedEventArgs e)
     {
+        MaybeForceEarlyProgress();
+
         if (DisplayMode == DisplayMode.Hide)
             return;
 
         if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) == false)
             return;
 
-        // Work on the span locally; do not capture it in a lambda.
-        var mem = e.Solution;              // Memory<int>
-        var span = mem.Span;               // Span<int>
+        var memory = e.Solution;
+        var span = memory.Span;
         var max = Math.Min(boardSize, span.Length);
 
         int depth = 0;
@@ -132,35 +178,14 @@ public sealed partial class MainViewModel
             return;
         }
 
-        // Prepare positions BEFORE dispatcher call so lambda doesn't capture Span<T>.
         List<Position> positions = new(depth);
         for (int c = 0; c < depth; c++)
             positions.Add(new Position(c, span[c]));
 
-        _uiDispatcher.Invoke(() =>
-        {
-            ChessboardVm.PlaceQueens(positions);
-        });
+        _uiDispatcher.Invoke(() => ChessboardVm.PlaceQueens(positions));
     }
 
-    private void OnProgressValueChangedEvent(object? sender, NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs e)
-    {
-        _uiDispatcher.Invoke(() =>
-        {
-            int progressInt = Math.Clamp((int)e.Value, 0, 100);
-            double progressDouble = progressInt / 100.0;
-            ProgressVisibility = Visibility.Visible;
-            ProgressLabelVisibility = Visibility.Visible;
-            ProgressValue = progressDouble;
-            ProgressLabel = $"{progressInt}%";
-            Debug.WriteLine($"[MainViewModel] Progress event: raw={e.Value}, mapped={progressInt}%");
-        });
-    }
-
-    #endregion
-
-    // SelectedSolution change hook (auto-generated partial)
-    // Suppressed during simulation only if Hide mode to avoid premature rendering.
+    // Property change hook
     partial void OnSelectedSolutionChanged(Solution value)
     {
         if (ChessboardVm == null)

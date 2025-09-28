@@ -183,16 +183,61 @@ public class BitmaskSolverExtended(
     #region Parallel Variants
 
     // --- Parallel variants (shallow top-level splitting). For large N, split first column placements among tasks.
-    private void SolveAllParallel() =>
-        ParallelRootSplit(onSolution: rows => { System.Threading.Interlocked.Increment(ref _solutionCount); if (ShouldAddSolution()) { lock (_solutions) { if (ShouldAddSolution()) { _solutions.Add(rows); if (EnableEvents) SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows))); } } } return false; }, restrictFirstCol: false, enhancedSymmetry: false);
+    private void SolveAllParallel()
+    {
+        // Root split: every first-row placement processed by a task -> we use those completions as coarse progress steps.
+        int totalRoots = BoardSize; // All-mode: first column unrestricted
+        ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(0.0, _currentSimToken));
+
+        int rootsCompleted = 0;
+
+        ParallelRootSplit(
+            onSolution: rows =>
+            {
+                System.Threading.Interlocked.Increment(ref _solutionCount);
+                if (ShouldAddSolution())
+                {
+                    lock (_solutions)
+                    {
+                        if (ShouldAddSolution())
+                        {
+                            _solutions.Add(rows);
+                            if (EnableEvents)
+                                SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows)));
+                        }
+                    }
+                }
+                return false;
+            },
+            restrictFirstCol: false,
+            enhancedSymmetry: false,
+            unique: false,
+            totalRoots: totalRoots,
+            onRootCompleted: () =>
+            {
+                if (EnableEvents)
+                {
+                    int done = System.Threading.Interlocked.Increment(ref rootsCompleted);
+                    double pct = Math.Min(100.0, (double)done / totalRoots * 100.0);
+                    ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken));
+                }
+            });
+    }
 
     private void SolveUniqueParallel()
     {
         int N = BoardSize;
-        int maxRow0 = (N + 1) / 2;
+        int totalRoots = (N + 1) / 2; // first column restricted by symmetry
+        ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(0.0, _currentSimToken));
+
+        int rootsCompleted = 0;
+
+        // Reuse existing logic but inject per-root progress updates.
+        int maxRow0 = totalRoots;
         var tasks = new List<Task<HashSet<int[]>>>();
         var cancelSource = new CancellationTokenSource();
         var token = cancelSource.Token;
+
         for (int firstRow = 0; firstRow < maxRow0; firstRow++)
         {
             int fr = firstRow;
@@ -201,7 +246,7 @@ public class BitmaskSolverExtended(
                 var localUnique = new HashSet<int[]>(new IntArrayComparer());
                 var scratchBuf = new int[N];
                 var rowsArr = new int[N]; Array.Fill(rowsArr, -1); rowsArr[0] = fr;
-                uint bitFirst = 1u << fr; // initial placement
+                uint bitFirst = 1u << fr;
                 uint cols = bitFirst;
                 uint d1 = bitFirst << 1;
                 uint d2 = bitFirst >> 1;
@@ -240,6 +285,14 @@ public class BitmaskSolverExtended(
                     if (col == N) continue;
                     remaining = ComputeAvailable(col);
                 }
+
+                // Root task finished -> coarse progress
+                if (EnableEvents)
+                {
+                    int done = System.Threading.Interlocked.Increment(ref rootsCompleted);
+                    double pct = Math.Min(100.0, (double)done / totalRoots * 100.0);
+                    ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken));
+                }
                 return localUnique;
 
                 uint ComputeAvailable(int c)
@@ -259,7 +312,9 @@ public class BitmaskSolverExtended(
                 { rem = stackRemaining[c]; cols = stackCols[c]; d1 = stackD1[c]; d2 = stackD2[c]; }
             }, token));
         }
+
         Task.WaitAll(tasks.ToArray());
+
         var globalUnique = new HashSet<int[]>(new IntArrayComparer());
         foreach (var t in tasks)
         {
@@ -273,21 +328,32 @@ public class BitmaskSolverExtended(
                     if (ShouldAddSolution())
                     {
                         _solutions.Add((int[])sol.Clone());
-                        if (EnableEvents) SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(sol)));
+                        if (EnableEvents)
+                            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(sol)));
                         if (!ShouldAddSolution()) cancelSource.Cancel();
                     }
                 }
             }
         }
+
+        // Ensure a final 100% (especially if rounding left us at <100)
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 
-    private void ParallelRootSplit(Func<int[], bool> onSolution, bool restrictFirstCol, bool enhancedSymmetry, bool unique = false)
+    private void ParallelRootSplit(
+        Func<int[], bool> onSolution,
+        bool restrictFirstCol,
+        bool enhancedSymmetry,
+        bool unique = false,
+        int? totalRoots = null,
+        Action? onRootCompleted = null)
     {
         int N = BoardSize;
         int maxRow0 = restrictFirstCol ? (N + 1) / 2 : N;
+        if (totalRoots == null) totalRoots = maxRow0;
         var tasks = new List<Task>();
         var globalUnique = unique ? new HashSet<string>() : null;
+
         for (int firstRow = 0; firstRow < maxRow0; firstRow++)
         {
             int fr = firstRow;
@@ -340,6 +406,9 @@ public class BitmaskSolverExtended(
                     stackCols[col] = cols; stackD1[col] = d1; stackD2[col] = d2; stackRemaining[col] = remaining;
                     cols |= bit; d1 = (d1 | bit) << 1; d2 = (d2 | bit) >> 1; col++; if (col == N) continue; remaining = ComputeAvailable(col);
                 }
+
+                onRootCompleted?.Invoke();
+
                 uint ComputeAvailable(int c)
                 {
                     uint avail = ~(cols | d1 | d2) & mask;
@@ -349,7 +418,7 @@ public class BitmaskSolverExtended(
                         int first = rowsArr[0];
                         maxRow = ((N & 1) == 1 && first == N / 2) ? N / 2 : N;
                     }
-                    if (restrictFirstCol && c == 0) maxRow = maxRow0; // (not used inside loop)
+                    if (restrictFirstCol && c == 0) maxRow = maxRow0;
                     if (maxRow < N) avail &= (1u << maxRow) - 1u;
                     return avail;
                 }
@@ -357,8 +426,11 @@ public class BitmaskSolverExtended(
                 { rem = stackRemaining[c]; cols = stackCols[c]; d1 = stackD1[c]; d2 = stackD2[c]; }
             }));
         }
+
         Task.WaitAll(tasks.ToArray());
-        ProgressValueChanged?.Invoke(this, new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(100.0, _currentSimToken));
+
+        // Final 100% (kept for compatibility)
+        ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 
     #endregion Parallel Variants
