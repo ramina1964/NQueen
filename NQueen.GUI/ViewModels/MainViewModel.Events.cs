@@ -61,7 +61,6 @@ public sealed partial class MainViewModel
         _actualTotalSolutions = 0;
     }
 
-    // Solution found event (batched)
     private void OnSolutionFoundEvent(object? sender, NQueen.Domain.EventArgsPruning.SolutionFoundEventArgs e)
     {
         if (_solver.IsSolverCanceled || (IsSimulating == false && IsOutputReady == false))
@@ -75,7 +74,6 @@ public sealed partial class MainViewModel
 
         if (solutionId == 1)
         {
-            // Only store selection; rendering may be suppressed while simulating/hide mode
             _uiDispatcher.Invoke(() =>
             {
                 if (_solver.IsSolverCanceled)
@@ -90,6 +88,17 @@ public sealed partial class MainViewModel
     {
         _uiDispatcher.Invoke(() =>
         {
+            // For Single solution mode with visualization we do NOT show percentage estimation.
+            if (SolutionMode == SolutionMode.Single && DisplayMode == DisplayMode.Visualize)
+            {
+                // Keep bar (indeterminate) visible, hide label text.
+                ProgressVisibility = Visibility.Visible;
+                ProgressLabelVisibility = Visibility.Hidden;
+                ProgressLabel = string.Empty;
+                // Do not touch ProgressValue (indeterminate style ignores it).
+                return;
+            }
+
             int progressInt = Math.Clamp((int)e.Value, 0, 100);
             double progressDouble = progressInt / 100.0;
 
@@ -105,7 +114,6 @@ public sealed partial class MainViewModel
         });
     }
 
-    // Early tick if solver finishes too fast
     private void MaybeForceEarlyProgress()
     {
         if (_hasProgressTick || IsSingleRunning)
@@ -176,7 +184,6 @@ public sealed partial class MainViewModel
         _uiDispatcher.Invoke(() => ChessboardVm.PlaceQueens(positions));
     }
 
-    // Property change hook
     partial void OnSelectedSolutionChanged(Solution value)
     {
         if (ChessboardVm == null)
@@ -210,6 +217,13 @@ public sealed partial class MainViewModel
         {
             if (value == DisplayMode.Hide)
                 ChessboardVm?.ClearImages();
+
+            // If switched to Visualize mid single-mode run, ensure label remains hidden.
+            if (SolutionMode == SolutionMode.Single && value == DisplayMode.Visualize)
+            {
+                ProgressLabelVisibility = Visibility.Hidden;
+                ProgressLabel = string.Empty;
+            }
             return;
         }
 

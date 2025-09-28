@@ -3,7 +3,7 @@
 public static class ErrorMessages
 {
     public const string InvalidIntegerError =
-    "Board size must be a valid integer.";
+        "Board size must be a valid integer.";
 
     public const string NoSolutionMessage =
         "No Solutions found. Try a larger board size!";
@@ -22,6 +22,10 @@ public static class ErrorMessages
 
     public static string SizeTooLargeForAll =>
         $"Board size for All Solutions must not exceed {BoardSettings.MaxSizeForAll}.";
+
+    // DisplayMode.Visualize limit message
+    public static string VisualizeSizeTooLarge =>
+        $"Visualization is only supported for board sizes up to {SimulationSettings.MaxVisualizeBoardSize}. Switch to Hide mode for larger boards.";
 
     public static string GetTimeoutMessage(TimeSpan timeout) =>
         $"Condition was not met within the timeout period of {timeout.TotalSeconds} seconds.";

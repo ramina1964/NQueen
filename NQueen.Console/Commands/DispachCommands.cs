@@ -66,7 +66,7 @@ public partial class DispatchCommands
                         continue;
                     }
 
-                    if (int.TryParse(input, out int nextBoardSize) && nextBoardSize >= 1 && nextBoardSize <= 32)
+                    if (int.TryParse(input, out int nextBoardSize) && nextBoardSize >= 1 && nextBoardSize <= BoardSettings.MaxBitmaskBoardSize)
                     {
                         var nextContext = new SimulationContext(nextBoardSize, mode.Value, DisplayMode.Hide, state.EnableParallelization);
                         ShowAndHandleResults(services, nextContext, state);
@@ -117,7 +117,7 @@ public partial class DispatchCommands
     private static int ShowBoardSizeMenu(MenuState state)
     {
         state.BlankInputCount = 0;
-        Console.Write("Enter board size (1-32, or 0 to go back): ");
+        Console.Write($"Enter board size (1-{BoardSettings.MaxBitmaskBoardSize}, or 0 to go back): ");
         var sizeInput = Console.ReadLine();
 
         if (IsQuitInput(sizeInput, state))
@@ -132,8 +132,9 @@ public partial class DispatchCommands
             return -1;
         }
 
-        if (int.TryParse(sizeInput, out int boardSize) == false || boardSize < 1 ||
-            boardSize > 32)
+        if (int.TryParse(sizeInput, out int boardSize) == false ||
+            boardSize < 1 ||
+            boardSize > BoardSettings.MaxBitmaskBoardSize)
         {
             Console.WriteLine("Invalid board size. Try again.\n");
             return -1;

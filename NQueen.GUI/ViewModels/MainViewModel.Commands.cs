@@ -105,6 +105,15 @@ public sealed partial class MainViewModel
             if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) == false)
                 return;
 
+            // Enforce visualization size limit
+            if (DisplayMode == DisplayMode.Visualize &&
+                boardSize > SimulationSettings.MaxVisualizeBoardSize)
+            {
+                MessageBox.Show(ErrorMessages.VisualizeSizeTooLarge,
+                    "Visualization Limit", MessageBoxButton.OK, MessageBoxImage.Information);
+                DisplayMode = DisplayMode.Hide; // switch automatically
+            }
+
             Debug.WriteLine($"[SimulateAsync] Starting with BoardSize={boardSize}, Mode={SolutionMode}, Display={DisplayMode}");
 
             ResetSimulationState();
@@ -116,7 +125,6 @@ public sealed partial class MainViewModel
 
             SimulationResults = await _solver.GetSimResultsAsync(simContext);
 
-            // Silent exit if canceled
             if (_solver.IsSolverCanceled || _currentSimulationToken == Guid.Empty)
                 return;
 
@@ -150,7 +158,6 @@ public sealed partial class MainViewModel
         {
             if (_solver.IsSolverCanceled)
             {
-                // Ensure UI reflects canceled state
                 IsSimulating = false;
                 IsSingleRunning = false;
                 ProgressVisibility = Visibility.Hidden;
