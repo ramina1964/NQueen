@@ -1,28 +1,28 @@
+using BenchmarkDotNet.Attributes;
+using NQueen.Domain.Enums;
+using NQueen.Domain.Models;
+using NQueen.KernelBitmask.Solvers;
+
 namespace NQueen.Benchmarking;
 
 [MemoryDiagnoser]
 public class BitmaskSolverExtendedSymmetryBenchmarks
 {
-    [Params(8, 12, 14, 15)]
-    public int BoardSize;
+    private readonly ISolutionFormatter _formatter = new DefaultSolutionFormatter();
+    private readonly BitmaskSolverExtended _solver;
 
-    private BitmaskSolverExtended? _solver;
-    private ISolutionFormatter _formatter = new DefaultSolutionFormatter();
-
-    [GlobalSetup]
-    public void Setup()
+    public BitmaskSolverExtendedSymmetryBenchmarks()
     {
-        _solver = new BitmaskSolverExtended(_formatter, disableCap: true);
-        // BoardSize, SolutionMode, DisplayMode are set via constructor, not property setters
+        // disable cap -> pass enableCap:false
+        _solver = new BitmaskSolverExtended(_formatter, enableCap: false);
     }
+
+    [Params(8, 10, 12)]
+    public int N { get; set; }
 
     [Benchmark]
-    public SimulationResults SolveUnique()
-    {
-        if (_solver == null)
-            throw new System.InvalidOperationException();
-        // Use the constructor that sets BoardSize, SolutionMode, DisplayMode
-        var solver = new BitmaskSolverExtended(BoardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter);
-        return solver.Solve();
-    }
+    public SimulationResults AllSolutions() => new BitmaskSolverExtended(N, SolutionMode.All, DisplayMode.Hide, _formatter).Solve();
+
+    [Benchmark]
+    public SimulationResults UniqueSolutions() => new BitmaskSolverExtended(N, SolutionMode.Unique, DisplayMode.Hide, _formatter).Solve();
 }

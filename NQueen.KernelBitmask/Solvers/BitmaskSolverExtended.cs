@@ -7,8 +7,8 @@ public class BitmaskSolverExtended(
 {
     #region Ctors
 
-    public BitmaskSolverExtended(ISolutionFormatter solutionFormatter, bool disableCap)
-        : this(solutionFormatter, SimulationSettings.MaxNoOfSolutionsInOutput) => _disableCap = disableCap;
+    public BitmaskSolverExtended(ISolutionFormatter solutionFormatter, bool enableCap)
+        : this(solutionFormatter, SimulationSettings.MaxNoOfSolutionsInOutput) => _capEnabled = enableCap;
 
     public BitmaskSolverExtended(
         int boardSize,
@@ -427,19 +427,19 @@ public class BitmaskSolverExtended(
     private readonly List<int[]> _solutions = [];
     private int _solutionCount;
     private Guid _currentSimToken = Guid.Empty;
-    private readonly bool _disableCap = false;
+    private readonly bool _capEnabled = true; // renamed from _disableCap (inverse semantics)
     private bool _disposed;
     private readonly int _maxSolutionsInOutput = maxSolutionsInOutput;
 
     private bool ShouldAddSolution()
     {
-        if (_disableCap) return true;
+        if (!_capEnabled) return true; // cap disabled => always add
         int cap = SimulationSettings.MaxNoOfSolutionsInOutput;
         if (cap <= 0) return true; // unlimited
         return _solutions.Count < cap;
     }
 
-    private bool ShouldStopCollecting() => !_disableCap && !ShouldAddSolution();
+    private bool ShouldStopCollecting() => _capEnabled && !ShouldAddSolution();
 
     #endregion Fields / Helpers
 }

@@ -21,9 +21,8 @@ public class Program
         services.AddTransient<Func<int, BoardState>>(sp => size => new BoardState(size));
         services.AddTransient<DispatchCommands>();
         services.AddTransient<ICommandProcessor, CommandProcessor>();
-
-        // Bitmask solver + formatter registrations (provides ISolverPruning etc.)
-        services.AddBitmaskSolverServices(disableCap: false);
+        // Enable cap in console app
+        services.AddBitmaskSolverServices(enableCap: true);
 
         services.AddSingleton<App>();
         return services.BuildServiceProvider();
