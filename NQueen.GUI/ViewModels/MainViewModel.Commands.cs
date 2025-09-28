@@ -171,6 +171,7 @@ public sealed partial class MainViewModel
         {
             case SimulationStatus.Started:
                 SubscribeToSimulationEvents();
+                _hasProgressTick = false;
                 IsIdle = false;
                 IsInInputMode = false;
                 IsSimulating = true;

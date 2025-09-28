@@ -20,16 +20,7 @@ public sealed partial class MainViewModel
 
         _solver.QueenPlaced += OnQueenPlacedEvent;
         _solver.SolutionFound += OnSolutionFoundEvent;
-        _solver.ProgressValueChanged += OnProgressValueChangedEvent;
-
-        // Ensure visible baseline progress immediately
-        _uiDispatcher.Invoke(() =>
-        {
-            ProgressVisibility = Visibility.Visible;
-            ProgressLabelVisibility = Visibility.Visible;
-            ProgressValue = 0;
-            ProgressLabel = "0%";
-        });
+        _solver.ProgressValueChanged += OnProgressValueChangedEvent;    
     }
 
     private void UnsubscribeFromSimulationEvents()
