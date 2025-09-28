@@ -1,6 +1,9 @@
 namespace NQueen.KernelBitmask.Solvers;
 
-public class BitmaskSolverExtended : ISolverPruning, IDisposable
+public class BitmaskSolverExtended(
+    ISolutionFormatter solutionFormatter,
+    int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput)
+        : ISolverPruning, IDisposable
 {
     #region Ctors
 
@@ -45,94 +48,166 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
 
     #endregion IDisposable
 
-    public BitmaskSolverExtended(ISolutionFormatter solutionFormatter, int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput)
-    {
-        _solutionFormatter = solutionFormatter;
-        _maxSolutionsInOutput = maxSolutionsInOutput;
-    }
+    #region Events & Public API
 
     public event EventHandler<QueenPlacedEventArgs>? QueenPlaced;
     public event EventHandler<SolutionFoundEventArgs>? SolutionFound;
     public event EventHandler<ProgressUpdateEventArgs>? ProgressValueChanged;
 
     public int DelayInMillisec { get; set; }
-
     public int ProgressValue { get; set; }
-
     public int BoardSize { get; private set; }
-
     public SolutionMode SolutionMode { get; private set; }
-
     public DisplayMode DisplayMode { get; private set; }
+    public bool IsSolverCanceled { get; set; }
+    public bool EnableParallelization { get; set; } = true;
+    public bool EnableEvents { get; set; } = true;
 
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
 
-    public bool IsSolverCanceled { get; set; }
-
-    public bool EnableParallelization { get; set; } = true; // new flag
-
-    public Task<SimulationResults> GetSimResultsAsync(SimulationContext simContext)
-    {
-        return Task.Run(() =>
+    public Task<SimulationResults> GetSimResultsAsync(SimulationContext simContext) =>
+        Task.Run(() =>
         {
             BoardSize = simContext.BoardSize;
             SolutionMode = simContext.SolutionMode;
             DisplayMode = simContext.DisplayMode;
-            EnableParallelization = simContext.EnableParallelization; // store flag
+            EnableParallelization = simContext.EnableParallelization;
             return Solve();
         });
-    }
 
     public SimulationResults Solve()
     {
-        if (BoardSize <= 0) throw new InvalidOperationException("BoardSize must be set (>0) before solving.");
-        _solutions.Clear();
-        _solutionCount = 0;
+        if (BoardSize <= 0)
+            throw new InvalidOperationException("BoardSize must be set (>0) before solving.");
+
+        ResetForSolve();
         var sw = Stopwatch.StartNew();
 
-        bool canParallel = EnableParallelization && BoardSize >= 10 && SolutionMode != SolutionMode.Single;
+        var parallelEligible = EnableParallelization && BoardSize >= 10 && SolutionMode != SolutionMode.Single;
         switch (SolutionMode)
         {
+            case SolutionMode.Single:
+                SolveSingleMode();
+                break;
             case SolutionMode.All:
-                if (canParallel) SolveAllParallel(); else BitmaskIterative(rows => { _solutionCount++; _solutions.Add((int[])rows.Clone()); return false; }, restrictFirstCol:false, enhancedSymmetry:false);
+                SolveAllMode(parallelEligible);
                 break;
             case SolutionMode.Unique:
-                if (canParallel) SolveUniqueParallel();
-                else
-                {
-                    var uniqueSet = new HashSet<int[]>(new IntArrayComparer());
-                    var scratchBuf = new int[BoardSize];
-                    BitmaskIterative(rows => {
-                        var copy = (int[])rows.Clone();
-                        if (SymmetryHelper.AddIfUnique(copy, uniqueSet, scratchBuf))
-                        {
-                            _solutionCount++;
-                            _solutions.Add(copy);
-                        }
-                        return false;
-                    }, restrictFirstCol:true, enhancedSymmetry:true);
-                }
-                break;
-            case SolutionMode.Single:
-                BitmaskIterative(rows => { _solutionCount++; if (_solutions.Count == 0) _solutions.Add((int[])rows.Clone()); return true; }, restrictFirstCol:false, enhancedSymmetry:false);
+                SolveUniqueMode(parallelEligible);
                 break;
             default:
                 throw new NotImplementedException("Unsupported SolutionMode value.");
         }
+
         sw.Stop();
+        return BuildResults(sw.Elapsed);
+    }
+
+    #endregion Events & Public API
+
+    #region Orchestration Helpers
+
+    private void ResetForSolve()
+    {
+        _solutions.Clear();
+        _solutionCount = 0;
+        IsSolverCanceled = false; // ensure fresh state each call (cancellation external can re-set)
+    }
+
+    private void SolveSingleMode()
+    {
+        BitmaskIterative(rows =>
+        {
+            _solutionCount++;
+            if (_solutions.Count == 0)
+                _solutions.Add((int[])rows.Clone());
+            return true; // stop after first
+        }, restrictFirstCol: false, enhancedSymmetry: false);
+    }
+
+    private void SolveAllMode(bool parallelEligible)
+    {
+        if (parallelEligible)
+        {
+            SolveAllParallel();
+            return;
+        }
+        BitmaskIterative(rows =>
+        {
+            _solutionCount++;
+            _solutions.Add((int[])rows.Clone());
+            return false;
+        }, restrictFirstCol: false, enhancedSymmetry: false);
+    }
+
+    private void SolveUniqueMode(bool parallelEligible)
+    {
+        if (parallelEligible)
+        {
+            SolveUniqueParallel();
+            return;
+        }
+        var uniqueSet = new HashSet<int[]>(new IntArrayComparer());
+        var scratchBuf = new int[BoardSize];
+        BitmaskIterative(rows =>
+        {
+            var copy = (int[])rows.Clone();
+            if (SymmetryHelper.AddIfUnique(copy, uniqueSet, scratchBuf))
+            {
+                _solutionCount++;
+                _solutions.Add(copy);
+            }
+            return false;
+        }, restrictFirstCol: true, enhancedSymmetry: true);
+    }
+
+    private SimulationResults BuildResults(TimeSpan elapsed)
+    {
         IEnumerable<int[]> outputSolutions = _solutions;
-        // Only cap output for UI display (DisplayMode.Visualize)
-        if (DisplayMode == DisplayMode.Visualize && BoardSize < 10 && SimulationSettings.MaxNoOfSolutionsInOutput > 0 && _solutions.Count > SimulationSettings.MaxNoOfSolutionsInOutput)
+        if (DisplayMode == DisplayMode.Visualize &&
+            BoardSize < 10 &&
+            SimulationSettings.MaxNoOfSolutionsInOutput > 0 &&
+            _solutions.Count > SimulationSettings.MaxNoOfSolutionsInOutput)
         {
             outputSolutions = _solutions.Take(SimulationSettings.MaxNoOfSolutionsInOutput);
         }
-        var resultSolutions = outputSolutions.Select((sol, idx) => new Solution(sol, _solutionFormatter, idx + 1)).ToList();
-        return new SimulationResults(resultSolutions, _solutionCount, Math.Round(sw.Elapsed.TotalSeconds, 1));
+
+        var resultSolutions = outputSolutions
+            .Select((sol, idx) => new Solution(sol, _solutionFormatter, idx + 1))
+            .ToList();
+
+        return new SimulationResults(resultSolutions, _solutionCount,
+            Math.Round(elapsed.TotalSeconds, 1));
     }
 
+    #endregion Orchestration Helpers
+
+    #region Parallel Variants
+
     // --- Parallel variants (shallow top-level splitting). For large N, split first column placements among tasks.
-    private void SolveAllParallel() => ParallelRootSplit(onSolution: rows => { _solutionCount++; if (ShouldAddSolution()) { lock (_solutions) { _solutions.Add(rows); if (EnableEvents) SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows))); } } return false; }, restrictFirstCol:false, enhancedSymmetry:false);
-    private void SolveSingleParallel() => ParallelRootSplit(onSolution: rows => { _solutionCount++; if (_solutions.Count == 0) { lock (_solutions) { if (_solutions.Count == 0) { _solutions.Add(rows); if (EnableEvents) SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows))); } } return true; } return true; }, restrictFirstCol:false, enhancedSymmetry:false);
+    private void SolveAllParallel() =>
+        ParallelRootSplit(onSolution: rows => { _solutionCount++; if (ShouldAddSolution()) { lock (_solutions) { _solutions.Add(rows); if (EnableEvents) SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows))); } } return false; }, restrictFirstCol: false, enhancedSymmetry: false);
+
+    private void SolveSingleParallel() =>
+        ParallelRootSplit(onSolution: rows =>
+        {
+            _solutionCount++;
+            if (_solutions.Count == 0)
+            {
+                lock (_solutions)
+                {
+                    if (_solutions.Count == 0)
+                    {
+                        _solutions.Add(rows);
+                        if (EnableEvents)
+                            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows)));
+                    }
+                }
+                return true;
+            }
+            return true;
+        }, restrictFirstCol: false, enhancedSymmetry: false);
+
     private void SolveUniqueParallel()
     {
         int N = BoardSize;
@@ -146,38 +221,28 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
                 var localUnique = new HashSet<int[]>(new IntArrayComparer());
                 var scratchBuf = new int[N];
                 var rowsArr = new int[N]; Array.Fill(rowsArr, -1); rowsArr[0] = fr;
-                // Initial masks with first queen placed at column 0, row fr
-                uint bitFirst = 1u << fr;
+                uint bitFirst = 1u << fr; // initial placement
                 uint cols = bitFirst;
-                uint d1 = (bitFirst) << 1;
-                uint d2 = (bitFirst) >> 1;
-                uint mask = N==32?0xFFFFFFFFu:(uint)((1u<<N)-1);
-
-                // Parallel arrays for backtracking frames (size N)
+                uint d1 = bitFirst << 1;
+                uint d2 = bitFirst >> 1;
+                uint mask = N == 32 ? 0xFFFFFFFFu : (uint)((1u << N) - 1);
                 uint[] stackCols = new uint[N];
                 uint[] stackD1 = new uint[N];
                 uint[] stackD2 = new uint[N];
                 uint[] stackRemaining = new uint[N];
-
-                int col = 1; // start from second column (first fixed)
+                int col = 1;
                 uint remaining = ComputeAvailable(1);
-
                 while (true)
                 {
                     if (col == N)
                     {
                         var copy = (int[])rowsArr.Clone();
-                        if (SymmetryHelper.AddIfUnique(copy, localUnique, scratchBuf))
-                        {
-                            // uniqueness handled locally
-                        }
-                        // backtrack
+                        if (SymmetryHelper.AddIfUnique(copy, localUnique, scratchBuf)) { /* local uniqueness only */ }
                         col--;
-                        if (col <= 0) break; // if back to column 0 we are done for this firstRow
+                        if (col <= 0) break;
                         Restore(col, out remaining);
                         continue;
                     }
-
                     if (remaining == 0)
                     {
                         col--;
@@ -185,28 +250,17 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
                         Restore(col, out remaining);
                         continue;
                     }
-
-                    uint bit = remaining & (uint)-(int)remaining; // pick LSB
-                    remaining ^= bit; // consume
+                    uint bit = remaining & (uint)-(int)remaining;
+                    remaining ^= bit;
                     int row = BitOperations.TrailingZeroCount(bit);
                     rowsArr[col] = row;
-
-                    // push frame
                     stackCols[col] = cols;
                     stackD1[col] = d1;
                     stackD2[col] = d2;
                     stackRemaining[col] = remaining;
-
-                    // advance masks
-                    cols |= bit;
-                    d1 = (d1 | bit) << 1;
-                    d2 = (d2 | bit) >> 1;
+                    cols |= bit; d1 = (d1 | bit) << 1; d2 = (d2 | bit) >> 1;
                     col++;
-                    if (col == N)
-                    {
-                        // loop will handle solution next iteration
-                        continue;
-                    }
+                    if (col == N) continue;
                     remaining = ComputeAvailable(col);
                 }
                 return localUnique;
@@ -215,25 +269,18 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
                 {
                     uint avail = ~(cols | d1 | d2) & mask;
                     int maxRow;
-                    if (c == 0)
-                        maxRow = maxRow0; // not used here (c never 0 inside this function for this task)
-                    else if (c == 1)
+                    if (c == 1)
                     {
                         int first = rowsArr[0];
                         maxRow = ((N & 1) == 1 && first == N / 2) ? N / 2 : N;
                     }
                     else
                         maxRow = N;
-                    if (maxRow < N)
-                    {
-                        uint limitMask = (1u << maxRow) - 1u;
-                        avail &= limitMask;
-                    }
+                    if (maxRow < N) avail &= (1u << maxRow) - 1u;
                     return avail;
                 }
                 void Restore(int c, out uint rem)
                 {
-                    // c is column we are returning to explore remaining positions
                     rem = stackRemaining[c];
                     cols = stackCols[c];
                     d1 = stackD1[c];
@@ -258,15 +305,15 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
                 }
             }
         }
-        ProgressValueChanged?.Invoke(this, new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(100.0, _currentSimToken));
+        ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 
-    private void ParallelRootSplit(Func<int[], bool> onSolution, bool restrictFirstCol, bool enhancedSymmetry, bool unique=false)
+    private void ParallelRootSplit(Func<int[], bool> onSolution, bool restrictFirstCol, bool enhancedSymmetry, bool unique = false)
     {
         int N = BoardSize;
-        int maxRow0 = restrictFirstCol ? (N + 1)/2 : N;
+        int maxRow0 = restrictFirstCol ? (N + 1) / 2 : N;
         var tasks = new List<Task>();
-        var globalUnique = unique ? new HashSet<string>() : null; // simple string key uniqueness to avoid heavy transforms across tasks
+        var globalUnique = unique ? new HashSet<string>() : null;
         for (int firstRow = 0; firstRow < maxRow0; firstRow++)
         {
             int fr = firstRow;
@@ -275,18 +322,14 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
                 var rowsArr = new int[N]; Array.Fill(rowsArr, -1); rowsArr[0] = fr;
                 uint bitFirst = 1u << fr;
                 uint cols = bitFirst; uint d1 = bitFirst << 1; uint d2 = bitFirst >> 1;
-                uint mask = N==32?0xFFFFFFFFu:(uint)((1u<<N)-1);
-
+                uint mask = N == 32 ? 0xFFFFFFFFu : (uint)((1u << N) - 1);
                 uint[] stackCols = new uint[N];
                 uint[] stackD1 = new uint[N];
                 uint[] stackD2 = new uint[N];
                 uint[] stackRemaining = new uint[N];
                 var scratchUnique = unique ? new HashSet<int[]>(new IntArrayComparer()) : null;
                 var scratchBuf = unique ? new int[N] : null;
-
-                int col = 1; // start after first fixed
-                uint remaining = ComputeAvailable(col);
-
+                int col = 1; uint remaining = ComputeAvailable(col);
                 while (true)
                 {
                     if (col == N)
@@ -309,7 +352,6 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
                         Restore(col, out remaining);
                         continue;
                     }
-
                     if (remaining == 0)
                     {
                         col--;
@@ -317,54 +359,37 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
                         Restore(col, out remaining);
                         continue;
                     }
-
                     uint bit = remaining & (uint)-(int)remaining;
                     remaining ^= bit;
                     int row = BitOperations.TrailingZeroCount(bit);
                     rowsArr[col] = row;
-
-                    stackCols[col] = cols;
-                    stackD1[col] = d1;
-                    stackD2[col] = d2;
-                    stackRemaining[col] = remaining;
-
-                    cols |= bit;
-                    d1 = (d1 | bit) << 1;
-                    d2 = (d2 | bit) >> 1;
-                    col++;
-                    if (col == N) continue;
-                    remaining = ComputeAvailable(col);
+                    stackCols[col] = cols; stackD1[col] = d1; stackD2[col] = d2; stackRemaining[col] = remaining;
+                    cols |= bit; d1 = (d1 | bit) << 1; d2 = (d2 | bit) >> 1; col++; if (col == N) continue; remaining = ComputeAvailable(col);
                 }
-
                 uint ComputeAvailable(int c)
                 {
                     uint avail = ~(cols | d1 | d2) & mask;
                     int maxRow = N;
-                    if (restrictFirstCol && c == 0) maxRow = maxRow0; // not used here
-                    else if (enhancedSymmetry && restrictFirstCol && c == 1)
+                    if (enhancedSymmetry && restrictFirstCol && c == 1)
                     {
                         int first = rowsArr[0];
                         maxRow = ((N & 1) == 1 && first == N / 2) ? N / 2 : N;
                     }
-                    if (maxRow < N)
-                    {
-                        uint limitMask = (1u << maxRow) - 1u;
-                        avail &= limitMask;
-                    }
+                    if (restrictFirstCol && c == 0) maxRow = maxRow0; // (not used inside loop)
+                    if (maxRow < N) avail &= (1u << maxRow) - 1u;
                     return avail;
                 }
                 void Restore(int c, out uint rem)
-                {
-                    rem = stackRemaining[c];
-                    cols = stackCols[c];
-                    d1 = stackD1[c];
-                    d2 = stackD2[c];
-                }
+                { rem = stackRemaining[c]; cols = stackCols[c]; d1 = stackD1[c]; d2 = stackD2[c]; }
             }));
         }
         Task.WaitAll(tasks.ToArray());
         ProgressValueChanged?.Invoke(this, new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
+
+    #endregion Parallel Variants
+
+    #region Core Iterative Solver
 
     private void BitmaskIterative(Func<int[], bool> onSolution,
         bool restrictFirstCol = false, bool enhancedSymmetry = false)
@@ -372,144 +397,67 @@ public class BitmaskSolverExtended : ISolverPruning, IDisposable
         var N = BoardSize;
         var queenRows = new int[N];
         Array.Fill(queenRows, -1);
-
         if (N > 31)
             throw new NotSupportedException("Bitmask solver supports board sizes up to 31.");
         uint mask = N == 32 ? 0xFFFFFFFFu : (uint)((1u << N) - 1);
-        uint cols = 0;
-        uint diag1 = 0;
-        uint diag2 = 0;
-
+        uint cols = 0; uint diag1 = 0; uint diag2 = 0;
         int maxRow0 = restrictFirstCol ? (N + 1) / 2 : N;
-
-        // Parallel arrays for frames
         uint[] stackCols = new uint[N];
         uint[] stackD1 = new uint[N];
         uint[] stackD2 = new uint[N];
         uint[] stackRemaining = new uint[N];
-
-        // --- Progress based on root-level placements ---
-        int rootPlacements = 0;
-        int rootTotal = restrictFirstCol ? maxRow0 : N;
-        ProgressValueChanged?.Invoke(this,
-            new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(0.0, _currentSimToken));
-
+        int rootPlacements = 0; int rootTotal = restrictFirstCol ? maxRow0 : N;
+        ProgressValueChanged?.Invoke(this, new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(0.0, _currentSimToken));
         var visualize = DisplayMode == DisplayMode.Visualize;
         var delay = visualize && DelayInMillisec > 0 ? DelayInMillisec : 0;
         int queenPlacedSampleRate = N >= 12 ? 1000 : 1;
-        int queenPlacedCounter = 0;
-        int lastDepth = -1;
-
-        int col = 0;
-        uint remaining = ComputeAvailable(0);
-
+        int queenPlacedCounter = 0; int lastDepth = -1;
+        int col = 0; uint remaining = ComputeAvailable(0);
         while (true)
         {
-            if (IsSolverCanceled)
-                break;
-
+            if (IsSolverCanceled) break;
             if (col == N)
             {
-                if (onSolution(queenRows))
-                    break;
-                col--;
-                if (col < 0) break;
-                Restore(col, out remaining);
-                continue;
+                if (onSolution(queenRows)) break; col--; if (col < 0) break; Restore(col, out remaining); continue;
             }
-
             if (remaining == 0)
-            {
-                col--;
-                if (col < 0) break;
-                Restore(col, out remaining);
-                continue;
-            }
-
-            uint bit = remaining & (uint)-(int)remaining; // LSB
-            remaining ^= bit;
-            int row = BitOperations.TrailingZeroCount(bit);
-            queenRows[col] = row;
-
-            // Progress: count root-level placements
+            { col--; if (col < 0) break; Restore(col, out remaining); continue; }
+            uint bit = remaining & (uint)-(int)remaining; remaining ^= bit; int row = BitOperations.TrailingZeroCount(bit); queenRows[col] = row;
             if (col == 0)
-            {
-                rootPlacements++;
-                var pct = (double)rootPlacements / rootTotal * 100.0;
-                ProgressValueChanged?.Invoke(this,
-                    new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(pct, _currentSimToken));
-            }
-
+            { rootPlacements++; var pct = (double)rootPlacements / rootTotal * 100.0; ProgressValueChanged?.Invoke(this, new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(pct, _currentSimToken)); }
             if (visualize)
-            {
-                queenPlacedCounter++;
-                if (queenPlacedCounter % queenPlacedSampleRate == 0 || col > lastDepth)
-                {
-                    QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(new Memory<int>(queenRows)));
-                    lastDepth = col;
-                }
-                if (delay > 0)
-                    Thread.Sleep(delay);
-            }
-
-            // Push frame for this column before descending
-            stackCols[col] = cols;
-            stackD1[col] = diag1;
-            stackD2[col] = diag2;
-            stackRemaining[col] = remaining;
-
-            cols |= bit;
-            diag1 = (diag1 | bit) << 1;
-            diag2 = (diag2 | bit) >> 1;
-            col++;
-            if (col == N) continue;
-            remaining = ComputeAvailable(col);
+            { queenPlacedCounter++; if (queenPlacedCounter % queenPlacedSampleRate == 0 || col > lastDepth) { QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(new Memory<int>(queenRows))); lastDepth = col; } if (delay > 0) Thread.Sleep(delay); }
+            stackCols[col] = cols; stackD1[col] = diag1; stackD2[col] = diag2; stackRemaining[col] = remaining;
+            cols |= bit; diag1 = (diag1 | bit) << 1; diag2 = (diag2 | bit) >> 1; col++; if (col == N) continue; remaining = ComputeAvailable(col);
         }
-        // Emit final 100% progress event
-        ProgressValueChanged?.Invoke(this,
-            new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(100.0, _currentSimToken));
-
+        ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
         uint ComputeAvailable(int c)
         {
             uint avail = ~(cols | diag1 | diag2) & mask;
             int maxRow;
-            if (c == 0)
-                maxRow = restrictFirstCol ? maxRow0 : N;
+            if (c == 0) maxRow = restrictFirstCol ? maxRow0 : N;
             else if (enhancedSymmetry && restrictFirstCol && c == 1)
-            {
-                int firstRow = queenRows[0];
-                if ((N & 1) == 1 && firstRow == N / 2)
-                    maxRow = N / 2;
-                else
-                    maxRow = N;
-            }
-            else
-                maxRow = N;
-            if (maxRow < N)
-            {
-                uint limitMask = (1u << maxRow) - 1u;
-                avail &= limitMask;
-            }
-            return avail;
+            { int firstRow = queenRows[0]; maxRow = ((N & 1) == 1 && firstRow == N / 2) ? N / 2 : N; }
+            else maxRow = N;
+            if (maxRow < N) avail &= (1u << maxRow) - 1u; return avail;
         }
         void Restore(int c, out uint rem)
-        {
-            rem = stackRemaining[c];
-            cols = stackCols[c];
-            diag1 = stackD1[c];
-            diag2 = stackD2[c];
-        }
+        { rem = stackRemaining[c]; cols = stackCols[c]; diag1 = stackD1[c]; diag2 = stackD2[c]; }
     }
 
-    private readonly ISolutionFormatter _solutionFormatter;
+    #endregion Core Iterative Solver
+
+    #region Fields / Helpers
+
+    private readonly ISolutionFormatter _solutionFormatter = solutionFormatter;
     private readonly List<int[]> _solutions = [];
     private int _solutionCount;
     private Guid _currentSimToken = Guid.Empty;
     private readonly bool _disableCap = false;
     private bool _disposed;
-    private readonly int _maxSolutionsInOutput;
-
-    public bool EnableEvents { get; set; } = true;
+    private readonly int _maxSolutionsInOutput = maxSolutionsInOutput;
 
     private bool ShouldAddSolution() => _maxSolutionsInOutput <= 0 || _solutions.Count < _maxSolutionsInOutput;
+
+    #endregion Fields / Helpers
 }
