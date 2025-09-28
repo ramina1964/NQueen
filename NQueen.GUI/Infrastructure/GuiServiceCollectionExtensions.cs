@@ -7,7 +7,8 @@ public static class GuiServiceCollectionExtensions
         var services = new ServiceCollection();
         services.AddSingleton<IDispatcher, WpfDispatcher>();
         services.AddTransient<ISaveFileDialogService, SaveFileDialogService>();
-        services.AddBitmaskSolverServices(disableCap: true);
+        // Enable cap in GUI (memory saving)
+        services.AddBitmaskSolverServices(disableCap: false);
 
         // Register MainWindow for DI
         services.AddSingleton<MainWindow>();

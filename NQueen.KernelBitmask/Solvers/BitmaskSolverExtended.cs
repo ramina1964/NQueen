@@ -83,7 +83,7 @@ public class BitmaskSolverExtended(
         ResetForSolve();
         var sw = Stopwatch.StartNew();
 
-        var parallelEligible = EnableParallelization && BoardSize >= 10 && SolutionMode != SolutionMode.Single;
+        var parallelEligible = EnableParallelization && BoardSize >= SimulationSettings.ParallelMinBoardSize && SolutionMode != SolutionMode.Single;
         switch (SolutionMode)
         {
             case SolutionMode.Single:
@@ -111,7 +111,7 @@ public class BitmaskSolverExtended(
     {
         _solutions.Clear();
         _solutionCount = 0;
-        IsSolverCanceled = false; // ensure fresh state each call (cancellation external can re-set)
+        IsSolverCanceled = false;
     }
 
     private void SolveSingleMode()
@@ -119,10 +119,11 @@ public class BitmaskSolverExtended(
         BitmaskIterative(rows =>
         {
             _solutionCount++;
-            if (_solutions.Count == 0)
+            if (_solutions.Count == 0 && ShouldAddSolution())
                 _solutions.Add((int[])rows.Clone());
-            return true; // stop after first
-        }, restrictFirstCol: false, enhancedSymmetry: false);
+            return true;
+        },
+            restrictFirstCol: false, enhancedSymmetry: false);
     }
 
     private void SolveAllMode(bool parallelEligible)
@@ -135,9 +136,11 @@ public class BitmaskSolverExtended(
         BitmaskIterative(rows =>
         {
             _solutionCount++;
-            _solutions.Add((int[])rows.Clone());
+            if (ShouldAddSolution())
+                _solutions.Add((int[])rows.Clone());
             return false;
-        }, restrictFirstCol: false, enhancedSymmetry: false);
+        },
+            restrictFirstCol: false, enhancedSymmetry: false);
     }
 
     private void SolveUniqueMode(bool parallelEligible)
@@ -155,23 +158,18 @@ public class BitmaskSolverExtended(
             if (SymmetryHelper.AddIfUnique(copy, uniqueSet, scratchBuf))
             {
                 _solutionCount++;
-                _solutions.Add(copy);
+                if (ShouldAddSolution())
+                    _solutions.Add(copy);
             }
             return false;
-        }, restrictFirstCol: true, enhancedSymmetry: true);
+        },
+            restrictFirstCol: true, enhancedSymmetry: true);
     }
 
     private SimulationResults BuildResults(TimeSpan elapsed)
     {
+        // Storage already capped via ShouldAddSolution; just project what we have.
         IEnumerable<int[]> outputSolutions = _solutions;
-        if (DisplayMode == DisplayMode.Visualize &&
-            BoardSize < 10 &&
-            SimulationSettings.MaxNoOfSolutionsInOutput > 0 &&
-            _solutions.Count > SimulationSettings.MaxNoOfSolutionsInOutput)
-        {
-            outputSolutions = _solutions.Take(SimulationSettings.MaxNoOfSolutionsInOutput);
-        }
-
         var resultSolutions = outputSolutions
             .Select((sol, idx) => new Solution(sol, _solutionFormatter, idx + 1))
             .ToList();
@@ -186,13 +184,15 @@ public class BitmaskSolverExtended(
 
     // --- Parallel variants (shallow top-level splitting). For large N, split first column placements among tasks.
     private void SolveAllParallel() =>
-        ParallelRootSplit(onSolution: rows => { _solutionCount++; if (ShouldAddSolution()) { lock (_solutions) { _solutions.Add(rows); if (EnableEvents) SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows))); } } return false; }, restrictFirstCol: false, enhancedSymmetry: false);
+        ParallelRootSplit(onSolution: rows => { System.Threading.Interlocked.Increment(ref _solutionCount); if (ShouldAddSolution()) { lock (_solutions) { if (ShouldAddSolution()) { _solutions.Add(rows); if (EnableEvents) SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows))); } } } return false; }, restrictFirstCol: false, enhancedSymmetry: false);
 
     private void SolveUniqueParallel()
     {
         int N = BoardSize;
         int maxRow0 = (N + 1) / 2;
         var tasks = new List<Task<HashSet<int[]>>>();
+        var cancelSource = new CancellationTokenSource();
+        var token = cancelSource.Token;
         for (int firstRow = 0; firstRow < maxRow0; firstRow++)
         {
             int fr = firstRow;
@@ -212,12 +212,12 @@ public class BitmaskSolverExtended(
                 uint[] stackRemaining = new uint[N];
                 int col = 1;
                 uint remaining = ComputeAvailable(1);
-                while (true)
+                while (!token.IsCancellationRequested)
                 {
                     if (col == N)
                     {
                         var copy = (int[])rowsArr.Clone();
-                        if (SymmetryHelper.AddIfUnique(copy, localUnique, scratchBuf)) { /* local uniqueness only */ }
+                        if (SymmetryHelper.AddIfUnique(copy, localUnique, scratchBuf)) { }
                         col--;
                         if (col <= 0) break;
                         Restore(col, out remaining);
@@ -234,10 +234,7 @@ public class BitmaskSolverExtended(
                     remaining ^= bit;
                     int row = BitOperations.TrailingZeroCount(bit);
                     rowsArr[col] = row;
-                    stackCols[col] = cols;
-                    stackD1[col] = d1;
-                    stackD2[col] = d2;
-                    stackRemaining[col] = remaining;
+                    stackCols[col] = cols; stackD1[col] = d1; stackD2[col] = d2; stackRemaining[col] = remaining;
                     cols |= bit; d1 = (d1 | bit) << 1; d2 = (d2 | bit) >> 1;
                     col++;
                     if (col == N) continue;
@@ -254,26 +251,22 @@ public class BitmaskSolverExtended(
                         int first = rowsArr[0];
                         maxRow = ((N & 1) == 1 && first == N / 2) ? N / 2 : N;
                     }
-                    else
-                        maxRow = N;
+                    else maxRow = N;
                     if (maxRow < N) avail &= (1u << maxRow) - 1u;
                     return avail;
                 }
                 void Restore(int c, out uint rem)
-                {
-                    rem = stackRemaining[c];
-                    cols = stackCols[c];
-                    d1 = stackD1[c];
-                    d2 = stackD2[c];
-                }
-            }));
+                { rem = stackRemaining[c]; cols = stackCols[c]; d1 = stackD1[c]; d2 = stackD2[c]; }
+            }, token));
         }
         Task.WaitAll(tasks.ToArray());
         var globalUnique = new HashSet<int[]>(new IntArrayComparer());
         foreach (var t in tasks)
         {
+            if (ShouldStopCollecting()) break;
             foreach (var sol in t.Result)
             {
+                if (ShouldStopCollecting()) break;
                 if (SymmetryHelper.AddIfUnique(sol, globalUnique, new int[N]))
                 {
                     _solutionCount++;
@@ -281,6 +274,7 @@ public class BitmaskSolverExtended(
                     {
                         _solutions.Add((int[])sol.Clone());
                         if (EnableEvents) SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(sol)));
+                        if (!ShouldAddSolution()) cancelSource.Cancel();
                     }
                 }
             }
@@ -390,7 +384,7 @@ public class BitmaskSolverExtended(
         ProgressValueChanged?.Invoke(this, new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(0.0, _currentSimToken));
         var visualize = DisplayMode == DisplayMode.Visualize;
         var delay = visualize && DelayInMillisec > 0 ? DelayInMillisec : 0;
-        int queenPlacedSampleRate = N >= 12 ? 1000 : 1;
+        int queenPlacedSampleRate = N >= SimulationSettings.QueenPlacedSamplingThresholdSize ? SimulationSettings.QueenPlacedLargeBoardSampleRate : 1;
         int queenPlacedCounter = 0; int lastDepth = -1;
         int col = 0; uint remaining = ComputeAvailable(0);
         while (true)
@@ -437,7 +431,15 @@ public class BitmaskSolverExtended(
     private bool _disposed;
     private readonly int _maxSolutionsInOutput = maxSolutionsInOutput;
 
-    private bool ShouldAddSolution() => _maxSolutionsInOutput <= 0 || _solutions.Count < _maxSolutionsInOutput;
+    private bool ShouldAddSolution()
+    {
+        if (_disableCap) return true;
+        int cap = SimulationSettings.MaxNoOfSolutionsInOutput;
+        if (cap <= 0) return true; // unlimited
+        return _solutions.Count < cap;
+    }
+
+    private bool ShouldStopCollecting() => !_disableCap && !ShouldAddSolution();
 
     #endregion Fields / Helpers
 }
