@@ -177,8 +177,8 @@ public sealed partial class MainViewModel
                 IsOutputReady = false;
                 ProgressVisibility = Visibility.Visible;
                 ProgressLabelVisibility = Visibility.Visible;
-                ProgressValue = 0; // Ensure progress starts at 0
-                ProgressLabel = "0%"; // Ensure label starts at 0%
+                ProgressValue = 0;
+                ProgressLabel = "0%";
                 IsSingleRunning = SolutionMode == SolutionMode.Single;
                 break;
 
@@ -191,7 +191,16 @@ public sealed partial class MainViewModel
                 IsOutputReady = true;
                 ProgressVisibility = Visibility.Hidden;
                 ProgressLabelVisibility = Visibility.Hidden;
+
                 OnSimulationCompleted();
+
+                // Fallback: fast simulations (small N) may have populated ObservableSolutions directly
+                // (ExtractCorrectNoOfSols) without any batched events. Ensure first solution renders.
+                if (SelectedSolution != null && ChessboardVm != null)
+                {
+                    EnsureBoardSized();
+                    ChessboardVm.PlaceQueens(SelectedSolution.Positions);
+                }
                 break;
         }
 

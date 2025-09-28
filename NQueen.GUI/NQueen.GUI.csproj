@@ -1,34 +1,41 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<OutputType>WinExe</OutputType>
-		<TargetFramework>net10.0-windows</TargetFramework>
-		<LangVersion>preview</LangVersion>
-		<UseWPF>true</UseWPF>
-		<Nullable>enable</Nullable>
-		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
-	</PropertyGroup>
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <LangVersion>preview</LangVersion>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+  </PropertyGroup>
 
-	<ItemGroup>
-		<None Remove="Images\WhiteQueen.png" />
-		<None Remove="ViewModels\MainViewModel.cs~RF2326ee9.TMP" />
-	</ItemGroup>
+  <ItemGroup>
+    <None Remove="Images\WhiteQueen.png" />
+    <None Remove="ViewModels\MainViewModel.cs~RF2326ee9.TMP" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
-	</ItemGroup>
-	<ItemGroup>
-		<ProjectReference Include="..\NQueen.Domain\NQueen.Domain.csproj" />
-		<ProjectReference Include="..\NQueen.KernelBitmask\NQueen.KernelBitmask.csproj" />
-		<ProjectReference Include="..\NQueen.Shared\NQueen.Shared.csproj" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<Resource Include="Images\WhiteQueen.png">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Resource>
-	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NQueen.Domain\NQueen.Domain.csproj" />
+    <ProjectReference Include="..\NQueen.KernelBitmask\NQueen.KernelBitmask.csproj" />
+    <ProjectReference Include="..\NQueen.Shared\NQueen.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Images\WhiteQueen.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+
+  <!-- Exclude legacy/duplicate messaging code -->
+  <ItemGroup>
+    <Compile Remove="Messaging\**\*.cs" />
+    <Compile Remove="MessagePruning\**\*.cs" />
+  </ItemGroup>
 
 </Project>

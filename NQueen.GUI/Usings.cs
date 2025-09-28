@@ -1,10 +1,8 @@
 ﻿global using CommunityToolkit.Mvvm.ComponentModel;
 global using CommunityToolkit.Mvvm.Input;
-global using CommunityToolkit.Mvvm.Messaging;
 global using FluentValidation;
 global using Microsoft.Extensions.DependencyInjection;
 global using NQueen.Domain.Enums;
-global using NQueen.Domain.EventArgs;
 global using NQueen.Domain.Formatters;
 global using NQueen.Domain.Interfaces;
 global using NQueen.Domain.Models;
@@ -13,7 +11,6 @@ global using NQueen.Domain.Utils;
 global using NQueen.GUI.Configuration;
 global using NQueen.GUI.Infrastructure;
 global using NQueen.GUI.Interfaces;
-global using NQueen.GUI.Messaging;
 global using NQueen.GUI.ViewModels;
 global using NQueen.GUI.Views;
 global using NQueen.KernelBitmask.Services;
