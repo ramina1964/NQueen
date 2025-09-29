@@ -1,11 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using NQueen.Domain.Interfaces;
-using NQueen.GUI.Configuration;           // TestDispatcher
-using NQueen.GUI.Interfaces;              // IDispatcher, ISaveFileDialogService
-using NQueen.GUI.ViewModels;
-using NQueen.KernelBitmask.Services;      // AddBitmaskSolverServices
-
-namespace NQueen.ViewModelTests.Setup;
+﻿namespace NQueen.ViewModelTests.Setup;
 
 public static class TestServiceCollectionExtensions
 {
