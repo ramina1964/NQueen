@@ -5,6 +5,33 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
     public string? BoardSizeError =>
         GetErrors(nameof(BoardSizeText)).OfType<string>().FirstOrDefault();
 
+    // Ensures that after a cancellation we revalidate and, if the AsyncRelayCommand
+    // is stuck in a running state, we rebuild it so the Simulate button re-enables.
+    private void HandlePostCancel()
+    {
+        // Recreate command if still flagged as running (some long-running Task might not
+        // have returned yet, keeping AsyncRelayCommand disabled).
+        if (SimulateCommand is AsyncRelayCommand arc && arc.IsRunning)
+        {
+            SimulateCommand = new AsyncRelayCommand(SimulateAsync, CanSimulate);
+            OnPropertyChanged(nameof(SimulateCommand));
+        }
+
+        // Re-run validation on current input.
+        ValidateProperty(nameof(BoardSizeText));
+
+        // If valid, put view-model into idle/input state ready for a new run.
+        if (IsValid)
+        {
+            IsIdle = true;
+            IsInInputMode = true;
+            IsSimulating = false;
+            IsOutputReady = false;
+        }
+
+        RefreshCommandStates();
+    }
+
     private void ValidateProperty(string propertyName)
     {
         if (propertyName != nameof(BoardSizeText))

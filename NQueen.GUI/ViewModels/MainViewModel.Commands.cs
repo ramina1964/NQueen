@@ -7,7 +7,6 @@ public sealed partial class MainViewModel
         if (IsSimulating == false)
             return;
 
-        // Flag cancellation so event handlers short‑circuit.
         _solver.IsSolverCanceled = true;
         _currentSimulationToken = Guid.Empty;
 
@@ -20,13 +19,10 @@ public sealed partial class MainViewModel
             Debug.WriteLine($"[Cancel] CancellationTokenSource.Cancel threw: {ex}");
         }
 
-        // Detach events first to avoid any further additions to ObservableSolutions.
         UnsubscribeFromSimulationEvents();
 
-        // Perform all UI-bound collection / property changes on the UI dispatcher to avoid race / stale visuals.
         _uiDispatcher.Invoke(() =>
         {
-            // Clear visualization & list (ensure SelectedSolution cleared before repopulating anywhere).
             SelectedSolution = null!;
             ObservableSolutions.Clear();
             ChessboardVm?.ClearImages();
@@ -41,18 +37,17 @@ public sealed partial class MainViewModel
             ProgressVisibility = Visibility.Hidden;
             ProgressLabelVisibility = Visibility.Hidden;
 
-            // Reset primary state flags
             IsSimulating = false;
             IsSingleRunning = false;
             IsInInputMode = true;
             IsIdle = true;
         });
 
-        // Fresh CTS for next run
-        try { CancellationTokenSource?.Dispose(); } catch { /* ignore */ }
+        try { CancellationTokenSource?.Dispose(); } catch { }
         CancellationTokenSource = new CancellationTokenSource();
 
-        RefreshCommandStates();
+        // Revalidate & ensure Simulate command is reset/enabled if input is valid.
+        HandlePostCancel();
     }
 
     private void Save()
@@ -179,10 +174,14 @@ public sealed partial class MainViewModel
             case SimulationStatus.Started:
                 SubscribeToSimulationEvents();
                 _hasProgressTick = false;
+                _lastProgressPercent = 0;
+                _progressCompleted = false;
+
                 IsIdle = false;
                 IsInInputMode = false;
                 IsSimulating = true;
                 IsOutputReady = false;
+
                 ProgressVisibility = Visibility.Visible;
                 ProgressLabelVisibility = Visibility.Visible;
                 ProgressValue = 0;
@@ -197,13 +196,21 @@ public sealed partial class MainViewModel
                 IsSimulating = false;
                 IsSingleRunning = false;
                 IsOutputReady = true;
+
+                // Mark complete and set final 100%
+                _progressCompleted = true;
+                if (!(SolutionMode == SolutionMode.Single && DisplayMode == DisplayMode.Visualize))
+                {
+                    _lastProgressPercent = 100;
+                    ProgressValue = 1.0;
+                    ProgressLabel = "100%";
+                }
+
                 ProgressVisibility = Visibility.Hidden;
                 ProgressLabelVisibility = Visibility.Hidden;
 
                 OnSimulationCompleted();
 
-                // Fallback: fast simulations (small N) may have populated ObservableSolutions directly
-                // (ExtractCorrectNoOfSols) without any batched events. Ensure first solution renders.
                 if (SelectedSolution != null && ChessboardVm != null)
                 {
                     EnsureBoardSized();

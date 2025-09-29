@@ -7,17 +7,19 @@ public sealed partial class MainViewModel
     private int _actualTotalSolutions = 0;
     private bool _hasProgressTick;
 
+    // Progress tracking
+    private int _lastProgressPercent = 0;
+    private bool _progressCompleted = false;
+
     private void SubscribeToSimulationEvents()
     {
         Debug.WriteLine($"[MainViewModel] Subscribing to solver: {_solver?.GetHashCode()}");
-
         UnsubscribeFromSimulationEvents();
 
         if (_solver == null)
             return;
 
         _hasProgressTick = false;
-
         _solver.QueenPlaced += OnQueenPlacedEvent;
         _solver.SolutionFound += OnSolutionFoundEvent;
         _solver.ProgressValueChanged += OnProgressValueChangedEvent;    
@@ -86,37 +88,55 @@ public sealed partial class MainViewModel
     // Progress handling
     private void OnProgressValueChangedEvent(object? sender, NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs e)
     {
+        // Ignore stale or post-finish events
+        if (e.SimulationToken != _currentSimulationToken || _solver.IsSolverCanceled || _progressCompleted)
+            return;
+
         _uiDispatcher.Invoke(() =>
         {
-            // For Single solution mode with visualization we do NOT show percentage estimation.
+            // Single + Visualize stays indeterminate
             if (SolutionMode == SolutionMode.Single && DisplayMode == DisplayMode.Visualize)
             {
-                // Keep bar (indeterminate) visible, hide label text.
                 ProgressVisibility = Visibility.Visible;
                 ProgressLabelVisibility = Visibility.Hidden;
                 ProgressLabel = string.Empty;
-                // Do not touch ProgressValue (indeterminate style ignores it).
                 return;
             }
 
-            int progressInt = Math.Clamp((int)e.Value, 0, 100);
-            double progressDouble = progressInt / 100.0;
+            int raw = (int)Math.Round(e.Value);
+            int clamped = Math.Clamp(raw, 0, 100);
+
+            // Prevent first / early overshoot to 100%. Defer 100 until Finished state.
+            if (clamped >= 100)
+            {
+                clamped = 99; // reserve 100% for completion
+            }
+
+            // Monotonic progression
+            if (clamped < _lastProgressPercent)
+            {
+                clamped = _lastProgressPercent; // never go backwards
+            }
+            else
+            {
+                _lastProgressPercent = clamped;
+            }
 
             ProgressVisibility = Visibility.Visible;
             ProgressLabelVisibility = Visibility.Visible;
-            ProgressValue = progressDouble;
-            ProgressLabel = $"{progressInt}%";
+            ProgressValue = clamped / 100.0;
+            ProgressLabel = $"{clamped}%";
 
-            if (progressInt is > 0 and < 100)
+            if (clamped is > 0 and < 100)
                 _hasProgressTick = true;
 
-            Debug.WriteLine($"[MainViewModel] Progress event: raw={e.Value}, mapped={progressInt}%");
+            Debug.WriteLine($"[MainViewModel] Progress event: raw={e.Value}, mapped={clamped}%, last={_lastProgressPercent}%");
         });
     }
 
     private void MaybeForceEarlyProgress()
     {
-        if (_hasProgressTick || IsSingleRunning)
+        if (_hasProgressTick || IsSingleRunning || _progressCompleted)
             return;
 
         _hasProgressTick = true;
@@ -128,12 +148,14 @@ public sealed partial class MainViewModel
                 ProgressLabelVisibility = Visibility.Visible;
                 ProgressValue = 0.01;
                 ProgressLabel = "1%";
+                _lastProgressPercent = Math.Max(_lastProgressPercent, 1);
                 Debug.WriteLine("[MainViewModel] Forced early progress tick at 1%.");
             }
         });
     }
 
-    private void OnQueenPlacedEvent(object? sender, NQueen.Domain.EventArgsPruning.QueenPlacedEventArgs e)
+    private void OnQueenPlacedEvent(object? sender,
+        Domain.EventArgsPruning.QueenPlacedEventArgs e)
     {
         MaybeForceEarlyProgress();
 
