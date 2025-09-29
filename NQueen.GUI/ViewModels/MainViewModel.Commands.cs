@@ -23,8 +23,12 @@ public sealed partial class MainViewModel
         if (DisplayMode == DisplayMode.Visualize &&
             boardSize > SimulationSettings.MaxVisualizeBoardSize)
         {
-            MessageBox.Show(ErrorMessages.VisualizeSizeTooLarge,
-                "Visualization Limit", MessageBoxButton.OK, MessageBoxImage.Information);
+            if (!SuppressUserDialogs)
+            {
+                MessageBox.Show(ErrorMessages.VisualizeSizeTooLarge,
+                    "Visualization Limit", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            // Behave identically otherwise: silently fall back to Hide.
             DisplayMode = DisplayMode.Hide;
         }
 

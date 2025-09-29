@@ -209,8 +209,14 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
 
         if (solutionMode.HasValue)
         {
+            var oldText = BoardSizeText;
             InputViewModel = new InputViewModel(solutionMode.Value);
-            BoardSizeText = BoardSettings.DefaultBoardSize.ToString();
+            
+            // Only overwrite if oldText is null/empty
+            if (string.IsNullOrWhiteSpace(oldText))
+                BoardSizeText = BoardSettings.DefaultBoardSize.ToString();
+            else
+                ValidateProperty(nameof(BoardSizeText)); // revalidate existing size
         }
 
         if (string.IsNullOrEmpty(boardSizeText) == false)

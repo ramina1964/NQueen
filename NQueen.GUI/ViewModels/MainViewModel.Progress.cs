@@ -2,7 +2,8 @@ namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel
 {
-    // Authoritative progress percent (0..100). 100 is only set at finalization.
+    // Authoritative progress percent (0..100). 100 only after finalization.
+    // Now raises PropertyChanged so XAML/tests can bind/assert.
     public int ProgressPercent => _progressPercent;
 
     private int _progressPercent;
@@ -13,10 +14,11 @@ public sealed partial class MainViewModel
         _progressFinalized = false;
         _hasProgressTick = false;
         _progressPercent = 0;
-        ProgressValue = 0.0;
+        ProgressValue = 0.0;           // (legacy normalized value; can remove later)
         ProgressLabel = "0%";
         ProgressVisibility = Visibility.Visible;
         ProgressLabelVisibility = Visibility.Visible;
+        OnPropertyChanged(nameof(ProgressPercent));
     }
 
     private void SetProgressPercent(int rawPercent)
@@ -26,7 +28,7 @@ public sealed partial class MainViewModel
 
         rawPercent = Math.Clamp(rawPercent, 0, 100);
 
-        // Reserve 100% for completion
+        // Reserve 100% for completion event
         if (rawPercent >= 100)
             rawPercent = 99;
 
@@ -39,6 +41,7 @@ public sealed partial class MainViewModel
 
         _progressPercent = rawPercent;
 
+        // Keep normalized ProgressValue for any legacy binding still present
         ProgressValue = _progressPercent / 100.0;
         ProgressLabel = $"{_progressPercent}%";
         ProgressVisibility = Visibility.Visible;
@@ -46,6 +49,8 @@ public sealed partial class MainViewModel
 
         if (_progressPercent is > 0 and < 100)
             _hasProgressTick = true;
+
+        OnPropertyChanged(nameof(ProgressPercent));
     }
 
     private void ForceEarlyProgressIfNeeded()
@@ -66,6 +71,7 @@ public sealed partial class MainViewModel
         _progressPercent = 100;
         ProgressValue = 1.0;
         ProgressLabel = "100%";
+        OnPropertyChanged(nameof(ProgressPercent));
     }
 
     // Internal test hook (optional for unit tests)

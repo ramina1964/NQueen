@@ -13,24 +13,28 @@ public static class TestHelpers
         SolutionMode solutionMode = SolutionMode.Single,
         DisplayMode displayMode = DisplayMode.Hide,
         SimulationResults? simulationResults = null,
-        ISolutionFormatter? solutionFormatter = null)
+        ISolutionFormatter? solutionFormatter = null,
+        bool suppressUserDialogs = true)
     {
         var serviceProvider = CreateServiceProvider();
         solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>();
 
-        var mainViewModel = new MainViewModel(
+        var vm = new MainViewModel(
             serviceProvider.GetRequiredService<ISolverPruning>(),
             serviceProvider.GetRequiredService<IDispatcher>(),
             serviceProvider.GetRequiredService<ISaveFileDialogService>(),
             solutionFormatter);
 
-        // Configure the MainViewModel instance
-        mainViewModel.BoardSizeText = boardSize.ToString();
-        mainViewModel.SolutionMode = solutionMode;
-        mainViewModel.DisplayMode = displayMode;
-        mainViewModel.SimulationResults = simulationResults ?? new SimulationResults([], 0);
+        // Suppress dialogs before any property setters that may trigger validation popups.
+        vm.SuppressUserDialogs = suppressUserDialogs;
 
-        return mainViewModel;
+        // Order matters: set mode/display first (avoids double reset), then size.
+        vm.SolutionMode = solutionMode;
+        vm.DisplayMode = displayMode;
+        vm.BoardSizeText = boardSize.ToString();
+
+        vm.SimulationResults = simulationResults ?? new SimulationResults([], 0);
+        return vm;
     }
 
     public static MainViewModel CreateMainViewModelWithMock(
@@ -39,105 +43,111 @@ public static class TestHelpers
         SolutionMode solutionMode = SolutionMode.Single,
         DisplayMode displayMode = DisplayMode.Hide,
         SimulationResults? simulationResults = null,
-        ISolutionFormatter? solutionFormatter = null)
+        ISolutionFormatter? solutionFormatter = null,
+        bool suppressUserDialogs = true)
     {
         var serviceProvider = CreateServiceProviderWithMock(mockSolver);
         solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>();
 
-        var mainViewModel = new MainViewModel(
+        var vm = new MainViewModel(
             mockSolver,
             serviceProvider.GetRequiredService<IDispatcher>(),
             serviceProvider.GetRequiredService<ISaveFileDialogService>(),
             solutionFormatter);
 
-        // Configure the MainViewModel instance
-        mainViewModel.BoardSizeText = boardSize.ToString();
-        mainViewModel.SolutionMode = solutionMode;
-        mainViewModel.DisplayMode = displayMode;
-        mainViewModel.SimulationResults = simulationResults ?? new SimulationResults([], 0);
-
-        return mainViewModel;
+        vm.SuppressUserDialogs = suppressUserDialogs;
+        vm.SolutionMode = solutionMode;
+        vm.DisplayMode = displayMode;
+        vm.BoardSizeText = boardSize.ToString();
+        vm.SimulationResults = simulationResults ?? new SimulationResults([], 0);
+        return vm;
     }
 
     public static MainViewModel CreateMainViewModelWithBoardSizeText(
         string boardSizeText,
         SolutionMode solutionMode = SolutionMode.Single,
         DisplayMode displayMode = DisplayMode.Hide,
-        ISolutionFormatter? solutionFormatter = null)
+        ISolutionFormatter? solutionFormatter = null,
+        bool suppressUserDialogs = true)
     {
         solutionFormatter ??= new TestSolutionFormatter();
-        var mainVm = CreateMainViewModel(solutionFormatter: solutionFormatter);
-        mainVm.SolutionMode = solutionMode;
-        mainVm.BoardSizeText = boardSizeText;
-        mainVm.DisplayMode = displayMode;
+        var vm = CreateMainViewModel(
+            boardSize: BoardSettings.DefaultBoardSize,
+            solutionMode: solutionMode,
+            displayMode: displayMode,
+            solutionFormatter: solutionFormatter,
+            suppressUserDialogs: suppressUserDialogs);
 
-        return mainVm;
+        // Assign text after base setup (will trigger validation once).
+        vm.BoardSizeText = boardSizeText;
+        return vm;
     }
 
-    // Todo: Fix compatibility of this method with the new Kernel project.
     public static MainViewModel CreateMainViewModelWithBoardSize(
         int boardSize,
         SolutionMode solutionMode = SolutionMode.Single,
         DisplayMode displayMode = DisplayMode.Hide,
-        ISolutionFormatter? solutionFormatter = null)
-    {
-        return CreateMainViewModelWithBoardSizeText(
-            boardSize.ToString(), solutionMode, displayMode, solutionFormatter);
-    }
+        ISolutionFormatter? solutionFormatter = null,
+        bool suppressUserDialogs = true) =>
+        CreateMainViewModel(
+            boardSize: boardSize,
+            solutionMode: solutionMode,
+            displayMode: displayMode,
+            solutionFormatter: solutionFormatter,
+            suppressUserDialogs: suppressUserDialogs);
 
     public static async Task<MainViewModel> MainViewModelCreateMainViewModelWithSimulationResults(
         int boardSize,
         SolutionMode solutionMode,
         DisplayMode displayMode,
         MockSaveFileDialogService saveFileDialogService,
-        ISolutionFormatter? solutionFormatter = null)
+        ISolutionFormatter? solutionFormatter = null,
+        bool suppressUserDialogs = true)
     {
         var serviceProvider = CreateServiceProvider();
         var solver = serviceProvider.GetRequiredService<ISolverPruning>();
-        
         solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>();
-        var mainVm = new MainViewModel(
+
+        var vm = new MainViewModel(
             solver,
             new TestDispatcher(),
             saveFileDialogService,
             solutionFormatter)
         {
-            BoardSizeText = boardSize.ToString(),
+            SuppressUserDialogs = suppressUserDialogs,
             SolutionMode = solutionMode,
             DisplayMode = displayMode,
-            IsIdle = true,
+            BoardSizeText = boardSize.ToString(),
+            IsIdle = true
         };
 
-        // Dynamically calculate simulation results
-        var simulationResults = await solver.GetSimResultsAsync(new SimulationContext(boardSize, solutionMode, displayMode, true));
-        mainVm.SimulationResults = simulationResults;
-        mainVm.NoOfSolutions = simulationResults.Solutions.Count().ToString();
+        var simulationResults = await solver.GetSimResultsAsync(
+            new SimulationContext(boardSize, solutionMode, displayMode, true));
 
-        return mainVm;
+        vm.SimulationResults = simulationResults;
+        vm.NoOfSolutions = simulationResults.Solutions.Count().ToString();
+        return vm;
     }
 
     public static Mock<ISolverPruning> CreateMockSolver(IEnumerable<Solution> solutions)
     {
         var mockSolver = new Mock<ISolverPruning>();
-        mockSolver.Setup(
-            s => s.GetSimResultsAsync(
-                        It.IsAny<SimulationContext>()))
-                  .ReturnsAsync(new SimulationResults(solutions, 0));
-        
+        mockSolver.Setup(s =>
+                s.GetSimResultsAsync(It.IsAny<SimulationContext>()))
+            .ReturnsAsync(new SimulationResults(solutions, 0));
         return mockSolver;
     }
 
     public static async Task WaitForSimulationCompletionAsync(MainViewModel mainVm)
     {
         var tcs = new TaskCompletionSource<bool>();
-        void handler(object? s, EventArgs e)
+        void Handler(object? s, EventArgs e)
         {
             tcs.TrySetResult(true);
-            mainVm.SimulationCompleted -= handler;
+            mainVm.SimulationCompleted -= Handler;
         }
 
-        mainVm.SimulationCompleted += handler;
-
+        mainVm.SimulationCompleted += Handler;
         try
         {
             mainVm.SimulateCommand.Execute(null);
@@ -145,7 +155,6 @@ public static class TestHelpers
         }
         catch (Exception ex)
         {
-            // Log the exception and rethrow for test visibility
             Console.WriteLine($"Exception during simulation: {ex}");
             throw;
         }
@@ -154,11 +163,10 @@ public static class TestHelpers
     public static async Task WaitForConditionAsync(Func<bool> condition, TimeSpan timeout)
     {
         var start = DateTime.UtcNow;
-        while (condition() == false)
+        while (!condition())
         {
             if (DateTime.UtcNow - start > timeout)
                 throw new TimeoutException(ErrorMessages.GetTimeoutMessage(timeout));
-
             await Task.Delay(10);
         }
     }

@@ -1,57 +1,67 @@
-﻿using NQueen.KernelBitmask.Services;
+﻿using Microsoft.Extensions.DependencyInjection;
+using NQueen.Domain.Interfaces;
+using NQueen.GUI.Configuration;           // TestDispatcher
+using NQueen.GUI.Interfaces;              // IDispatcher, ISaveFileDialogService
+using NQueen.GUI.ViewModels;
+using NQueen.KernelBitmask.Services;      // AddBitmaskSolverServices
 
 namespace NQueen.ViewModelTests.Setup;
 
 public static class TestServiceCollectionExtensions
 {
-    public static ServiceProvider InitializeForTests()
+    /// <summary>
+    /// Registers services required for MainViewModel unit tests.
+    /// </summary>
+    /// <param name="enableCap">Pass false to disable solution capping in tests.</param>
+    public static IServiceCollection AddViewModelTestServices(
+        this IServiceCollection services,
+        bool enableCap = false)
     {
-        var services = new ServiceCollection();
+        // Bitmask solver (registers ISolutionFormatter + ISolverPruning & related fronts/backs)
+        services.AddBitmaskSolverServices(enableCap);
 
-        // Override IDispatcher with TestDispatcher for tests
+        // Test dispatcher (synchronous)
         services.AddSingleton<IDispatcher, TestDispatcher>();
+
+        // Mock save dialog / file service used by MainViewModel.Save()
         services.AddSingleton<ISaveFileDialogService, MockSaveFileDialogService>();
 
-        // Register BoardState factory for dynamic board sizes
-        services.AddTransient<Func<int, BoardState>>(sp => size => new BoardState(size));
-        services.AddTransient<ISolutionManager, SolutionManager>();
-        services.AddTransient<SolverEngine>();
+        // ViewModel under test
+        services.AddTransient<MainViewModel>();
 
-        // Register BitmaskSolverExtended as ISolverPruning
-        services.AddBitmaskSolverServices(disableCap: true);
-
-        services.AddTransient<SimulationOrchestrator>();
-
-        // Register shared ViewModels
-        services.AddNQueenViewModels();
-        services.AddSingleton<ISolutionFormatter, TestSolutionFormatter>();
-        
-        // Build and return the service provider
-        return services.BuildServiceProvider();
+        return services;
     }
 
-    public static ServiceProvider InitializeForTestsWithMock(ISolverPruning mockSolver)
+    public static ServiceProvider BuildTestServiceProvider(bool enableCap = false) =>
+        new ServiceCollection()
+            .AddViewModelTestServices(enableCap)
+            .BuildServiceProvider();
+
+    // ---------------- Legacy helper method names still used in TestHelpers ----------------
+
+    /// <summary>
+    /// Backward-compatible factory used by existing tests (maps to BuildTestServiceProvider).
+    /// </summary>
+    public static ServiceProvider InitializeForTests(bool enableCap = false) =>
+        BuildTestServiceProvider(enableCap);
+
+    /// <summary>
+    /// Initializes DI for tests while injecting a provided mock ISolverPruning.
+    /// Ensures other required services are present.
+    /// </summary>
+    public static ServiceProvider InitializeForTestsWithMock(ISolverPruning mockSolver, bool enableCap = false)
     {
         var services = new ServiceCollection();
 
-        // Override IDispatcher with TestDispatcher for tests
-        services.AddSingleton<IDispatcher, TestDispatcher>();
-        services.AddSingleton<ISaveFileDialogService, MockSaveFileDialogService>();
+        // Register standard test services (including real solver) first.
+        services.AddViewModelTestServices(enableCap);
 
-        // Register BoardState factory for dynamic board sizes
-        services.AddTransient<Func<int, BoardState>>(sp => size => new BoardState(size));
-        services.AddTransient<ISolutionManager, SolutionManager>();
-
-        // Register the mock as ISolverPruning
+        // Override solver with supplied mock (register for all relevant interfaces if needed).
+        services.AddSingleton(mockSolver);
         services.AddSingleton<ISolverPruning>(mockSolver);
+        services.AddSingleton<ISolverBackEndPruning>(mockSolver);
+        services.AddSingleton<ISolverFrontEndPruning>(mockSolver);
 
-        services.AddTransient<SimulationOrchestrator>();
-
-        // Register shared ViewModels
-        services.AddNQueenViewModels();
-        services.AddSingleton<ISolutionFormatter, TestSolutionFormatter>();
-
-        // Build and return the service provider
         return services.BuildServiceProvider();
     }
 }

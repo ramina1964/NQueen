@@ -62,7 +62,7 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private static SimulationResults _simulationResults = null!;
+    private SimulationResults _simulationResults = new([], 0.0);
 
     [ObservableProperty]
     private ObservableCollection<Solution> _observableSolutions = [];
@@ -125,4 +125,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _enableParallelization = true;
+
+    // When true (primarily in unit tests), suppress all modal MessageBox dialogs.
+    [ObservableProperty]
+    private bool _suppressUserDialogs;
 }
