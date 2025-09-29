@@ -135,6 +135,7 @@ public sealed partial class MainViewModel
         }
 
         UnsubscribeFromSimulationEvents();
+        StopVisualizationTimer(); // NEW: stop throttling timer on cancel
 
         _uiDispatcher.Invoke(() =>
         {
@@ -147,7 +148,6 @@ public sealed partial class MainViewModel
             MemoryUsage = "0";
             IsOutputReady = false;
 
-            // Progress reset (hide on cancel)
             _progressFinalized = false;
             _progressPercent = 0;
             ProgressValue = 0.0;
@@ -161,9 +161,8 @@ public sealed partial class MainViewModel
             IsIdle = true;
         });
 
-        try { CancellationTokenSource?.Dispose(); } catch { /* ignore */ }
+        try { CancellationTokenSource?.Dispose(); } catch { }
         CancellationTokenSource = new CancellationTokenSource();
-
         HandlePostCancel();
     }
 
@@ -174,6 +173,7 @@ public sealed partial class MainViewModel
             case SimulationStatus.Started:
                 SubscribeToSimulationEvents();
                 ResetProgress();
+                StopVisualizationTimer(); // ensure clean start
                 IsIdle = false;
                 IsInInputMode = false;
                 IsSimulating = true;
@@ -184,6 +184,7 @@ public sealed partial class MainViewModel
 
             case SimulationStatus.Finished:
                 UnsubscribeFromSimulationEvents();
+                StopVisualizationTimer();
                 IsIdle = true;
                 IsInInputMode = true;
                 IsSimulating = false;
