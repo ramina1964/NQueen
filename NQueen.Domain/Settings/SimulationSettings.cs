@@ -21,5 +21,5 @@ public static class SimulationSettings
     public const int ProgressIntervalInMilliSec = 5000;
 
     // Visualization is allowed only up to and including this board size.
-    public const int MaxVisualizeBoardSize = 8;
+    public const int MaxVisualizeBoardSize = 6;
 }
