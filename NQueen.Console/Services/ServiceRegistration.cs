@@ -2,15 +2,15 @@
 
 public static class ServiceRegistration
 {
-    // Registers only the active Bitmask kernel services (legacy kernels removed).
+    /// <summary>
+    /// Registers N-Queen console application services (bitmask solver + helpers).
+    /// </summary>
     public static IServiceCollection AddNQueenServices(this IServiceCollection services, bool enableCap = true)
     {
-        // Bitmask solver + formatter + pruning interfaces
         services.AddBitmaskSolverServices(enableCap);
 
-        // Factory for creating BitmaskBoardState instances
-        services.AddTransient<Func<int, BitmaskBoardState>>(
-            _ => size => BitmaskBoardState.Create(size));
+        // Stateless factory delegate for BitmaskBoardState creation.
+        services.AddTransient<Func<int, BitmaskBoardState>>(sp => size => BitmaskBoardState.Create(size));
 
         return services;
     }

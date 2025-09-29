@@ -9,9 +9,8 @@ public partial class App : Application
 
         base.OnStartup(e);
 
-        _serviceProvider = GuiServiceCollectionExtensions.Initialize();
-        var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
-        mainWindow.Show();
+        _serviceProvider = GuiServiceCollectionExtensions.BuildGuiServiceProvider();
+        _serviceProvider.GetRequiredService<MainWindow>().Show();
     }
 
     protected override void OnExit(ExitEventArgs e)
