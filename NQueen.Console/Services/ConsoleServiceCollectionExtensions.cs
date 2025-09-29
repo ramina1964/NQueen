@@ -1,6 +1,6 @@
 ﻿namespace NQueen.ConsoleApp.Services;
 
-public static class ServiceRegistration
+public static class ConsoleServiceCollectionExtensions
 {
     /// <summary>
     /// Registers N-Queen console application services (bitmask solver + helpers).

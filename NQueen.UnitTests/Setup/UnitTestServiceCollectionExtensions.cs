@@ -1,6 +1,6 @@
 ﻿namespace NQueen.UnitTests.Setup;
 
-public static class DependencyInjectionConfig
+public static class UnitTestServiceCollectionExtensions
 {
     public static IServiceCollection AddApplicationServices(
         this IServiceCollection services)

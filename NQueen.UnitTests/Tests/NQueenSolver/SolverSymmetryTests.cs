@@ -13,13 +13,6 @@ public class SolverSymmetryTests
         var baseSolution = new Memory<int>([0, 2, 4, 1, 3]);
         solutions.Add(baseSolution);
 
-        // Mock dependencies
-        //var mockSolutionFormatter = new Mock<ISolutionFormatter>().Object;
-        //Func<int, BoardState> mockBoardStateFactory = size => new BoardState(size);
-
-        // Create SolverEngine with mock dependencies
-        //var solverEngine = new SolverEngine(mockSolutionFormatter, mockBoardStateFactory);
-
         // Generate symmetrical transformations
         var symmetricalSolutions = SymmetryHelper.GetSymmetricalTransformations(baseSolution.Span.ToArray());
 

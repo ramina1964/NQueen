@@ -1,6 +1,6 @@
 ﻿namespace NQueen.KernelBitmask.Services;
 
-public static class BitmaskCollectionExtensions
+public static class BitmaskServiceCollectionExtensions
 {
     public static IServiceCollection AddBitmaskSolverServices(
         this IServiceCollection services,
