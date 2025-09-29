@@ -40,7 +40,9 @@ public sealed partial class MainViewModel
     {
         SimulationCompleted?.Invoke(this, EventArgs.Empty);
 
-        if (_batchedSolutions.Count > 0)
+        // Only populate ObservableSolutions here when we were NOT visualizing.
+        // (When visualizing, solutions were streamed live already.)
+        if (DisplayMode == DisplayMode.Hide && _batchedSolutions.Count > 0)
         {
             _uiDispatcher.Invoke(() =>
             {
@@ -65,23 +67,36 @@ public sealed partial class MainViewModel
 
     private void OnSolutionFoundEvent(object? sender, NQueen.Domain.EventArgsPruning.SolutionFoundEventArgs e)
     {
-        if (_solver.IsSolverCanceled || (IsSimulating == false && IsOutputReady == false))
+        if (_solver.IsSolverCanceled || IsSimulating == false)
             return;
 
         _actualTotalSolutions++;
 
+        // Always track internally so final counts are correct.
         var solutionId = _batchedSolutions.Count + 1;
         var newSolution = new Solution(e.Solution.ToArray(), _solutionFormatter, solutionId);
         _batchedSolutions.Add(newSolution);
 
-        if (solutionId == 1)
+        if (DisplayMode == DisplayMode.Visualize)
         {
+            // Stream updates live when visualizing (list + selected solution).
             _uiDispatcher.Invoke(() =>
             {
-                if (_solver.IsSolverCanceled)
-                    return;
+                // Enforce UI output cap (0 or negative => no cap).
+                var cap = SimulationSettings.MaxNoOfSolutionsInOutput;
+                bool underCap = cap <= 0 || ObservableSolutions.Count < cap;
+
+                if (underCap)
+                    ObservableSolutions.Add(newSolution);
+
+                // Always show last solution (even if list is capped).
                 SelectedSolution = newSolution;
             });
+        }
+        else
+        {
+            // Hide mode: suppress UI changes until completion.
+            // Previously first solution was shown; that is now removed per requirement.
         }
     }
 
@@ -106,21 +121,14 @@ public sealed partial class MainViewModel
             int raw = (int)Math.Round(e.Value);
             int clamped = Math.Clamp(raw, 0, 100);
 
-            // Prevent first / early overshoot to 100%. Defer 100 until Finished state.
+            // Prevent premature 100% (reserve for Finished state)
             if (clamped >= 100)
-            {
-                clamped = 99; // reserve 100% for completion
-            }
+                clamped = 99;
 
-            // Monotonic progression
             if (clamped < _lastProgressPercent)
-            {
-                clamped = _lastProgressPercent; // never go backwards
-            }
+                clamped = _lastProgressPercent;
             else
-            {
                 _lastProgressPercent = clamped;
-            }
 
             ProgressVisibility = Visibility.Visible;
             ProgressLabelVisibility = Visibility.Visible;
@@ -227,14 +235,11 @@ public sealed partial class MainViewModel
 
     partial void OnDisplayModeChanged(DisplayMode value)
     {
-        // First attempt to clear any stale visualization constraint error
-        // (defined in Validation partial; safe no-op if it didn’t exist earlier).
         ClearVisualizationConstraintIfSatisfied();
 
         if (_solver == null)
             return;
 
-        // Re-run validation (this will also re-set IsValid and command states).
         if (ValidateAndSetUiState() == false)
             return;
 
@@ -245,7 +250,6 @@ public sealed partial class MainViewModel
             if (value == DisplayMode.Hide)
                 ChessboardVm?.ClearImages();
 
-            // If switching to Visualize in a single-solution run, keep percentage hidden.
             if (SolutionMode == SolutionMode.Single && value == DisplayMode.Visualize)
             {
                 ProgressLabelVisibility = Visibility.Hidden;
@@ -254,7 +258,6 @@ public sealed partial class MainViewModel
             return;
         }
 
-        // Not simulating: re-render current selection (if any)
         RenderSelectedSolution();
     }
 
