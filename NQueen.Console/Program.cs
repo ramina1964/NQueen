@@ -17,14 +17,13 @@ public class Program
     {
         var services = new ServiceCollection();
 
-        // Core dependencies for the Console App
-        services.AddTransient<Func<int, BoardState>>(sp => size => new BoardState(size));
+        // Register active N-Queen (bitmask) services only
+        services.AddNQueenServices(enableCap: true);
+
         services.AddTransient<DispatchCommands>();
         services.AddTransient<ICommandProcessor, CommandProcessor>();
-        // Enable cap in console app
-        services.AddBitmaskSolverServices(enableCap: true);
 
         services.AddSingleton<App>();
         return services.BuildServiceProvider();
     }
-}   
+}
