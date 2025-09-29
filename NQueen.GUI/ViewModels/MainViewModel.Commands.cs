@@ -2,93 +2,30 @@
 
 public sealed partial class MainViewModel
 {
-    private void Cancel()
-    {
-        if (IsSimulating == false)
-            return;
-
-        _solver.IsSolverCanceled = true;
-        _currentSimulationToken = Guid.Empty;
-
-        try
-        {
-            CancellationTokenSource?.Cancel();
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[Cancel] CancellationTokenSource.Cancel threw: {ex}");
-        }
-
-        UnsubscribeFromSimulationEvents();
-
-        _uiDispatcher.Invoke(() =>
-        {
-            SelectedSolution = null!;
-            ObservableSolutions.Clear();
-            ChessboardVm?.ClearImages();
-
-            NoOfSolutions = "0";
-            ElapsedTimeInSec = $"{0,0:N1}";
-            MemoryUsage = "0";
-            IsOutputReady = false;
-
-            ProgressValue = 0;
-            ProgressLabel = string.Empty;
-            ProgressVisibility = Visibility.Hidden;
-            ProgressLabelVisibility = Visibility.Hidden;
-
-            IsSimulating = false;
-            IsSingleRunning = false;
-            IsInInputMode = true;
-            IsIdle = true;
-        });
-
-        try { CancellationTokenSource?.Dispose(); } catch { }
-        CancellationTokenSource = new CancellationTokenSource();
-
-        // Revalidate & ensure Simulate command is reset/enabled if input is valid.
-        HandlePostCancel();
-    }
-
-    private void Save()
-    {
-        if (ParsingUtils.TryParseInt(BoardSizeText, out var _) == false)
-            return;
-
-        var filePath = _saveFileService.ShowSaveFileDialog();
-        if (string.IsNullOrEmpty(filePath))
-            return;
-
-        try
-        {
-            var content = GenerateSaveContent();
-            _saveFileService.SaveContent(filePath, content);
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[Save] Error during save operation: {ex.Message}");
-            throw;
-        }
-    }
-
-    private bool CanSimulate() => IsValid && HasErrors == false;
-
-    private bool CanCancel() => IsSimulating;
-
-    private bool CanSave() =>
-    IsOutputReady
-    && ObservableSolutions.Count > 0
-    && HasErrors == false
-    && string.IsNullOrWhiteSpace(BoardSizeText) == false;
+    // ----------------- PUBLIC / COMMAND TARGET METHODS -----------------
 
     private async Task SimulateAsync()
     {
-        Debug.WriteLine($"[SimulateAsync] Using solver instance: {_solver?.GetHashCode()}");
         if (_solver == null)
         {
             MessageBox.Show("Solver is not initialized.", "Error",
                 MessageBoxButton.OK, MessageBoxImage.Error);
             return;
+        }
+
+        if (IsSimulating)
+            return;
+
+        if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) == false)
+            return;
+
+        // Enforce visualization size limit before starting
+        if (DisplayMode == DisplayMode.Visualize &&
+            boardSize > SimulationSettings.MaxVisualizeBoardSize)
+        {
+            MessageBox.Show(ErrorMessages.VisualizeSizeTooLarge,
+                "Visualization Limit", MessageBoxButton.OK, MessageBoxImage.Information);
+            DisplayMode = DisplayMode.Hide;
         }
 
         _solver.IsSolverCanceled = false;
@@ -97,20 +34,6 @@ public sealed partial class MainViewModel
 
         try
         {
-            if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) == false)
-                return;
-
-            // Enforce visualization size limit
-            if (DisplayMode == DisplayMode.Visualize &&
-                boardSize > SimulationSettings.MaxVisualizeBoardSize)
-            {
-                MessageBox.Show(ErrorMessages.VisualizeSizeTooLarge,
-                    "Visualization Limit", MessageBoxButton.OK, MessageBoxImage.Information);
-                DisplayMode = DisplayMode.Hide; // switch automatically
-            }
-
-            Debug.WriteLine($"[SimulateAsync] Starting with BoardSize={boardSize}, Mode={SolutionMode}, Display={DisplayMode}");
-
             ResetSimulationState();
             ManageSimulationStatus(SimulationStatus.Started);
             UpdateUiState();
@@ -167,26 +90,96 @@ public sealed partial class MainViewModel
         }
     }
 
+    private void Save()
+    {
+        if (ParsingUtils.TryParseInt(BoardSizeText, out _) == false)
+            return;
+
+        if (IsOutputReady == false || ObservableSolutions.Count == 0)
+            return;
+
+        var filePath = _saveFileService.ShowSaveFileDialog();
+        if (string.IsNullOrEmpty(filePath))
+            return;
+
+        try
+        {
+            var content = GenerateSaveContent();
+            _saveFileService.SaveContent(filePath, content);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Save] Error during save operation: {ex.Message}");
+            MessageBox.Show("Failed to save solutions.", "Error",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    // ----------------- NEW: Cancel & ManageSimulationStatus (restored) -----------------
+
+    private void Cancel()
+    {
+        if (IsSimulating == false)
+            return;
+
+        _solver.IsSolverCanceled = true;
+        _currentSimulationToken = Guid.Empty;
+
+        try
+        {
+            CancellationTokenSource?.Cancel();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Cancel] CancellationTokenSource.Cancel threw: {ex}");
+        }
+
+        UnsubscribeFromSimulationEvents();
+
+        _uiDispatcher.Invoke(() =>
+        {
+            SelectedSolution = null!;
+            ObservableSolutions.Clear();
+            ChessboardVm?.ClearImages();
+
+            NoOfSolutions = "0";
+            ElapsedTimeInSec = $"{0,0:N1}";
+            MemoryUsage = "0";
+            IsOutputReady = false;
+
+            // Progress reset (hide on cancel)
+            _progressFinalized = false;
+            _progressPercent = 0;
+            ProgressValue = 0.0;
+            ProgressLabel = string.Empty;
+            ProgressVisibility = Visibility.Hidden;
+            ProgressLabelVisibility = Visibility.Hidden;
+
+            IsSimulating = false;
+            IsSingleRunning = false;
+            IsInInputMode = true;
+            IsIdle = true;
+        });
+
+        try { CancellationTokenSource?.Dispose(); } catch { /* ignore */ }
+        CancellationTokenSource = new CancellationTokenSource();
+
+        HandlePostCancel();
+    }
+
     private void ManageSimulationStatus(SimulationStatus simulationStatus)
     {
         switch (simulationStatus)
         {
             case SimulationStatus.Started:
                 SubscribeToSimulationEvents();
-                _hasProgressTick = false;
-                _lastProgressPercent = 0;
-                _progressCompleted = false;
-
+                ResetProgress();
                 IsIdle = false;
                 IsInInputMode = false;
                 IsSimulating = true;
                 IsOutputReady = false;
-
-                ProgressVisibility = Visibility.Visible;
-                ProgressLabelVisibility = Visibility.Visible;
-                ProgressValue = 0;
-                ProgressLabel = "0%";
                 IsSingleRunning = SolutionMode == SolutionMode.Single;
+                RefreshCommandStates();
                 break;
 
             case SimulationStatus.Finished:
@@ -197,14 +190,8 @@ public sealed partial class MainViewModel
                 IsSingleRunning = false;
                 IsOutputReady = true;
 
-                // Mark complete and set final 100%
-                _progressCompleted = true;
                 if (!(SolutionMode == SolutionMode.Single && DisplayMode == DisplayMode.Visualize))
-                {
-                    _lastProgressPercent = 100;
-                    ProgressValue = 1.0;
-                    ProgressLabel = "100%";
-                }
+                    FinalizeProgressIfApplicable();
 
                 ProgressVisibility = Visibility.Hidden;
                 ProgressLabelVisibility = Visibility.Hidden;
@@ -216,11 +203,28 @@ public sealed partial class MainViewModel
                     EnsureBoardSized();
                     ChessboardVm.PlaceQueens(SelectedSolution.Positions);
                 }
+                RefreshCommandStates();
                 break;
         }
-
-        RefreshCommandStates();
     }
+
+    // ----------------- COMMAND CAN-EXECUTE PREDICATES -----------------
+
+    private bool CanSimulate() =>
+        IsValid &&
+        HasErrors == false &&
+        IsSimulating == false &&
+        string.IsNullOrWhiteSpace(BoardSizeText) == false;
+
+    private bool CanCancel() => IsSimulating;
+
+    private bool CanSave() =>
+        IsOutputReady &&
+        ObservableSolutions.Count > 0 &&
+        HasErrors == false &&
+        string.IsNullOrWhiteSpace(BoardSizeText) == false;
+
+    // ----------------- SUPPORT / HELPERS (RESTORED) -----------------
 
     private void ExtractCorrectNoOfSols()
     {
@@ -229,7 +233,6 @@ public sealed partial class MainViewModel
         if (SimulationResults == null)
             return;
 
-        // Decide how many to display. 0 or negative means "no cap".
         var cap = SimulationSettings.MaxNoOfSolutionsInOutput;
         IEnumerable<Solution> sols = SimulationResults.Solutions;
 
@@ -242,7 +245,7 @@ public sealed partial class MainViewModel
 
     private string GenerateSaveContent()
     {
-        if (ParsingUtils.TryParseInt(BoardSizeText, out var _) == false)
+        if (ParsingUtils.TryParseInt(BoardSizeText, out _) == false)
             return string.Empty;
 
         StringBuilder sb = new();
@@ -254,11 +257,11 @@ public sealed partial class MainViewModel
         sb.AppendLine($"Elapsed Time: {ElapsedTimeInSec} seconds");
         sb.AppendLine($"Memory Usage: {MemoryUsage} MB");
         sb.AppendLine();
-
         sb.AppendLine("Solutions:");
+
         foreach (var solution in ObservableSolutions)
         {
-            sb.Append($"Solution ID: {solution.Id}\t\t\t");
+            sb.Append($"Solution ID: {solution.Id}\t");
             sb.AppendLine(solution.Details);
         }
 
@@ -284,13 +287,6 @@ public sealed partial class MainViewModel
         SaveCommand?.NotifyCanExecuteChanged();
     }
 
-    [RelayCommand]
-    private void TestProgress()
-    {
-        ProgressValue += 0.1;
-        if (ProgressValue > 1)
-            ProgressValue = 0;
-    }
-
+    // Field needed for token-based event gating
     private Guid _currentSimulationToken = Guid.Empty;
 }

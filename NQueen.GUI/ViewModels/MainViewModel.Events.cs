@@ -7,10 +7,6 @@ public sealed partial class MainViewModel
     private int _actualTotalSolutions = 0;
     private bool _hasProgressTick;
 
-    // Progress tracking
-    private int _lastProgressPercent = 0;
-    private bool _progressCompleted = false;
-
     private void SubscribeToSimulationEvents()
     {
         Debug.WriteLine($"[MainViewModel] Subscribing to solver: {_solver?.GetHashCode()}");
@@ -22,7 +18,7 @@ public sealed partial class MainViewModel
         _hasProgressTick = false;
         _solver.QueenPlaced += OnQueenPlacedEvent;
         _solver.SolutionFound += OnSolutionFoundEvent;
-        _solver.ProgressValueChanged += OnProgressValueChangedEvent;    
+        _solver.ProgressValueChanged += OnProgressValueChangedEvent;
     }
 
     private void UnsubscribeFromSimulationEvents()
@@ -35,13 +31,10 @@ public sealed partial class MainViewModel
         _solver.ProgressValueChanged -= OnProgressValueChangedEvent;
     }
 
-    // Called from ManageSimulationStatus(Finished)
     private void OnSimulationCompleted()
     {
         SimulationCompleted?.Invoke(this, EventArgs.Empty);
 
-        // Only populate ObservableSolutions here when we were NOT visualizing.
-        // (When visualizing, solutions were streamed live already.)
         if (DisplayMode == DisplayMode.Hide && _batchedSolutions.Count > 0)
         {
             _uiDispatcher.Invoke(() =>
@@ -72,44 +65,31 @@ public sealed partial class MainViewModel
 
         _actualTotalSolutions++;
 
-        // Always track internally so final counts are correct.
         var solutionId = _batchedSolutions.Count + 1;
         var newSolution = new Solution(e.Solution.ToArray(), _solutionFormatter, solutionId);
         _batchedSolutions.Add(newSolution);
 
         if (DisplayMode == DisplayMode.Visualize)
         {
-            // Stream updates live when visualizing (list + selected solution).
             _uiDispatcher.Invoke(() =>
             {
-                // Enforce UI output cap (0 or negative => no cap).
                 var cap = SimulationSettings.MaxNoOfSolutionsInOutput;
                 bool underCap = cap <= 0 || ObservableSolutions.Count < cap;
-
                 if (underCap)
                     ObservableSolutions.Add(newSolution);
-
-                // Always show last solution (even if list is capped).
                 SelectedSolution = newSolution;
             });
-        }
-        else
-        {
-            // Hide mode: suppress UI changes until completion.
-            // Previously first solution was shown; that is now removed per requirement.
         }
     }
 
     // Progress handling
     private void OnProgressValueChangedEvent(object? sender, NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs e)
     {
-        // Ignore stale or post-finish events
-        if (e.SimulationToken != _currentSimulationToken || _solver.IsSolverCanceled || _progressCompleted)
+        if (e.SimulationToken != _currentSimulationToken || _solver.IsSolverCanceled)
             return;
 
         _uiDispatcher.Invoke(() =>
         {
-            // Single + Visualize stays indeterminate
             if (SolutionMode == SolutionMode.Single && DisplayMode == DisplayMode.Visualize)
             {
                 ProgressVisibility = Visibility.Visible;
@@ -119,48 +99,11 @@ public sealed partial class MainViewModel
             }
 
             int raw = (int)Math.Round(e.Value);
-            int clamped = Math.Clamp(raw, 0, 100);
-
-            // Prevent premature 100% (reserve for Finished state)
-            if (clamped >= 100)
-                clamped = 99;
-
-            if (clamped < _lastProgressPercent)
-                clamped = _lastProgressPercent;
-            else
-                _lastProgressPercent = clamped;
-
-            ProgressVisibility = Visibility.Visible;
-            ProgressLabelVisibility = Visibility.Visible;
-            ProgressValue = clamped / 100.0;
-            ProgressLabel = $"{clamped}%";
-
-            if (clamped is > 0 and < 100)
-                _hasProgressTick = true;
-
-            Debug.WriteLine($"[MainViewModel] Progress event: raw={e.Value}, mapped={clamped}%, last={_lastProgressPercent}%");
+            SetProgressPercent(raw);
         });
     }
 
-    private void MaybeForceEarlyProgress()
-    {
-        if (_hasProgressTick || IsSingleRunning || _progressCompleted)
-            return;
-
-        _hasProgressTick = true;
-        _uiDispatcher.Invoke(() =>
-        {
-            if (ProgressValue < 0.01)
-            {
-                ProgressVisibility = Visibility.Visible;
-                ProgressLabelVisibility = Visibility.Visible;
-                ProgressValue = 0.01;
-                ProgressLabel = "1%";
-                _lastProgressPercent = Math.Max(_lastProgressPercent, 1);
-                Debug.WriteLine("[MainViewModel] Forced early progress tick at 1%.");
-            }
-        });
-    }
+    private void MaybeForceEarlyProgress() => ForceEarlyProgressIfNeeded();
 
     private void OnQueenPlacedEvent(object? sender,
         Domain.EventArgsPruning.QueenPlacedEventArgs e)
