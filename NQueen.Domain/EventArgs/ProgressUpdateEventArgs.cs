@@ -1,4 +1,4 @@
-﻿namespace NQueen.Domain.EventArgsPruning;
+﻿namespace NQueen.Domain.EventArgs;
 
 public class ProgressUpdateEventArgs(
     double value, Guid simulationToken) : System.EventArgs

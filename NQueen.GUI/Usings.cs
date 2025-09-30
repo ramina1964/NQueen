@@ -3,6 +3,7 @@ global using CommunityToolkit.Mvvm.Input;
 global using FluentValidation;
 global using Microsoft.Extensions.DependencyInjection;
 global using NQueen.Domain.Enums;
+global using NQueen.Domain.EventArgs;
 global using NQueen.Domain.Formatters;
 global using NQueen.Domain.Interfaces;
 global using NQueen.Domain.Models;

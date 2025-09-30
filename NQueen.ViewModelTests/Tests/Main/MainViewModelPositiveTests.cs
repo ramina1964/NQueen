@@ -187,12 +187,12 @@ public class MainViewModelPositiveTests : IDisposable
 
         // Simulate progress updates
         mockSolver
-            .SetupAdd(s => s.ProgressValueChanged += It.IsAny<EventHandler<Domain.EventArgsPruning.ProgressUpdateEventArgs>>())
-            .Callback<EventHandler<NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs>>(handler =>
+            .SetupAdd(s => s.ProgressValueChanged += It.IsAny<EventHandler<ProgressUpdateEventArgs>>())
+            .Callback<EventHandler<ProgressUpdateEventArgs>>(handler =>
             {
                 for (var progress = 0.1; progress <= 1.0; progress += 0.1)
                 {
-                    handler?.Invoke(mockSolver.Object, new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(progress * 100, Guid.NewGuid()));
+                    handler?.Invoke(mockSolver.Object, new ProgressUpdateEventArgs(progress * 100, Guid.NewGuid()));
                     Task.Delay(10).Wait();
                 }
             });
@@ -258,12 +258,14 @@ public class MainViewModelPositiveTests : IDisposable
 
         // Simulate progress updates
         mockSolver
-            .SetupAdd(s => s.ProgressValueChanged += It.IsAny<EventHandler<NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs>>())
-            .Callback<EventHandler<NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs>>(handler =>
+            .SetupAdd(s => s.ProgressValueChanged += It.IsAny<EventHandler<ProgressUpdateEventArgs>>())
+            .Callback<EventHandler<ProgressUpdateEventArgs>>(handler =>
             {
                 for (var progress = 0.1; progress <= 1.0; progress += 0.1)
                 {
-                    handler?.Invoke(mockSolver.Object, new NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs(progress * 100, Guid.NewGuid()));
+                    handler?.Invoke(mockSolver.Object,
+                        new ProgressUpdateEventArgs(progress * 100, Guid.NewGuid()));
+
                     Task.Delay(10).Wait();
                 }
             });

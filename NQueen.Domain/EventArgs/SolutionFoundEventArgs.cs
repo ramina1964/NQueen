@@ -1,4 +1,4 @@
-﻿namespace NQueen.Domain.EventArgsPruning;
+﻿namespace NQueen.Domain.EventArgs;
 
 public class SolutionFoundEventArgs(Memory<int> solution) : System.EventArgs
 {

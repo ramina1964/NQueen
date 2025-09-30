@@ -152,7 +152,7 @@ public sealed partial class MainViewModel
         StopVisualizationTimer();
     }
 
-    private void OnSolutionFoundEvent(object? sender, NQueen.Domain.EventArgsPruning.SolutionFoundEventArgs e)
+    private void OnSolutionFoundEvent(object? sender, SolutionFoundEventArgs e)
     {
         if (_solver?.IsSolverCanceled == true || !IsSimulating)
             return;
@@ -178,7 +178,7 @@ public sealed partial class MainViewModel
         }
     }
 
-    private void OnProgressValueChangedEvent(object? sender, NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs e)
+    private void OnProgressValueChangedEvent(object? sender, ProgressUpdateEventArgs e)
     {
         if (e.SimulationToken != _currentSimulationToken || _solver?.IsSolverCanceled == true)
             return;
@@ -228,7 +228,7 @@ public sealed partial class MainViewModel
     private void MaybeForceEarlyProgress() => ForceEarlyProgressIfNeeded();
 
     private void OnQueenPlacedEvent(object? sender,
-        Domain.EventArgsPruning.QueenPlacedEventArgs e)
+        QueenPlacedEventArgs e)
     {
         MaybeForceEarlyProgress();
 

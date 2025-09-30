@@ -1,4 +1,4 @@
-﻿namespace NQueen.Domain.EventArgsPruning;
+﻿namespace NQueen.Domain.EventArgs;
 
 public readonly struct QueenPlacedEventArgs(Memory<int> solution)
 {

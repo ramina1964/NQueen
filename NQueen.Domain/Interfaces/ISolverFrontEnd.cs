@@ -11,9 +11,9 @@ public interface ISolverFrontEnd
 
     int ProgressValue { get; set; }
 
-    event EventHandler<EventArgsPruning.QueenPlacedEventArgs> QueenPlaced;
-    event EventHandler<EventArgsPruning.SolutionFoundEventArgs> SolutionFound;
-    event EventHandler<EventArgsPruning.ProgressUpdateEventArgs> ProgressValueChanged;
+    event EventHandler<QueenPlacedEventArgs> QueenPlaced;
+    event EventHandler<SolutionFoundEventArgs> SolutionFound;
+    event EventHandler<ProgressUpdateEventArgs> ProgressValueChanged;
 
     void SetSimulationToken(Guid token);
 }
