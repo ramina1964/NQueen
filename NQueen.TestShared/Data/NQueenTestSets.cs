@@ -8,10 +8,8 @@ public static class NQueenTestSets
             { "1000", SolutionMode.Single, false, nameof(ErrorMessages.SizeTooLargeForSingle) },
             { "1000", SolutionMode.Unique, false, nameof(ErrorMessages.SizeTooLargeForUnique) },
             { "1000", SolutionMode.All, false, nameof(ErrorMessages.SizeTooLargeForAll) },
-
-            // 20 is VALID for Unique & All (max). Keep a positive case explicitly in other tests.
-            { "21", SolutionMode.Unique, false, nameof(ErrorMessages.SizeTooLargeForUnique) },
-            { "21", SolutionMode.All, false, nameof(ErrorMessages.SizeTooLargeForAll) }
+            { (BoardSettings.MaxSizeForUnique + 1).ToString(), SolutionMode.Unique, false, nameof(ErrorMessages.SizeTooLargeForUnique) },
+            { (BoardSettings.MaxSizeForAll + 1).ToString(), SolutionMode.All, false, nameof(ErrorMessages.SizeTooLargeForAll) }
         };
 
     public static TheoryData<int, SolutionMode> SmallValueCases =>
@@ -43,8 +41,8 @@ public static class NQueenTestSets
             { "1", true, null! },
             { "8", true, null! },
             { "17", true, null! },
-            { "20", true, null! }, // still valid for Single (limit is 37)
-            { "37", true, null! },
+            { BoardSettings.MaxSizeForUnique.ToString(), true, null! },
+            { BoardSettings.MaxSizeForSingle.ToString(), true, null! },
         };
 
     public static TheoryData<int, SolutionMode> SolverShouldNotGenerateAnySolutionData =>
@@ -72,15 +70,8 @@ public static class NQueenTestSets
             { 11, SolutionMode.Single },
             { 12, SolutionMode.Single },
             { 13, SolutionMode.Single },
-            { 20, SolutionMode.Single },
-            { 21, SolutionMode.Single },
-            { 22, SolutionMode.Single },
-            { 23, SolutionMode.Single },
-            { 24, SolutionMode.Single },
-            { 25, SolutionMode.Single },
-            { 26, SolutionMode.Single },
-            { 27, SolutionMode.Single },
-            { 28, SolutionMode.Single }
+            { BoardSettings.MaxSizeForUnique, SolutionMode.Single },
+            { BoardSettings.MaxSizeForSingle, SolutionMode.Single },
         };
 
     public static TheoryData<int, SolutionMode> SolverShouldGenerateCorrectListOfUniqueSolutions =>
@@ -108,13 +99,21 @@ public static class NQueenTestSets
         {
             {-1, SolutionMode.Single },
             {0, SolutionMode.Single },
-            {38, SolutionMode.Single },
+            {BoardSettings.MaxSizeForSingle + 1, SolutionMode.Single },
             {-1, SolutionMode.Unique },
             {0, SolutionMode.Unique},
-            {21, SolutionMode.Unique },   // updated invalid (>=21)
+            {BoardSettings.MaxSizeForUnique + 1, SolutionMode.Unique },
             {-1, SolutionMode.All },
             {0, SolutionMode.All},
-            {21, SolutionMode.All},       // updated invalid (>=21)
+            {BoardSettings.MaxSizeForAll + 1, SolutionMode.All},
             {8, (SolutionMode)999 },
+        };
+
+    public static TheoryData<int, SolutionMode> ValidBoardSizes =>
+        new()
+        {
+            { BoardSettings.MaxSizeForSingle, SolutionMode.Single },
+            { BoardSettings.MaxSizeForUnique, SolutionMode.Unique },
+            { BoardSettings.MaxSizeForAll, SolutionMode.All },
         };
 }

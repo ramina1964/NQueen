@@ -45,22 +45,12 @@ public class MainViewModelValidationTests
     }
 
     [Theory]
-    [InlineData("1",  SolutionMode.Single)]
-    [InlineData("37", SolutionMode.Single)]
-    [InlineData("17", SolutionMode.Unique)]
-    [InlineData("18", SolutionMode.Unique)]   // valid Unique
-    [InlineData("19", SolutionMode.Unique)]   // valid Unique
-    [InlineData("20", SolutionMode.Unique)]   // valid Unique
-    [InlineData("17", SolutionMode.All)]
-    [InlineData("18", SolutionMode.All)]      // valid All
-    [InlineData("19", SolutionMode.All)]      // valid All
-    [InlineData("20", SolutionMode.All)]      // valid All
-    public void BoardSizeText_Validation_ShouldReportValidCases_WhenValid(
-        string boardSizeText, SolutionMode solutionMode)
+    [MemberData(nameof(NQueenTestSets.ValidBoardSizes), MemberType = typeof(NQueenTestSets))]
+    public void BoardSizeText_Validation_ShouldReportValidCases_WhenValid(int boardSize, SolutionMode solutionMode)
     {
         var mockFormatter = new Mock<ISolutionFormatter>().Object;
         var mainVm = TestHelpers.CreateMainViewModelWithBoardSizeText(
-            boardSizeText, solutionMode);
+            boardSize.ToString(), solutionMode);
 
         var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
 
@@ -177,9 +167,9 @@ public class MainViewModelValidationTests
     }
 
     [Theory]
-    [InlineData("37", SolutionMode.Single, SolutionMode.Unique)] // 37 invalid for Unique
-    [InlineData("21", SolutionMode.Single, SolutionMode.All)]    // 21 invalid for All
-    [InlineData("21", SolutionMode.Single, SolutionMode.Unique)] // 21 invalid for Unique
+    [InlineData("37", SolutionMode.Single, SolutionMode.Unique)]
+    [InlineData("21", SolutionMode.Single, SolutionMode.All)]
+    [InlineData("21", SolutionMode.Single, SolutionMode.Unique)]
     public void Chessboard_DoesNotUpdate_WhenSwitchingToInvalidMode(
         string boardSizeText, SolutionMode validMode, SolutionMode invalidMode)
     {
