@@ -17,8 +17,10 @@ public class MainViewModelPositiveTests : IDisposable
             new Solution([1, 3, 0, 2], mockFormatter, null)
         ]);
 
-        var mainVm = TestHelpers.CreateMainViewModelWithMock(
-            mockSolver.Object, boardSize, solutionMode, displayMode, null, mockFormatter);
+        var simContext = new SimulationContext(
+            boardSize, solutionMode, displayMode, EnableParallelization: true);
+
+        var mainVm = TestHelpers.CreateMainViewModelWithMock(mockSolver.Object, simContext);
 
         // Act
         await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
@@ -165,98 +167,36 @@ public class MainViewModelPositiveTests : IDisposable
     }
 
     [Theory]
-    [InlineData(4, DisplayMode.Visualize)]
-    public async Task ProgressBar_ShouldUpdate_ForUniqueMode(
-        int boardSize, DisplayMode displayMode)
+    [InlineData(4, SolutionMode.Unique, DisplayMode.Visualize, 1)]
+    [InlineData(4, SolutionMode.All, DisplayMode.Visualize, 2)]
+    public async Task ProgressBar_ShouldUpdate_ForUniqueAndAllModes(
+        int boardSize,
+        SolutionMode solutionMode,
+        DisplayMode displayMode,
+        int expectedSolutionCount)
     {
         // Arrange
         var mockFormatter = new Mock<ISolutionFormatter>().Object;
 
-        // Create a mock solver for Unique mode
-        var mockSolver = new Mock<ISolver>();
-
-        // Configure the mock solver to return a valid SimulationResults object
-        mockSolver
-            .Setup(s => s.GetSimResultsAsync(It.IsAny<SimulationContext>()))
-            .ReturnsAsync(new SimulationResults(
-                [
-                    new Solution([1, 3, 0, 2], mockFormatter, null)
-                ],
-                ElapsedTimeInSec: 1.0
-            ));
-
-        // Simulate progress updates
-        mockSolver
-            .SetupAdd(s => s.ProgressValueChanged += It.IsAny<EventHandler<ProgressUpdateEventArgs>>())
-            .Callback<EventHandler<ProgressUpdateEventArgs>>(handler =>
-            {
-                for (var progress = 0.1; progress <= 1.0; progress += 0.1)
-                {
-                    handler?.Invoke(mockSolver.Object, new ProgressUpdateEventArgs(progress * 100, Guid.NewGuid()));
-                    Task.Delay(10).Wait();
-                }
-            });
-
-        var mainVm = TestHelpers.CreateMainViewModelWithMock(
-            mockSolver.Object,
-            boardSize,
-            SolutionMode.Unique,
-            displayMode,
-            null,
-            mockFormatter
-        );
-
-        double? progressDuringSimulation = null;
-        mainVm.PropertyChanged += (s, e) =>
+        var solutions = solutionMode switch
         {
-            if (e.PropertyName == nameof(mainVm.ProgressValue))
+            SolutionMode.All =>
+            [
+                new Solution([1, 3, 0, 2], mockFormatter, null),
+                new Solution([2, 0, 3, 1], mockFormatter, null)
+            ],
+            _ => new[]
             {
-                progressDuringSimulation = mainVm.ProgressValue;
+                new Solution([1, 3, 0, 2], mockFormatter, null)
             }
         };
 
-        // Act
-        mainVm.SimulateCommand.Execute(null);
-
-        // Wait for the simulation to complete
-        await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
-
-        // Wait for the progress value to be updated
-        await TestHelpers.WaitForConditionAsync(() =>
-        {
-            return progressDuringSimulation.HasValue;
-        }, TimeSpan.FromSeconds(20));
-
-        // Assert
-        progressDuringSimulation.Should().NotBeNull("ProgressValue should be updated during the simulation.");
-        progressDuringSimulation.Should().BeGreaterThan(0, "ProgressValue should be greater than 0 during the simulation.");
-
-        // Optionally, check final state
-        mainVm.ProgressValue.Should().BeInRange(0, 1, "ProgressValue should be between 0 and 1 after the simulation.");
-        mainVm.ProgressVisibility.Should().Be(Visibility.Hidden, "ProgressVisibility should be hidden after the simulation.");
-    }
-
-    [Theory]
-    [InlineData(4, DisplayMode.Visualize)]
-    public async Task ProgressBar_ShouldUpdate_ForAllMode(
-        int boardSize, DisplayMode displayMode)
-    {
-        // Arrange
-        var mockFormatter = new Mock<ISolutionFormatter>().Object;
-                
-        // Create a mock solver for All mode
         var mockSolver = new Mock<ISolver>();
+
         mockSolver
             .Setup(s => s.GetSimResultsAsync(It.IsAny<SimulationContext>()))
-            .ReturnsAsync(new SimulationResults(
-                [
-                    new Solution([1, 3, 0, 2], mockFormatter, null),
-                    new Solution([2, 0, 3, 1], mockFormatter, null)
-                ],
-                ElapsedTimeInSec: 1.0
-            ));
+            .ReturnsAsync(new SimulationResults(solutions, ElapsedTimeInSec: 1.0));
 
-        // Simulate progress updates
         mockSolver
             .SetupAdd(s => s.ProgressValueChanged += It.IsAny<EventHandler<ProgressUpdateEventArgs>>())
             .Callback<EventHandler<ProgressUpdateEventArgs>>(handler =>
@@ -265,19 +205,15 @@ public class MainViewModelPositiveTests : IDisposable
                 {
                     handler?.Invoke(mockSolver.Object,
                         new ProgressUpdateEventArgs(progress * 100, Guid.NewGuid()));
-
                     Task.Delay(10).Wait();
                 }
             });
 
+        var simContext = new SimulationContext(
+            boardSize, solutionMode, displayMode);
+
         var mainVm = TestHelpers.CreateMainViewModelWithMock(
-            mockSolver.Object,
-            boardSize,
-            SolutionMode.All,
-            displayMode,
-            null,
-            mockFormatter
-        );
+            mockSolver.Object, simContext, simulationResults: null, mockFormatter);
 
         double? progressDuringSimulation = null;
         mainVm.PropertyChanged += (s, e) =>
@@ -290,13 +226,17 @@ public class MainViewModelPositiveTests : IDisposable
         mainVm.SimulateCommand.Execute(null);
         await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
 
-        // Assert
-        progressDuringSimulation.Should().NotBeNull();
-        progressDuringSimulation.Should().BeGreaterThan(0);
+        // Wait until at least one progress update observed (robust across modes)
+        await TestHelpers.WaitForConditionAsync(
+            () => progressDuringSimulation.HasValue,
+            TimeSpan.FromSeconds(10));
 
-        // Optionally, check final state
+        // Assert
+        progressDuringSimulation.Should().NotBeNull("ProgressValue should update during simulation.");
+        progressDuringSimulation.Should().BeGreaterThan(0, "Progress should advance above 0.");
         mainVm.ProgressValue.Should().BeInRange(0, 1);
         mainVm.ProgressVisibility.Should().Be(Visibility.Hidden);
+        mainVm.ObservableSolutions.Count.Should().Be(expectedSolutionCount);
     }
 
     private static void AssertSavedContentProperties(
