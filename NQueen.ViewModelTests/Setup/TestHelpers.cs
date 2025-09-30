@@ -39,13 +39,18 @@ public static class TestHelpers
 
     public static MainViewModel CreateMainViewModelWithMock(
         ISolver mockSolver,
-        int boardSize = 8,
-        SolutionMode solutionMode = SolutionMode.Single,
-        DisplayMode displayMode = DisplayMode.Hide,
+        SimulationContext? simulationContext = null,
         SimulationResults? simulationResults = null,
         ISolutionFormatter? solutionFormatter = null,
         bool suppressUserDialogs = true)
     {
+        // Provide a default context if none supplied (mirrors previous defaults).
+        var ctx = simulationContext ?? new SimulationContext(
+            BoardSettings.DefaultBoardSize,
+            SolutionMode.Single,
+            DisplayMode.Hide,
+            EnableParallelization: true);
+
         var serviceProvider = CreateServiceProviderWithMock(mockSolver);
         solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>();
 
@@ -56,9 +61,9 @@ public static class TestHelpers
             solutionFormatter);
 
         vm.SuppressUserDialogs = suppressUserDialogs;
-        vm.SolutionMode = solutionMode;
-        vm.DisplayMode = displayMode;
-        vm.BoardSizeText = boardSize.ToString();
+        vm.SolutionMode = ctx.SolutionMode;
+        vm.DisplayMode = ctx.DisplayMode;
+        vm.BoardSizeText = ctx.BoardSize.ToString();
         vm.SimulationResults = simulationResults ?? new SimulationResults([], 0);
         return vm;
     }
