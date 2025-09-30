@@ -22,7 +22,8 @@ public class SolverPositiveTests : IDisposable
         Assert.Single(expectedSolutions);
 
         // Act
-        var actualResults = await _solver.GetSimResultsAsync(new SimulationContext(boardSize, solutionMode, DisplayMode.Hide));
+        var simContext = new SimulationContext(boardSize, solutionMode, DisplayMode.Hide);
+        var actualResults = await _solver.GetSimResultsAsync(simContext);
         var actualSolutionsList = actualResults.Solutions
             .Select(solution => solution.QueenPositions.ToArray());
 
@@ -41,7 +42,8 @@ public class SolverPositiveTests : IDisposable
         var expectedSolutions = TestBase.FetchExpectedSols(boardSize, solutionMode);
 
         // Act
-        var actualResults = await _solver.GetSimResultsAsync(new SimulationContext(boardSize, solutionMode, DisplayMode.Hide));
+        var simContext = new SimulationContext(boardSize, solutionMode, DisplayMode.Hide);
+        var actualResults = await _solver.GetSimResultsAsync(simContext);
         var actualSolutionsList = actualResults.Solutions
             .Select(solution => solution.QueenPositions.ToArray());
 
@@ -62,7 +64,8 @@ public class SolverPositiveTests : IDisposable
         var expectedSolutions = TestBase.FetchExpectedSols(boardSize, solutionMode);
 
         // Act
-        var actualResults = await _solver.GetSimResultsAsync(new SimulationContext(boardSize, solutionMode, DisplayMode.Hide));
+        var simContext = new SimulationContext(boardSize, solutionMode, DisplayMode.Hide);
+        var actualResults = await _solver.GetSimResultsAsync(simContext);
         var actualSolutionsList = actualResults.Solutions
             .Select(solution => solution.QueenPositions.ToArray());
 

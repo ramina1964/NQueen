@@ -20,8 +20,8 @@ public class SolverNegativeTests : IDisposable
         int boardSize, SolutionMode solutionMode)
     {
         // Act
-        var actualSolutions = await _solver
-            .GetSimResultsAsync(new SimulationContext(boardSize, solutionMode, DisplayMode.Hide));
+        var simContext = new SimulationContext(boardSize, solutionMode, DisplayMode.Hide);
+        var actualSolutions = await _solver.GetSimResultsAsync(simContext);
 
         // Assert
         Assert.Empty(actualSolutions.Solutions);

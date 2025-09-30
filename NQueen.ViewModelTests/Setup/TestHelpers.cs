@@ -121,8 +121,10 @@ public static class TestHelpers
             IsIdle = true
         };
 
-        var simulationResults = await solver.GetSimResultsAsync(
-            new SimulationContext(boardSize, solutionMode, displayMode, true));
+        var simContext = new SimulationContext(
+            boardSize, solutionMode, displayMode, EnableParallelization: true);
+
+        var simulationResults = await solver.GetSimResultsAsync(simContext);
 
         vm.SimulationResults = simulationResults;
         vm.NoOfSolutions = simulationResults.Solutions.LongCount().ToString();

@@ -30,9 +30,13 @@ public class TestBase(ISolverBackEnd sut)
             _ => throw new ArgumentOutOfRangeException(nameof(solutionMode), "Invalid solution mode.")
         };
 
-    public async Task<IEnumerable<int[]>> FetchActualSolsAsync(int boardSize, SolutionMode solutionMode) =>
-        (await Sut.GetSimResultsAsync(new SimulationContext(boardSize, solutionMode, DisplayMode.Hide))).Solutions
+    public async Task<IEnumerable<int[]>> FetchActualSolsAsync(int boardSize, SolutionMode solutionMode)
+    {
+        var simContext = new SimulationContext(boardSize, solutionMode, DisplayMode.Hide);
+        return (await Sut.GetSimResultsAsync(simContext))
+            .Solutions
             .Select(sol => sol.QueenPositions);
+    }
 
     // Helper method for assertions
     protected async Task AssertSolutionsAsync(int boardSize, SolutionMode solutionMode)
