@@ -125,7 +125,8 @@ public static class TestHelpers
             new SimulationContext(boardSize, solutionMode, displayMode, true));
 
         vm.SimulationResults = simulationResults;
-        vm.NoOfSolutions = simulationResults.Solutions.Count().ToString();
+        vm.NoOfSolutions = simulationResults.Solutions.LongCount().ToString();
+        
         return vm;
     }
 

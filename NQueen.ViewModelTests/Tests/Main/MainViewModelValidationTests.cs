@@ -48,9 +48,13 @@ public class MainViewModelValidationTests
     [InlineData("1",  SolutionMode.Single)]
     [InlineData("37", SolutionMode.Single)]
     [InlineData("17", SolutionMode.Unique)]
-    [InlineData("18", SolutionMode.Unique)]   // max valid Unique
+    [InlineData("18", SolutionMode.Unique)]   // valid Unique
+    [InlineData("19", SolutionMode.Unique)]   // valid Unique
+    [InlineData("20", SolutionMode.Unique)]   // valid Unique
     [InlineData("17", SolutionMode.All)]
-    [InlineData("18", SolutionMode.All)]      // max valid All
+    [InlineData("18", SolutionMode.All)]      // valid All
+    [InlineData("19", SolutionMode.All)]      // valid All
+    [InlineData("20", SolutionMode.All)]      // valid All
     public void BoardSizeText_Validation_ShouldReportValidCases_WhenValid(
         string boardSizeText, SolutionMode solutionMode)
     {
@@ -102,7 +106,7 @@ public class MainViewModelValidationTests
     }
 
     [Theory]
-    [InlineData("21", "19", SolutionMode.Unique, SolutionMode.All)]
+    [InlineData("21", "21", SolutionMode.Unique, SolutionMode.All)]
     public void BoardSizeText_Validation_ShouldRespectSolutionModeLimits(
         string originalBoardSizeText,
         string finalBoardSizeText,
@@ -124,7 +128,7 @@ public class MainViewModelValidationTests
         mainVm.BoardSizeText = finalBoardSizeText;
 
         errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
-        errors.Should().Contain(ErrorMessages.SizeTooLargeForAll); // 19 invalid for All (max 18)
+        errors.Should().Contain(ErrorMessages.SizeTooLargeForAll); // 21 invalid for All (max 20)
     }
 
     [Fact]
@@ -144,13 +148,12 @@ public class MainViewModelValidationTests
         errors.Should().BeEmpty();
         mainVm.HasErrors.Should().BeFalse();
     }
-
-    // Uses sizes invalid for starting mode (19/21 for Unique/All) then switches to valid Single.
+    
     [Theory]
-    [InlineData("19", SolutionMode.All,    SolutionMode.Single, 19)]
-    [InlineData("19", SolutionMode.Unique, SolutionMode.Single, 19)]
     [InlineData("21", SolutionMode.All,    SolutionMode.Single, 21)]
     [InlineData("21", SolutionMode.Unique, SolutionMode.Single, 21)]
+    [InlineData("37", SolutionMode.All,    SolutionMode.Single, 37)]
+    [InlineData("37", SolutionMode.Unique, SolutionMode.Single, 37)]
     public void Chessboard_Updates_WhenSwitchingToValidMode(string boardSizeText,
         SolutionMode invalidMode, SolutionMode validMode, int expectedBoardSize)
     {
@@ -175,8 +178,8 @@ public class MainViewModelValidationTests
 
     [Theory]
     [InlineData("37", SolutionMode.Single, SolutionMode.Unique)] // 37 invalid for Unique
-    [InlineData("19", SolutionMode.Single, SolutionMode.All)]    // 19 invalid for All
-    [InlineData("19", SolutionMode.Single, SolutionMode.Unique)] // 19 invalid for Unique
+    [InlineData("21", SolutionMode.Single, SolutionMode.All)]    // 21 invalid for All
+    [InlineData("21", SolutionMode.Single, SolutionMode.Unique)] // 21 invalid for Unique
     public void Chessboard_DoesNotUpdate_WhenSwitchingToInvalidMode(
         string boardSizeText, SolutionMode validMode, SolutionMode invalidMode)
     {

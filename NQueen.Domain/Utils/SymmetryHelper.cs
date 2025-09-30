@@ -257,7 +257,7 @@ public static partial class SymmetryHelper
     // --- Additional helpers (retained) ---
     /// <summary>
     /// Builds a title for solution listings with truncation / mode awareness.</summary>
-    public static string SolutionTitle(SolutionMode solutionMode, int noOfSolutions)
+    public static string SolutionTitle(SolutionMode solutionMode, ulong noOfSolutions)
     {
         if (solutionMode == SolutionMode.Single)
         { return "Solution:"; }

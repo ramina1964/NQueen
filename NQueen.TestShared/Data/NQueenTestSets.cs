@@ -9,9 +9,9 @@ public static class NQueenTestSets
             { "1000", SolutionMode.Unique, false, nameof(ErrorMessages.SizeTooLargeForUnique) },
             { "1000", SolutionMode.All, false, nameof(ErrorMessages.SizeTooLargeForAll) },
 
-            // 18 is VALID for Unique & All (max). Keep a positive case explicitly in other tests.
-            { "19", SolutionMode.Unique, false, nameof(ErrorMessages.SizeTooLargeForUnique) },
-            { "19", SolutionMode.All, false, nameof(ErrorMessages.SizeTooLargeForAll) }
+            // 20 is VALID for Unique & All (max). Keep a positive case explicitly in other tests.
+            { "21", SolutionMode.Unique, false, nameof(ErrorMessages.SizeTooLargeForUnique) },
+            { "21", SolutionMode.All, false, nameof(ErrorMessages.SizeTooLargeForAll) }
         };
 
     public static TheoryData<int, SolutionMode> SmallValueCases =>
@@ -43,7 +43,7 @@ public static class NQueenTestSets
             { "1", true, null! },
             { "8", true, null! },
             { "17", true, null! },
-            { "18", true, null! }, // still valid for Single (limit is 37)
+            { "20", true, null! }, // still valid for Single (limit is 37)
             { "37", true, null! },
         };
 
@@ -72,8 +72,6 @@ public static class NQueenTestSets
             { 11, SolutionMode.Single },
             { 12, SolutionMode.Single },
             { 13, SolutionMode.Single },
-            { 18, SolutionMode.Single },
-            { 19, SolutionMode.Single },
             { 20, SolutionMode.Single },
             { 21, SolutionMode.Single },
             { 22, SolutionMode.Single },
@@ -113,10 +111,10 @@ public static class NQueenTestSets
             {38, SolutionMode.Single },
             {-1, SolutionMode.Unique },
             {0, SolutionMode.Unique},
-            {19, SolutionMode.Unique },   // updated invalid (>=19)
+            {21, SolutionMode.Unique },   // updated invalid (>=21)
             {-1, SolutionMode.All },
             {0, SolutionMode.All},
-            {19, SolutionMode.All},       // updated invalid (>=19)
+            {21, SolutionMode.All},       // updated invalid (>=21)
             {8, (SolutionMode)999 },
         };
 }

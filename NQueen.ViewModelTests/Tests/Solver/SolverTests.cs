@@ -10,7 +10,7 @@ public class SolverTests
         var solver = new Mock<ISolverBackEnd>();
         solver.Setup(s => s.GetSimResultsAsync(
                 It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
-            .ReturnsAsync(new SimulationResults([new Solution(new int[] { 0, 1, 2 }, new DefaultSolutionFormatter(), null)], 0.0));
+            .ReturnsAsync(new SimulationResults([new Solution([0, 1, 2], new DefaultSolutionFormatter(), null)], 1UL, 0.0));
 
         // Act
         var results = await solver.Object.GetSimResultsAsync(
@@ -27,7 +27,7 @@ public class SolverTests
         var solver = new Mock<ISolverBackEnd>();
         solver.Setup(s => s.GetSimResultsAsync(    
                 It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
-            .ReturnsAsync(new SimulationResults([], 0.0));
+            .ReturnsAsync(new SimulationResults([], 0UL, 0.0));
 
         // Act
         var results = await solver.Object.GetSimResultsAsync(

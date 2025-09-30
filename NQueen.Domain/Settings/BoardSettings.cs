@@ -17,8 +17,8 @@ public static class BoardSettings
     public const int MaxBitmaskBoardSize = 64;
 
     public const int MaxSizeForSingle = 37;
-    public const int MaxSizeForUnique = 18;
-    public const int MaxSizeForAll = 18;
+    public const int MaxSizeForUnique = 20;
+    public const int MaxSizeForAll = 20;
 
     public const string DefaultQueenImagePath = @"..\..\Images\WhiteQueen.png";
     public const char WhiteQueenChar = '\u2655';

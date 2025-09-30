@@ -1,28 +1,8 @@
 namespace NQueen.KernelBitmask.Solvers;
 
-/// <summary>
-/// Minimal iterative bitmask N-Queens solver (reference / baseline).
-/// Provides an allocation-light stack-based enumeration for all solutions (up to N=32)
-/// without symmetry pruning. An optional symmetry-pruned variant (<see cref="SolveAllSymmetryPruned"/>)
-/// is included for experimentation / benchmarking.
-/// </summary>
-/// <remarks>
-/// BIT REPRESENTATION:
-/// <list type="bullet">
-/// <item><description><c>cols</c>  – occupied rows.</description></item>
-/// <item><description><c>diag1</c> – main diagonals (shift left per column advance).</description></item>
-/// <item><description><c>diag2</c> – anti-diagonals (shift right per column advance).</description></item>
-/// </list>
-/// AVAILABLE ROWS = <c>~(cols | diag1 | diag2) & mask</c> where <c>mask = (1 &lt;&lt; N) - 1</c>.
-/// </remarks>
 public class BitmaskSolver(int boardSize)
 {
-    /// <summary>
-    /// Enumerates all solutions (no symmetry pruning). Optionally collects first-class copies.
-    /// </summary>
-    /// <param name="collectSolutions">If true, solutions are cloned and stored in <see cref="Solutions"/>.</param>
-    /// <returns>Total number of solutions discovered.</returns>
-    public int SolveAll(bool collectSolutions = false)
+    public ulong SolveAll(bool collectSolutions = false)
     {
         SolutionCount = 0;
         Solutions.Clear();
@@ -85,11 +65,7 @@ public class BitmaskSolver(int boardSize)
         return SolutionCount;
     }
 
-    /// <summary>
-    /// Symmetry-pruned enumeration variant (horizontal + second-column center pruning). Provided for tests / benchmarking.
-    /// Not used implicitly by existing callers.
-    /// </summary>
-    public int SolveAllSymmetryPruned(bool collectSolutions = false)
+    public ulong SolveAllSymmetryPruned(bool collectSolutions = false)
     {
         SolutionCount = 0;
         Solutions.Clear();
@@ -129,7 +105,6 @@ public class BitmaskSolver(int boardSize)
                 int firstRow = queenRows[0];
                 if ((n & 1) == 1 && firstRow == n / 2)
                 {
-                    // first queen centered -> only explore second column rows strictly above center
                     colRowLimit = n / 2;
                 }
                 else
@@ -176,7 +151,7 @@ public class BitmaskSolver(int boardSize)
     public int BoardSize { get; } = boardSize;
 
     /// <summary>Total number of solutions from the last execution.</summary>
-    public int SolutionCount { get; private set; }
+    public ulong SolutionCount { get; private set; }
 
     /// <summary>Collected solutions (if <see cref="SolveAll"/> or <see cref="SolveAllSymmetryPruned"/> invoked with collection enabled).</summary>
     public List<int[]> Solutions { get; } = new();

@@ -7,7 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:view="clr-namespace:NQueen.GUI.Views"
     xmlns:viewmodel="clr-namespace:NQueen.GUI.ViewModels"
-    Title="Solutions of NQueen Problem with Backtracking - .NET 9.0"
+    Title="Solutions of NQueen Problem using Symmetry Pruned Backtracking with .NET 10.0"
     MinWidth="1200"
     MinHeight="1000"
     Background="White"

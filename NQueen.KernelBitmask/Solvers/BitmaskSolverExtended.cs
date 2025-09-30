@@ -612,13 +612,6 @@ public class BitmaskSolverExtended(
     #endregion
 
     #region Fields / Helpers
-    private readonly ISolutionFormatter _solutionFormatter = solutionFormatter;
-    private readonly List<int[]> _solutions = [];
-    private int _solutionCount;
-    private Guid _currentSimToken = Guid.Empty;
-    private readonly bool _capEnabled = true;
-    private bool _disposed;
-    private readonly int _maxSolutionsInOutput = maxSolutionsInOutput;
 
     private bool ShouldAddSolution()
     {
@@ -630,5 +623,13 @@ public class BitmaskSolverExtended(
 
     private bool ShouldStopCollecting() =>
         _capEnabled && ShouldAddSolution() == false;
+
+    private readonly ISolutionFormatter _solutionFormatter = solutionFormatter;
+    private readonly List<int[]> _solutions = [];
+    private ulong _solutionCount;
+    private Guid _currentSimToken = Guid.Empty;
+    private readonly bool _capEnabled = true;
+    private bool _disposed;
+    private readonly int _maxSolutionsInOutput = maxSolutionsInOutput;
     #endregion
 }

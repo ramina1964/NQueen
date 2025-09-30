@@ -241,7 +241,7 @@ public sealed partial class MainViewModel
         var cap = SimulationSettings.MaxNoOfSolutionsInOutput;
         IEnumerable<Solution> sols = SimulationResults.Solutions;
 
-        if (cap > 0 && SimulationResults.SolutionsCount > cap)
+        if (cap > 0 && SimulationResults.SolutionsCount > (ulong)cap)
             sols = sols.Take(cap);
 
         foreach (var s in sols)
