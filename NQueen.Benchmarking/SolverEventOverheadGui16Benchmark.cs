@@ -1,12 +1,3 @@
-using System;
-using System.Collections.ObjectModel;
-using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Jobs;
-using NQueen.Domain.Settings;
-using NQueen.Domain.Enums;
-using NQueen.Domain.Models;
-using NQueen.KernelBitmask.Solvers;
-
 namespace NQueen.Benchmarking;
 
 // Focused benchmark: N=16, Unique, Visualize, GUI-like event handlers only.

@@ -13,7 +13,7 @@ global using NQueen.GUI.Infrastructure;
 global using NQueen.GUI.Interfaces;
 global using NQueen.GUI.ViewModels;
 global using NQueen.GUI.Views;
-global using NQueen.KernelBitmask.Services;
+global using NQueen.Kernel.Services;
 global using NQueen.Shared.Utils;
 global using NQueen.Shared.Validation;
 global using System;

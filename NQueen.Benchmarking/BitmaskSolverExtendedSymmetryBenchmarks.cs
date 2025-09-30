@@ -1,8 +1,3 @@
-using BenchmarkDotNet.Attributes;
-using NQueen.Domain.Enums;
-using NQueen.Domain.Models;
-using NQueen.KernelBitmask.Solvers;
-
 namespace NQueen.Benchmarking;
 
 [MemoryDiagnoser]

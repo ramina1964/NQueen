@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>NQueen.Kernel</AssemblyName>
+    <RootNamespace>NQueen.Kernel</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NQueen.Domain\NQueen.Domain.csproj" />
+    <ProjectReference Include="..\NQueen.Shared\NQueen.Shared.csproj" />
+  </ItemGroup>
+
+</Project>
