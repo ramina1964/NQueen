@@ -113,7 +113,7 @@ public class MainViewModelPositiveTests : IDisposable
         SolutionMode solutionMode, bool expectedIndeterminate)
     {
         // Arrange
-        var mockSolver = new Mock<ISolverPruning>();
+        var mockSolver = new Mock<ISolver>();
         var mockFormatter = new Mock<ISolutionFormatter>().Object;
 
         mockSolver
@@ -173,7 +173,7 @@ public class MainViewModelPositiveTests : IDisposable
         var mockFormatter = new Mock<ISolutionFormatter>().Object;
 
         // Create a mock solver for Unique mode
-        var mockSolver = new Mock<ISolverPruning>();
+        var mockSolver = new Mock<ISolver>();
 
         // Configure the mock solver to return a valid SimulationResults object
         mockSolver
@@ -187,7 +187,7 @@ public class MainViewModelPositiveTests : IDisposable
 
         // Simulate progress updates
         mockSolver
-            .SetupAdd(s => s.ProgressValueChanged += It.IsAny<EventHandler<NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs>>())
+            .SetupAdd(s => s.ProgressValueChanged += It.IsAny<EventHandler<Domain.EventArgsPruning.ProgressUpdateEventArgs>>())
             .Callback<EventHandler<NQueen.Domain.EventArgsPruning.ProgressUpdateEventArgs>>(handler =>
             {
                 for (var progress = 0.1; progress <= 1.0; progress += 0.1)
@@ -245,7 +245,7 @@ public class MainViewModelPositiveTests : IDisposable
         var mockFormatter = new Mock<ISolutionFormatter>().Object;
                 
         // Create a mock solver for All mode
-        var mockSolver = new Mock<ISolverPruning>();
+        var mockSolver = new Mock<ISolver>();
         mockSolver
             .Setup(s => s.GetSimResultsAsync(It.IsAny<SimulationContext>()))
             .ReturnsAsync(new SimulationResults(

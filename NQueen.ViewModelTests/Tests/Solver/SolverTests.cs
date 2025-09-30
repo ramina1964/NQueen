@@ -8,13 +8,16 @@ public class SolverTests
     {
         // Arrange
         var solver = new Mock<ISolverBackEnd>();
-        solver.Setup(s => s.GetSimResultsAsync(
-                It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
+        solver.Setup(s => s.GetSimResultsAsync(It.IsAny<SimulationContext>()))
             .ReturnsAsync(new SimulationResults([new Solution([0, 1, 2], new DefaultSolutionFormatter(), null)], 1UL, 0.0));
 
+        var simContext = new SimulationContext(
+            BoardSize: 4,
+            SolutionMode: SolutionMode.Single,
+            DisplayMode: DisplayMode.Visualize);
+
         // Act
-        var results = await solver.Object.GetSimResultsAsync(
-            4, SolutionMode.Single, DisplayMode.Visualize);
+        var results = await solver.Object.GetSimResultsAsync(simContext);
 
         // Assert
         results.Solutions.Should().NotBeEmpty();
@@ -25,13 +28,16 @@ public class SolverTests
     {
         // Arrange
         var solver = new Mock<ISolverBackEnd>();
-        solver.Setup(s => s.GetSimResultsAsync(    
-                It.IsAny<int>(), It.IsAny<SolutionMode>(), It.IsAny<DisplayMode>()))
+        solver.Setup(s => s.GetSimResultsAsync(It.IsAny<SimulationContext>()))
             .ReturnsAsync(new SimulationResults([], 0UL, 0.0));
 
+        var simContext = new SimulationContext(
+            BoardSize: 4,
+            SolutionMode: SolutionMode.Single,
+            DisplayMode: DisplayMode.Visualize);
+
         // Act
-        var results = await solver.Object.GetSimResultsAsync(
-            4, SolutionMode.Single, DisplayMode.Visualize);
+        var results = await solver.Object.GetSimResultsAsync(simContext);
 
         // Assert
         results.Solutions.Should().BeEmpty();

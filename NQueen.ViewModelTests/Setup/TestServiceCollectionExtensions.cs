@@ -42,7 +42,7 @@ public static class TestServiceCollectionExtensions
     /// Initializes DI for tests while injecting a provided mock ISolverPruning.
     /// Ensures other required services are present.
     /// </summary>
-    public static ServiceProvider InitializeForTestsWithMock(ISolverPruning mockSolver, bool enableCap = false)
+    public static ServiceProvider InitializeForTestsWithMock(ISolver mockSolver, bool enableCap = false)
     {
         var services = new ServiceCollection();
 
@@ -51,9 +51,9 @@ public static class TestServiceCollectionExtensions
 
         // Override solver with supplied mock (register for all relevant interfaces if needed).
         services.AddSingleton(mockSolver);
-        services.AddSingleton<ISolverPruning>(mockSolver);
-        services.AddSingleton<ISolverBackEndPruning>(mockSolver);
-        services.AddSingleton<ISolverFrontEndPruning>(mockSolver);
+        services.AddSingleton<ISolver>(mockSolver);
+        services.AddSingleton<ISolverBackEnd>(mockSolver);
+        services.AddSingleton<ISolverFrontEnd>(mockSolver);
 
         return services.BuildServiceProvider();
     }

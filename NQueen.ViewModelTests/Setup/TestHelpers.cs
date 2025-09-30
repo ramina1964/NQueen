@@ -5,7 +5,7 @@ public static class TestHelpers
     public static ServiceProvider CreateServiceProvider() =>
         TestServiceCollectionExtensions.InitializeForTests();
 
-    public static ServiceProvider CreateServiceProviderWithMock(ISolverPruning mockSolver) =>
+    public static ServiceProvider CreateServiceProviderWithMock(ISolver mockSolver) =>
         TestServiceCollectionExtensions.InitializeForTestsWithMock(mockSolver);
 
     public static MainViewModel CreateMainViewModel(
@@ -20,7 +20,7 @@ public static class TestHelpers
         solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>();
 
         var vm = new MainViewModel(
-            serviceProvider.GetRequiredService<ISolverPruning>(),
+            serviceProvider.GetRequiredService<ISolver>(),
             serviceProvider.GetRequiredService<IDispatcher>(),
             serviceProvider.GetRequiredService<ISaveFileDialogService>(),
             solutionFormatter);
@@ -38,7 +38,7 @@ public static class TestHelpers
     }
 
     public static MainViewModel CreateMainViewModelWithMock(
-        ISolverPruning mockSolver,
+        ISolver mockSolver,
         int boardSize = 8,
         SolutionMode solutionMode = SolutionMode.Single,
         DisplayMode displayMode = DisplayMode.Hide,
@@ -105,7 +105,7 @@ public static class TestHelpers
         bool suppressUserDialogs = true)
     {
         var serviceProvider = CreateServiceProvider();
-        var solver = serviceProvider.GetRequiredService<ISolverPruning>();
+        var solver = serviceProvider.GetRequiredService<ISolver>();
         solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>();
 
         var vm = new MainViewModel(
@@ -130,9 +130,9 @@ public static class TestHelpers
         return vm;
     }
 
-    public static Mock<ISolverPruning> CreateMockSolver(IEnumerable<Solution> solutions)
+    public static Mock<ISolver> CreateMockSolver(IEnumerable<Solution> solutions)
     {
-        var mockSolver = new Mock<ISolverPruning>();
+        var mockSolver = new Mock<ISolver>();
         mockSolver.Setup(s =>
                 s.GetSimResultsAsync(It.IsAny<SimulationContext>()))
             .ReturnsAsync(new SimulationResults(solutions, 0));

@@ -18,9 +18,9 @@ public static class BitmaskServiceCollectionExtensions
                 enableCap: enableCap));
 
         // IMPORTANT: Use factory delegates to reuse the same BitmaskSolverExtended instance per resolution.
-        services.AddTransient<ISolverPruning>(sp => sp.GetRequiredService<BitmaskSolverExtended>());
-        services.AddTransient<ISolverBackEndPruning>(sp => sp.GetRequiredService<BitmaskSolverExtended>());
-        services.AddTransient<ISolverFrontEndPruning>(sp => sp.GetRequiredService<BitmaskSolverExtended>());
+        services.AddTransient<ISolver>(sp => sp.GetRequiredService<BitmaskSolverExtended>());
+        services.AddTransient<ISolverBackEnd>(sp => sp.GetRequiredService<BitmaskSolverExtended>());
+        services.AddTransient<ISolverFrontEnd>(sp => sp.GetRequiredService<BitmaskSolverExtended>());
 
         return services;
     }

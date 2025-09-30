@@ -10,7 +10,7 @@ public class SolverNegativeTests : IDisposable
         services.AddTestServices();
 
         _serviceProvider = services.BuildServiceProvider();
-        _solver = _serviceProvider.GetRequiredService<ISolverBackEndPruning>();
+        _solver = _serviceProvider.GetRequiredService<ISolverBackEnd>();
     }
 
     [Theory]
@@ -33,6 +33,6 @@ public class SolverNegativeTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private readonly ISolverBackEndPruning _solver;
+    private readonly ISolverBackEnd _solver;
     private readonly ServiceProvider _serviceProvider;
 }

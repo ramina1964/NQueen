@@ -3,7 +3,7 @@ namespace NQueen.Kernel.Solvers;
 public class BitmaskSolverExtended(
     ISolutionFormatter solutionFormatter,
     int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput)
-        : ISolverPruning, IDisposable
+        : ISolver, IDisposable
 {
     #region Ctors
     public BitmaskSolverExtended(ISolutionFormatter solutionFormatter, bool enableCap)
