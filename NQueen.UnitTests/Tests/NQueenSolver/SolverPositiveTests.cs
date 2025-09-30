@@ -18,11 +18,11 @@ public class SolverPositiveTests : IDisposable
         int boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        var expectedSolutions = TestBase.FetchExpectedSols(boardSize, solutionMode);
+        var simContext = new SimulationContext(boardSize, solutionMode, DisplayMode.Hide);
+        var expectedSolutions = TestBase.FetchExpectedSols(simContext);
         Assert.Single(expectedSolutions);
 
         // Act
-        var simContext = new SimulationContext(boardSize, solutionMode, DisplayMode.Hide);
         var actualResults = await _solver.GetSimResultsAsync(simContext);
         var actualSolutionsList = actualResults.Solutions
             .Select(solution => solution.QueenPositions.ToArray());
@@ -39,10 +39,10 @@ public class SolverPositiveTests : IDisposable
         int boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        var expectedSolutions = TestBase.FetchExpectedSols(boardSize, solutionMode);
+        var simContext = new SimulationContext(boardSize, solutionMode, DisplayMode.Hide);
+        var expectedSolutions = TestBase.FetchExpectedSols(simContext);
 
         // Act
-        var simContext = new SimulationContext(boardSize, solutionMode, DisplayMode.Hide);
         var actualResults = await _solver.GetSimResultsAsync(simContext);
         var actualSolutionsList = actualResults.Solutions
             .Select(solution => solution.QueenPositions.ToArray());
@@ -61,10 +61,10 @@ public class SolverPositiveTests : IDisposable
         int boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        var expectedSolutions = TestBase.FetchExpectedSols(boardSize, solutionMode);
+        var simContext = new SimulationContext(boardSize, solutionMode, DisplayMode.Hide);
+        var expectedSolutions = TestBase.FetchExpectedSols(simContext);
 
         // Act
-        var simContext = new SimulationContext(boardSize, solutionMode, DisplayMode.Hide);
         var actualResults = await _solver.GetSimResultsAsync(simContext);
         var actualSolutionsList = actualResults.Solutions
             .Select(solution => solution.QueenPositions.ToArray());

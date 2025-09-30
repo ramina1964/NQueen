@@ -9,43 +9,42 @@ public class TestBase(ISolverBackEnd sut)
     protected readonly ISolverBackEnd Sut = sut
         ?? throw new ArgumentNullException(nameof(sut));
 
-    public static List<int[]> FetchExpectedSols(int boardSize, SolutionMode solutionMode) =>
-        solutionMode switch
+    public static List<int[]> FetchExpectedSols(SimulationContext simContext)
+    {
+        return simContext.SolutionMode switch
         {
             SolutionMode.Single => ExpectedSolutionData.SingleSolutions
-                .TryGetValue(boardSize, out var singleSolutions)
+                .TryGetValue(simContext.BoardSize, out var singleSolutions)
                 ? singleSolutions
-                : throw new KeyNotFoundException($"No single solutions found for board size {boardSize}."),
+                : throw new KeyNotFoundException($"No single solutions found for board size {simContext.BoardSize}."),
 
             SolutionMode.Unique => ExpectedSolutionData.UniqueSolutions
-                .TryGetValue(boardSize, out var uniqueSolutions)
+                .TryGetValue(simContext.BoardSize, out var uniqueSolutions)
                 ? uniqueSolutions
-                : throw new KeyNotFoundException($"No unique solutions found for board size {boardSize}."),
+                : throw new KeyNotFoundException($"No unique solutions found for board size {simContext.BoardSize}."),
 
             SolutionMode.All => ExpectedSolutionData.AllSolutions
-                .TryGetValue(boardSize, out var allSolutions)
+                .TryGetValue(simContext.BoardSize, out var allSolutions)
                 ? allSolutions
-                : throw new KeyNotFoundException($"No all solutions found for board size {boardSize}."),
+                : throw new KeyNotFoundException($"No all solutions found for board size {simContext.BoardSize}."),
 
-            _ => throw new ArgumentOutOfRangeException(nameof(solutionMode), "Invalid solution mode.")
+            _ => throw new ArgumentOutOfRangeException(nameof(simContext.BoardSize), "Invalid solution mode.")
         };
-
-    public async Task<IEnumerable<int[]>> FetchActualSolsAsync(int boardSize, SolutionMode solutionMode)
-    {
-        var simContext = new SimulationContext(boardSize, solutionMode, DisplayMode.Hide);
-        return (await Sut.GetSimResultsAsync(simContext))
-            .Solutions
-            .Select(sol => sol.QueenPositions);
     }
 
+    public async Task<IEnumerable<int[]>> FetchActualSolsAsync(SimulationContext simContext) =>
+        (await Sut.GetSimResultsAsync(simContext))
+        .Solutions
+        .Select(sol => sol.QueenPositions);
+
     // Helper method for assertions
-    protected async Task AssertSolutionsAsync(int boardSize, SolutionMode solutionMode)
+    protected async Task AssertSolutionsAsync(SimulationContext simContext)
     {
         // Arrange
-        ExpectedSolutions = FetchExpectedSols(boardSize, solutionMode);
+        ExpectedSolutions = FetchExpectedSols(simContext);
 
         // Act
-        ActualSolutions = [.. await FetchActualSolsAsync(boardSize, solutionMode)];
+        ActualSolutions = [.. await FetchActualSolsAsync(simContext)];
 
         // Assert
         Assert.Equal(ExpectedSolutions.Count, ActualSolutions.Count);
