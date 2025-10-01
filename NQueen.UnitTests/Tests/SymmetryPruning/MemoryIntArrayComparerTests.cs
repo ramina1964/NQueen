@@ -24,8 +24,8 @@ public class MemoryIntArrayComparerTests
     }
 
     [Theory]
-    [InlineData(new int[] { 0, 2, 4, 1, 3 }, 7)]
-    [InlineData(new int[] { 1, 3, 0, 2, 4 }, 7)]
+    [InlineData(new int[] { 0, 2, 4, 1, 3 }, 8)]
+    [InlineData(new int[] { 1, 3, 0, 2, 4 }, 8)]
     public void GetSymmetricalTransformations_ShouldReturnExpectedCount(
         int[] solutionArray, int expectedCount)
     {
@@ -40,13 +40,14 @@ public class MemoryIntArrayComparerTests
         // Arrange
         var solution = new int[] { 0, 2, 4, 1, 3 };
         int[][] expectedVariants = [
-            [ 0, 2, 4, 1, 3 ],
+            [ 0, 2, 4, 1, 3 ], // identity
             [ 3, 1, 4, 2, 0 ],
             [ 4, 2, 0, 3, 1 ],
             [ 1, 3, 0, 2, 4 ],
             [ 2, 0, 3, 1, 4 ],
             [ 4, 1, 3, 0, 2 ],
-            [ 2, 4, 1, 3, 0 ]
+            [ 2, 4, 1, 3, 0 ],
+            [ 0, 3, 1, 4, 2 ] // add missing variant
         ];
 
         // Act
