@@ -230,6 +230,7 @@ public class BitmaskSolverExtended(
             tasks.Add(Task.Run(() =>
             {
                 var localUnique = new HashSet<int[]>(new IntArrayComparer());
+                var scratchBuf = new int[N];
                 var rowsArr = new int[N];
                 Array.Fill(rowsArr, -1);
                 rowsArr[0] = fr;
@@ -252,9 +253,8 @@ public class BitmaskSolverExtended(
                 {
                     if (col == N)
                     {
-                        var canonical = SymmetryHelper.GetCanonicalForm(rowsArr);
-                        if (!localUnique.Contains(canonical))
-                            localUnique.Add((int[])canonical.Clone());
+                        // Use scratchBuf for AddIfUnique to avoid repeated allocations
+                        if (SymmetryHelper.AddIfUnique(rowsArr, localUnique, scratchBuf)) { }
                         col--;
                         if (col <= 0) break;
                         Restore(col, out remaining);
@@ -319,15 +319,16 @@ public class BitmaskSolverExtended(
         Task.WaitAll(tasks.ToArray());
 
         var globalUnique = new HashSet<int[]>(new IntArrayComparer());
+        var globalScratchBuf = new int[N];
         foreach (var t in tasks)
         {
             if (ShouldStopCollecting()) break;
             foreach (var sol in t.Result)
             {
                 if (ShouldStopCollecting()) break;
-                if (!globalUnique.Contains(sol))
+                // Use globalScratchBuf for AddIfUnique
+                if (SymmetryHelper.AddIfUnique(sol, globalUnique, globalScratchBuf))
                 {
-                    globalUnique.Add((int[])sol.Clone());
                     _solutionCount++;
                     if (ShouldAddSolution())
                     {
