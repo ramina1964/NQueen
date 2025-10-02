@@ -121,9 +121,6 @@ public partial class DispatchCommands
             return;
         }
 
-        Console.WriteLine("Simulation started...");
-        Console.WriteLine();
-
         var solver = new BitmaskSolverExtended(
             context.BoardSize, context.SolutionMode, context.DisplayMode, formatter)
         {
@@ -135,6 +132,7 @@ public partial class DispatchCommands
             solver.UseCountOnlyUniqueMode = true;
 
         var results = solver.Solve();
+        // Output only the summary for user communication
         var summary = GetSummaryString(context, results);
         Console.WriteLine(summary);
         Console.WriteLine();
@@ -148,8 +146,8 @@ public partial class DispatchCommands
         sb.AppendLine("Summary:");
         sb.AppendLine($"  Board Size      : {NumericUtils.FormatWithSpaceSeparator(context.BoardSize)}");
         sb.AppendLine($"  Mode            : {context.SolutionMode}");
-        sb.AppendLine($"  Total Solutions : {NumericUtils.FormatWithSpaceSeparator(results.SolutionsCount)}{(results.IsTruncated ? $" (showing first {results.Solutions.Count})" : string.Empty)}");
-        sb.AppendLine($"  Elapsed (sec)   : {NumericUtils.FormatWithSpaceSeparator(results.ElapsedTimeInSec, 2)}");
+        sb.AppendLine($"  Total Solutions : {results.SolutionsCount:N0}{(results.IsTruncated ? $" (showing first {results.Solutions.Count})" : string.Empty)}");
+        sb.AppendLine($"  Elapsed (sec)   : {results.ElapsedTimeInSec:N1}");
         sb.AppendLine($"  Memory (MB)     : {NumericUtils.UpdateMemoryUsage()}");
         sb.AppendLine();
 
