@@ -65,6 +65,8 @@ public class BitmaskSolverExtended(
 
     public bool EnableEvents { get; set; } = true;
 
+    public bool UseCountOnlyUniqueMode { get; set; } = false;
+
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
 
     public Task<SimulationResults> GetSimResultsAsync(SimulationContext simContext) =>
@@ -183,8 +185,47 @@ public class BitmaskSolverExtended(
             pct => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken))));
     }
 
+    private void SolveUniqueCountOnlyMode()
+    {
+        int N = BoardSize;
+        var sampleSolutions = new List<int[]>();
+        ulong totalUnique = 0;
+        var scratchBuf = new int[N];
+
+        _searchEngine.Run(new BitmaskSearchEngine.Request(
+            BoardSize,
+            RestrictFirstCol: true,
+            EnhancedSymmetry: true,
+            DisplayMode,
+            DelayInMillisec,
+            _currentSimToken,
+            () => IsSolverCanceled,
+            p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
+            m => { if (EnableEvents) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
+            rows =>
+            {
+                var copy = (int[])rows.Clone();
+                int symmetryWeight = SymmetryHelper.GetSymmetryWeight(copy, scratchBuf);
+                totalUnique += (ulong)symmetryWeight;
+                if (sampleSolutions.Count < _maxSolutionsInOutput && ShouldAddSolution())
+                    sampleSolutions.Add(copy);
+                return false;
+            }
+        ));
+
+        _solutionCount = totalUnique;
+        _solutions.Clear();
+        _solutions.AddRange(sampleSolutions);
+    }
+
     private void RunUniqueParallel()
     {
+        if (UseCountOnlyUniqueMode)
+        {
+            SolveUniqueCountOnlyMode();
+            return;
+        }
+
         _parallelEngine.RunUnique(new BitmaskParallelEngine.UniqueRequest(
             BoardSize,
             EnableEvents,

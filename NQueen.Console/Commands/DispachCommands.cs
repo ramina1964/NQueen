@@ -130,6 +130,10 @@ public partial class DispatchCommands
             EnableEvents = false
         };
 
+        // Enable memory-saving mode for unique solutions
+        if (context.SolutionMode == SolutionMode.Unique)
+            solver.UseCountOnlyUniqueMode = true;
+
         var results = solver.Solve();
         var summary = GetSummaryString(context, results);
         Console.WriteLine(summary);

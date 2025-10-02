@@ -193,6 +193,21 @@ public static partial class SymmetryHelper
         }
     }
 
+    /// <summary>
+    /// Returns the symmetry weight for a solution (number of unique symmetrical forms).
+    /// Used for count-only unique mode in solvers.
+    /// </summary>
+    public static int GetSymmetryWeight(int[] solution, int[] scratch)
+    {
+        // Get all symmetrical transformations
+        var symmetries = GetSymmetricalSolutions(solution);
+        // Use a HashSet to count unique forms
+        var set = new HashSet<string>();
+        foreach (var sym in symmetries)
+            set.Add(string.Join(",", sym));
+        return set.Count;
+    }
+
     // --- Additional helpers (retained) ---
     /// <summary>
     /// Builds a title for solution listings with truncation / mode awareness.</summary>

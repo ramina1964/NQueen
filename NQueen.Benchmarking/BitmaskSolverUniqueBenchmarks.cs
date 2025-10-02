@@ -7,7 +7,7 @@ public class BitmaskSolverUniqueBenchmarks
     public void Setup()
     {
         _formatter = new SolutionFormatter();
-        _boardSize = 12;
+        _boardSize = 16;
     }
 
     [Benchmark]
