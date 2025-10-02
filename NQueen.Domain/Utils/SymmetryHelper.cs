@@ -143,26 +143,54 @@ public static partial class SymmetryHelper
     {
         ArgumentNullException.ThrowIfNull(solution);
         int n = solution.Length;
-        int[] min = null!;
-        foreach (var trans in GetSymmetricalSolutions(solution))
+        // Use a single scratch buffer for all transformations
+        int[] min = new int[n];
+        int[] scratch = new int[n];
+        bool minSet = false;
+
+        // Identity
+        Array.Copy(solution, scratch, n);
+        if (!minSet || IsLess(scratch, min, n)) { Array.Copy(scratch, min, n); minSet = true; }
+
+        // Rotate 90
+        for (int i = 0; i < n; i++) scratch[solution[i]] = n - 1 - i;
+        if (IsLess(scratch, min, n)) Array.Copy(scratch, min, n);
+
+        // Rotate 180
+        for (int i = 0; i < n; i++) scratch[n - 1 - i] = n - 1 - solution[i];
+        if (IsLess(scratch, min, n)) Array.Copy(scratch, min, n);
+
+        // Rotate 270
+        for (int i = 0; i < n; i++) scratch[n - 1 - solution[i]] = i;
+        if (IsLess(scratch, min, n)) Array.Copy(scratch, min, n);
+
+        // Reflect vertical
+        for (int i = 0; i < n; i++) scratch[n - 1 - i] = solution[i];
+        if (IsLess(scratch, min, n)) Array.Copy(scratch, min, n);
+
+        // Reflect horizontal
+        for (int i = 0; i < n; i++) scratch[i] = n - 1 - solution[i];
+        if (IsLess(scratch, min, n)) Array.Copy(scratch, min, n);
+
+        // Reflect main diagonal
+        for (int i = 0; i < n; i++) scratch[solution[i]] = i;
+        if (IsLess(scratch, min, n)) Array.Copy(scratch, min, n);
+
+        // Reflect anti-diagonal
+        for (int i = 0; i < n; i++) scratch[n - 1 - solution[i]] = n - 1 - i;
+        if (IsLess(scratch, min, n)) Array.Copy(scratch, min, n);
+
+        return min;
+
+        static bool IsLess(int[] a, int[] b, int n)
         {
-            if (min == null)
-            {
-                min = (int[])trans.Clone();
-                continue;
-            }
-            bool isLess = false;
             for (int i = 0; i < n; i++)
             {
-                if (trans[i] < min[i]) { isLess = true; break; }
-                if (trans[i] > min[i]) break;
+                if (a[i] < b[i]) return true;
+                if (a[i] > b[i]) return false;
             }
-            if (isLess)
-            {
-                for (int i = 0; i < n; i++) min[i] = trans[i];
-            }
+            return false;
         }
-        return min;
     }
 
     // --- Additional helpers (retained) ---
