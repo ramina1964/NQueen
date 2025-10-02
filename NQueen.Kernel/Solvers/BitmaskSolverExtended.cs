@@ -322,11 +322,9 @@ public class BitmaskSolverExtended(
         var globalScratchBuf = new int[N];
         foreach (var t in tasks)
         {
-            if (ShouldStopCollecting()) break;
             foreach (var sol in t.Result)
             {
-                if (ShouldStopCollecting()) break;
-                // Use globalScratchBuf for AddIfUnique
+                // Always increment _solutionCount for every unique solution found
                 if (SymmetryHelper.AddIfUnique(sol, globalUnique, globalScratchBuf))
                 {
                     _solutionCount++;
@@ -336,7 +334,6 @@ public class BitmaskSolverExtended(
                         if (EnableEvents)
                             SolutionFound?.Invoke(this,
                                 new SolutionFoundEventArgs(new Memory<int>(sol)));
-                        if (!ShouldAddSolution()) cancelSource.Cancel();
                     }
                 }
             }
