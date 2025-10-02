@@ -6,8 +6,10 @@ public class BitmaskSolverExtended(
         : ISolver, IDisposable
 {
     #region Ctors
-    public BitmaskSolverExtended(ISolutionFormatter solutionFormatter, bool enableCap)
-        : this(solutionFormatter, SimulationSettings.MaxNoOfSolutionsInOutput) => _capEnabled = enableCap;
+    public BitmaskSolverExtended(
+        ISolutionFormatter solutionFormatter, bool enableCap)
+        : this(solutionFormatter, SimulationSettings.MaxNoOfSolutionsInOutput) =>
+            _capEnabled = enableCap;
 
     public BitmaskSolverExtended(
         int boardSize,
@@ -50,12 +52,19 @@ public class BitmaskSolverExtended(
     public event EventHandler<ProgressUpdateEventArgs>? ProgressValueChanged;
 
     public int DelayInMillisec { get; set; }
+
     public int ProgressValue { get; set; }
+    
     public int BoardSize { get; private set; }
+    
     public SolutionMode SolutionMode { get; private set; }
+    
     public DisplayMode DisplayMode { get; private set; }
+    
     public bool IsSolverCanceled { get; set; }
+    
     public bool EnableParallelization { get; set; } = true;
+    
     public bool EnableEvents { get; set; } = true;
 
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
@@ -92,12 +101,15 @@ public class BitmaskSolverExtended(
             case SolutionMode.Single:
                 SolveSingleMode();
                 break;
+            
             case SolutionMode.All:
                 SolveAllMode(parallelEligible);
                 break;
+            
             case SolutionMode.Unique:
                 SolveUniqueMode(parallelEligible);
                 break;
+            
             default:
                 throw new NotImplementedException($"Unsupported SolutionMode: {SolutionMode}");
         }
