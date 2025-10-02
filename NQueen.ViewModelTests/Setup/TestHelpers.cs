@@ -25,14 +25,10 @@ public static class TestHelpers
             serviceProvider.GetRequiredService<ISaveFileDialogService>(),
             solutionFormatter);
 
-        // Suppress dialogs before any property setters that may trigger validation popups.
         vm.SuppressUserDialogs = suppressUserDialogs;
-
-        // Order matters: set mode/display first (avoids double reset), then size.
         vm.SolutionMode = solutionMode;
         vm.DisplayMode = displayMode;
         vm.BoardSizeText = boardSize.ToString();
-
         vm.SimulationResults = simulationResults ?? new SimulationResults([], 0);
         return vm;
     }
@@ -44,12 +40,10 @@ public static class TestHelpers
         ISolutionFormatter? solutionFormatter = null,
         bool suppressUserDialogs = true)
     {
-        // Provide a default context if none supplied (mirrors previous defaults).
         var ctx = simulationContext ?? new SimulationContext(
             BoardSettings.DefaultBoardSize,
             SolutionMode.Single,
-            DisplayMode.Hide,
-            EnableParallelization: true);
+            DisplayMode.Hide);
 
         var serviceProvider = CreateServiceProviderWithMock(mockSolver);
         solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>();
@@ -75,7 +69,6 @@ public static class TestHelpers
         ISolutionFormatter? solutionFormatter = null,
         bool suppressUserDialogs = true)
     {
-        solutionFormatter ??= new TestSolutionFormatter();
         var vm = CreateMainViewModel(
             boardSize: BoardSettings.DefaultBoardSize,
             solutionMode: solutionMode,
@@ -83,7 +76,6 @@ public static class TestHelpers
             solutionFormatter: solutionFormatter,
             suppressUserDialogs: suppressUserDialogs);
 
-        // Assign text after base setup (will trigger validation once).
         vm.BoardSizeText = boardSizeText;
         return vm;
     }
@@ -126,22 +118,19 @@ public static class TestHelpers
             IsIdle = true
         };
 
-        var simContext = new SimulationContext(
-            boardSize, solutionMode, displayMode, EnableParallelization: true);
-
+        var simContext = new SimulationContext(boardSize, solutionMode, displayMode);
         var simulationResults = await solver.GetSimResultsAsync(simContext);
 
         vm.SimulationResults = simulationResults;
         vm.NoOfSolutions = simulationResults.Solutions.LongCount().ToString();
-        
         return vm;
     }
 
     public static Mock<ISolver> CreateMockSolver(IEnumerable<Solution> solutions)
     {
         var mockSolver = new Mock<ISolver>();
-        mockSolver.Setup(s =>
-                s.GetSimResultsAsync(It.IsAny<SimulationContext>()))
+        mockSolver
+            .Setup(s => s.GetSimResultsAsync(It.IsAny<SimulationContext>()))
             .ReturnsAsync(new SimulationResults(solutions, 0));
         return mockSolver;
     }
@@ -149,23 +138,15 @@ public static class TestHelpers
     public static async Task WaitForSimulationCompletionAsync(MainViewModel mainVm)
     {
         var tcs = new TaskCompletionSource<bool>();
-        void Handler(object? s, EventArgs e)
+        void Handler(object? _, EventArgs __)
         {
-            tcs.TrySetResult(true);
             mainVm.SimulationCompleted -= Handler;
+            tcs.TrySetResult(true);
         }
 
         mainVm.SimulationCompleted += Handler;
-        try
-        {
-            mainVm.SimulateCommand.Execute(null);
-            await tcs.Task;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Exception during simulation: {ex}");
-            throw;
-        }
+        mainVm.SimulateCommand.Execute(null);
+        await tcs.Task;
     }
 
     public static async Task WaitForConditionAsync(Func<bool> condition, TimeSpan timeout)
@@ -174,8 +155,8 @@ public static class TestHelpers
         while (!condition())
         {
             if (DateTime.UtcNow - start > timeout)
-                throw new TimeoutException(ErrorMessages.GetTimeoutMessage(timeout));
-            await Task.Delay(10);
+                throw new TimeoutException($"Condition not met within {timeout.TotalMilliseconds}ms.");
+            await Task.Delay(20);
         }
     }
 }

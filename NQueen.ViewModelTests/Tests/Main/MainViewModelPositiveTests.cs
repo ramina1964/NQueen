@@ -18,7 +18,7 @@ public class MainViewModelPositiveTests : IDisposable
         ]);
 
         var simContext = new SimulationContext(
-            boardSize, solutionMode, displayMode, EnableParallelization: true);
+            boardSize, solutionMode, displayMode);
 
         var mainVm = TestHelpers.CreateMainViewModelWithMock(mockSolver.Object, simContext);
 

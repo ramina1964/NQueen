@@ -3,54 +3,37 @@
 public record MenuState
 {
     public bool ExitRequested { get; set; }
-
     public int BlankInputCount { get; set; }
-
-    public bool EnableParallelization { get; set; } = true;
 }
-
-// Todo: Use input validation here, otherwise move input validation into ValidationHelper.
-// Todo: Use constants for menu options, messages, etc from Utils/Constants.cs
 
 public partial class DispatchCommands
 {
     public static void RunInteractiveMenu(IServiceProvider services)
     {
         var state = new MenuState();
-        Console.WriteLine($"Parallelization is ENABLED by default. Type 'toggle' at any prompt to switch.");
         while (state.ExitRequested == false)
         {
-            // Option to toggle parallelization
-            Console.WriteLine($"Current parallelization: {(state.EnableParallelization ? "ENABLED" : "DISABLED")}");
-            // Select Solution Mode (Bitmask solver is implicit)
             var mode = ShowSolutionModeMenu(state);
             if (state.ExitRequested)
                 break;
-
             if (mode == null)
             {
-                // User chose 0 (Exit)
                 state.ExitRequested = true;
                 break;
             }
 
-            // Board size selection loop for chosen mode
             while (state.ExitRequested == false)
             {
                 var boardSize = ShowBoardSizeMenu(state);
-                if (state.ExitRequested)
-                    break;
+                if (state.ExitRequested) break;
+                if (boardSize == -1) break;
 
-                if (boardSize == -1)
-                    break;
-
-                var context = new SimulationContext(boardSize, mode.Value, DisplayMode.Hide, state.EnableParallelization);
+                var context = new SimulationContext(boardSize, mode.Value, DisplayMode.Hide);
                 ShowAndHandleResults(services, context, state);
 
-                // Prompt for next action (inline, after summary)
                 while (true)
                 {
-                    Console.Write("Enter a board size, 'back', 'exit', or 'toggle' to switch parallelization: ");
+                    Console.Write("Enter a board size, 'back' or 'exit': ");
                     var input = Console.ReadLine();
                     if (IsQuitInput(input, state))
                     {
@@ -59,23 +42,15 @@ public partial class DispatchCommands
                     }
                     if (input?.ToLower() == "back")
                         break;
-                    if (input?.ToLower() == "toggle")
-                    {
-                        state.EnableParallelization = !state.EnableParallelization;
-                        Console.WriteLine($"Parallelization is now {(state.EnableParallelization ? "ENABLED" : "DISABLED")}");
-                        continue;
-                    }
 
-                    if (int.TryParse(input, out int nextBoardSize) && nextBoardSize >= 1 && nextBoardSize <= BoardSettings.MaxBitmaskBoardSize)
+                    if (int.TryParse(input, out int nextBoardSize) &&
+                        nextBoardSize >= 1 && nextBoardSize <= BoardSettings.MaxBitmaskBoardSize)
                     {
-                        var nextContext = new SimulationContext(nextBoardSize, mode.Value, DisplayMode.Hide, state.EnableParallelization);
+                        var nextContext = new SimulationContext(nextBoardSize, mode.Value, DisplayMode.Hide);
                         ShowAndHandleResults(services, nextContext, state);
-                        
-                        // After running, return to prompt for the next action
                         continue;
                     }
                 }
-
                 break;
             }
         }
@@ -89,7 +64,6 @@ public partial class DispatchCommands
         var modes = Enum.GetValues<SolutionMode>();
         for (int i = 0; i < modes.Length; i++)
             Console.WriteLine($"  {i + 1}. {modes[i]}");
-
         Console.WriteLine("  0. Exit");
         Console.Write("Choice: ");
         var modeInput = Console.ReadLine();
@@ -100,17 +74,15 @@ public partial class DispatchCommands
             state.ExitRequested = true;
             return null;
         }
-
         if (modeInput == "0")
             return null;
 
-        if (int.TryParse(modeInput, out int modeIndex) == false || modeIndex < 1 ||
-            modeIndex > modes.Length)
+        if (int.TryParse(modeInput, out int modeIndex) == false ||
+            modeIndex < 1 || modeIndex > modes.Length)
         {
             Console.WriteLine("Invalid choice. Try again.\n");
             return null;
         }
-
         return modes[modeIndex - 1];
     }
 
@@ -125,21 +97,17 @@ public partial class DispatchCommands
             state.ExitRequested = true;
             return -1;
         }
-
         if (sizeInput == "0")
         {
             Console.WriteLine();
             return -1;
         }
-
         if (int.TryParse(sizeInput, out int boardSize) == false ||
-            boardSize < 1 ||
-            boardSize > BoardSettings.MaxBitmaskBoardSize)
+            boardSize < 1 || boardSize > BoardSettings.MaxBitmaskBoardSize)
         {
             Console.WriteLine("Invalid board size. Try again.\n");
             return -1;
         }
-
         return boardSize;
     }
 
@@ -163,15 +131,11 @@ public partial class DispatchCommands
         };
 
         var results = solver.Solve();
-
-        // Get the summary string and print it at the top level
         var summary = GetSummaryString(context, results);
         Console.WriteLine(summary);
-        // Only two blank lines before the next prompt
         Console.WriteLine();
     }
 
-    // This method now only returns the summary string, does not write to the console
     public static string GetSummaryString(
         SimulationContext context, SimulationResults results)
     {

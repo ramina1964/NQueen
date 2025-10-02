@@ -123,9 +123,6 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnIsOutputReadyChanged(bool value) =>
         RefreshCommandStates();
 
-    [ObservableProperty]
-    private bool _enableParallelization = true;
-
     // When true (primarily in unit tests), suppress all modal MessageBox dialogs.
     [ObservableProperty]
     private bool _suppressUserDialogs;

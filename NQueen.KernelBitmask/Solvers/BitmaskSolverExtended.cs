@@ -50,12 +50,17 @@ public class BitmaskSolverExtended(
     public event EventHandler<ProgressUpdateEventArgs>? ProgressValueChanged;
 
     public int DelayInMillisec { get; set; }
+
     public int ProgressValue { get; set; }
+
     public int BoardSize { get; private set; }
+
     public SolutionMode SolutionMode { get; private set; }
+
     public DisplayMode DisplayMode { get; private set; }
+
     public bool IsSolverCanceled { get; set; }
-    public bool EnableParallelization { get; set; } = true;
+
     public bool EnableEvents { get; set; } = true;
 
     public void SetSimulationToken(Guid token) => _currentSimToken = token;

@@ -54,17 +54,15 @@ public class BitmaskSolverExtended(
     public int DelayInMillisec { get; set; }
 
     public int ProgressValue { get; set; }
-    
+
     public int BoardSize { get; private set; }
-    
+
     public SolutionMode SolutionMode { get; private set; }
-    
+
     public DisplayMode DisplayMode { get; private set; }
-    
+
     public bool IsSolverCanceled { get; set; }
-    
-    public bool EnableParallelization { get; set; } = true;
-    
+
     public bool EnableEvents { get; set; } = true;
 
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
@@ -75,7 +73,6 @@ public class BitmaskSolverExtended(
             BoardSize = simContext.BoardSize;
             SolutionMode = simContext.SolutionMode;
             DisplayMode = simContext.DisplayMode;
-            EnableParallelization = simContext.EnableParallelization;
             return Solve();
         });
 
@@ -91,25 +88,25 @@ public class BitmaskSolverExtended(
         ResetForSolve();
         var sw = Stopwatch.StartNew();
 
-        var parallelEligible =
-            EnableParallelization &&
-            BoardSize >= SimulationSettings.ParallelMinBoardSize &&
-            SolutionMode != SolutionMode.Single;
+        // Todo: Consider exposing this as a property
+        //var parallelEligible =
+        //    BoardSize >= SimulationSettings.ParallelMinBoardSize &&
+        //    SolutionMode != SolutionMode.Single;
 
         switch (SolutionMode)
         {
             case SolutionMode.Single:
                 SolveSingleMode();
                 break;
-            
+
             case SolutionMode.All:
-                SolveAllMode(parallelEligible);
+                RunAllParallel();
                 break;
-            
+
             case SolutionMode.Unique:
-                SolveUniqueMode(parallelEligible);
+                RunUniqueParallel();
                 break;
-            
+
             default:
                 throw new NotImplementedException($"Unsupported SolutionMode: {SolutionMode}");
         }
@@ -149,73 +146,6 @@ public class BitmaskSolverExtended(
                     _solutions.Add((int[])rows.Clone());
                 return true;
             }));
-
-    private void SolveAllMode(bool parallelEligible)
-    {
-        if (parallelEligible)
-        {
-            RunAllParallel();
-            return;
-        }
-        _searchEngine.Run(new BitmaskSearchEngine.Request(
-            BoardSize,
-            RestrictFirstCol: false,
-            EnhancedSymmetry: false,
-            DisplayMode,
-            DelayInMillisec,
-            _currentSimToken,
-            () => IsSolverCanceled,
-            p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-            m =>
-            {
-                if (EnableEvents)
-                    QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m));
-            },
-            rows =>
-            {
-                _solutionCount++;
-                if (ShouldAddSolution())
-                    _solutions.Add((int[])rows.Clone());
-                return false;
-            }));
-    }
-
-    private void SolveUniqueMode(bool parallelEligible)
-    {
-        if (parallelEligible)
-        {
-            RunUniqueParallel();
-            return;
-        }
-        var uniqueSet = new HashSet<int[]>(new IntArrayComparer());
-        var scratchBuf = new int[BoardSize];
-
-        _searchEngine.Run(new BitmaskSearchEngine.Request(
-            BoardSize,
-            RestrictFirstCol: true,
-            EnhancedSymmetry: true,
-            DisplayMode,
-            DelayInMillisec,
-            _currentSimToken,
-            () => IsSolverCanceled,
-            p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-            m =>
-            {
-                if (EnableEvents)
-                    QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m));
-            },
-            rows =>
-            {
-                var copy = (int[])rows.Clone();
-                if (SymmetryHelper.AddIfUnique(copy, uniqueSet, scratchBuf))
-                {
-                    _solutionCount++;
-                    if (ShouldAddSolution())
-                        _solutions.Add(copy);
-                }
-                return false;
-            }));
-    }
 
     private SimulationResults BuildResults(TimeSpan elapsed)
     {
@@ -285,7 +215,6 @@ public class BitmaskSolverExtended(
             return true;
 
         var cap = SimulationSettings.MaxNoOfSolutionsInOutput;
-
         return cap <= 0 || _solutions.Count < cap;
     }
 

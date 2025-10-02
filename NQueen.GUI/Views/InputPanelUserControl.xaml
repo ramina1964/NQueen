@@ -44,7 +44,6 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <Grid.ColumnDefinitions>
@@ -134,17 +133,6 @@
                     Minimum="10"
                     Style="{StaticResource SliderStyle}"
                     Value="{Binding DelayInMilliseconds, Mode=TwoWay}" />
-
-                <!--  Parallelization  -->
-                <CheckBox
-                    Grid.Row="4"
-                    Grid.Column="0"
-                    Margin="5,10"
-                    HorizontalAlignment="Right"
-                    Content="Enable Parallelization"
-                    IsEnabled="{Binding IsInInputMode}"
-                    IsChecked="{Binding EnableParallelization, Mode=TwoWay}" />
-
             </Grid>
         </GroupBox>
     </StackPanel>
