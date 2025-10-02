@@ -1,70 +1,39 @@
 namespace NQueen.Kernel.Solvers;
 
-public class BitmaskSolverExtended(
-    ISolutionFormatter solutionFormatter,
-    int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput)
-        : ISolver, IDisposable
+public class BitmaskSolverExtended : ISolver, IDisposable
 {
-    #region Ctors
-    public BitmaskSolverExtended(
-        ISolutionFormatter solutionFormatter, bool enableCap)
-        : this(solutionFormatter, SimulationSettings.MaxNoOfSolutionsInOutput) =>
-            _capEnabled = enableCap;
+    // -------------------- Public API & Constructors --------------------
+    public BitmaskSolverExtended(ISolutionFormatter solutionFormatter, int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput)
+    {
+        _solutionFormatter = solutionFormatter;
+        _maxSolutionsInOutput = maxSolutionsInOutput;
+    }
 
-    public BitmaskSolverExtended(
-        int boardSize,
-        SolutionMode solutionMode,
-        DisplayMode displayMode,
-        ISolutionFormatter solutionFormatter,
-        int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput)
+    public BitmaskSolverExtended(ISolutionFormatter solutionFormatter, bool enableCap)
+        : this(solutionFormatter, SimulationSettings.MaxNoOfSolutionsInOutput)
+    {
+        _capEnabled = enableCap;
+    }
+
+    public BitmaskSolverExtended(int boardSize, SolutionMode solutionMode, DisplayMode displayMode, ISolutionFormatter solutionFormatter, int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput)
         : this(solutionFormatter, maxSolutionsInOutput)
     {
         BoardSize = boardSize;
         SolutionMode = solutionMode;
         DisplayMode = displayMode;
     }
-    #endregion
 
-    #region IDisposable
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (_disposed) return;
-        if (disposing)
-        {
-            _solutions.Clear();
-            QueenPlaced = null;
-            SolutionFound = null;
-            ProgressValueChanged = null;
-        }
-        _disposed = true;
-    }
-    #endregion
-
-    #region Events & Public API
     public event EventHandler<QueenPlacedEventArgs>? QueenPlaced;
     public event EventHandler<SolutionFoundEventArgs>? SolutionFound;
     public event EventHandler<ProgressUpdateEventArgs>? ProgressValueChanged;
 
     public int DelayInMillisec { get; set; }
-
     public int ProgressValue { get; set; }
-
     public int BoardSize { get; private set; }
-
     public SolutionMode SolutionMode { get; private set; }
-
     public DisplayMode DisplayMode { get; private set; }
-
     public bool IsSolverCanceled { get; set; }
-
     public bool EnableEvents { get; set; } = true;
-
     public bool UseCountOnlyUniqueMode { get; set; } = false;
 
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
@@ -84,31 +53,22 @@ public class BitmaskSolverExtended(
             throw new InvalidOperationException("BoardSize must be > 0.");
 
         if (BoardSize > BoardSettings.MaxBitmaskBoardSize)
-            throw new NotSupportedException(
-                $"Bitmask solver supports boards up to {BoardSettings.MaxBitmaskBoardSize}. (Requested: {BoardSize})");
+            throw new NotSupportedException($"Bitmask solver supports boards up to {BoardSettings.MaxBitmaskBoardSize}. (Requested: {BoardSize})");
 
         ResetForSolve();
         var sw = Stopwatch.StartNew();
-
-        // Todo: Consider exposing this as a property
-        //var parallelEligible =
-        //    BoardSize >= SimulationSettings.ParallelMinBoardSize &&
-        //    SolutionMode != SolutionMode.Single;
 
         switch (SolutionMode)
         {
             case SolutionMode.Single:
                 SolveSingleMode();
                 break;
-
             case SolutionMode.All:
                 RunAllParallel();
                 break;
-
             case SolutionMode.Unique:
                 RunUniqueParallel();
                 break;
-
             default:
                 throw new NotImplementedException($"Unsupported SolutionMode: {SolutionMode}");
         }
@@ -116,9 +76,27 @@ public class BitmaskSolverExtended(
         sw.Stop();
         return BuildResults(sw.Elapsed);
     }
-    #endregion
 
-    #region Orchestration Helpers
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+        if (disposing)
+        {
+            _solutions.Clear();
+            QueenPlaced = null;
+            SolutionFound = null;
+            ProgressValueChanged = null;
+        }
+        _disposed = true;
+    }
+
+    // -------------------- Private Methods & Fields --------------------
     private void ResetForSolve()
     {
         _solutions.Clear();
@@ -136,18 +114,15 @@ public class BitmaskSolverExtended(
             _currentSimToken,
             () => IsSolverCanceled,
             p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-            m =>
-            {
-                if (EnableEvents)
-                    QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m));
-            },
+            m => { if (EnableEvents) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
             rows =>
             {
                 _solutionCount++;
                 if (_solutions.Count == 0 && ShouldAddSolution())
                     _solutions.Add((int[])rows.Clone());
                 return true;
-            }));
+            }
+        ));
 
     private SimulationResults BuildResults(TimeSpan elapsed)
     {
@@ -155,12 +130,9 @@ public class BitmaskSolverExtended(
             .Select((sol, idx) => new Solution(sol, _solutionFormatter, idx + 1))
             .ToList();
 
-        return new SimulationResults(resultSolutions, _solutionCount,
-            Math.Round(elapsed.TotalSeconds, 1));
+        return new SimulationResults(resultSolutions, _solutionCount, Math.Round(elapsed.TotalSeconds, 1));
     }
-    #endregion
 
-    #region Parallel (Delegated to Engine)
     private void RunAllParallel()
     {
         _parallelEngine.RunAll(new BitmaskParallelEngine.AllRequest(
@@ -182,7 +154,8 @@ public class BitmaskSolverExtended(
                     }
                 }
             },
-            pct => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken))));
+            pct => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken))
+        ));
     }
 
     private void SolveUniqueCountOnlyMode()
@@ -245,21 +218,20 @@ public class BitmaskSolverExtended(
                     }
                 }
             },
-            pct => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken))));
+            pct => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken))
+        ));
     }
-    #endregion
 
-    #region Fields / Helpers
     private bool ShouldAddSolution()
     {
         if (_capEnabled == false)
             return true;
-
         var cap = SimulationSettings.MaxNoOfSolutionsInOutput;
         return cap <= 0 || _solutions.Count < cap;
     }
 
-    private readonly ISolutionFormatter _solutionFormatter = solutionFormatter;
+    // -------------------- Private Fields --------------------
+    private readonly ISolutionFormatter _solutionFormatter;
     private readonly List<int[]> _solutions = [];
     private readonly BitmaskSearchEngine _searchEngine = new();
     private readonly BitmaskParallelEngine _parallelEngine = new();
@@ -267,6 +239,5 @@ public class BitmaskSolverExtended(
     private Guid _currentSimToken = Guid.Empty;
     private readonly bool _capEnabled = true;
     private bool _disposed;
-    private readonly int _maxSolutionsInOutput = maxSolutionsInOutput;
-    #endregion
+    private readonly int _maxSolutionsInOutput;
 }
