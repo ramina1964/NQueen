@@ -1,21 +1,21 @@
 namespace NQueen.Kernel.Solvers;
 
-public class BitmaskSolverExtended : ISolver, IDisposable
+public class BitmaskSolver : ISolver, IDisposable
 {
     // -------------------- Public API & Constructors --------------------
-    public BitmaskSolverExtended(ISolutionFormatter solutionFormatter, int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput)
+    public BitmaskSolver(ISolutionFormatter solutionFormatter, int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput)
     {
         _solutionFormatter = solutionFormatter;
         _maxSolutionsInOutput = maxSolutionsInOutput;
     }
 
-    public BitmaskSolverExtended(ISolutionFormatter solutionFormatter, bool enableCap)
+    public BitmaskSolver(ISolutionFormatter solutionFormatter, bool enableCap)
         : this(solutionFormatter, SimulationSettings.MaxNoOfSolutionsInOutput)
     {
         _capEnabled = enableCap;
     }
 
-    public BitmaskSolverExtended(int boardSize, SolutionMode solutionMode, DisplayMode displayMode, ISolutionFormatter solutionFormatter, int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput)
+    public BitmaskSolver(int boardSize, SolutionMode solutionMode, DisplayMode displayMode, ISolutionFormatter solutionFormatter, int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput)
         : this(solutionFormatter, maxSolutionsInOutput)
     {
         BoardSize = boardSize;

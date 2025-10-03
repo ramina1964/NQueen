@@ -5,17 +5,25 @@ public static class UnitTestServiceCollectionExtensions
     public static IServiceCollection AddApplicationServices(
         this IServiceCollection services)
     {
-        // Register solver + related interfaces (full set: no cap in tests).
-        services.AddBitmaskSolverServices(enableCap: false);
+        // Solver (no cap in tests)
+        services.AddTransient<BitmaskSolver>(sp =>
+            new BitmaskSolver(
+                sp.GetRequiredService<ISolutionFormatter>(),
+                enableCap: false   // unlimited for tests
+            )
+        );
+        services.AddTransient<ISolver>(sp => sp.GetRequiredService<BitmaskSolver>());
 
-        // Override default formatter with test implementation (last registration wins).
+        // Test formatter overrides any default (register after solver dependencies if needed)
         services.AddSingleton<ISolutionFormatter, TestSolutionFormatter>();
+
         return services;
     }
 
     public static IServiceCollection AddTestServices(this IServiceCollection services)
     {
-        // Placeholder for additional per-test registrations.
+        // Additional per-test registrations can go here.
+        services.AddTransient<ISolverBackEnd, BitmaskSolver>();
         return services;
     }
 }

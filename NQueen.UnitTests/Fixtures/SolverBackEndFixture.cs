@@ -8,7 +8,7 @@ public class SolverBackEndFixture
     public SolverBackEndFixture()
     {
         var services = new ServiceCollection()
-            .AddApplicationServices() // full solution set (uncapped)
+            .AddApplicationServices()
             .AddTestServices();
 
         ServiceProvider = services.BuildServiceProvider();

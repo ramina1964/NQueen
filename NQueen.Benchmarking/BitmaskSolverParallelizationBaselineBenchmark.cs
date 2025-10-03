@@ -15,7 +15,7 @@ public class BitmaskSolverParallelizationBaselineBenchmark
     [Benchmark(Baseline = true)]
     public SimulationResults SolveCurrent()
     {
-        var solver = new BitmaskSolverExtended(BoardSize, SolutionMode, DisplayMode.Hide, _formatter)
+        var solver = new BitmaskSolver(BoardSize, SolutionMode, DisplayMode.Hide, _formatter)
         {
             DelayInMillisec = 0,
             EnableEvents = false

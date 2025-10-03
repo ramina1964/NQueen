@@ -50,7 +50,7 @@ public class SolverEventOverheadBenchmarks
     [Benchmark]
     public SimulationResults Solve()
     {
-        var solver = new BitmaskSolverExtended(BoardSize, SolutionMode, DisplayMode, _formatter);
+        var solver = new BitmaskSolver(BoardSize, SolutionMode, DisplayMode, _formatter);
         solver.DelayInMillisec = 0; // no artificial delay
 
         switch (Scenario)

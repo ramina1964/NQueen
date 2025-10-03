@@ -16,7 +16,7 @@ public class SolverEventOverheadGui16Benchmark
     [Benchmark]
     public SimulationResults Solve()
     {
-        var solver = new BitmaskSolverExtended(BoardSize, Mode, Display, _formatter)
+        var solver = new BitmaskSolver(BoardSize, Mode, Display, _formatter)
         {
             DelayInMillisec = 0
         };

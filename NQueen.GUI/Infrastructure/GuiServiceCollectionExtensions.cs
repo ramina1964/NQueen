@@ -2,29 +2,32 @@
 
 public static class GuiServiceCollectionExtensions
 {
-    /// <summary>
-    /// Registers GUI-level services and view models. Returns the collection for chaining.
-    /// </summary>
     public static IServiceCollection AddGuiServices(this IServiceCollection services, bool enableCap = true)
     {
         services.AddSingleton<IDispatcher, WpfDispatcher>();
         services.AddTransient<ISaveFileDialogService, SaveFileDialogService>();
-        services.AddBitmaskSolverServices(enableCap: enableCap); // GUI uses capped solutions by default
+        services.AddTransient<ISolutionFormatter, SolutionFormatter>();
 
         // Windows / ViewModels
         services.AddSingleton<MainWindow>();
         services.AddTransient<MainViewModel>();
 
-        // User controls (transient - lightweight)
         services.AddTransient<ChessboardUserControl>();
         services.AddTransient<InputPanelUserControl>();
         services.AddTransient<SimulationPanelUserControl>();
+
+        // Solver registration:
+        // Register the concrete AND map the interface so MainViewModel(ISolver ...) resolves.
+        services.AddTransient(sp => new BitmaskSolver(
+                sp.GetRequiredService<ISolutionFormatter>(),
+                enableCap
+            )
+        );
+        services.AddTransient<ISolver>(sp => sp.GetRequiredService<BitmaskSolver>());
+
         return services;
     }
 
-    /// <summary>
-    /// Convenience bootstrap used by App.xaml.cs.
-    /// </summary>
     public static IServiceProvider BuildGuiServiceProvider(bool enableCap = true) =>
         new ServiceCollection()
             .AddGuiServices(enableCap)

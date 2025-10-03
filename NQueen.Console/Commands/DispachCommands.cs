@@ -122,7 +122,7 @@ public partial class DispatchCommands
             return;
         }
 
-        var solver = new BitmaskSolverExtended(
+        var solver = new BitmaskSolver(
             context.BoardSize, context.SolutionMode, context.DisplayMode, formatter)
         {
             EnableEvents = false

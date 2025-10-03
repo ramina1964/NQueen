@@ -4,13 +4,20 @@ public partial class App : Application
 {
     protected override void OnStartup(StartupEventArgs e)
     {
-        AppDomain.CurrentDomain.FirstChanceException += (_, args) =>
-            Debug.WriteLine("[FirstChance] " + args.Exception);
+        try
+        {
+            AppDomain.CurrentDomain.FirstChanceException += (_, args) =>
+                Debug.WriteLine("[FirstChance] " + args.Exception);
 
-        base.OnStartup(e);
+            base.OnStartup(e);
 
-        _serviceProvider = GuiServiceCollectionExtensions.BuildGuiServiceProvider();
-        _serviceProvider.GetRequiredService<MainWindow>().Show();
+            _serviceProvider = GuiServiceCollectionExtensions.BuildGuiServiceProvider();
+            _serviceProvider.GetRequiredService<MainWindow>().Show();
+        }
+        catch (Exception)
+        {
+            throw new Exception("Exception under registering dependencies!");
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)

@@ -13,7 +13,7 @@ public class BitmaskSolverUniqueBenchmarks
     [Benchmark]
     public SimulationResults SolveUnique()
     {
-        var solver = new BitmaskSolverExtended(_boardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter);
+        var solver = new BitmaskSolver(_boardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter);
         return solver.Solve();
     }
 

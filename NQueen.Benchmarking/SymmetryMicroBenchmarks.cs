@@ -20,7 +20,7 @@ public class SymmetryCanonicalFormBenchmark
     public void Setup()
     {
         // Generate K valid solutions for BoardSize using All mode
-        var solver = new BitmaskSolverExtended(BoardSize, SolutionMode.All, DisplayMode.Hide, new DefaultSolutionFormatter());
+        var solver = new BitmaskSolver(BoardSize, SolutionMode.All, DisplayMode.Hide, new DefaultSolutionFormatter());
         var results = solver.Solve();
         // Take first 500 solutions (or all if fewer)
         _solutions = results.Solutions.Select(s => s.QueenPositions).Take(500).ToList();
@@ -51,7 +51,7 @@ public class SymmetryAddIfUniqueBenchmark
     [GlobalSetup]
     public void Setup()
     {
-        var solver = new BitmaskSolverExtended(BoardSize, SolutionMode.All, DisplayMode.Hide, new DefaultSolutionFormatter());
+        var solver = new BitmaskSolver(BoardSize, SolutionMode.All, DisplayMode.Hide, new DefaultSolutionFormatter());
         var results = solver.Solve();
         _solutions = results.Solutions.Select(s => s.QueenPositions).Take(500).ToList();
         _scratch = new int[BoardSize];

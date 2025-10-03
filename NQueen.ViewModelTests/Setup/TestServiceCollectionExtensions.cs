@@ -11,7 +11,7 @@ public static class TestServiceCollectionExtensions
         bool enableCap = false)
     {
         // Bitmask solver (registers ISolutionFormatter + ISolverPruning & related fronts/backs)
-        services.AddBitmaskSolverServices(enableCap);
+        //services.AddBitmaskSolverServices(enableCap);
 
         // Test dispatcher (synchronous)
         services.AddSingleton<IDispatcher, TestDispatcher>();
