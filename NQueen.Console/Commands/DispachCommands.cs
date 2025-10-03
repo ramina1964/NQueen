@@ -122,18 +122,26 @@ public partial class DispatchCommands
             return;
         }
 
-        var solver = new BitmaskSolver(
-            context.BoardSize, context.SolutionMode, context.DisplayMode, formatter)
+        // Resolve solver from DI instead of constructing manually to ensure consistent configuration.
+        if (services.GetService(typeof(ISolverBackEnd)) is not ISolverBackEnd solverBackend)
         {
-            EnableEvents = false
-        };
+            Console.WriteLine("Error: ISolverBackEnd service not found.\n");
+            state.ExitRequested = true;
+            return;
+        }
 
-        // Enable memory-saving mode for unique solutions
-        if (context.SolutionMode == SolutionMode.Unique)
-            solver.UseCountOnlyUniqueMode = true;
+        // (Optional) cast to BitmaskSolver for perf flags; safe because our DI registers that concrete type.
+        if (solverBackend is BitmaskSolver bitmask)
+        {
+            bitmask.EnableEvents = false;
 
-        var results = solver.Solve();
-        // Output only the summary for user communication
+            // IMPORTANT: Do NOT enable count-only unique mode here; it reports total (all) solutions, not unique count.
+            // bitmask.UseCountOnlyUniqueMode = true;  // Removed to ensure correct unique solution counts.
+        }
+
+        // Execute solve
+        var results = solverBackend.GetSimResultsAsync(context).GetAwaiter().GetResult();
+
         var summary = GetSummaryString(context, results);
         Console.WriteLine(summary);
         Console.WriteLine();
