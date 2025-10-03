@@ -1,4 +1,6 @@
-﻿namespace NQueen.ViewModelTests.Setup;
+﻿using NQueen.Kernel.Solvers;
+
+namespace NQueen.ViewModelTests.Setup;
 
 public static class TestServiceCollectionExtensions
 {
@@ -21,6 +23,13 @@ public static class TestServiceCollectionExtensions
 
         // ViewModel under test
         services.AddTransient<MainViewModel>();
+        services.AddTransient<ISolutionFormatter, SolutionFormatter>();
+        services.AddTransient<ISolver>(sp =>
+            new BitmaskSolver(
+                sp.GetRequiredService<ISolutionFormatter>(),
+                enableCap: false // or true, as needed for your tests
+            )
+        );
 
         return services;
     }

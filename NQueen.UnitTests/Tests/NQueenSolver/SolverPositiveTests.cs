@@ -25,11 +25,12 @@ public class SolverPositiveTests : IDisposable
         // Act
         var actualResults = await _solver.GetSimResultsAsync(simContext);
         var actualSolutionsList = actualResults.Solutions
-            .Select(solution => solution.QueenPositions.ToArray());
+            .Select(solution => solution.QueenPositions.ToArray())
+            .ToList();
 
-        // Assert
-        actualSolutionsList.Should().ContainSingle().Which.Should()
-            .BeEquivalentTo(expectedSolutions.First());
+        // Assert (still strict here because exactly one solution is expected)
+        actualSolutionsList.Should().ContainSingle()
+            .Which.Should().BeEquivalentTo(expectedSolutions.First());
     }
 
     [Theory]
@@ -45,13 +46,20 @@ public class SolverPositiveTests : IDisposable
         // Act
         var actualResults = await _solver.GetSimResultsAsync(simContext);
         var actualSolutionsList = actualResults.Solutions
-            .Select(solution => solution.QueenPositions.ToArray());
+            .Select(solution => solution.QueenPositions.ToArray())
+            .ToList();
 
-        // Assert
-        Assert.Equal(
-            expectedSolutions.OrderBy(solution => string.Join(",", solution)),
-            actualSolutionsList.OrderBy(solution => string.Join(",", solution))
-        );
+        // Assert: relax ordering by only requiring
+        // 1) counts match
+        // 2) each expected solution exists in the actual set
+        actualSolutionsList.Should().HaveCount(expectedSolutions.Count);
+        foreach (var expected in expectedSolutions)
+        {
+            actualSolutionsList.Should().ContainEquivalentOf(
+                expected,
+                "expected unique solution [{0}] was not found",
+                string.Join(",", expected));
+        }
     }
 
     [Theory]
@@ -67,15 +75,18 @@ public class SolverPositiveTests : IDisposable
         // Act
         var actualResults = await _solver.GetSimResultsAsync(simContext);
         var actualSolutionsList = actualResults.Solutions
-            .Select(solution => solution.QueenPositions.ToArray());
+            .Select(solution => solution.QueenPositions.ToArray())
+            .ToList();
 
-        // Assert
-        Assert.Equal(
-            expectedSolutions
-            .OrderBy(solution => string.Join(",", solution)),
-            actualSolutionsList
-            .OrderBy(solution => string.Join(",", solution))
-        );
+        // Assert: same relaxed semantics as unique test
+        actualSolutionsList.Should().HaveCount(expectedSolutions.Count);
+        foreach (var expected in expectedSolutions)
+        {
+            actualSolutionsList.Should().ContainEquivalentOf(
+                expected,
+                "expected full solution [{0}] was not found",
+                string.Join(",", expected));
+        }
     }
 
     public void Dispose()
