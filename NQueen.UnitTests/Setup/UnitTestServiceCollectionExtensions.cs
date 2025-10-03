@@ -1,22 +1,18 @@
 ﻿namespace NQueen.UnitTests.Setup;
 
+/// <summary>
+/// DI setup for pure unit tests (backend solver focus).
+/// Registers an uncapped solver and replaces the default formatter with a test formatter.
+/// </summary>
 public static class UnitTestServiceCollectionExtensions
 {
     public static IServiceCollection AddApplicationServices(
         this IServiceCollection services)
     {
-        // Shared uncapped solver registration for all solver interfaces
-        services.AddTransient<BitmaskSolver>(sp =>
-            new BitmaskSolver(
-                sp.GetRequiredService<ISolutionFormatter>(),
-                enableCap: false // disable output cap for tests
-            )
-        );
+        // Uncapped solver to ensure all solutions are enumerated
+        services.AddBitmaskSolverForTests();
 
-        services.AddTransient<ISolver>(sp => sp.GetRequiredService<BitmaskSolver>());
-        services.AddTransient<ISolverBackEnd>(sp => sp.GetRequiredService<BitmaskSolver>());
-
-        // Test formatter (after solver dependencies)
+        // Override the default solution formatter with the test-specific one
         services.AddSingleton<ISolutionFormatter, TestSolutionFormatter>();
 
         return services;
@@ -24,7 +20,7 @@ public static class UnitTestServiceCollectionExtensions
 
     public static IServiceCollection AddTestServices(this IServiceCollection services)
     {
-        // No additional solver registration here to avoid reintroducing cap.
+        // (Intentionally left blank; place per-test overrides/mocks here if needed)
         return services;
     }
 }

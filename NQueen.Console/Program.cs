@@ -17,13 +17,16 @@ public class Program
     {
         var services = new ServiceCollection();
 
-        // Register active N-Queen (bitmask) services only
+        // Core application registrations
         services.AddNQueenServices(enableCap: true);
 
+        // Command pipeline
         services.AddTransient<DispatchCommands>();
         services.AddTransient<ICommandProcessor, CommandProcessor>();
 
+        // Root app
         services.AddSingleton<App>();
+
         return services.BuildServiceProvider();
     }
 }

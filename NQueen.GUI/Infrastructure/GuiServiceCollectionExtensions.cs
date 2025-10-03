@@ -1,29 +1,26 @@
 ﻿namespace NQueen.GUI.Infrastructure;
 
+/// <summary>
+/// GUI (WPF) DI registration.
+/// Provides dispatcher, dialog services, ViewModels, windows, and the solver.
+/// </summary>
 public static class GuiServiceCollectionExtensions
 {
     public static IServiceCollection AddGuiServices(this IServiceCollection services, bool enableCap = true)
     {
+        // UI infra
         services.AddSingleton<IDispatcher, WpfDispatcher>();
         services.AddTransient<ISaveFileDialogService, SaveFileDialogService>();
-        services.AddTransient<ISolutionFormatter, SolutionFormatter>();
 
-        // Windows / ViewModels
+        // Solver (capped for UI responsiveness by default)
+        services.AddBitmaskSolverServices(enableCap);
+
+        // Windows / Views / ViewModels
         services.AddSingleton<MainWindow>();
         services.AddTransient<MainViewModel>();
-
         services.AddTransient<ChessboardUserControl>();
         services.AddTransient<InputPanelUserControl>();
         services.AddTransient<SimulationPanelUserControl>();
-
-        // Solver registration:
-        // Register the concrete AND map the interface so MainViewModel(ISolver ...) resolves.
-        services.AddTransient(sp => new BitmaskSolver(
-                sp.GetRequiredService<ISolutionFormatter>(),
-                enableCap
-            )
-        );
-        services.AddTransient<ISolver>(sp => sp.GetRequiredService<BitmaskSolver>());
 
         return services;
     }
@@ -33,6 +30,6 @@ public static class GuiServiceCollectionExtensions
             .AddGuiServices(enableCap)
             .BuildServiceProvider();
 
-    // Backward compatible entry point (retain existing call sites if any)
+    // Legacy alias if older code still calls Initialize()
     public static IServiceProvider Initialize() => BuildGuiServiceProvider();
 }

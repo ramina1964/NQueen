@@ -1,4 +1,5 @@
 ﻿global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.DependencyInjection.Extensions;
 global using NQueen.Domain.Enums;
 global using NQueen.Domain.EventArgs;
 global using NQueen.Domain.Interfaces;

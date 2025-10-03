@@ -11,12 +11,13 @@ public partial class App : Application
 
             base.OnStartup(e);
 
+            // Centralized GUI service provider (solver + UI services)
             _serviceProvider = GuiServiceCollectionExtensions.BuildGuiServiceProvider();
             _serviceProvider.GetRequiredService<MainWindow>().Show();
         }
         catch (Exception)
         {
-            throw new Exception("Exception under registering dependencies!");
+            throw new Exception("Exception during dependency registration.");
         }
     }
 

@@ -14,7 +14,7 @@ global using NQueen.GUI.Infrastructure;
 global using NQueen.GUI.Interfaces;
 global using NQueen.GUI.ViewModels;
 global using NQueen.GUI.Views;
-global using NQueen.Kernel.Solvers;
+global using NQueen.Kernel.Services;
 global using NQueen.Shared.Utils;
 global using NQueen.Shared.Validation;
 global using System;
@@ -34,3 +34,4 @@ global using System.Windows.Data;
 global using System.Windows.Markup;
 global using System.Windows.Media;
 global using System.Windows.Threading;
+

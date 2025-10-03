@@ -1,33 +1,28 @@
 ﻿namespace NQueen.ViewModelTests.Setup;
 
+/// <summary>
+/// DI setup for ViewModel-focused tests (includes dispatcher, dialog service, and uncapped solver).
+/// </summary>
 public static class TestServiceCollectionExtensions
 {
-    /// <summary>
-    /// Registers services required for MainViewModel unit tests.
-    /// </summary>
-    /// <param name="enableCap">Pass false to disable solution capping in tests.</param>
     public static IServiceCollection AddViewModelTestServices(
         this IServiceCollection services,
         bool enableCap = false)
     {
-        // Bitmask solver (registers ISolutionFormatter + ISolverPruning & related fronts/backs)
-        //services.AddBitmaskSolverServices(enableCap);
+        // Uncapped solver (test-friendly). Pass enableCap:true to simulate UI cap.
+        services.AddBitmaskSolverServices(enableCap);
 
-        // Test dispatcher (synchronous)
+        // Test dispatcher (synchronous execution)
         services.AddSingleton<IDispatcher, TestDispatcher>();
 
-        // Mock save dialog / file service used by MainViewModel.Save()
+        // Dialog service mock
         services.AddSingleton<ISaveFileDialogService, MockSaveFileDialogService>();
+
+        // Formatter (will override the TryAdd from solver registration if already present)
+        services.AddTransient<ISolutionFormatter, SolutionFormatter>();
 
         // ViewModel under test
         services.AddTransient<MainViewModel>();
-        services.AddTransient<ISolutionFormatter, SolutionFormatter>();
-        services.AddTransient<ISolver>(sp =>
-            new BitmaskSolver(
-                sp.GetRequiredService<ISolutionFormatter>(),
-                enableCap: false // or true, as needed for your tests
-            )
-        );
 
         return services;
     }
@@ -37,26 +32,17 @@ public static class TestServiceCollectionExtensions
             .AddViewModelTestServices(enableCap)
             .BuildServiceProvider();
 
-    // ---------------- Legacy helper method names still used in TestHelpers ----------------
-
-    /// <summary>
-    /// Backward-compatible factory used by existing tests (maps to BuildTestServiceProvider).
-    /// </summary>
+    // Backward compatible aliases
     public static ServiceProvider InitializeForTests(bool enableCap = false) =>
         BuildTestServiceProvider(enableCap);
 
-    /// <summary>
-    /// Initializes DI for tests while injecting a provided mock ISolverPruning.
-    /// Ensures other required services are present.
-    /// </summary>
     public static ServiceProvider InitializeForTestsWithMock(ISolver mockSolver, bool enableCap = false)
     {
         var services = new ServiceCollection();
 
-        // Register standard test services (including real solver) first.
         services.AddViewModelTestServices(enableCap);
 
-        // Override solver with supplied mock (register for all relevant interfaces if needed).
+        // Override with supplied mock for all solver interfaces
         services.AddSingleton(mockSolver);
         services.AddSingleton<ISolver>(mockSolver);
         services.AddSingleton<ISolverBackEnd>(mockSolver);
