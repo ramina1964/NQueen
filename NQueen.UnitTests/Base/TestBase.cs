@@ -37,7 +37,7 @@ public class TestBase(ISolverBackEnd sut)
         .Solutions
         .Select(sol => sol.QueenPositions);
 
-    // Helper method for assertions
+    // Helper method for assertions (now uses set equivalence)
     protected async Task AssertSolutionsAsync(SimulationContext simContext)
     {
         // Arrange
@@ -46,9 +46,10 @@ public class TestBase(ISolverBackEnd sut)
         // Act
         ActualSolutions = [.. await FetchActualSolsAsync(simContext)];
 
-        // Assert
-        Assert.Equal(ExpectedSolutions.Count, ActualSolutions.Count);
-        ActualSolutions.Should().BeEquivalentTo(ExpectedSolutions);
+        SolutionAssertions.AssertSolutionsSetEquivalent(
+            ActualSolutions,
+            ExpectedSolutions,
+            $"N={simContext.BoardSize} {simContext.SolutionMode}");
     }
 }
 

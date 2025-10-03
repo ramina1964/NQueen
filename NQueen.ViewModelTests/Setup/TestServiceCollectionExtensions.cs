@@ -1,6 +1,4 @@
-﻿using NQueen.Kernel.Solvers;
-
-namespace NQueen.ViewModelTests.Setup;
+﻿namespace NQueen.ViewModelTests.Setup;
 
 public static class TestServiceCollectionExtensions
 {
