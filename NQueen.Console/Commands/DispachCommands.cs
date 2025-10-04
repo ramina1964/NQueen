@@ -1,12 +1,10 @@
 ﻿namespace NQueen.ConsoleApp.Commands;
 
-public record MenuState
-{
-    public bool ExitRequested { get; set; }
-
-    public int BlankInputCount { get; set; }
-}
-
+/// <summary>
+/// Interactive menu for NQueen solver.
+/// This app always shows both the total count of unique solutions and a few example solutions (up to a cap).
+/// This approach is memory-efficient and informative for all board sizes.
+/// </summary>
 public partial class DispatchCommands
 {
     public static void RunInteractiveMenu(IServiceProvider services)
@@ -17,21 +15,24 @@ public partial class DispatchCommands
             var mode = ShowSolutionModeMenu(state);
             if (state.ExitRequested)
                 break;
-            
             if (mode == null)
             {
                 state.ExitRequested = true;
                 break;
             }
-
             while (state.ExitRequested == false)
             {
                 var boardSize = ShowBoardSizeMenu(state);
                 if (state.ExitRequested) break;
                 if (boardSize == -1) break;
 
+                Console.WriteLine();
+                Console.WriteLine("Output mode: This app will show the total count of unique solutions and a few example solutions (up to 5).\n");
+                Console.WriteLine("This is the recommended mode for large boards, as it is memory-efficient and informative.");
+                Console.WriteLine();
+
                 var context = new SimulationContext(boardSize, mode.Value, DisplayMode.Hide);
-                ShowAndHandleResults(services, context, state);
+                ShowCombinedResults(services, context, state);
 
                 while (true)
                 {
@@ -44,18 +45,56 @@ public partial class DispatchCommands
                     }
                     if (input == "back" || input == "b")
                         break;
-
                     if (int.TryParse(input, out int nextBoardSize) &&
                         nextBoardSize >= 1 && nextBoardSize <= BoardSettings.MaxBitmaskBoardSize)
                     {
                         var nextContext = new SimulationContext(nextBoardSize, mode.Value, DisplayMode.Hide);
-                        ShowAndHandleResults(services, nextContext, state);
+                        ShowCombinedResults(services, nextContext, state);
                         continue;
                     }
                 }
                 break;
             }
         }
+    }
+
+    /// <summary>
+    /// Shows both the total count and example solutions using UniqueSolutionExamplesAndCountSolver.
+    /// </summary>
+    private static void ShowCombinedResults(
+        IServiceProvider services, SimulationContext context, MenuState state)
+    {
+        if (services.GetService(typeof(ISolutionFormatter)) is not ISolutionFormatter formatter)
+        {
+            Console.WriteLine("Error: ISolutionFormatter service not found.\n");
+            state.ExitRequested = true;
+            return;
+        }
+        var solver = new UniqueSolutionExamplesAndCountSolver(formatter, exampleCap: 5);
+        var (examples, countOnly) = solver.Solve(context);
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("Summary:");
+        sb.AppendLine($"  Board Size      : {NumericUtils.FormatWithSpaceSeparator(context.BoardSize)}");
+        sb.AppendLine($"  Mode            : {context.SolutionMode}");
+        sb.AppendLine($"  Total Solutions : {countOnly.SolutionsCount:N0}");
+        sb.AppendLine($"  Elapsed (sec)   : {countOnly.ElapsedTimeInSec:N1}");
+        sb.AppendLine($"  Memory (MB)     : {NumericUtils.UpdateMemoryUsage()}");
+        sb.AppendLine();
+        if (examples.Solutions.Count == 0)
+        {
+            sb.AppendLine("No example solutions found.");
+        }
+        else
+        {
+            sb.AppendLine($"Showing up to {examples.Solutions.Count} example solutions:");
+            foreach (var solution in examples.Solutions)
+            {
+                sb.AppendLine($"Solution {solution.Id}: {solution.Details}");
+            }
+        }
+        sb.AppendLine();
+        Console.WriteLine(sb.ToString());
     }
 
     private static SolutionMode? ShowSolutionModeMenu(MenuState state)
@@ -111,80 +150,6 @@ public partial class DispatchCommands
             return -1;
         }
         return boardSize;
-    }
-
-    private static void ShowAndHandleResults(
-        IServiceProvider services, SimulationContext context, MenuState state)
-    {
-        if (services.GetService(typeof(ISolutionFormatter)) is not ISolutionFormatter formatter)
-        {
-            Console.WriteLine("Error: ISolutionFormatter service not found.\n");
-            state.ExitRequested = true;
-            return;
-        }
-
-        // Resolve solver from DI instead of constructing manually to ensure consistent configuration.
-        if (services.GetService(typeof(ISolverBackEnd)) is not ISolverBackEnd solverBackend)
-        {
-            Console.WriteLine("Error: ISolverBackEnd service not found.\n");
-            state.ExitRequested = true;
-            return;
-        }
-
-        // (Optional) cast to BitmaskSolver for perf flags; safe because our DI registers that concrete type.
-        if (solverBackend is BitmaskSolver bitmask)
-        {
-            bitmask.EnableEvents = false;
-
-            // IMPORTANT: Do NOT enable count-only unique mode here; it reports total (all) solutions, not unique count.
-            // bitmask.UseCountOnlyUniqueMode = true;  // Removed to ensure correct unique solution counts.
-        }
-
-        // Execute solve
-        var results = solverBackend
-            .GetSimResultsAsync(context)
-            .GetAwaiter()
-            .GetResult();
-
-        var summary = GetSummaryString(context, results);
-        Console.WriteLine(summary);
-    }
-
-    public static string GetSummaryString(
-        SimulationContext context, SimulationResults results)
-    {
-        var sb = new System.Text.StringBuilder();
-
-        sb.AppendLine("Summary:");
-        sb.AppendLine($"  Board Size      : {NumericUtils.FormatWithSpaceSeparator(context.BoardSize)}");
-        sb.AppendLine($"  Mode            : {context.SolutionMode}");
-
-        //sb.AppendLine($"  Total Solutions : {results.SolutionsCount:N0}{(
-        //    results.IsTruncated ? $" (showing first {results.Solutions.Count})" : string.Empty)}");
-
-        sb.AppendLine($"  Total Solutions : {results.SolutionsCount:N0}");
-        sb.AppendLine($"  Elapsed (sec)   : {results.ElapsedTimeInSec:N1}");
-        sb.AppendLine($"  Memory (MB)     : {NumericUtils.UpdateMemoryUsage()}");
-        sb.AppendLine();
-
-        if (results.SolutionsCount == 0)
-        {
-            sb.AppendLine("No solutions found.");
-        }
-        else
-        {
-            var title = SymmetryHelper.SolutionTitle(context.SolutionMode, results.SolutionsCount);
-            sb.AppendLine(title);
-            sb.AppendLine();
-
-            foreach (var solution in results.Solutions)
-            {
-                sb.AppendLine($"Solution {solution.Id}: {solution.Details}");
-            }
-        }
-        sb.AppendLine();
-
-        return sb.ToString();
     }
 
     private static bool IsQuitInput(string? input, MenuState state)
