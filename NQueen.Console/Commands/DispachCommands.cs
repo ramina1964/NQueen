@@ -17,6 +17,7 @@ public partial class DispatchCommands
             var mode = ShowSolutionModeMenu(state);
             if (state.ExitRequested)
                 break;
+            
             if (mode == null)
             {
                 state.ExitRequested = true;
@@ -34,14 +35,14 @@ public partial class DispatchCommands
 
                 while (true)
                 {
-                    Console.Write("Enter a board size, 'back' or 'exit': ");
-                    var input = Console.ReadLine();
+                    Console.Write("Enter a board size, 'back' ('b') or 'exit' ('e'): ");
+                    var input = Console.ReadLine()?.Trim().ToLower();
                     if (IsQuitInput(input, state))
                     {
                         state.ExitRequested = true;
                         break;
                     }
-                    if (input?.ToLower() == "back")
+                    if (input == "back" || input == "b")
                         break;
 
                     if (int.TryParse(input, out int nextBoardSize) &&
@@ -140,11 +141,13 @@ public partial class DispatchCommands
         }
 
         // Execute solve
-        var results = solverBackend.GetSimResultsAsync(context).GetAwaiter().GetResult();
+        var results = solverBackend
+            .GetSimResultsAsync(context)
+            .GetAwaiter()
+            .GetResult();
 
         var summary = GetSummaryString(context, results);
         Console.WriteLine(summary);
-        Console.WriteLine();
     }
 
     public static string GetSummaryString(
@@ -155,7 +158,11 @@ public partial class DispatchCommands
         sb.AppendLine("Summary:");
         sb.AppendLine($"  Board Size      : {NumericUtils.FormatWithSpaceSeparator(context.BoardSize)}");
         sb.AppendLine($"  Mode            : {context.SolutionMode}");
-        sb.AppendLine($"  Total Solutions : {results.SolutionsCount:N0}{(results.IsTruncated ? $" (showing first {results.Solutions.Count})" : string.Empty)}");
+
+        //sb.AppendLine($"  Total Solutions : {results.SolutionsCount:N0}{(
+        //    results.IsTruncated ? $" (showing first {results.Solutions.Count})" : string.Empty)}");
+
+        sb.AppendLine($"  Total Solutions : {results.SolutionsCount:N0}");
         sb.AppendLine($"  Elapsed (sec)   : {results.ElapsedTimeInSec:N1}");
         sb.AppendLine($"  Memory (MB)     : {NumericUtils.UpdateMemoryUsage()}");
         sb.AppendLine();
