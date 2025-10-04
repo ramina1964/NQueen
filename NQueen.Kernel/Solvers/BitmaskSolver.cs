@@ -33,7 +33,7 @@ public class BitmaskSolver : ISolver, IDisposable
     public SolutionMode SolutionMode { get; private set; }
     public DisplayMode DisplayMode { get; private set; }
     public bool IsSolverCanceled { get; set; }
-    public bool EnableEvents { get; set; } = true;
+    public bool EnableEvents { get; set; } = true; // External master enable
     public bool UseCountOnlyUniqueMode { get; set; } = false;
 
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
@@ -102,6 +102,21 @@ public class BitmaskSolver : ISolver, IDisposable
         _solutions.Clear();
         _solutionCount = 0;
         IsSolverCanceled = false;
+        _eventsSuppressedAfterCap = false; // allow events for new run
+    }
+
+    private bool ShouldRaiseEvents() => EnableEvents && !_eventsSuppressedAfterCap;
+
+    private void MaybeSuppressEventsAfterCap()
+    {
+        if (_eventsSuppressedAfterCap) return;
+        if (_capEnabled == false) return;
+        int cap = _maxSolutionsInOutput; // respect ctor argument
+        if (cap > 0 && _solutions.Count >= cap)
+        {
+            // Stop further QueenPlaced / SolutionFound notifications to reduce allocations & GC.
+            _eventsSuppressedAfterCap = true;
+        }
     }
 
     private void SolveSingleMode() =>
@@ -114,12 +129,15 @@ public class BitmaskSolver : ISolver, IDisposable
             _currentSimToken,
             () => IsSolverCanceled,
             p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-            m => { if (EnableEvents) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
+            m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
             rows =>
             {
                 _solutionCount++;
                 if (_solutions.Count == 0 && ShouldAddSolution())
+                {
                     _solutions.Add((int[])rows.Clone());
+                    MaybeSuppressEventsAfterCap();
+                }
                 return true;
             }
         ));
@@ -137,7 +155,7 @@ public class BitmaskSolver : ISolver, IDisposable
     {
         _parallelEngine.RunAll(new BitmaskParallelEngine.AllRequest(
             BoardSize,
-            EnableEvents,
+            EnableEvents, // initial snapshot; dynamic suppression handled inside solver callbacks
             rows =>
             {
                 Interlocked.Increment(ref _solutionCount);
@@ -148,8 +166,9 @@ public class BitmaskSolver : ISolver, IDisposable
                         if (ShouldAddSolution())
                         {
                             _solutions.Add(rows);
-                            if (EnableEvents)
+                            if (ShouldRaiseEvents())
                                 SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows)));
+                            MaybeSuppressEventsAfterCap();
                         }
                     }
                 }
@@ -174,15 +193,19 @@ public class BitmaskSolver : ISolver, IDisposable
             _currentSimToken,
             () => IsSolverCanceled,
             p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-            m => { if (EnableEvents) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
+            m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
             rows =>
             {
                 var copy = (int[])rows.Clone();
                 int symmetryWeight = SymmetryHelper.GetSymmetryWeight(copy, scratchBuf);
                 totalUnique += (ulong)symmetryWeight;
                 if (sampleSolutions.Count < _maxSolutionsInOutput && ShouldAddSolution())
+                {
                     sampleSolutions.Add(copy);
-                return false;
+                    if (sampleSolutions.Count >= _maxSolutionsInOutput)
+                        _eventsSuppressedAfterCap = true; // suppress further placements
+                }
+                return false; // continue counting
             }
         ));
 
@@ -212,8 +235,9 @@ public class BitmaskSolver : ISolver, IDisposable
                         if (ShouldAddSolution())
                         {
                             _solutions.Add(rows);
-                            if (EnableEvents)
+                            if (ShouldRaiseEvents())
                                 SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows)));
+                            MaybeSuppressEventsAfterCap();
                         }
                     }
                 }
@@ -226,7 +250,7 @@ public class BitmaskSolver : ISolver, IDisposable
     {
         if (_capEnabled == false)
             return true;
-        var cap = SimulationSettings.MaxNoOfSolutionsInOutput;
+        var cap = _maxSolutionsInOutput; // use instance max
         return cap <= 0 || _solutions.Count < cap;
     }
 
@@ -240,4 +264,5 @@ public class BitmaskSolver : ISolver, IDisposable
     private readonly bool _capEnabled = true;
     private bool _disposed;
     private readonly int _maxSolutionsInOutput;
+    private volatile bool _eventsSuppressedAfterCap; // dynamic flag to stop event traffic after cap reached
 }
