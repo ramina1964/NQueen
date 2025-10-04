@@ -1,4 +1,6 @@
-﻿namespace NQueen.UnitTests.Base;
+﻿using NQueen.Domain.Context;
+
+namespace NQueen.UnitTests.Base;
 
 public class TestBase(ISolverBackEnd sut)
 {

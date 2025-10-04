@@ -1,6 +1,7 @@
 ﻿global using FluentAssertions;
 global using Microsoft.Extensions.DependencyInjection;
 global using Moq;
+global using NQueen.Domain.Context;
 global using NQueen.Domain.Enums;
 global using NQueen.Domain.EventArgs;
 global using NQueen.Domain.Formatters;

@@ -1,4 +1,6 @@
-﻿namespace NQueen.ViewModelTests.Tests.Solver;
+﻿using NQueen.Domain.Context;
+
+namespace NQueen.ViewModelTests.Tests.Solver;
 
 // Todo: Add a test method for checking the simulation cancellation under execution.
 public class SolverTests

@@ -1,3 +1,5 @@
+using NQueen.Domain.Context;
+
 namespace NQueen.Kernel.Solvers;
 
 public class BitmaskSolver : ISolver, IDisposable

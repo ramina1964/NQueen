@@ -1,5 +1,6 @@
 namespace NQueen.Kernel.Solvers;
 
+using NQueen.Domain.Context;
 using NQueen.Domain.Models;
 using NQueen.Domain.Settings;
 

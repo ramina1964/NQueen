@@ -1,4 +1,4 @@
-﻿namespace NQueen.Domain.Models;
+﻿namespace NQueen.Domain.Context;
 
 public record SimulationContext(
     int BoardSize,

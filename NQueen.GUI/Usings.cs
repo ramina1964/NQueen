@@ -2,6 +2,7 @@
 global using CommunityToolkit.Mvvm.Input;
 global using FluentValidation;
 global using Microsoft.Extensions.DependencyInjection;
+global using NQueen.Domain.Context;
 global using NQueen.Domain.Enums;
 global using NQueen.Domain.EventArgs;
 global using NQueen.Domain.Formatters;
@@ -34,4 +35,3 @@ global using System.Windows.Data;
 global using System.Windows.Markup;
 global using System.Windows.Media;
 global using System.Windows.Threading;
-
