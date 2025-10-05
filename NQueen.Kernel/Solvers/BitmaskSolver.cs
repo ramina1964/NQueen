@@ -183,7 +183,7 @@ public class BitmaskSolver : ISolver, IDisposable
     {
         int N = BoardSize;
         var sampleSolutions = new List<int[]>();
-        ulong totalUnique = 0;
+        var uniqueSet = new HashSet<int[]>(new IntArrayComparer());
         var scratchBuf = new int[N];
 
         _searchEngine.Run(new BitmaskSearchEngine.Request(
@@ -199,19 +199,21 @@ public class BitmaskSolver : ISolver, IDisposable
             rows =>
             {
                 var copy = (int[])rows.Clone();
-                int symmetryWeight = SymmetryHelper.GetSymmetryWeight(copy, scratchBuf);
-                totalUnique += (ulong)symmetryWeight;
-                if (sampleSolutions.Count < _maxSolutionsInOutput && ShouldAddSolution())
+                // Only add and count if unique (canonical)
+                if (SymmetryHelper.AddIfUnique(copy, uniqueSet, scratchBuf))
                 {
-                    sampleSolutions.Add(copy);
-                    if (sampleSolutions.Count >= _maxSolutionsInOutput)
-                        _eventsSuppressedAfterCap = true; // suppress further placements
+                    if (sampleSolutions.Count < _maxSolutionsInOutput && ShouldAddSolution())
+                    {
+                        sampleSolutions.Add(copy);
+                        if (sampleSolutions.Count >= _maxSolutionsInOutput)
+                            _eventsSuppressedAfterCap = true;
+                    }
                 }
-                return false; // continue counting
+                return false;
             }
         ));
 
-        _solutionCount = totalUnique;
+        _solutionCount = (ulong)uniqueSet.Count;
         _solutions.Clear();
         _solutions.AddRange(sampleSolutions);
     }
@@ -267,4 +269,25 @@ public class BitmaskSolver : ISolver, IDisposable
     private bool _disposed;
     private readonly int _maxSolutionsInOutput;
     private volatile bool _eventsSuppressedAfterCap; // dynamic flag to stop event traffic after cap reached
+
+    private sealed class IntArrayComparer : IEqualityComparer<int[]>
+    {
+        public bool Equals(int[]? x, int[]? y)
+        {
+            if (ReferenceEquals(x, y)) return true;
+            if (x is null || y is null || x.Length != y.Length) return false;
+            for (int i = 0; i < x.Length; i++)
+                if (x[i] != y[i]) return false;
+            return true;
+        }
+        public int GetHashCode(int[] obj)
+        {
+            unchecked
+            {
+                int hash = 17;
+                foreach (var v in obj) hash = hash * 31 + v;
+                return hash;
+            }
+        }
+    }
 }

@@ -27,7 +27,8 @@ public partial class DispatchCommands
                 if (boardSize == -1) break;
 
                 Console.WriteLine();
-                Console.WriteLine("Output mode: This app will show the total count of unique solutions and a few example solutions (up to 5).\n");
+                Console.WriteLine($"Output mode: This app will show the total count of unique solutions and a few example solutions (up to {SimulationSettings.MaxNoOfSolutionsInOutput}).\n");
+                Console.WriteLine("The total count is computed using a fast, memory-efficient algorithm.\n");
                 Console.WriteLine("This is the recommended mode for large boards, as it is memory-efficient and informative.");
                 Console.WriteLine();
 
@@ -70,7 +71,7 @@ public partial class DispatchCommands
             state.ExitRequested = true;
             return;
         }
-        var solver = new UniqueSolutionExamplesAndCountSolver(formatter, exampleCap: 5);
+        var solver = new UniqueSolutionExamplesAndCountSolver(formatter, exampleCap: SimulationSettings.MaxNoOfSolutionsInOutput);
         var (examples, countOnly) = solver.Solve(context);
 
         var sb = new System.Text.StringBuilder();
@@ -87,7 +88,7 @@ public partial class DispatchCommands
         }
         else
         {
-            sb.AppendLine($"Showing up to {examples.Solutions.Count} example solutions:");
+            sb.AppendLine($"Showing up to {SimulationSettings.MaxNoOfSolutionsInOutput} example solutions:");
             foreach (var solution in examples.Solutions)
             {
                 sb.AppendLine($"Solution {solution.Id}: {solution.Details}");

@@ -17,13 +17,16 @@ public class UniqueSolutionExamplesAndCountSolver
 
     public (SimulationResults examples, SimulationResults countOnly) Solve(SimulationContext context)
     {
-        // First, get example solutions (capped)
-        var materializing = new MaterializingUniqueSolver(_formatter);
-        var examples = materializing.Solve(context, _exampleCap);
+        // Run a Unique mode solve materializing up to exampleCap solutions
+        var exampleSolver = new BitmaskSolver(context.BoardSize, SolutionMode.Unique, context.DisplayMode, _formatter, _exampleCap);
+        exampleSolver.UseCountOnlyUniqueMode = false; // ensure full materialization (within cap)
+        var examples = exampleSolver.Solve();
 
-        // Then, get the total count (count-only)
-        var countOnlySolver = new CountOnlyUniqueSolver(_formatter);
-        var countOnly = countOnlySolver.Solve(context, 0);
+        // Run a Unique mode solve in count-only unique mode (returns representative sample capped at 0 => no enforced cap unless solver logic treats 0 as unlimited)
+        // We set maxSolutionsInOutput = 0 to allow internal logic; flag drives count-only behavior.
+        var countOnlySolver = new BitmaskSolver(context.BoardSize, SolutionMode.Unique, context.DisplayMode, _formatter, 0);
+        countOnlySolver.UseCountOnlyUniqueMode = true; // enable fast counting with symmetry weighting
+        var countOnly = countOnlySolver.Solve();
 
         return (examples, countOnly);
     }

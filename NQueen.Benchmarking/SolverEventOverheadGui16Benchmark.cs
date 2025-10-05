@@ -3,7 +3,6 @@ namespace NQueen.Benchmarking;
 // Focused benchmark: N=16, Unique, Visualize, GUI-like event handlers only.
 // Helps quantify current per-event & solution materialization overhead before optimization.
 [MemoryDiagnoser]
-[CPUUsageDiagnoser]
 [SimpleJob(RuntimeMoniker.HostProcess, launchCount:1, warmupCount:0, iterationCount:1)]
 public class SolverEventOverheadGui16Benchmark
 {

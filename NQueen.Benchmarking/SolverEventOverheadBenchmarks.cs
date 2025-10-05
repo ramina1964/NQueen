@@ -15,7 +15,6 @@ namespace NQueen.Benchmarking;
 // allocation + per?event logic cost to quantify relative overhead.
 
 [MemoryDiagnoser]
-[CPUUsageDiagnoser]
 public class SolverEventOverheadBenchmarks
 {
     [Params(8, 10)]

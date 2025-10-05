@@ -8,7 +8,6 @@ using System.Linq;
 namespace NQueen.Benchmarking;
 
 [MemoryDiagnoser]
-[CPUUsageDiagnoser]
 public class SymmetryCanonicalFormBenchmark
 {
     [Params(8, 10, 12, 14, 16)]

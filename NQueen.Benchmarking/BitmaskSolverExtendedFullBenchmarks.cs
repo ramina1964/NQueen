@@ -9,7 +9,6 @@ namespace NQueen.Benchmarking;
 // Use results to compare with ConsoleApp baselines (which effectively run Hide + no handlers).
 
 [MemoryDiagnoser]
-[CPUUsageDiagnoser]
 public class BitmaskSolverExtendedFullBenchmarks
 {
     // Keep sizes moderate so the cartesian space remains tractable.

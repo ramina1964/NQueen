@@ -1,6 +1,6 @@
 namespace NQueen.Benchmarking;
 
-[CPUUsageDiagnoser]
+[MemoryDiagnoser]
 public class BitmaskSolverUniqueBenchmarks
 {
     [GlobalSetup]

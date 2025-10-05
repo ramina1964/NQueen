@@ -8,7 +8,7 @@ public class BitmaskSolver_UniqueMode_Benchmark
 {
     private readonly ISolutionFormatter _formatter = new SolutionFormatter();
 
-    [Params(10)]
+    [Params(14)]
     public int BoardSize;
 
     [Benchmark]
@@ -19,4 +19,4 @@ public class BitmaskSolver_UniqueMode_Benchmark
         solver.UseCountOnlyUniqueMode = false; // Materializing approach
         return solver.Solve();
     }
-}
+} 
