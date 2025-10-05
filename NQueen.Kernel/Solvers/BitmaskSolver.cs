@@ -182,7 +182,6 @@ public class BitmaskSolver : ISolver, IDisposable
     private void SolveUniqueCountOnlyMode()
     {
         int N = BoardSize;
-        var sampleSolutions = new List<int[]>();
         var uniqueSet = new HashSet<int[]>(new IntArrayComparer());
         var scratchBuf = new int[N];
 
@@ -199,23 +198,84 @@ public class BitmaskSolver : ISolver, IDisposable
             rows =>
             {
                 var copy = (int[])rows.Clone();
-                // Only add and count if unique (canonical)
                 if (SymmetryHelper.AddIfUnique(copy, uniqueSet, scratchBuf))
                 {
-                    if (sampleSolutions.Count < _maxSolutionsInOutput && ShouldAddSolution())
-                    {
-                        sampleSolutions.Add(copy);
-                        if (sampleSolutions.Count >= _maxSolutionsInOutput)
-                            _eventsSuppressedAfterCap = true;
-                    }
+                    // Only count if unique
                 }
                 return false;
             }
         ));
 
         _solutionCount = (ulong)uniqueSet.Count;
-        _solutions.Clear();
-        _solutions.AddRange(sampleSolutions);
+        _solutions.Clear(); // No sample solutions in pure count-only mode
+    }
+
+    private static ulong CountUniqueForRoot(int N, int firstRow)
+    {
+        ulong count = 0;
+        var rowsArr = new int[N];
+        Array.Fill(rowsArr, -1);
+        rowsArr[0] = firstRow;
+
+        ulong bitFirst = 1UL << firstRow;
+        ulong cols = bitFirst;
+        ulong d1 = bitFirst << 1;
+        ulong d2 = bitFirst >> 1;
+        ulong mask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
+
+        ulong[] stackCols = new ulong[N];
+        ulong[] stackD1 = new ulong[N];
+        ulong[] stackD2 = new ulong[N];
+        ulong[] stackRemaining = new ulong[N];
+
+        int col = 1;
+        ulong remaining = ~(cols | d1 | d2) & mask;
+
+        while (true)
+        {
+            if (col == N)
+            {
+                count++;
+                col--;
+                if (col <= 0) break;
+                Restore(col, out remaining);
+                continue;
+            }
+            if (remaining == 0)
+            {
+                col--;
+                if (col <= 0) break;
+                Restore(col, out remaining);
+                continue;
+            }
+            ulong bit = remaining & (ulong)-(long)remaining;
+            remaining ^= bit;
+            int row = BitOperations.TrailingZeroCount(bit);
+            rowsArr[col] = row;
+
+            stackCols[col] = cols;
+            stackD1[col] = d1;
+            stackD2[col] = d2;
+            stackRemaining[col] = remaining;
+
+            cols |= bit;
+            d1 = (d1 | bit) << 1;
+            d2 = (d2 | bit) >> 1;
+
+            col++;
+            if (col == N) continue;
+            remaining = ~(cols | d1 | d2) & mask;
+        }
+
+        void Restore(int c, out ulong rem)
+        {
+            rem = stackRemaining[c];
+            cols = stackCols[c];
+            d1 = stackD1[c];
+            d2 = stackD2[c];
+        }
+
+        return count;
     }
 
     private void RunUniqueParallel()

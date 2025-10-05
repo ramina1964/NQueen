@@ -90,9 +90,11 @@ internal sealed class BitmaskParallelEngine
                     request.ReportProgress(pct);
                 }
 
+                // For All mode, do NOT apply symmetry pruning
                 ulong ComputeAvailable(int c)
                 {
                     ulong avail = ~(cols | d1 | d2) & mask;
+                    // Use full row range for all columns
                     return avail;
                 }
 
@@ -142,7 +144,7 @@ internal sealed class BitmaskParallelEngine
                 ulong[] stackRemaining = new ulong[N];
 
                 int col = 1;
-                ulong remaining = ComputeAvailable(1);
+                ulong remaining = ComputeAvailable(col);
 
                 while (true)
                 {
@@ -190,12 +192,11 @@ internal sealed class BitmaskParallelEngine
 
                 return localUnique;
 
+                // For Unique mode, apply symmetry pruning
                 ulong ComputeAvailable(int c)
                 {
                     ulong avail = ~(cols | d1 | d2) & mask;
-                    int maxRow = (c == 1)
-                        ? (((N & 1) == 1 && rowsArr[0] == N / 2) ? N / 2 : N)
-                        : N;
+                    int maxRow = SymmetryHelper.MaxRowExclusiveForColumn(N, c, rowsArr);
                     if (maxRow < N)
                         avail &= (1UL << maxRow) - 1UL;
                     return avail;
