@@ -10,8 +10,14 @@ public partial class DispatchCommands
     public static void RunInteractiveMenu(IServiceProvider services)
     {
         var state = new MenuState();
+        bool infoShown = false;
         while (state.ExitRequested == false)
         {
+            if (!infoShown)
+            {
+                Console.WriteLine("Output mode: This app will show the total count of unique solutions and a few example solutions (up to 5).\nThe total count is computed using a fast, memory-efficient algorithm.\nThis is the recommended mode for large boards, as it is memory-efficient and informative.");
+                infoShown = true;
+            }
             var mode = ShowSolutionModeMenu(state);
             if (state.ExitRequested)
                 break;
@@ -25,16 +31,15 @@ public partial class DispatchCommands
                 var boardSize = ShowBoardSizeMenu(state);
                 if (state.ExitRequested) break;
                 if (boardSize == -1) break;
-
-                Console.WriteLine();
-                Console.WriteLine($"Output mode: This app will show the total count of unique solutions and a few example solutions (up to {SimulationSettings.MaxNoOfSolutionsInOutput}).\n");
-                Console.WriteLine("The total count is computed using a fast, memory-efficient algorithm.\n");
-                Console.WriteLine("This is the recommended mode for large boards, as it is memory-efficient and informative.");
-                Console.WriteLine();
-
                 var context = new SimulationContext(boardSize, mode.Value, DisplayMode.Hide);
-                ShowCombinedResults(services, context, state);
-
+                bool useCountOnly = false;
+                if (mode == SolutionMode.Unique || mode == SolutionMode.All)
+                {
+                    Console.Write($"Use CountOnly mode for {mode} solutions? (y/n): ");
+                    var countOnlyInput = Console.ReadLine()?.Trim().ToLower();
+                    useCountOnly = countOnlyInput == "y" || countOnlyInput == "yes";
+                }
+                ShowCombinedResults(services, context, state, useCountOnly, mode.Value);
                 while (true)
                 {
                     Console.Write("Enter a board size, 'back' ('b') or 'exit' ('e'): ");
@@ -50,7 +55,7 @@ public partial class DispatchCommands
                         nextBoardSize >= 1 && nextBoardSize <= BoardSettings.MaxBitmaskBoardSize)
                     {
                         var nextContext = new SimulationContext(nextBoardSize, mode.Value, DisplayMode.Hide);
-                        ShowCombinedResults(services, nextContext, state);
+                        ShowCombinedResults(services, nextContext, state, useCountOnly, mode.Value);
                         continue;
                     }
                 }
@@ -63,7 +68,7 @@ public partial class DispatchCommands
     /// Shows both the total count and example solutions using UniqueSolutionExamplesAndCountSolver.
     /// </summary>
     private static void ShowCombinedResults(
-        IServiceProvider services, SimulationContext context, MenuState state)
+        IServiceProvider services, SimulationContext context, MenuState state, bool useCountOnly = false, SolutionMode mode = SolutionMode.Single)
     {
         if (services.GetService(typeof(ISolutionFormatter)) is not ISolutionFormatter formatter)
         {
@@ -71,31 +76,51 @@ public partial class DispatchCommands
             state.ExitRequested = true;
             return;
         }
-        var solver = new UniqueSolutionExamplesAndCountSolver(formatter, exampleCap: SimulationSettings.MaxNoOfSolutionsInOutput);
-        var (examples, countOnly) = solver.Solve(context);
-
+        SimulationResults results;
+        if (mode == SolutionMode.Unique)
+        {
+            var solver = new BitmaskSolver(context.BoardSize, SolutionMode.Unique, context.DisplayMode, formatter, SimulationSettings.MaxNoOfSolutionsInOutput);
+            solver.UseCountOnlyUniqueMode = useCountOnly;
+            results = solver.Solve();
+        }
+        else if (mode == SolutionMode.All)
+        {
+            var solver = new BitmaskSolver(context.BoardSize, SolutionMode.All, context.DisplayMode, formatter, SimulationSettings.MaxNoOfSolutionsInOutput);
+            solver.UseCountOnlyAllMode = useCountOnly;
+            results = solver.Solve();
+        }
+        else
+        {
+            var solver = new BitmaskSolver(context.BoardSize, mode, context.DisplayMode, formatter, SimulationSettings.MaxNoOfSolutionsInOutput);
+            results = solver.Solve();
+        }
         var sb = new System.Text.StringBuilder();
         sb.AppendLine("Summary:");
         sb.AppendLine($"  Board Size      : {NumericUtils.FormatWithSpaceSeparator(context.BoardSize)}");
         sb.AppendLine($"  Mode            : {context.SolutionMode}");
-        sb.AppendLine($"  Total Solutions : {countOnly.SolutionsCount:N0}");
-        sb.AppendLine($"  Elapsed (sec)   : {countOnly.ElapsedTimeInSec:N1}");
+        sb.AppendLine($"  Total Solutions : {results.SolutionsCount:N0}");
+        sb.AppendLine($"  Elapsed (sec)   : {results.ElapsedTimeInSec:N1}");
         sb.AppendLine($"  Memory (MB)     : {NumericUtils.UpdateMemoryUsage()}");
         sb.AppendLine();
-        if (examples.Solutions.Count == 0)
+        if (results.Solutions.Count == 0)
         {
-            sb.AppendLine("No example solutions found.");
+            // Only show 'No example solutions found.' if NOT CountOnly mode
+            if (mode == SolutionMode.All && !useCountOnly)
+                sb.AppendLine("No example solutions found.");
         }
         else
         {
             sb.AppendLine($"Showing up to {SimulationSettings.MaxNoOfSolutionsInOutput} example solutions:");
-            foreach (var solution in examples.Solutions)
+            foreach (var solution in results.Solutions)
             {
                 sb.AppendLine($"Solution {solution.Id}: {solution.Details}");
             }
         }
         sb.AppendLine();
         Console.WriteLine(sb.ToString());
+        // Ensure exactly 2 blank lines after summary
+        Console.WriteLine();
+        Console.WriteLine();
     }
 
     private static SolutionMode? ShowSolutionModeMenu(MenuState state)

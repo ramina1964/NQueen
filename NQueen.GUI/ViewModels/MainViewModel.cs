@@ -57,6 +57,8 @@ public sealed partial class MainViewModel :
 
     public bool HasErrors => _errors.Count != 0;
 
+    public bool IsCountOnlyUniqueMode { get; set; } // Bind this to a checkbox in the UI
+
     // --- Public Methods ---
     public IEnumerable GetErrors(string? propertyName)
     {

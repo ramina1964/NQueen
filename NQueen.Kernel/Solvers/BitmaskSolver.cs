@@ -37,6 +37,7 @@ public class BitmaskSolver : ISolver, IDisposable
     public bool IsSolverCanceled { get; set; }
     public bool EnableEvents { get; set; } = true; // External master enable
     public bool UseCountOnlyUniqueMode { get; set; } = false;
+    public bool UseCountOnlyAllMode { get; set; } = false; // New property for count-only All mode
 
     // New parallelization tunables
     public bool UseParallel { get; set; } = true; // allow disabling parallel execution (forces single-threaded search)
@@ -70,7 +71,11 @@ public class BitmaskSolver : ISolver, IDisposable
                 SolveSingleMode();
                 break;
             case SolutionMode.All:
-                if (UseParallel)
+                if (UseCountOnlyAllMode)
+                {
+                    SolveAllCountOnlyMode();
+                }
+                else if (UseParallel)
                     RunAllParallel();
                 else
                     RunAllSequential();
@@ -160,6 +165,7 @@ public class BitmaskSolver : ISolver, IDisposable
             .Select((sol, idx) => new Solution(sol, _solutionFormatter, idx + 1))
             .ToList();
 
+        // Always return the total number of solutions found, not just the number stored
         return new SimulationResults(resultSolutions, _solutionCount, Math.Round(elapsed.TotalSeconds, 1));
     }
 
@@ -223,7 +229,7 @@ public class BitmaskSolver : ISolver, IDisposable
     {
         int N = BoardSize;
         var uniqueSet = new HashSet<int[]>(new IntArrayComparer());
-        var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)]; // Use helper for consistency
+        var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
 
         _searchEngine.Run(new BitmaskSearchEngine.Request(
             BoardSize,
@@ -390,6 +396,29 @@ public class BitmaskSolver : ISolver, IDisposable
                 return false; // continue search
             }
         ));
+    }
+
+    private void SolveAllCountOnlyMode()
+    {
+        ulong count = 0;
+        _searchEngine.Run(new BitmaskSearchEngine.Request(
+            BoardSize,
+            RestrictFirstCol: false,
+            EnhancedSymmetry: false,
+            DisplayMode,
+            DelayInMillisec,
+            _currentSimToken,
+            () => IsSolverCanceled,
+            p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
+            m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
+            rows =>
+            {
+                count++;
+                return false;
+            }
+        ));
+        _solutionCount = count;
+        _solutions.Clear(); // No sample solutions in count-only mode
     }
 
     private bool ShouldAddSolution()

@@ -44,7 +44,10 @@ public sealed partial class MainViewModel
 
             var simContext = new SimulationContext(boardSize, SolutionMode, DisplayMode);
             _solver.DelayInMillisec = DelayInMilliseconds;
-
+            if (SolutionMode == SolutionMode.Unique)
+                _solver.UseCountOnlyUniqueMode = IsCountOnlyUniqueMode;
+            else
+                _solver.UseCountOnlyUniqueMode = false;
             SimulationResults = await _solver.GetSimResultsAsync(simContext);
 
             if (_solver.IsSolverCanceled || _currentSimulationToken == Guid.Empty)
