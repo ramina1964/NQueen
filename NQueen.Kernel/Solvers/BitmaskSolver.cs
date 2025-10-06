@@ -38,6 +38,10 @@ public class BitmaskSolver : ISolver, IDisposable
     public bool EnableEvents { get; set; } = true; // External master enable
     public bool UseCountOnlyUniqueMode { get; set; } = false;
 
+    // New parallelization tunables
+    public bool UseParallel { get; set; } = true; // allow disabling parallel execution (forces single-threaded search)
+    public int ParallelRootSplitDepth { get; set; } = 1; // number of leading columns used to create root tasks (>=1). Currently supported for All mode; Unique mode uses 1.
+
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
 
     public Task<SimulationResults> GetSimResultsAsync(SimulationContext simContext) =>
@@ -66,10 +70,16 @@ public class BitmaskSolver : ISolver, IDisposable
                 SolveSingleMode();
                 break;
             case SolutionMode.All:
-                RunAllParallel();
+                if (UseParallel)
+                    RunAllParallel();
+                else
+                    RunAllSequential();
                 break;
             case SolutionMode.Unique:
-                RunUniqueParallel();
+                if (UseParallel)
+                    RunUniqueParallel();
+                else
+                    RunUniqueSequential();
                 break;
             default:
                 throw new NotImplementedException($"Unsupported SolutionMode: {SolutionMode}");
@@ -158,6 +168,7 @@ public class BitmaskSolver : ISolver, IDisposable
         _parallelEngine.RunAll(new BitmaskParallelEngine.AllRequest(
             BoardSize,
             EnableEvents, // initial snapshot; dynamic suppression handled inside solver callbacks
+            ParallelRootSplitDepth < 1 ? 1 : ParallelRootSplitDepth,
             rows =>
             {
                 Interlocked.Increment(ref _solutionCount);
@@ -176,6 +187,35 @@ public class BitmaskSolver : ISolver, IDisposable
                 }
             },
             pct => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken))
+        ));
+    }
+
+    private void RunAllSequential()
+    {
+        // Single-threaded enumeration of all solutions
+        _searchEngine.Run(new BitmaskSearchEngine.Request(
+            BoardSize,
+            RestrictFirstCol: false,
+            EnhancedSymmetry: false,
+            DisplayMode,
+            DelayInMillisec,
+            _currentSimToken,
+            () => IsSolverCanceled,
+            p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
+            m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
+            rows =>
+            {
+                _solutionCount++;
+                if (ShouldAddSolution())
+                {
+                    var copy = (int[])rows.Clone();
+                    _solutions.Add(copy);
+                    if (ShouldRaiseEvents())
+                        SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(copy)));
+                    MaybeSuppressEventsAfterCap();
+                }
+                return false; // keep searching
+            }
         ));
     }
 
@@ -289,6 +329,7 @@ public class BitmaskSolver : ISolver, IDisposable
         _parallelEngine.RunUnique(new BitmaskParallelEngine.UniqueRequest(
             BoardSize,
             EnableEvents,
+            1, // root split depth currently fixed at 1 for Unique mode
             rows =>
             {
                 _solutionCount++;
@@ -307,6 +348,47 @@ public class BitmaskSolver : ISolver, IDisposable
                 }
             },
             pct => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken))
+        ));
+    }
+
+    private void RunUniqueSequential()
+    {
+        if (UseCountOnlyUniqueMode)
+        {
+            SolveUniqueCountOnlyMode();
+            return;
+        }
+
+        int N = BoardSize;
+        var uniqueSet = new HashSet<int[]>(new IntArrayComparer());
+        var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
+
+        _searchEngine.Run(new BitmaskSearchEngine.Request(
+            BoardSize,
+            RestrictFirstCol: true,
+            EnhancedSymmetry: true,
+            DisplayMode,
+            DelayInMillisec,
+            _currentSimToken,
+            () => IsSolverCanceled,
+            p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
+            m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
+            rows =>
+            {
+                var copy = (int[])rows.Clone();
+                if (SymmetryHelper.AddIfUnique(copy, uniqueSet, scratchBuf))
+                {
+                    _solutionCount++;
+                    if (ShouldAddSolution())
+                    {
+                        _solutions.Add(copy);
+                        if (ShouldRaiseEvents())
+                            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(copy)));
+                        MaybeSuppressEventsAfterCap();
+                    }
+                }
+                return false; // continue search
+            }
         ));
     }
 
