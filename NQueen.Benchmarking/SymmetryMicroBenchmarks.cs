@@ -53,7 +53,7 @@ public class SymmetryAddIfUniqueBenchmark
         var solver = new BitmaskSolver(BoardSize, SolutionMode.All, DisplayMode.Hide, new DefaultSolutionFormatter());
         var results = solver.Solve();
         _solutions = results.Solutions.Select(s => s.QueenPositions).Take(500).ToList();
-        _scratch = new int[SymmetryHelper.GetScratchBufferSize(BoardSize)]; // Use helper
+        _scratch = new int[SymmetryHelper.GetScratchBufferSize(BoardSize)]; // Use helper for consistency
     }
 
     [Benchmark]
