@@ -183,7 +183,7 @@ public class BitmaskSolver : ISolver, IDisposable
     {
         int N = BoardSize;
         var uniqueSet = new HashSet<int[]>(new IntArrayComparer());
-        var scratchBuf = new int[N];
+        var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)]; // Use helper
 
         _searchEngine.Run(new BitmaskSearchEngine.Request(
             BoardSize,

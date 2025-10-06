@@ -127,7 +127,7 @@ internal sealed class BitmaskParallelEngine
             tasks.Add(Task.Run(() =>
             {
                 var localUnique = new HashSet<int[]>(new IntArrayComparer());
-                var scratchBuf = new int[N];
+                var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)]; // Use helper
                 var rowsArr = new int[N];
                 Array.Fill(rowsArr, -1);
                 rowsArr[0] = fr;
@@ -215,7 +215,7 @@ internal sealed class BitmaskParallelEngine
         Task.WaitAll(tasks.ToArray());
 
         var globalUnique = new HashSet<int[]>(new IntArrayComparer());
-        var globalScratchBuf = new int[N];
+        var globalScratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)]; // Use helper
         foreach (var t in tasks)
         {
             foreach (var sol in t.Result)

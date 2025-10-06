@@ -1,22 +1,7 @@
 ﻿namespace NQueen.Domain.Utils;
 
-// Todo: Keep methods used in NQueen.KernelBitmask only in this class, remove all others.
-/// <summary>
-/// Symmetry utilities for the N-Queens problem.
-/// Focuses on efficient uniqueness detection via transformation generation and
-/// in-place scratch-buffer comparisons. Multiple API layers retained for backward
-/// compatibility; <see cref="AddIfUnique"/> is the preferred high-performance path.
-/// </summary>
 public static partial class SymmetryHelper
 {
-    /// <summary>
-    /// Determines maximum (exclusive) row index to explore for a given column under enhanced symmetry pruning.
-    /// Used by advanced solvers to restrict search (horizontal + secondary pruning).
-    /// </summary>
-    /// <param name="boardSize">Board dimension (N).</param>
-    /// <param name="column">Current column index.</param>
-    /// <param name="queenRows">Working queen row placements.</param>
-    /// <returns>Exclusive upper bound for row iteration.</returns>
     public static int MaxRowExclusiveForColumn(int boardSize, int column, int[] queenRows)
     {
         if (column == 0)
@@ -30,280 +15,139 @@ public static partial class SymmetryHelper
         return boardSize;
     }
 
-    /// <summary>
-    /// Adds a solution to a uniqueness set if its canonical form is not already present.
-    /// Uses a single reusable scratch buffer to avoid per-check allocations.
-    /// </summary>
+    // Optimized: pass scratch buffer to avoid allocations
     public static bool AddIfUnique(int[] solution, HashSet<int[]> uniqueSolutions, int[] scratch)
     {
         ArgumentNullException.ThrowIfNull(solution);
         ArgumentNullException.ThrowIfNull(uniqueSolutions);
         ArgumentNullException.ThrowIfNull(scratch);
-        if (scratch.Length < solution.Length)
+        if (scratch.Length < solution.Length * 2)
             throw new ArgumentException("Scratch buffer too small", nameof(scratch));
 
-        // Compute canonical form
-        var canonical = GetCanonicalForm(solution);
+        // Compute canonical form using scratch
+        var canonical = GetCanonicalForm(solution, scratch);
         if (uniqueSolutions.Contains(canonical))
             return false;
         uniqueSolutions.Add((int[])canonical.Clone());
         return true;
     }
 
-    /// <summary>
-    /// Checks if any symmetrical transformation already exists (Memory<int> direct version).</summary>
-    public static bool IsSymmetrical(
-        Memory<int> solution,
-        HashSet<Memory<int>> solutions)
+    // Overload: GetCanonicalForm with scratch buffer
+    public static int[] GetCanonicalForm(int[] solution, int[] scratch)
     {
-        foreach (var transformation in GetSymmetricalSolutions(solution))
-            if (solutions.Contains(new Memory<int>(transformation)))
-                return true;
+        ArgumentNullException.ThrowIfNull(solution);
+        int n = solution.Length;
+        // Use provided scratch buffer for all transformations
+        int[] min = scratch.AsSpan(0, n).ToArray();
+        int[] buf = scratch.AsSpan(n, n).ToArray();
+        bool minSet = false;
 
-        return false;
+        // Identity
+        Array.Copy(solution, buf, n);
+        if (!minSet || IsLess(buf, min, n)) { Array.Copy(buf, min, n); minSet = true; }
+
+        // Rotate 90
+        for (int i = 0; i < n; i++) buf[solution[i]] = n - 1 - i;
+        if (IsLess(buf, min, n)) Array.Copy(buf, min, n);
+
+        // Rotate 180
+        for (int i = 0; i < n; i++) buf[n - 1 - i] = n - 1 - solution[i];
+        if (IsLess(buf, min, n)) Array.Copy(buf, min, n);
+
+        // Rotate 270
+        for (int i = 0; i < n; i++) buf[n - 1 - solution[i]] = i;
+        if (IsLess(buf, min, n)) Array.Copy(buf, min, n);
+
+        // Reflect vertical
+        for (int i = 0; i < n; i++) buf[n - 1 - i] = solution[i];
+        if (IsLess(buf, min, n)) Array.Copy(buf, min, n);
+
+        // Reflect horizontal
+        for (int i = 0; i < n; i++) buf[i] = n - 1 - solution[i];
+        if (IsLess(buf, min, n)) Array.Copy(buf, min, n);
+
+        // Reflect main diagonal
+        for (int i = 0; i < n; i++) buf[solution[i]] = i;
+        if (IsLess(buf, min, n)) Array.Copy(buf, min, n);
+
+        // Reflect anti-diagonal
+        for (int i = 0; i < n; i++) buf[n - 1 - solution[i]] = n - 1 - i;
+        if (IsLess(buf, min, n)) Array.Copy(buf, min, n);
+
+        return min;
     }
 
-    /// <summary>
-    /// Alternate memory-based symmetry presence check (allocates 7 arrays per call).</summary>
-    public static bool IsSymmetricalSolution(
-        Memory<int> solution,
-        HashSet<Memory<int>> solutions)
+    // Legacy overload for compatibility
+    public static int[] GetCanonicalForm(int[] solution)
     {
-        var span = solution.Span;
-        foreach (var transformation in GetSymmetricalSolutions(span))
+        int n = solution.Length;
+        int[] scratch = new int[n * 2];
+        return GetCanonicalForm(solution, scratch);
+    }
+
+    private static bool IsLess(int[] a, int[] b, int n)
+    {
+        for (int i = 0; i < n; i++)
         {
-            if (solutions.Contains(new Memory<int>(transformation)))
-                return true;
+            if (a[i] < b[i]) return true;
+            if (a[i] > b[i]) return false;
         }
-
         return false;
     }
 
-    /// <summary>
-    /// Generates all 8 symmetrical variants for a given solution (including the identity/original).
-    /// </summary>
+    // Restore public API for compatibility
     public static List<int[]> GetSymmetricalSolutions(int[] solution)
     {
         int n = solution.Length;
         var results = new List<int[]>(8);
+        var buf = new int[n];
         // 1. Identity
-        results.Add((int[])solution.Clone());
+        Array.Copy(solution, buf, n);
+        results.Add((int[])buf.Clone());
         // 2. Rotate 90
-        var rot90 = new int[n];
-        for (int i = 0; i < n; i++) rot90[solution[i]] = n - 1 - i;
-        results.Add(rot90);
+        for (int i = 0; i < n; i++) buf[solution[i]] = n - 1 - i;
+        results.Add((int[])buf.Clone());
         // 3. Rotate 180
-        var rot180 = new int[n];
-        for (int i = 0; i < n; i++) rot180[n - 1 - i] = n - 1 - solution[i];
-        results.Add(rot180);
+        for (int i = 0; i < n; i++) buf[n - 1 - i] = n - 1 - solution[i];
+        results.Add((int[])buf.Clone());
         // 4. Rotate 270
-        var rot270 = new int[n];
-        for (int i = 0; i < n; i++) rot270[n - 1 - solution[i]] = i;
-        results.Add(rot270);
+        for (int i = 0; i < n; i++) buf[n - 1 - solution[i]] = i;
+        results.Add((int[])buf.Clone());
         // 5. Reflect vertical
-        var reflVert = new int[n];
-        for (int i = 0; i < n; i++) reflVert[n - 1 - i] = solution[i];
-        results.Add(reflVert);
+        for (int i = 0; i < n; i++) buf[n - 1 - i] = solution[i];
+        results.Add((int[])buf.Clone());
         // 6. Reflect horizontal
-        var reflHoriz = new int[n];
-        for (int i = 0; i < n; i++) reflHoriz[i] = n - 1 - solution[i];
-        results.Add(reflHoriz);
+        for (int i = 0; i < n; i++) buf[i] = n - 1 - solution[i];
+        results.Add((int[])buf.Clone());
         // 7. Reflect main diagonal
-        var reflMainDiag = new int[n];
-        for (int i = 0; i < n; i++) reflMainDiag[solution[i]] = i;
-        results.Add(reflMainDiag);
+        for (int i = 0; i < n; i++) buf[solution[i]] = i;
+        results.Add((int[])buf.Clone());
         // 8. Reflect anti-diagonal
-        var reflAntiDiag = new int[n];
-        for (int i = 0; i < n; i++) reflAntiDiag[n - 1 - solution[i]] = n - 1 - i;
-        results.Add(reflAntiDiag);
+        for (int i = 0; i < n; i++) buf[n - 1 - solution[i]] = n - 1 - i;
+        results.Add((int[])buf.Clone());
         return results;
     }
 
-    /// <summary>
-    /// Overload: Generates all 8 symmetrical variants for a given solution from ReadOnlySpan<int>.
-    /// </summary>
-    public static List<int[]> GetSymmetricalSolutions(ReadOnlySpan<int> solution)
-    {
-        return GetSymmetricalSolutions(solution.ToArray());
-    }
-
-    /// <summary>
-    /// Overload: Generates all 8 symmetrical variants for a given solution from Memory<int>.
-    /// </summary>
     public static List<int[]> GetSymmetricalSolutions(Memory<int> solution)
     {
         return GetSymmetricalSolutions(solution.ToArray());
     }
 
-    /// <summary>
-    /// Returns the canonical form (lexicographically smallest) of a solution among all its symmetry transformations.
-    /// Used for efficient uniqueness checks.
-    /// </summary>
-    public static int[] GetCanonicalForm(int[] solution)
+    public static List<int[]> GetSymmetricalSolutions(ReadOnlySpan<int> solution)
     {
-        ArgumentNullException.ThrowIfNull(solution);
-        int n = solution.Length;
-        // Use a single scratch buffer for all transformations
-        int[] min = new int[n];
-        int[] scratch = new int[n];
-        bool minSet = false;
-
-        // Identity
-        Array.Copy(solution, scratch, n);
-        if (!minSet || IsLess(scratch, min, n)) { Array.Copy(scratch, min, n); minSet = true; }
-
-        // Rotate 90
-        for (int i = 0; i < n; i++) scratch[solution[i]] = n - 1 - i;
-        if (IsLess(scratch, min, n)) Array.Copy(scratch, min, n);
-
-        // Rotate 180
-        for (int i = 0; i < n; i++) scratch[n - 1 - i] = n - 1 - solution[i];
-        if (IsLess(scratch, min, n)) Array.Copy(scratch, min, n);
-
-        // Rotate 270
-        for (int i = 0; i < n; i++) scratch[n - 1 - solution[i]] = i;
-        if (IsLess(scratch, min, n)) Array.Copy(scratch, min, n);
-
-        // Reflect vertical
-        for (int i = 0; i < n; i++) scratch[n - 1 - i] = solution[i];
-        if (IsLess(scratch, min, n)) Array.Copy(scratch, min, n);
-
-        // Reflect horizontal
-        for (int i = 0; i < n; i++) scratch[i] = n - 1 - solution[i];
-        if (IsLess(scratch, min, n)) Array.Copy(scratch, min, n);
-
-        // Reflect main diagonal
-        for (int i = 0; i < n; i++) scratch[solution[i]] = i;
-        if (IsLess(scratch, min, n)) Array.Copy(scratch, min, n);
-
-        // Reflect anti-diagonal
-        for (int i = 0; i < n; i++) scratch[n - 1 - solution[i]] = n - 1 - i;
-        if (IsLess(scratch, min, n)) Array.Copy(scratch, min, n);
-
-        return min;
-
-        static bool IsLess(int[] a, int[] b, int n)
-        {
-            for (int i = 0; i < n; i++)
-            {
-                if (a[i] < b[i]) return true;
-                if (a[i] > b[i]) return false;
-            }
-            return false;
-        }
+        return GetSymmetricalSolutions(solution.ToArray());
     }
 
-    /// <summary>
-    /// Returns the symmetry weight for a solution (number of unique symmetrical forms).
-    /// Used for count-only unique mode in solvers.
-    /// </summary>
-    public static int GetSymmetryWeight(int[] solution, int[] scratch)
-    {
-        // Get all symmetrical transformations
-        var symmetries = GetSymmetricalSolutions(solution);
-        // Use a HashSet to count unique forms
-        var set = new HashSet<string>();
-        foreach (var sym in symmetries)
-            set.Add(string.Join(",", sym));
-        return set.Count;
-    }
-
-    // --- Additional helpers (retained) ---
-    /// <summary>
-    /// Builds a title for solution listings with truncation / mode awareness.</summary>
-    public static string SolutionTitle(SolutionMode solutionMode, ulong noOfSolutions)
-    {
-        if (solutionMode == SolutionMode.Single)
-        { return "Solution:"; }
-
-        if (noOfSolutions <= SimulationSettings.MaxNoOfSolutionsInOutput)
-        {
-            return solutionMode == SolutionMode.All
-                ? "List of All Solutions (Included Symmetrical Ones):"
-                : "List of Unique Solutions (Excluded Symmetrical Ones):";
-        }
-
-        return solutionMode == SolutionMode.All
-            ? $"List of First {SimulationSettings.MaxNoOfSolutionsInOutput} Solution(s), May Include Symmetrical Ones:"
-            : $"List of First {SimulationSettings.MaxNoOfSolutionsInOutput} Unique Solution(s), Excluded Symmetrical Ones:";
-    }
-
-    /// <summary>Returns a rotated solution (creates a new array).</summary>
-    public static int[] Rotate(int[] solution, int degrees)
-    {
-        int n = solution.Length;
-        int[] rotated = new int[n];
-
-        switch (degrees)
-        {
-            case 90:
-                for (int i = 0; i < n; i++)
-                    rotated[solution[i]] = n - 1 - i;
-                break;
-
-            case 180:
-                for (int i = 0; i < n; i++)
-                    rotated[n - 1 - i] = n - 1 - solution[i];
-                break;
-
-            case 270:
-                for (int i = 0; i < n; i++)
-                    rotated[n - 1 - solution[i]] = i;
-                break;
-
-            default:
-                throw new ArgumentException($"Invalid rotation angle: {degrees}. Only 90, 180, and 270 are supported.");
-        }
-        return rotated;
-    }
-
-    /// <summary>Returns a new reflected solution across the specified axis.</summary>
-    public static int[] Reflect(int[] solution, string axis)
-    {
-        int n = solution.Length;
-        int[] reflected = new int[n];
-
-        switch (axis.ToLower())
-        {
-            case "horizontal":
-                for (int i = 0; i < n; i++)
-                    reflected[i] = n - 1 - solution[i];
-                break;
-
-            case "vertical":
-                for (int i = 0; i < n; i++)
-                    reflected[n - 1 - i] = solution[i];
-                break;
-
-            case "diagonal-primary":
-                for (int i = 0; i < n; i++)
-                    reflected[solution[i]] = i;
-                break;
-
-            case "diagonal-secondary":
-                for (int i = 0; i < n; i++)
-                    reflected[n - 1 - solution[i]] = n - 1 - i;
-                break;
-
-            default:
-                throw new ArgumentException($"Invalid reflection axis: {axis}. Only 'horizontal', 'vertical', 'diagonal-primary', and 'diagonal-secondary' are supported.");
-        }
-        return reflected;
-    }
-
-    /// <summary>
-    /// Legacy wrapper for compatibility: returns all 8 symmetrical transformations from ReadOnlySpan<int>.
-    /// </summary>
     public static IEnumerable<int[]> GetSymmetricalTransformations(ReadOnlySpan<int> solution)
     {
-        return GetSymmetricalSolutions(solution);
+        return GetSymmetricalSolutions(solution.ToArray());
     }
 
-    /// <summary>
-    /// Legacy wrapper for compatibility: returns all 8 symmetrical transformations from Memory<int>.
-    /// </summary>
     public static IEnumerable<int[]> GetSymmetricalTransformations(Memory<int> solution)
     {
-        return GetSymmetricalSolutions(solution);
+        return GetSymmetricalSolutions(solution.ToArray());
     }
+
+    public static int GetScratchBufferSize(int boardSize) =>
+        boardSize * 2;
 }
