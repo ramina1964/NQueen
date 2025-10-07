@@ -32,49 +32,118 @@ public static partial class SymmetryHelper
         return true;
     }
 
-    // Overload: GetCanonicalForm with scratch buffer
+    // New: Packed key uniqueness helper (uses UInt128). Assumes board size <= 32 (true for unique mode limit 20).
+    public static bool AddIfUniquePacked(int[] solution, HashSet<UInt128> uniqueKeys, int[] scratch, out UInt128 key, out int[] canonicalCopy)
+    {
+        key = 0;
+        canonicalCopy = Array.Empty<int>();
+        ArgumentNullException.ThrowIfNull(solution);
+        ArgumentNullException.ThrowIfNull(uniqueKeys);
+        if (scratch.Length < solution.Length * 2)
+            throw new ArgumentException("Scratch buffer too small", nameof(scratch));
+        key = GetCanonicalKey(solution, scratch, out var canonicalSpan);
+        if (!uniqueKeys.Add(key))
+            return false;
+        // copy canonical representative so caller may materialize if desired
+        canonicalCopy = canonicalSpan.ToArray();
+        return true;
+    }
+
+    // Overload: GetCanonicalForm with scratch buffer (existing array-returning API)
     public static int[] GetCanonicalForm(int[] solution, int[] scratch)
     {
         ArgumentNullException.ThrowIfNull(solution);
         int n = solution.Length;
-        // Use provided scratch buffer for all transformations
-        int[] min = scratch.AsSpan(0, n).ToArray();
-        int[] buf = scratch.AsSpan(n, n).ToArray();
+        // Use first n entries for min, next n entries for buf directly (no ToArray allocations)
+        var min = scratch.AsSpan(0, n);
+        var buf = scratch.AsSpan(n, n);
         bool minSet = false;
 
         // Identity
-        Array.Copy(solution, buf, n);
-        if (!minSet || IsLess(buf, min, n)) { Array.Copy(buf, min, n); minSet = true; }
-
+        solution.AsSpan().CopyTo(buf);
+        if (!minSet || SpanIsLess(buf, min, n)) { buf.CopyTo(min); minSet = true; }
         // Rotate 90
         for (int i = 0; i < n; i++) buf[solution[i]] = n - 1 - i;
-        if (IsLess(buf, min, n)) Array.Copy(buf, min, n);
-
+        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
         // Rotate 180
         for (int i = 0; i < n; i++) buf[n - 1 - i] = n - 1 - solution[i];
-        if (IsLess(buf, min, n)) Array.Copy(buf, min, n);
-
+        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
         // Rotate 270
         for (int i = 0; i < n; i++) buf[n - 1 - solution[i]] = i;
-        if (IsLess(buf, min, n)) Array.Copy(buf, min, n);
-
+        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
         // Reflect vertical
         for (int i = 0; i < n; i++) buf[n - 1 - i] = solution[i];
-        if (IsLess(buf, min, n)) Array.Copy(buf, min, n);
-
+        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
         // Reflect horizontal
         for (int i = 0; i < n; i++) buf[i] = n - 1 - solution[i];
-        if (IsLess(buf, min, n)) Array.Copy(buf, min, n);
-
+        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
         // Reflect main diagonal
         for (int i = 0; i < n; i++) buf[solution[i]] = i;
-        if (IsLess(buf, min, n)) Array.Copy(buf, min, n);
-
+        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
         // Reflect anti-diagonal
         for (int i = 0; i < n; i++) buf[n - 1 - solution[i]] = n - 1 - i;
-        if (IsLess(buf, min, n)) Array.Copy(buf, min, n);
+        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
 
-        return min;
+        // Return a cloned array for legacy API expectations
+        return min.ToArray();
+    }
+
+    // Allocation-free canonical key computation.
+    public static UInt128 GetCanonicalKey(int[] solution, int[] scratch, out ReadOnlySpan<int> canonical)
+    {
+        int n = solution.Length;
+        if (scratch.Length < n * 2) throw new ArgumentException("Scratch buffer too small", nameof(scratch));
+        var min = scratch.AsSpan(0, n);
+        var buf = scratch.AsSpan(n, n);
+        bool minSet = false;
+
+        // Identity
+        solution.AsSpan().CopyTo(buf);
+        if (!minSet || SpanIsLess(buf, min, n)) { buf.CopyTo(min); minSet = true; }
+        // Rotate 90
+        for (int i = 0; i < n; i++) buf[solution[i]] = n - 1 - i;
+        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
+        // Rotate 180
+        for (int i = 0; i < n; i++) buf[n - 1 - i] = n - 1 - solution[i];
+        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
+        // Rotate 270
+        for (int i = 0; i < n; i++) buf[n - 1 - solution[i]] = i;
+        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
+        // Reflect vertical
+        for (int i = 0; i < n; i++) buf[n - 1 - i] = solution[i];
+        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
+        // Reflect horizontal
+        for (int i = 0; i < n; i++) buf[i] = n - 1 - solution[i];
+        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
+        // Reflect main diagonal
+        for (int i = 0; i < n; i++) buf[solution[i]] = i;
+        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
+        // Reflect anti-diagonal
+        for (int i = 0; i < n; i++) buf[n - 1 - solution[i]] = n - 1 - i;
+        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
+
+        canonical = min;
+        return PackCanonical(min, n);
+    }
+
+    private static bool SpanIsLess(ReadOnlySpan<int> a, ReadOnlySpan<int> b, int n)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            if (a[i] < b[i]) return true;
+            if (a[i] > b[i]) return false;
+        }
+        return false;
+    }
+
+    private static UInt128 PackCanonical(ReadOnlySpan<int> rows, int n)
+    {
+        UInt128 key = 0;
+        for (int i = 0; i < n; i++)
+        {
+            key = (key << 5) | (uint)rows[i];
+        }
+        return key;
     }
 
     // Legacy overload for compatibility
@@ -101,53 +170,21 @@ public static partial class SymmetryHelper
         int n = solution.Length;
         var results = new List<int[]>(8);
         var buf = new int[n];
-        // 1. Identity
-        Array.Copy(solution, buf, n);
-        results.Add((int[])buf.Clone());
-        // 2. Rotate 90
-        for (int i = 0; i < n; i++) buf[solution[i]] = n - 1 - i;
-        results.Add((int[])buf.Clone());
-        // 3. Rotate 180
-        for (int i = 0; i < n; i++) buf[n - 1 - i] = n - 1 - solution[i];
-        results.Add((int[])buf.Clone());
-        // 4. Rotate 270
-        for (int i = 0; i < n; i++) buf[n - 1 - solution[i]] = i;
-        results.Add((int[])buf.Clone());
-        // 5. Reflect vertical
-        for (int i = 0; i < n; i++) buf[n - 1 - i] = solution[i];
-        results.Add((int[])buf.Clone());
-        // 6. Reflect horizontal
-        for (int i = 0; i < n; i++) buf[i] = n - 1 - solution[i];
-        results.Add((int[])buf.Clone());
-        // 7. Reflect main diagonal
-        for (int i = 0; i < n; i++) buf[solution[i]] = i;
-        results.Add((int[])buf.Clone());
-        // 8. Reflect anti-diagonal
-        for (int i = 0; i < n; i++) buf[n - 1 - solution[i]] = n - 1 - i;
-        results.Add((int[])buf.Clone());
+        Array.Copy(solution, buf, n); results.Add((int[])buf.Clone());
+        for (int i = 0; i < n; i++) buf[solution[i]] = n - 1 - i; results.Add((int[])buf.Clone());
+        for (int i = 0; i < n; i++) buf[n - 1 - i] = n - 1 - solution[i]; results.Add((int[])buf.Clone());
+        for (int i = 0; i < n; i++) buf[n - 1 - solution[i]] = i; results.Add((int[])buf.Clone());
+        for (int i = 0; i < n; i++) buf[n - 1 - i] = solution[i]; results.Add((int[])buf.Clone());
+        for (int i = 0; i < n; i++) buf[i] = n - 1 - solution[i]; results.Add((int[])buf.Clone());
+        for (int i = 0; i < n; i++) buf[solution[i]] = i; results.Add((int[])buf.Clone());
+        for (int i = 0; i < n; i++) buf[n - 1 - solution[i]] = n - 1 - i; results.Add((int[])buf.Clone());
         return results;
     }
 
-    public static List<int[]> GetSymmetricalSolutions(Memory<int> solution)
-    {
-        return GetSymmetricalSolutions(solution.ToArray());
-    }
+    public static List<int[]> GetSymmetricalSolutions(Memory<int> solution) => GetSymmetricalSolutions(solution.ToArray());
+    public static List<int[]> GetSymmetricalSolutions(ReadOnlySpan<int> solution) => GetSymmetricalSolutions(solution.ToArray());
+    public static IEnumerable<int[]> GetSymmetricalTransformations(ReadOnlySpan<int> solution) => GetSymmetricalSolutions(solution.ToArray());
+    public static IEnumerable<int[]> GetSymmetricalTransformations(Memory<int> solution) => GetSymmetricalSolutions(solution.ToArray());
 
-    public static List<int[]> GetSymmetricalSolutions(ReadOnlySpan<int> solution)
-    {
-        return GetSymmetricalSolutions(solution.ToArray());
-    }
-
-    public static IEnumerable<int[]> GetSymmetricalTransformations(ReadOnlySpan<int> solution)
-    {
-        return GetSymmetricalSolutions(solution.ToArray());
-    }
-
-    public static IEnumerable<int[]> GetSymmetricalTransformations(Memory<int> solution)
-    {
-        return GetSymmetricalSolutions(solution.ToArray());
-    }
-
-    public static int GetScratchBufferSize(int boardSize) =>
-        boardSize * 2;
+    public static int GetScratchBufferSize(int boardSize) => boardSize * 2;
 }

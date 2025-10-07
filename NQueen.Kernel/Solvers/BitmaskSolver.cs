@@ -228,7 +228,7 @@ public class BitmaskSolver : ISolver, IDisposable
     private void SolveUniqueCountOnlyMode()
     {
         int N = BoardSize;
-        var uniqueSet = new HashSet<int[]>(new IntArrayComparer());
+        var uniqueKeys = new HashSet<UInt128>();
         var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
 
         _searchEngine.Run(new BitmaskSearchEngine.Request(
@@ -243,17 +243,18 @@ public class BitmaskSolver : ISolver, IDisposable
             m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
             rows =>
             {
+                // rows reused by search engine; copy before canonicalizing to avoid mutation issues
                 var copy = (int[])rows.Clone();
-                if (SymmetryHelper.AddIfUnique(copy, uniqueSet, scratchBuf))
+                if (SymmetryHelper.AddIfUniquePacked(copy, uniqueKeys, scratchBuf, out _, out _))
                 {
-                    // Only count if unique
+                    // unique counted implicitly via set size
                 }
                 return false;
             }
         ));
 
-        _solutionCount = (ulong)uniqueSet.Count;
-        _solutions.Clear(); // No sample solutions in pure count-only mode
+        _solutionCount = (ulong)uniqueKeys.Count;
+        _solutions.Clear();
     }
 
     private static ulong CountUniqueForRoot(int N, int firstRow)
@@ -366,7 +367,7 @@ public class BitmaskSolver : ISolver, IDisposable
         }
 
         int N = BoardSize;
-        var uniqueSet = new HashSet<int[]>(new IntArrayComparer());
+        var uniqueKeys = new HashSet<UInt128>();
         var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
 
         _searchEngine.Run(new BitmaskSearchEngine.Request(
@@ -382,14 +383,14 @@ public class BitmaskSolver : ISolver, IDisposable
             rows =>
             {
                 var copy = (int[])rows.Clone();
-                if (SymmetryHelper.AddIfUnique(copy, uniqueSet, scratchBuf))
+                if (SymmetryHelper.AddIfUniquePacked(copy, uniqueKeys, scratchBuf, out _, out var canonical))
                 {
                     _solutionCount++;
                     if (ShouldAddSolution())
                     {
-                        _solutions.Add(copy);
+                        _solutions.Add(canonical.ToArray());
                         if (ShouldRaiseEvents())
-                            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(copy)));
+                            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(canonical.ToArray())));
                         MaybeSuppressEventsAfterCap();
                     }
                 }

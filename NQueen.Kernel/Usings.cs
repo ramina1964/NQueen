@@ -9,3 +9,4 @@ global using NQueen.Domain.Utils;
 global using NQueen.Kernel.Solvers;
 global using System.Diagnostics;
 global using System.Numerics;
+global using System.Buffers;

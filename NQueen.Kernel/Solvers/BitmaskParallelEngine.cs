@@ -1,6 +1,3 @@
-using System.Buffers;
-using System.Collections.Concurrent;
-
 namespace NQueen.Kernel.Solvers;
 
 internal sealed class BitmaskParallelEngine
@@ -19,20 +16,15 @@ internal sealed class BitmaskParallelEngine
         Action<int[]> OnUniqueSolution,
         Action<double> ReportProgress);
 
-    private static int ChooseAdaptiveSplitDepth(int boardSize)
-    {
-        if (boardSize <= 10) return 1;
-        if (boardSize <= 13) return 2;
-        return 3;
-    }
-
     public void RunAll(AllRequest request)
     {
         int N = request.BoardSize;
-        int splitDepth = request.RootSplitDepth < 0 ? ChooseAdaptiveSplitDepth(N) : request.RootSplitDepth;
+        int splitDepth = request.RootSplitDepth < 1 ? 1 : request.RootSplitDepth;
         if (splitDepth > N) splitDepth = N;
 
         request.ReportProgress(0.0);
+        var tasks = new List<Task>();
+
         var rootStack = new Stack<RootFrame>();
         rootStack.Push(new RootFrame(0, 0UL, 0UL, 0UL, new int[N]));
         ulong mask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
@@ -64,96 +56,87 @@ internal sealed class BitmaskParallelEngine
 
         int totalRoots = rootList.Count;
         int rootsCompleted = 0;
-        int workerCount = Math.Min(Environment.ProcessorCount, totalRoots);
-        var queue = new ConcurrentQueue<RootFrame>(rootList);
-        var solutionCount = 0UL;
-        var tasks = new List<Task>(workerCount);
 
-        for (int w = 0; w < workerCount; w++)
+        foreach (var root in rootList)
         {
             tasks.Add(Task.Run(() =>
             {
-                var localBufferPool = ArrayPool<ulong>.Shared;
-                var localIntPool = ArrayPool<int>.Shared;
-                while (queue.TryDequeue(out var root))
+                var rowsArr = root.Rows;
+                int startCol = root.Col;
+                for (int i = 0; i < N; i++) if (i >= startCol && rowsArr[i] == 0) rowsArr[i] = -1;
+
+                ulong cols = root.Cols;
+                ulong d1 = root.D1;
+                ulong d2 = root.D2;
+
+                ulong[] stackCols = new ulong[N];
+                ulong[] stackD1 = new ulong[N];
+                ulong[] stackD2 = new ulong[N];
+                ulong[] stackRemaining = new ulong[N];
+
+                int col = startCol;
+                ulong remaining = ComputeAvailable(col);
+
+                while (true)
                 {
-                    var rowsArr = root.Rows;
-                    int startCol = root.Col;
-                    for (int i = startCol; i < N; i++) if (rowsArr[i] == 0 && i >= startCol) rowsArr[i] = -1;
-                    ulong cols = root.Cols;
-                    ulong d1 = root.D1;
-                    ulong d2 = root.D2;
-                    var stackCols = localBufferPool.Rent(N);
-                    var stackD1 = localBufferPool.Rent(N);
-                    var stackD2 = localBufferPool.Rent(N);
-                    var stackRemaining = localBufferPool.Rent(N);
-                    int col = startCol;
-                    ulong remaining = ComputeAvailable(col);
-                    try
+                    if (col == N)
                     {
-                        while (true)
-                        {
-                            if (col == N)
-                            {
-                                var copy = (int[])rowsArr.Clone();
-                                request.OnSolution(copy);
-                                Interlocked.Increment(ref solutionCount);
-                                col--;
-                                if (col < startCol) break;
-                                Restore(col, out remaining);
-                                continue;
-                            }
-                            if (remaining == 0)
-                            {
-                                col--;
-                                if (col < startCol) break;
-                                Restore(col, out remaining);
-                                continue;
-                            }
-                            ulong bit = remaining & (ulong)-(long)remaining;
-                            remaining ^= bit;
-                            int row = BitOperations.TrailingZeroCount(bit);
-                            rowsArr[col] = row;
-                            stackCols[col] = cols;
-                            stackD1[col] = d1;
-                            stackD2[col] = d2;
-                            stackRemaining[col] = remaining;
-                            cols |= bit;
-                            d1 = (d1 | bit) << 1;
-                            d2 = (d2 | bit) >> 1;
-                            col++;
-                            if (col == N) continue;
-                            remaining = ComputeAvailable(col);
-                        }
+                        var copy = (int[])rowsArr.Clone();
+                        request.OnSolution(copy);
+                        col--;
+                        if (col < startCol) break;
+                        Restore(col, out remaining);
+                        continue;
                     }
-                    finally
+                    if (remaining == 0)
                     {
-                        localBufferPool.Return(stackCols);
-                        localBufferPool.Return(stackD1);
-                        localBufferPool.Return(stackD2);
-                        localBufferPool.Return(stackRemaining);
+                        col--;
+                        if (col < startCol) break;
+                        Restore(col, out remaining);
+                        continue;
                     }
-                    if (request.EnableEvents)
-                    {
-                        int done = Interlocked.Increment(ref rootsCompleted);
-                        double pct = Math.Min(100.0, (double)done / totalRoots * 100.0);
-                        request.ReportProgress(pct);
-                    }
-                    ulong ComputeAvailable(int c)
-                    {
-                        ulong avail = ~(cols | d1 | d2) & mask;
-                        return avail;
-                    }
-                    void Restore(int c, out ulong rem)
-                    {
-                        rem = stackRemaining[c];
-                        cols = stackCols[c];
-                        d1 = stackD1[c];
-                        d2 = stackD2[c];
-                    }
+                    ulong bit = remaining & (ulong)-(long)remaining;
+                    remaining ^= bit;
+                    int row = BitOperations.TrailingZeroCount(bit);
+                    rowsArr[col] = row;
+
+                    stackCols[col] = cols;
+                    stackD1[col] = d1;
+                    stackD2[col] = d2;
+                    stackRemaining[col] = remaining;
+
+                    cols |= bit;
+                    d1 = (d1 | bit) << 1;
+                    d2 = (d2 | bit) >> 1;
+
+                    col++;
+                    if (col == N) continue;
+                    remaining = ComputeAvailable(col);
+                }
+
+                if (request.EnableEvents)
+                {
+                    int done = Interlocked.Increment(ref rootsCompleted);
+                    double pct = Math.Min(100.0, (double)done / totalRoots * 100.0);
+                    request.ReportProgress(pct);
+                }
+
+                ulong ComputeAvailable(int c)
+                {
+                    ulong avail = ~(cols | d1 | d2) & mask;
+                    return avail;
+                }
+
+                void Restore(int c, out ulong rem)
+                {
+                    rem = stackRemaining[c];
+                    cols = stackCols[c];
+                    d1 = stackD1[c];
+                    d2 = stackD2[c];
                 }
             }));
         }
+
         Task.WaitAll(tasks.ToArray());
         request.ReportProgress(100.0);
     }
@@ -161,20 +144,18 @@ internal sealed class BitmaskParallelEngine
     public void RunUnique(UniqueRequest request)
     {
         int N = request.BoardSize;
-        // We currently only support splitDepth == 1 for unique due to symmetry constraints.
-        int splitDepth = 1;
         request.ReportProgress(0.0);
         int totalRoots = (N + 1) / 2;
         int rootsCompleted = 0;
 
-        var tasks = new List<Task<HashSet<int[]>>>();
+        var tasks = new List<Task<HashSet<UInt128>>>();
 
         for (int firstRow = 0; firstRow < totalRoots; firstRow++)
         {
             int fr = firstRow;
             tasks.Add(Task.Run(() =>
             {
-                var localUnique = new HashSet<int[]>(new IntArrayComparer());
+                var localUnique = new HashSet<UInt128>();
                 var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
                 var rowsArr = new int[N];
                 Array.Fill(rowsArr, -1);
@@ -198,7 +179,7 @@ internal sealed class BitmaskParallelEngine
                 {
                     if (col == N)
                     {
-                        if (SymmetryHelper.AddIfUnique(rowsArr, localUnique, scratchBuf)) { }
+                        if (SymmetryHelper.AddIfUniquePacked(rowsArr, localUnique, scratchBuf, out _, out _)) { }
                         col--;
                         if (col <= 0) break;
                         Restore(col, out remaining);
@@ -260,21 +241,35 @@ internal sealed class BitmaskParallelEngine
 
         Task.WaitAll(tasks.ToArray());
 
-        var globalUnique = new HashSet<int[]>(new IntArrayComparer());
+        var globalUnique = new HashSet<UInt128>();
         var globalScratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
         foreach (var t in tasks)
         {
-            foreach (var sol in t.Result)
+            foreach (var key in t.Result)
             {
-                if (SymmetryHelper.AddIfUnique(sol, globalUnique, globalScratchBuf))
+                // We only need canonical arrays for materialization when OnUniqueSolution is invoked.
+                if (globalUnique.Add(key))
                 {
-                    var copy = (int[])sol.Clone();
-                    request.OnUniqueSolution(copy);
+                    // Reconstruct representative array from key for callback consumers.
+                    var rows = UnpackKeyToArray(key, N);
+                    request.OnUniqueSolution(rows);
                 }
             }
         }
 
         request.ReportProgress(100.0);
+    }
+
+    private static int[] UnpackKeyToArray(UInt128 key, int n)
+    {
+        var rows = new int[n];
+        // Packed with most significant row first (left-shift process). Need to read back reverse.
+        for (int i = n - 1; i >= 0; i--)
+        {
+            rows[i] = (int)(key & 0x1F); // 5 bits
+            key >>= 5;
+        }
+        return rows;
     }
 
     private readonly record struct RootFrame(int Col, ulong Cols, ulong D1, ulong D2, int[] Rows);
