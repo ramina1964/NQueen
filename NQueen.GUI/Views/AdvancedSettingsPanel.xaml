@@ -10,16 +10,37 @@
     d:DesignHeight="220"
     mc:Ignorable="d">
     <GroupBox Header="Performance &amp; Parallel Settings" Margin="0" Padding="0" Background="Bisque" BorderBrush="Black" BorderThickness="1">
-        <!-- Switched to StackPanel for simpler vertical spacing control -->
-        <StackPanel Margin="6" >
-            <CheckBox Content="Use Parallel" IsChecked="{Binding UseParallel}" Margin="2 4" />
-            <StackPanel Orientation="Horizontal" Margin="2 4">
-                <TextBlock Text="Root Split Depth:" VerticalAlignment="Center" Width="120" />
-                <TextBox Width="70" Text="{Binding ParallelRootSplitDepth, UpdateSourceTrigger=PropertyChanged}" />
-            </StackPanel>
-            <CheckBox Content="Count-Only (All Mode)" IsChecked="{Binding IsCountOnlyAllMode}" Margin="2 4" />
-            <CheckBox Content="Count-Only (Unique Mode)" IsChecked="{Binding IsCountOnlyUniqueMode}" Margin="2 4" />
-            <TextBlock Text="Count-Only skips storing example solutions." FontSize="11" Foreground="Gray" TextWrapping="Wrap" Margin="2 6 2 2" />
-        </StackPanel>
+        <Grid Margin="6">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="110" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Use Parallel -->
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Use Parallel" VerticalAlignment="Center" Margin="2 4 6 4" />
+            <CheckBox Grid.Row="0" Grid.Column="1" IsChecked="{Binding UseParallel}" HorizontalAlignment="Right" Margin="2 4" />
+
+            <!-- Root Split Depth -->
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Root Split Depth" VerticalAlignment="Center" Margin="2 4 6 4" />
+            <TextBox Grid.Row="1" Grid.Column="1" Width="60" Text="{Binding ParallelRootSplitDepth, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Right" Margin="2 4" />
+
+            <!-- All Mode Storage -->
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="All Mode Storage" VerticalAlignment="Center" Margin="2 4 6 4" />
+            <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding EnumStorageModes}" SelectedItem="{Binding SelectedAllStorageMode}" HorizontalAlignment="Right" Width="110" Margin="2 4" />
+
+            <!-- Unique Mode Storage -->
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="Unique Mode Storage" VerticalAlignment="Center" Margin="2 4 6 4" />
+            <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding EnumStorageModes}" SelectedItem="{Binding SelectedUniqueStorageMode}" HorizontalAlignment="Right" Width="110" Margin="2 4" />
+
+            <!-- Info Note -->
+            <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Text="CountOnly skips storing sample solutions." FontSize="11" Foreground="Gray" TextWrapping="Wrap" Margin="2 8 2 2" />
+        </Grid>
     </GroupBox>
 </UserControl>

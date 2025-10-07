@@ -37,7 +37,8 @@ public sealed partial class MainViewModel
         {
             bitmask.UseParallel = UseParallel;
             bitmask.ParallelRootSplitDepth = ParallelRootSplitDepth;
-            bitmask.UseCountOnlyAllMode = IsCountOnlyAllMode;
+            bitmask.AllStorageMode = SelectedAllStorageMode;
+            bitmask.UniqueStorageMode = SelectedUniqueStorageMode;
         }
 
         _solver.IsSolverCanceled = false;
@@ -52,10 +53,6 @@ public sealed partial class MainViewModel
 
             var simContext = new SimulationContext(boardSize, SolutionMode, DisplayMode);
             _solver.DelayInMillisec = DelayInMilliseconds;
-            if (SolutionMode == SolutionMode.Unique)
-                _solver.UseCountOnlyUniqueMode = IsCountOnlyUniqueMode;
-            else
-                _solver.UseCountOnlyUniqueMode = false; // keep unique-only property consistent
 
             SimulationResults = await _solver.GetSimResultsAsync(simContext);
 

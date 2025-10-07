@@ -49,6 +49,18 @@ public sealed partial class MainViewModel : ObservableObject
     private IEnumerable<DisplayMode> _enumDisplayModes =
         Enum.GetValues<DisplayMode>().Cast<DisplayMode>();
 
+    // New: storage mode enum options
+    [ObservableProperty]
+    private IEnumerable<ResultStorageMode> _enumStorageModes =
+        Enum.GetValues<ResultStorageMode>().Cast<ResultStorageMode>();
+
+    // Selected storage mode per solution category (UI bound)
+    [ObservableProperty]
+    private ResultStorageMode _selectedAllStorageMode = SimulationSettings.DefaultAllStorageMode;
+
+    [ObservableProperty]
+    private ResultStorageMode _selectedUniqueStorageMode = SimulationSettings.DefaultUniqueStorageMode;
+
     [ObservableProperty]
     private bool _isVisualized;
 
@@ -69,7 +81,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private Solution _selectedSolution = new([0], new DefaultSolutionFormatter());
-
 
     [ObservableProperty]
     private SolutionMode _solutionMode;
@@ -123,11 +134,13 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnIsOutputReadyChanged(bool value) =>
         RefreshCommandStates();
 
+    // Removed legacy IsCountOnlyUniqueMode property from this partial to avoid duplication (now kept in main file as legacy comment)
+
     // When true (primarily in unit tests), suppress all modal MessageBox dialogs.
     [ObservableProperty]
     private bool _suppressUserDialogs;
 
-    // -------- NEW: Advanced / Performance Tunables (bind to new panel) --------
+    // -------- Advanced / Performance Tunables --------
 
     [ObservableProperty]
     private bool _useParallel = SimulationSettings.DefaultUseParallel;
@@ -144,14 +157,5 @@ public sealed partial class MainViewModel : ObservableObject
         if (value < 1) ParallelRootSplitDepth = 1; // clamp
         else if (_solver is NQueen.Kernel.Solvers.BitmaskSolver b)
             b.ParallelRootSplitDepth = value;
-    }
-
-    // Count-only for All mode (distinct from existing IsCountOnlyUniqueMode)
-    [ObservableProperty]
-    private bool _isCountOnlyAllMode = (SimulationSettings.DefaultAllStorageMode == ResultStorageMode.CountOnly);
-
-    partial void OnIsCountOnlyAllModeChanged(bool value)
-    {
-        // nothing else needed now; applied at simulate time
     }
 }
