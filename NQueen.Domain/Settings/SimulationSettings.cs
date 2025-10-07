@@ -12,8 +12,11 @@ public static class SimulationSettings
     public const int DefaultParallelRootSplitDepth = 1;
 
     // Storage strategies
-    public const ResultStorageMode DefaultAllStorageMode = ResultStorageMode.MaterializeSample;
-    public const ResultStorageMode DefaultUniqueStorageMode = ResultStorageMode.MaterializeSample;
+    public const ResultStorageMode DefaultAllStorageMode =
+        ResultStorageMode.MaterializeSample;
+
+    public const ResultStorageMode DefaultUniqueStorageMode =
+        ResultStorageMode.MaterializeSample;
 
     // Threshold size where we reduce QueenPlaced event frequency.
     public const int QueenPlacedSamplingThresholdSize = 12;

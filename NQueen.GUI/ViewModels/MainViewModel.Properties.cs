@@ -158,4 +158,36 @@ public sealed partial class MainViewModel : ObservableObject
         else if (_solver is NQueen.Kernel.Solvers.BitmaskSolver b)
             b.ParallelRootSplitDepth = value;
     }
+
+    // Auto-tuning flag (true => user cannot modify parallel settings directly)
+    private bool _autoTuneParallel = true;
+
+    // Hooks consolidated into validation partial; remove duplicate implementations here.
+    private void AutoAdjustParallel()
+    {
+        if (!_autoTuneParallel || _solver is not NQueen.Kernel.Solvers.BitmaskSolver bs)
+            return;
+        if (!ParsingUtils.TryParseInt(BoardSizeText, out var n))
+            return;
+
+        bool parallel;
+        if (DisplayMode == DisplayMode.Visualize)
+            parallel = false;
+        else if (SolutionMode == SolutionMode.Single)
+            parallel = n >= 14;
+        else
+            parallel = n >= 9;
+
+        bs.UseParallel = parallel;
+        UseParallel = parallel;
+
+        int depth;
+        if (!parallel) depth = 1;
+        else if (n < 12) depth = 1;
+        else if (n < 16) depth = 2;
+        else depth = 3;
+        if (depth > n) depth = n < 1 ? 1 : n;
+        bs.ParallelRootSplitDepth = depth;
+        ParallelRootSplitDepth = depth;
+    }
 }

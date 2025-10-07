@@ -9,6 +9,8 @@
     d:DesignWidth="260"
     d:DesignHeight="220"
     mc:Ignorable="d">
+
+    <!-- Uses shared styles (TextBoxNumericalStyle, ComboBoxStyle, LabelStyle) for consistency -->
     <GroupBox Header="Performance &amp; Parallel Settings" Margin="0" Padding="0" Background="Bisque" BorderBrush="Black" BorderThickness="1">
         <Grid Margin="6">
             <Grid.RowDefinitions>
@@ -20,27 +22,27 @@
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="110" />
+                <ColumnDefinition Width="150" />
             </Grid.ColumnDefinitions>
 
-            <!-- Use Parallel -->
-            <TextBlock Grid.Row="0" Grid.Column="0" Text="Use Parallel" VerticalAlignment="Center" Margin="2 4 6 4" />
-            <CheckBox Grid.Row="0" Grid.Column="1" IsChecked="{Binding UseParallel}" HorizontalAlignment="Right" Margin="2 4" />
+            <!-- Use Parallel (auto-tuned, disabled for editing) -->
+            <Label Grid.Row="0" Grid.Column="0" Content="Use Parallel (Auto)" Style="{StaticResource LabelStyle}" Margin="2 4 6 4" />
+            <CheckBox Grid.Row="0" Grid.Column="1" IsChecked="{Binding UseParallel}" IsEnabled="False" HorizontalAlignment="Right" Margin="2 4" VerticalContentAlignment="Center" />
 
-            <!-- Root Split Depth -->
-            <TextBlock Grid.Row="1" Grid.Column="0" Text="Root Split Depth" VerticalAlignment="Center" Margin="2 4 6 4" />
-            <TextBox Grid.Row="1" Grid.Column="1" Width="60" Text="{Binding ParallelRootSplitDepth, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Right" Margin="2 4" />
+            <!-- Root Split Depth (auto-tuned, disabled) -->
+            <Label Grid.Row="1" Grid.Column="0" Content="Root Split Depth (Auto)" Style="{StaticResource LabelStyle}" Margin="2 4 6 4" />
+            <TextBox Grid.Row="1" Grid.Column="1" Width="60" Text="{Binding ParallelRootSplitDepth}" IsEnabled="False" HorizontalAlignment="Right" Style="{StaticResource TextBoxNumericalStyle}" />
 
             <!-- All Mode Storage -->
-            <TextBlock Grid.Row="2" Grid.Column="0" Text="All Mode Storage" VerticalAlignment="Center" Margin="2 4 6 4" />
-            <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding EnumStorageModes}" SelectedItem="{Binding SelectedAllStorageMode}" HorizontalAlignment="Right" Width="110" Margin="2 4" />
+            <Label Grid.Row="2" Grid.Column="0" Content="All Mode Storage" Style="{StaticResource LabelStyle}" Margin="2 4 6 4" />
+            <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding EnumStorageModes}" SelectedItem="{Binding SelectedAllStorageMode}" HorizontalAlignment="Stretch" Style="{StaticResource ComboBoxStyle}" />
 
             <!-- Unique Mode Storage -->
-            <TextBlock Grid.Row="3" Grid.Column="0" Text="Unique Mode Storage" VerticalAlignment="Center" Margin="2 4 6 4" />
-            <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding EnumStorageModes}" SelectedItem="{Binding SelectedUniqueStorageMode}" HorizontalAlignment="Right" Width="110" Margin="2 4" />
+            <Label Grid.Row="3" Grid.Column="0" Content="Unique Mode Storage" Style="{StaticResource LabelStyle}" Margin="2 4 6 4" />
+            <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding EnumStorageModes}" SelectedItem="{Binding SelectedUniqueStorageMode}" HorizontalAlignment="Stretch" Style="{StaticResource ComboBoxStyle}" />
 
             <!-- Info Note -->
-            <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Text="CountOnly skips storing sample solutions." FontSize="11" Foreground="Gray" TextWrapping="Wrap" Margin="2 8 2 2" />
+            <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Text="Parallel &amp; split depth auto-tuned by board size &amp; solution mode." FontSize="11" Foreground="Gray" TextWrapping="Wrap" Margin="2 8 2 2" />
         </Grid>
     </GroupBox>
 </UserControl>

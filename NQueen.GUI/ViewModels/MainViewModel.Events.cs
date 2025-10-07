@@ -306,40 +306,6 @@ public sealed partial class MainViewModel
         ChessboardVm.PlaceQueens(value.Positions);
     }
 
-    partial void OnDisplayModeChanged(DisplayMode value)
-    {
-        ClearVisualizationConstraintIfSatisfied();
-
-        if (_solver == null)
-            return;
-
-        if (!ValidateAndSetUiState())
-            return;
-
-        OnPropertyChanged(nameof(BoardSizeText));
-
-        if (IsSimulating)
-        {
-            if (value == DisplayMode.Hide)
-            {
-                StopVisualizationTimer();
-                ChessboardVm?.ClearImages();
-            }
-
-            if (SolutionMode == SolutionMode.Single && value == DisplayMode.Visualize)
-            {
-                ProgressLabelVisibility = Visibility.Hidden;
-                ProgressLabel = string.Empty;
-            }
-            return;
-        }
-
-        if (value == DisplayMode.Hide)
-            StopVisualizationTimer();
-
-        RenderSelectedSolution();
-    }
-
     private void RenderSelectedSolution()
     {
         if (ChessboardVm == null)
