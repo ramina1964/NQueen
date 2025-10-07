@@ -36,6 +36,12 @@ public class BitmaskSolver : ISolver, IDisposable
     public DisplayMode DisplayMode { get; private set; }
     public bool IsSolverCanceled { get; set; }
     public bool EnableEvents { get; set; } = true; // External master enable
+
+    // Replace legacy booleans with enum-backed properties
+    public ResultStorageMode AllStorageMode { get; set; } = SimulationSettings.DefaultAllStorageMode;
+    public ResultStorageMode UniqueStorageMode { get; set; } = SimulationSettings.DefaultUniqueStorageMode;
+
+    // Backward compatibility properties (optional: keep for UI until migrated)
     public bool UseCountOnlyUniqueMode { get; set; } = false;
     public bool UseCountOnlyAllMode { get; set; } = false; // New property for count-only All mode
 
@@ -61,6 +67,10 @@ public class BitmaskSolver : ISolver, IDisposable
 
         if (BoardSize > BoardSettings.MaxBitmaskBoardSize)
             throw new NotSupportedException($"Bitmask solver supports boards up to {BoardSettings.MaxBitmaskBoardSize}. (Requested: {BoardSize})");
+
+        // Sync compatibility booleans from enum configuration
+        UseCountOnlyAllMode = AllStorageMode == ResultStorageMode.CountOnly;
+        UseCountOnlyUniqueMode = UniqueStorageMode == ResultStorageMode.CountOnly;
 
         ResetForSolve();
         var sw = Stopwatch.StartNew();

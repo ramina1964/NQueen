@@ -1,0 +1,25 @@
+<UserControl
+    x:Class="NQueen.GUI.Views.AdvancedSettingsPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
+    d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
+    d:DesignWidth="260"
+    d:DesignHeight="220"
+    mc:Ignorable="d">
+    <GroupBox Header="Performance &amp; Parallel Settings" Margin="0" Padding="0" Background="Bisque" BorderBrush="Black" BorderThickness="1">
+        <!-- Switched to StackPanel for simpler vertical spacing control -->
+        <StackPanel Margin="6" >
+            <CheckBox Content="Use Parallel" IsChecked="{Binding UseParallel}" Margin="2 4" />
+            <StackPanel Orientation="Horizontal" Margin="2 4">
+                <TextBlock Text="Root Split Depth:" VerticalAlignment="Center" Width="120" />
+                <TextBox Width="70" Text="{Binding ParallelRootSplitDepth, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <CheckBox Content="Count-Only (All Mode)" IsChecked="{Binding IsCountOnlyAllMode}" Margin="2 4" />
+            <CheckBox Content="Count-Only (Unique Mode)" IsChecked="{Binding IsCountOnlyUniqueMode}" Margin="2 4" />
+            <TextBlock Text="Count-Only skips storing example solutions." FontSize="11" Foreground="Gray" TextWrapping="Wrap" Margin="2 6 2 2" />
+        </StackPanel>
+    </GroupBox>
+</UserControl>

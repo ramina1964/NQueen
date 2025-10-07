@@ -126,4 +126,32 @@ public sealed partial class MainViewModel : ObservableObject
     // When true (primarily in unit tests), suppress all modal MessageBox dialogs.
     [ObservableProperty]
     private bool _suppressUserDialogs;
+
+    // -------- NEW: Advanced / Performance Tunables (bind to new panel) --------
+
+    [ObservableProperty]
+    private bool _useParallel = SimulationSettings.DefaultUseParallel;
+    partial void OnUseParallelChanged(bool value)
+    {
+        if (_solver is NQueen.Kernel.Solvers.BitmaskSolver b)
+            b.UseParallel = value;
+    }
+
+    [ObservableProperty]
+    private int _parallelRootSplitDepth = SimulationSettings.DefaultParallelRootSplitDepth;
+    partial void OnParallelRootSplitDepthChanged(int value)
+    {
+        if (value < 1) ParallelRootSplitDepth = 1; // clamp
+        else if (_solver is NQueen.Kernel.Solvers.BitmaskSolver b)
+            b.ParallelRootSplitDepth = value;
+    }
+
+    // Count-only for All mode (distinct from existing IsCountOnlyUniqueMode)
+    [ObservableProperty]
+    private bool _isCountOnlyAllMode = (SimulationSettings.DefaultAllStorageMode == ResultStorageMode.CountOnly);
+
+    partial void OnIsCountOnlyAllModeChanged(bool value)
+    {
+        // nothing else needed now; applied at simulate time
+    }
 }

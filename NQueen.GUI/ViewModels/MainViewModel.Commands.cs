@@ -32,6 +32,14 @@ public sealed partial class MainViewModel
             DisplayMode = DisplayMode.Hide;
         }
 
+        // Apply advanced tunables to solver (if BitmaskSolver)
+        if (_solver is NQueen.Kernel.Solvers.BitmaskSolver bitmask)
+        {
+            bitmask.UseParallel = UseParallel;
+            bitmask.ParallelRootSplitDepth = ParallelRootSplitDepth;
+            bitmask.UseCountOnlyAllMode = IsCountOnlyAllMode;
+        }
+
         _solver.IsSolverCanceled = false;
         _currentSimulationToken = Guid.NewGuid();
         _solver.SetSimulationToken(_currentSimulationToken);
@@ -47,7 +55,8 @@ public sealed partial class MainViewModel
             if (SolutionMode == SolutionMode.Unique)
                 _solver.UseCountOnlyUniqueMode = IsCountOnlyUniqueMode;
             else
-                _solver.UseCountOnlyUniqueMode = false;
+                _solver.UseCountOnlyUniqueMode = false; // keep unique-only property consistent
+
             SimulationResults = await _solver.GetSimResultsAsync(simContext);
 
             if (_solver.IsSolverCanceled || _currentSimulationToken == Guid.Empty)

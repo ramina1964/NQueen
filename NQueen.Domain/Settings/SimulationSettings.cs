@@ -7,19 +7,13 @@ public static class SimulationSettings
     public const SolutionMode DefaultSolutionMode = SolutionMode.Unique;
     public const DisplayMode DefaultDisplayMode = DisplayMode.Hide;
 
-    // Parallel / uniqueness tuning (new)
-
-    // Enable parallel solver by default
+    // Parallel tuning
     public const bool DefaultUseParallel = true;
-
-    // Initial root split depth
     public const int DefaultParallelRootSplitDepth = 1;
 
-    // Default materialization of sample unique solutions
-    public const bool DefaultCountOnlyUniqueMode = false;
-
-    // Default materialization of sample all solutions
-    public const bool DefaultCountOnlyAllMode = false;
+    // Storage strategies
+    public const ResultStorageMode DefaultAllStorageMode = ResultStorageMode.MaterializeSample;
+    public const ResultStorageMode DefaultUniqueStorageMode = ResultStorageMode.MaterializeSample;
 
     // Threshold size where we reduce QueenPlaced event frequency.
     public const int QueenPlacedSamplingThresholdSize = 12;
