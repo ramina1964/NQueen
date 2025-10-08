@@ -347,21 +347,28 @@ public class BitmaskSolver : ISolver, IDisposable
 
     private ulong CountUniqueSolutionsSymmetryAware(int N)
     {
-        // Symmetry-aware unique solution counter (no allocations, no HashSet)
-        // Only works for N >= 1
         if (N <= 0) return 0;
         ulong total = 0;
         int half = N / 2;
         int totalSteps = half + ((N & 1) == 1 ? 1 : 0);
-        for (int firstRow = 0; firstRow < half; firstRow++)
+        int progressCounter = 0;
+        object lockObj = new object();
+
+        // Parallelize the outer loop over firstRow
+        Parallel.For(0, half, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, firstRow =>
         {
-            total += CountUniqueForRoot(N, firstRow) * 2;
-            if (ProgressValueChanged != null)
+            ulong localCount = CountUniqueForRoot(N, firstRow) * 2;
+            lock (lockObj)
             {
-                double pct = (double)(firstRow + 1) / totalSteps * 100.0;
-                ProgressValueChanged(this, new ProgressUpdateEventArgs(pct, _currentSimToken));
+                total += localCount;
+                progressCounter++;
+                if (ProgressValueChanged != null)
+                {
+                    double pct = (double)progressCounter / totalSteps * 100.0;
+                    ProgressValueChanged(this, new ProgressUpdateEventArgs(pct, _currentSimToken));
+                }
             }
-        }
+        });
         if ((N & 1) == 1)
         {
             // Center row (only for odd N)
