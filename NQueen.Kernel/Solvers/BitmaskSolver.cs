@@ -1,5 +1,3 @@
-using NQueen.Domain.Context;
-
 namespace NQueen.Kernel.Solvers;
 
 public class BitmaskSolver : ISolver, IDisposable
@@ -279,48 +277,6 @@ public class BitmaskSolver : ISolver, IDisposable
         }
     }
 
-    private void SolveUniqueCountOnlyMode()
-    {
-        if (UseParallel)
-        {
-            ulong count = 0;
-            _parallelEngine.RunUniqueCountOnly(new BitmaskParallelEngine.UniqueCountOnlyRequest(
-                BoardSize,
-                1, // Unique mode always uses split depth 1
-                c => count = c,
-                pct => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken))
-            ));
-            _solutionCount = count;
-            _solutions.Clear();
-        }
-        else
-        {
-            int N = BoardSize;
-            var uniqueKeys = new HashSet<UInt128>();
-            var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
-
-            _searchEngine.Run(new BitmaskSearchEngine.Request(
-                BoardSize,
-                RestrictFirstCol: true,
-                EnhancedSymmetry: true,
-                DisplayMode,
-                DelayInMillisec,
-                _currentSimToken,
-                () => IsSolverCanceled,
-                p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-                m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
-                rows =>
-                {
-                    var copy = (int[])rows.Clone();
-                    SymmetryHelper.AddIfUniquePacked(copy, uniqueKeys, scratchBuf, out _, out _);
-                    return false;
-                }
-            ));
-            _solutionCount = (ulong)uniqueKeys.Count;
-            _solutions.Clear();
-        }
-    }
-
     private static ulong CountUniqueForRoot(int N, int firstRow)
     {
         ulong count = 0;
@@ -389,6 +345,35 @@ public class BitmaskSolver : ISolver, IDisposable
         return count;
     }
 
+    private ulong CountUniqueSolutionsSymmetryAware(int N)
+    {
+        // Symmetry-aware unique solution counter (no allocations, no HashSet)
+        // Only works for N >= 1
+        if (N <= 0) return 0;
+        ulong total = 0;
+        int half = N / 2;
+        int totalSteps = half + ((N & 1) == 1 ? 1 : 0);
+        for (int firstRow = 0; firstRow < half; firstRow++)
+        {
+            total += CountUniqueForRoot(N, firstRow) * 2;
+            if (ProgressValueChanged != null)
+            {
+                double pct = (double)(firstRow + 1) / totalSteps * 100.0;
+                ProgressValueChanged(this, new ProgressUpdateEventArgs(pct, _currentSimToken));
+            }
+        }
+        if ((N & 1) == 1)
+        {
+            // Center row (only for odd N)
+            total += CountUniqueForRoot(N, half); // no mirror
+            if (ProgressValueChanged != null)
+            {
+                ProgressValueChanged(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+            }
+        }
+        return total;
+    }
+
     private void RunUniqueParallel()
     {
         if (UseCountOnlyUniqueMode)
@@ -420,6 +405,44 @@ public class BitmaskSolver : ISolver, IDisposable
             },
             pct => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken))
         ));
+    }
+
+    private void SolveUniqueCountOnlyMode()
+    {
+        if (UseParallel)
+        {
+            // Use symmetry-aware allocation-free counter for large N
+            _solutionCount = CountUniqueSolutionsSymmetryAware(BoardSize);
+            _solutions.Clear();
+            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+        }
+        else
+        {
+            int N = BoardSize;
+            var uniqueKeys = new HashSet<UInt128>();
+            var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
+
+            _searchEngine.Run(new BitmaskSearchEngine.Request(
+                BoardSize,
+                RestrictFirstCol: true,
+                EnhancedSymmetry: true,
+                DisplayMode,
+                DelayInMillisec,
+                _currentSimToken,
+                () => IsSolverCanceled,
+                p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
+                m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
+                rows =>
+                {
+                    // Directly pack key from working array, skip cloning
+                    var key = SymmetryHelper.GetCanonicalKey(rows, scratchBuf, out _);
+                    uniqueKeys.Add(key);
+                    return false;
+                }
+            ));
+            _solutionCount = (ulong)uniqueKeys.Count;
+            _solutions.Clear();
+        }
     }
 
     private void RunUniqueSequential()

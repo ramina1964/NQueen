@@ -449,8 +449,9 @@ internal sealed class BitmaskParallelEngine
                 {
                     if (col == N)
                     {
-                        // Directly pack key from working array, skip cloning
-                        SymmetryHelper.AddIfUniquePacked(rowsArr, localUnique, scratchBuf, out _, out _);
+                        // Only compute canonical key, do not materialize canonical array
+                        var key = SymmetryHelper.GetCanonicalKey(rowsArr, scratchBuf, out _);
+                        localUnique.Add(key);
                         col--;
                         if (col <= 0) break;
                         Restore(col, out remaining);
