@@ -33,13 +33,13 @@
             <Label Grid.Row="1" Grid.Column="0" Content="Root Split Depth (Auto)" Style="{StaticResource LabelStyle}" Margin="2 4 6 4" />
             <TextBox Grid.Row="1" Grid.Column="1" Width="60" Text="{Binding ParallelRootSplitDepth}" IsEnabled="False" HorizontalAlignment="Right" Style="{StaticResource TextBoxNumericalStyle}" />
 
-            <!-- All Mode Storage -->
-            <Label Grid.Row="2" Grid.Column="0" Content="All Mode Storage" Style="{StaticResource LabelStyle}" Margin="2 4 6 4" />
-            <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding EnumStorageModes}" SelectedItem="{Binding SelectedAllStorageMode}" HorizontalAlignment="Stretch" Style="{StaticResource ComboBoxStyle}" />
-
             <!-- Unique Mode Storage -->
-            <Label Grid.Row="3" Grid.Column="0" Content="Unique Mode Storage" Style="{StaticResource LabelStyle}" Margin="2 4 6 4" />
-            <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding EnumStorageModes}" SelectedItem="{Binding SelectedUniqueStorageMode}" HorizontalAlignment="Stretch" Style="{StaticResource ComboBoxStyle}" />
+            <Label Grid.Row="2" Grid.Column="0" Content="Unique Mode Storage" Style="{StaticResource LabelStyle}" Margin="2 4 6 4" />
+            <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding EnumStorageModes}" SelectedItem="{Binding SelectedUniqueStorageMode}" HorizontalAlignment="Stretch" Style="{StaticResource ComboBoxStyle}" IsEnabled="{Binding IsInInputMode}" />
+
+            <!-- All Mode Storage -->
+            <Label Grid.Row="3" Grid.Column="0" Content="All Mode Storage" Style="{StaticResource LabelStyle}" Margin="2 4 6 4" />
+            <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding EnumStorageModes}" SelectedItem="{Binding SelectedAllStorageMode}" HorizontalAlignment="Stretch" Style="{StaticResource ComboBoxStyle}" IsEnabled="{Binding IsInInputMode}" />
 
             <!-- Info Note -->
             <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Text="Parallel &amp; split depth auto-tuned by board size &amp; solution mode." FontSize="11" Foreground="Gray" TextWrapping="Wrap" Margin="2 8 2 2" />

@@ -241,36 +241,84 @@ public class BitmaskSolver : ISolver, IDisposable
         ));
     }
 
+    private void SolveAllCountOnlyMode()
+    {
+        if (UseParallel)
+        {
+            ulong count = 0;
+            _parallelEngine.RunAllCountOnly(new BitmaskParallelEngine.AllCountOnlyRequest(
+                BoardSize,
+                UseAdaptiveDepth ? -1 : ParallelRootSplitDepth,
+                c => count = c,
+                pct => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken))
+            ));
+            _solutionCount = count;
+            _solutions.Clear();
+        }
+        else
+        {
+            ulong count = 0;
+            _searchEngine.Run(new BitmaskSearchEngine.Request(
+                BoardSize,
+                RestrictFirstCol: false,
+                EnhancedSymmetry: false,
+                DisplayMode,
+                DelayInMillisec,
+                _currentSimToken,
+                () => IsSolverCanceled,
+                p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
+                m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
+                rows =>
+                {
+                    count++;
+                    return false;
+                }
+            ));
+            _solutionCount = count;
+            _solutions.Clear();
+        }
+    }
+
     private void SolveUniqueCountOnlyMode()
     {
-        int N = BoardSize;
-        var uniqueKeys = new HashSet<UInt128>();
-        var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
+        if (UseParallel)
+        {
+            ulong count = 0;
+            _parallelEngine.RunUniqueCountOnly(new BitmaskParallelEngine.UniqueCountOnlyRequest(
+                BoardSize,
+                1, // Unique mode always uses split depth 1
+                c => count = c,
+                pct => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken))
+            ));
+            _solutionCount = count;
+            _solutions.Clear();
+        }
+        else
+        {
+            int N = BoardSize;
+            var uniqueKeys = new HashSet<UInt128>();
+            var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
 
-        _searchEngine.Run(new BitmaskSearchEngine.Request(
-            BoardSize,
-            RestrictFirstCol: true,
-            EnhancedSymmetry: true,
-            DisplayMode,
-            DelayInMillisec,
-            _currentSimToken,
-            () => IsSolverCanceled,
-            p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-            m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
-            rows =>
-            {
-                // rows reused by search engine; copy before canonicalizing to avoid mutation issues
-                var copy = (int[])rows.Clone();
-                if (SymmetryHelper.AddIfUniquePacked(copy, uniqueKeys, scratchBuf, out _, out _))
+            _searchEngine.Run(new BitmaskSearchEngine.Request(
+                BoardSize,
+                RestrictFirstCol: true,
+                EnhancedSymmetry: true,
+                DisplayMode,
+                DelayInMillisec,
+                _currentSimToken,
+                () => IsSolverCanceled,
+                p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
+                m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
+                rows =>
                 {
-                    // unique counted implicitly via set size
+                    var copy = (int[])rows.Clone();
+                    SymmetryHelper.AddIfUniquePacked(copy, uniqueKeys, scratchBuf, out _, out _);
+                    return false;
                 }
-                return false;
-            }
-        ));
-
-        _solutionCount = (ulong)uniqueKeys.Count;
-        _solutions.Clear();
+            ));
+            _solutionCount = (ulong)uniqueKeys.Count;
+            _solutions.Clear();
+        }
     }
 
     private static ulong CountUniqueForRoot(int N, int firstRow)
@@ -413,29 +461,6 @@ public class BitmaskSolver : ISolver, IDisposable
                 return false; // continue search
             }
         ));
-    }
-
-    private void SolveAllCountOnlyMode()
-    {
-        ulong count = 0;
-        _searchEngine.Run(new BitmaskSearchEngine.Request(
-            BoardSize,
-            RestrictFirstCol: false,
-            EnhancedSymmetry: false,
-            DisplayMode,
-            DelayInMillisec,
-            _currentSimToken,
-            () => IsSolverCanceled,
-            p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-            m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
-            rows =>
-            {
-                count++;
-                return false;
-            }
-        ));
-        _solutionCount = count;
-        _solutions.Clear(); // No sample solutions in count-only mode
     }
 
     private bool ShouldAddSolution()
