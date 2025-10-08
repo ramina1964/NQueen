@@ -48,6 +48,7 @@ public class BitmaskSolver : ISolver, IDisposable
     // New parallelization tunables
     public bool UseParallel { get; set; } = true; // allow disabling parallel execution (forces single-threaded search)
     public int ParallelRootSplitDepth { get; set; } = 1; // number of leading columns used to create root tasks (>=1). Currently supported for All mode; Unique mode uses 1.
+    public bool UseAdaptiveDepth { get; set; } = false; // new property to enable adaptive split depth selection
 
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
 
@@ -86,7 +87,12 @@ public class BitmaskSolver : ISolver, IDisposable
                     SolveAllCountOnlyMode();
                 }
                 else if (UseParallel)
-                    RunAllParallel();
+                {
+                    int splitDepth = UseAdaptiveDepth
+                        ? ParallelSplitDepthHeuristic.GetOptimalSplitDepth(BoardSize)
+                        : ParallelRootSplitDepth;
+                    RunAllParallel(splitDepth);
+                }
                 else
                     RunAllSequential();
                 break;
@@ -179,12 +185,12 @@ public class BitmaskSolver : ISolver, IDisposable
         return new SimulationResults(resultSolutions, _solutionCount, Math.Round(elapsed.TotalSeconds, 1));
     }
 
-    private void RunAllParallel()
+    private void RunAllParallel(int splitDepth)
     {
         _parallelEngine.RunAll(new BitmaskParallelEngine.AllRequest(
             BoardSize,
-            EnableEvents, // initial snapshot; dynamic suppression handled inside solver callbacks
-            ParallelRootSplitDepth < 1 ? 1 : ParallelRootSplitDepth,
+            EnableEvents,
+            splitDepth < 1 ? 1 : splitDepth,
             rows =>
             {
                 Interlocked.Increment(ref _solutionCount);

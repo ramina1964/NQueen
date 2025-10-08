@@ -22,6 +22,12 @@ internal sealed class BitmaskParallelEngine
         int splitDepth = request.RootSplitDepth < 1 ? 1 : request.RootSplitDepth;
         if (splitDepth > N) splitDepth = N;
 
+        // Adaptive logic: if splitDepth is -1, use heuristic
+        if (request.RootSplitDepth == -1)
+        {
+            splitDepth = ParallelSplitDepthHeuristic.GetOptimalSplitDepth(N);
+        }
+
         request.ReportProgress(0.0);
         var tasks = new List<Task>();
 
