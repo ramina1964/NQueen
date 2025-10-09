@@ -67,9 +67,10 @@ public class BitmaskSolver : ISolver, IDisposable
         if (BoardSize > BoardSettings.MaxBitmaskBoardSize)
             throw new NotSupportedException($"Bitmask solver supports boards up to {BoardSettings.MaxBitmaskBoardSize}. (Requested: {BoardSize})");
 
-        // Sync compatibility booleans from enum configuration
-        UseCountOnlyAllMode = AllStorageMode == ResultStorageMode.CountOnly;
-        UseCountOnlyUniqueMode = UniqueStorageMode == ResultStorageMode.CountOnly;
+        // IMPORTANT: Do NOT overwrite the legacy boolean flags here.
+        // Users (e.g. ConsoleApp) may set UseCountOnly* directly. We combine the enum + boolean as an OR.
+        bool allCountOnly = UseCountOnlyAllMode || AllStorageMode == ResultStorageMode.CountOnly;
+        bool uniqueCountOnly = UseCountOnlyUniqueMode || UniqueStorageMode == ResultStorageMode.CountOnly;
 
         ResetForSolve();
         var sw = Stopwatch.StartNew();
@@ -80,7 +81,7 @@ public class BitmaskSolver : ISolver, IDisposable
                 SolveSingleMode();
                 break;
             case SolutionMode.All:
-                if (UseCountOnlyAllMode)
+                if (allCountOnly)
                 {
                     SolveAllCountOnlyMode();
                 }
@@ -95,7 +96,11 @@ public class BitmaskSolver : ISolver, IDisposable
                     RunAllSequential();
                 break;
             case SolutionMode.Unique:
-                if (UseParallel)
+                if (uniqueCountOnly)
+                {
+                    SolveUniqueCountOnlyMode();
+                }
+                else if (UseParallel)
                     RunUniqueParallel();
                 else
                     RunUniqueSequential();
