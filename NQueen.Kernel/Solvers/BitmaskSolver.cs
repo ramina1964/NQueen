@@ -85,15 +85,18 @@ public class BitmaskSolver : ISolver, IDisposable
                 {
                     SolveAllCountOnlyMode();
                 }
-                else if (UseParallel)
+                else
                 {
+                    // Automatic parallel/sequential selection for All mode
+                    bool autoParallel = ParallelSplitDepthHeuristic.ShouldUseParallelForAll(BoardSize);
                     int splitDepth = UseAdaptiveDepth
                         ? ParallelSplitDepthHeuristic.GetOptimalSplitDepth(BoardSize)
                         : ParallelRootSplitDepth;
-                    RunAllParallel(splitDepth);
+                    if (autoParallel)
+                        RunAllParallel(splitDepth);
+                    else
+                        RunAllSequential();
                 }
-                else
-                    RunAllSequential();
                 break;
             case SolutionMode.Unique:
                 if (uniqueCountOnly)

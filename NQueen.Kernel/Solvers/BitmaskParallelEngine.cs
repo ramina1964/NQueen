@@ -335,48 +335,60 @@ internal sealed class BitmaskParallelEngine
                 ulong d1 = root.D1;
                 ulong d2 = root.D2;
 
-                ulong[] stackCols = new ulong[N];
-                ulong[] stackD1 = new ulong[N];
-                ulong[] stackD2 = new ulong[N];
-                ulong[] stackRemaining = new ulong[N];
+                // Use ArrayPool to reduce allocations for stack arrays
+                var pool = System.Buffers.ArrayPool<ulong>.Shared;
+                ulong[] stackCols = pool.Rent(N);
+                ulong[] stackD1 = pool.Rent(N);
+                ulong[] stackD2 = pool.Rent(N);
+                ulong[] stackRemaining = pool.Rent(N);
 
-                int col = startCol;
-                ulong remaining = ComputeAvailable(col);
-
-                while (true)
+                try
                 {
-                    if (col == N)
+                    int col = startCol;
+                    ulong remaining = ComputeAvailable(col);
+
+                    while (true)
                     {
-                        localCount++;
-                        col--;
-                        if (col < startCol) break;
-                        Restore(col, out remaining);
-                        continue;
+                        if (col == N)
+                        {
+                            localCount++;
+                            col--;
+                            if (col < startCol) break;
+                            Restore(col, out remaining);
+                            continue;
+                        }
+                        if (remaining == 0)
+                        {
+                            col--;
+                            if (col < startCol) break;
+                            Restore(col, out remaining);
+                            continue;
+                        }
+                        ulong bit = remaining & (ulong)-(long)remaining;
+                        remaining ^= bit;
+                        int row = BitOperations.TrailingZeroCount(bit);
+                        rowsArr[col] = row;
+
+                        stackCols[col] = cols;
+                        stackD1[col] = d1;
+                        stackD2[col] = d2;
+                        stackRemaining[col] = remaining;
+
+                        cols |= bit;
+                        d1 = (d1 | bit) << 1;
+                        d2 = (d2 | bit) >> 1;
+
+                        col++;
+                        if (col == N) continue;
+                        remaining = ComputeAvailable(col);
                     }
-                    if (remaining == 0)
-                    {
-                        col--;
-                        if (col < startCol) break;
-                        Restore(col, out remaining);
-                        continue;
-                    }
-                    ulong bit = remaining & (ulong)-(long)remaining;
-                    remaining ^= bit;
-                    int row = BitOperations.TrailingZeroCount(bit);
-                    rowsArr[col] = row;
-
-                    stackCols[col] = cols;
-                    stackD1[col] = d1;
-                    stackD2[col] = d2;
-                    stackRemaining[col] = remaining;
-
-                    cols |= bit;
-                    d1 = (d1 | bit) << 1;
-                    d2 = (d2 | bit) >> 1;
-
-                    col++;
-                    if (col == N) continue;
-                    remaining = ComputeAvailable(col);
+                }
+                finally
+                {
+                    pool.Return(stackCols);
+                    pool.Return(stackD1);
+                    pool.Return(stackD2);
+                    pool.Return(stackRemaining);
                 }
 
                 if (request.ReportProgress != null)

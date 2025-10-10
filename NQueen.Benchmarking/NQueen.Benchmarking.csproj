@@ -20,4 +20,8 @@
     <ProjectReference Include="..\NQueen.Kernel\NQueen.Kernel.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Artifacts\results\" />
+  </ItemGroup>
+
 </Project>

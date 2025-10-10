@@ -24,4 +24,13 @@ internal static class ParallelSplitDepthHeuristic
         }
         return 1;
     }
+
+    /// <summary>
+    /// Returns true if parallel mode should be used for All solutions, based on board size.
+    /// </summary>
+    public static bool ShouldUseParallelForAll(int boardSize)
+    {
+        // Empirical: parallel overhead outweighs benefit for N < 12
+        return boardSize >= 12;
+    }
 }
