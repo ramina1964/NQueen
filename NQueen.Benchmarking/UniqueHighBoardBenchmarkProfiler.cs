@@ -17,8 +17,8 @@ namespace NQueen.Benchmarking;
 // Returns: total unique solutions count (uniform return type for both modes)
 public class UniqueHighBoardBenchmarkProfiler
 {
-    // Add N=19 and N=20 for large board benchmarking
-    [Params(14, 16, 18, 19, 20)]
+    // Only benchmark N=14, 16, 18 to avoid excessive profiler runtime
+    [Params(14, 16, 18)]
     public int BoardSize;
 
     // false => materialize sample solutions; true => pure count-only unique mode
