@@ -4,6 +4,7 @@ using NQueen.Kernel.Solvers;
 using NQueen.Domain.Models;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 
 namespace NQueen.Benchmarking;
 
@@ -28,11 +29,11 @@ public class SymmetryCanonicalFormBenchmark
     [Benchmark]
     public void CanonicalizeAll()
     {
+        var scratch = new int[BoardSize * 2];
         foreach (var sol in _solutions)
         {
-            var canonical = SymmetryHelper.GetCanonicalForm(sol);
-            // Prevent JIT elision
-            if (canonical[0] < -1) throw new System.InvalidOperationException();
+            var key = SymmetryHelper.GetCanonicalKey(sol, scratch, out _);
+            if (key == UInt128.MaxValue - 1) throw new System.InvalidOperationException();
         }
     }
 }
@@ -59,7 +60,7 @@ public class SymmetryAddIfUniqueBenchmark
     [Benchmark]
     public void ColdInsertions()
     {
-        var set = new HashSet<int[]>(new IntArrayComparer());
+        var set = new HashSet<UInt128>();
         foreach (var sol in _solutions)
         {
             SymmetryHelper.AddIfUnique(sol, set, _scratch);
@@ -70,7 +71,7 @@ public class SymmetryAddIfUniqueBenchmark
     [Benchmark]
     public void DuplicateInsertions()
     {
-        var set = new HashSet<int[]>(new IntArrayComparer());
+        var set = new HashSet<UInt128>();
         foreach (var sol in _solutions)
         {
             SymmetryHelper.AddIfUnique(sol, set, _scratch);

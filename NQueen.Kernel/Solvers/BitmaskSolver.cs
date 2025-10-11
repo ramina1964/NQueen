@@ -521,24 +521,24 @@ public class BitmaskSolver : ISolver, IDisposable
     private readonly int _maxSolutionsInOutput;
     private volatile bool _eventsSuppressedAfterCap; // dynamic flag to stop event traffic after cap reached
 
-    private sealed class IntArrayComparer : IEqualityComparer<int[]>
-    {
-        public bool Equals(int[]? x, int[]? y)
-        {
-            if (ReferenceEquals(x, y)) return true;
-            if (x is null || y is null || x.Length != y.Length) return false;
-            for (int i = 0; i < x.Length; i++)
-                if (x[i] != y[i]) return false;
-            return true;
-        }
-        public int GetHashCode(int[] obj)
-        {
-            unchecked
-            {
-                int hash = 17;
-                foreach (var v in obj) hash = hash * 31 + v;
-                return hash;
-            }
-        }
-    }
+    //private sealed class IntArrayComparer : IEqualityComparer<int[]>
+    //{
+    //    public bool Equals(int[]? x, int[]? y)
+    //    {
+    //        if (ReferenceEquals(x, y)) return true;
+    //        if (x is null || y is null || x.Length != y.Length) return false;
+    //        for (int i = 0; i < x.Length; i++)
+    //            if (x[i] != y[i]) return false;
+    //        return true;
+    //    }
+    //    public int GetHashCode(int[] obj)
+    //    {
+    //        unchecked
+    //        {
+    //            int hash = 17;
+    //            foreach (var v in obj) hash = hash * 31 + v;
+    //            return hash;
+    //        }
+    //    }
+    //}
 }

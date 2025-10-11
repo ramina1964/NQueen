@@ -15,24 +15,7 @@ public static partial class SymmetryHelper
         return boardSize;
     }
 
-    // Optimized: pass scratch buffer to avoid allocations
-    public static bool AddIfUnique(int[] solution, HashSet<int[]> uniqueSolutions, int[] scratch)
-    {
-        ArgumentNullException.ThrowIfNull(solution);
-        ArgumentNullException.ThrowIfNull(uniqueSolutions);
-        ArgumentNullException.ThrowIfNull(scratch);
-        if (scratch.Length < solution.Length * 2)
-            throw new ArgumentException("Scratch buffer too small", nameof(scratch));
-
-        // Compute canonical form using scratch
-        var canonical = GetCanonicalForm(solution, scratch);
-        if (uniqueSolutions.Contains(canonical))
-            return false;
-        uniqueSolutions.Add((int[])canonical.Clone());
-        return true;
-    }
-
-    // New: Packed key uniqueness helper (uses UInt128). Assumes board size <= 32 (true for unique mode limit 20).
+    // Packed key uniqueness helper (uses UInt128). Assumes board size <= 32 (true for unique mode limit 20+ packed fits 5 bits per row up to 32).
     public static bool AddIfUniquePacked(int[] solution, HashSet<UInt128> uniqueKeys, int[] scratch, out UInt128 key, out int[] canonicalCopy)
     {
         key = 0;
@@ -48,6 +31,10 @@ public static partial class SymmetryHelper
         canonicalCopy = canonicalSpan.ToArray();
         return true;
     }
+
+    // Convenience overload when caller does not need key/canonical copy.
+    public static bool AddIfUnique(int[] solution, HashSet<UInt128> uniqueKeys, int[] scratch) =>
+        AddIfUniquePacked(solution, uniqueKeys, scratch, out _, out _);
 
     // Overload: GetCanonicalForm with scratch buffer (existing array-returning API)
     public static int[] GetCanonicalForm(int[] solution, int[] scratch)
@@ -146,7 +133,7 @@ public static partial class SymmetryHelper
         return key;
     }
 
-    // Legacy overload for compatibility
+    // Legacy overload for compatibility (still used by some tests/benchmarks expecting int[] return)
     public static int[] GetCanonicalForm(int[] solution)
     {
         int n = solution.Length;
