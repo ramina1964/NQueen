@@ -583,7 +583,8 @@ internal sealed class BitmaskParallelEngine
     private static int[] UnpackKeyToArray(UInt128 key, int n)
     {
         var rows = new int[n];
-        // Packed with most significant row first (left-shift process). Need to read back reverse.
+        // Packed with most significant row first (left-shift process).
+        // Need to read back reverse.
         for (int i = n - 1; i >= 0; i--)
         {
             rows[i] = (int)(key & 0x1F); // 5 bits
@@ -592,5 +593,6 @@ internal sealed class BitmaskParallelEngine
         return rows;
     }
 
-    private readonly record struct RootFrame(int Col, ulong Cols, ulong D1, ulong D2, int[] Rows);
+    private readonly record struct RootFrame(
+        int Col, ulong Cols, ulong D1, ulong D2, int[] Rows);
 }
