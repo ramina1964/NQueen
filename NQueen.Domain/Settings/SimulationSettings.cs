@@ -30,4 +30,7 @@ public static class SimulationSettings
 
     // Visualization is allowed only up to and including this board size.
     public const int MaxVisualizeBoardSize = 6;
+
+    // NEW: Threshold at/above which we throttle parallel progress updates for All modes.
+    public const int LargeBoardProgressThrottleThreshold = 16;
 }

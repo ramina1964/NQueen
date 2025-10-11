@@ -74,6 +74,11 @@ internal sealed class BitmaskParallelEngine
 
         int totalRoots = rootList.Count;
         int rootsCompleted = 0;
+        // Throttle progress reports for large boards to bucketed percent changes only.
+        int lastPercentReported = -1; // shared across tasks (Interlocked)
+        bool throttle = N >= SimulationSettings.LargeBoardProgressThrottleThreshold; // requirement scope
+        int bucketSize = SimulationSettings.ProgressThresholdPct;
+        if (bucketSize < 1) bucketSize = 1;
 
         foreach (var root in rootList)
         {
@@ -135,8 +140,26 @@ internal sealed class BitmaskParallelEngine
                 if (request.EnableEvents)
                 {
                     int done = Interlocked.Increment(ref rootsCompleted);
-                    double pct = Math.Min(100.0, (double)done / totalRoots * 100.0);
-                    request.ReportProgress(pct);
+                    if (!throttle)
+                    {
+                        double pctFine = Math.Min(100.0, (double)done / totalRoots * 100.0);
+                        request.ReportProgress(pctFine);
+                    }
+                    else
+                    {
+                        // Only report when progress crosses a bucket boundary (e.g., every 5%).
+                        int pctInt = (int)((double)done * 100 / totalRoots);
+                        int bucket = (pctInt / bucketSize) * bucketSize;
+                        int observed;
+                        while (bucket > (observed = Volatile.Read(ref lastPercentReported)))
+                        {
+                            if (Interlocked.CompareExchange(ref lastPercentReported, bucket, observed) == observed)
+                            {
+                                request.ReportProgress(bucket);
+                                break;
+                            }
+                        }
+                    }
                 }
 
                 ulong ComputeAvailable(int c)
@@ -321,6 +344,10 @@ internal sealed class BitmaskParallelEngine
 
         int totalRoots = rootList.Count;
         int rootsCompleted = 0;
+        int lastPercentReported = -1;
+        bool throttle = N >= NQueen.Domain.Settings.SimulationSettings.LargeBoardProgressThrottleThreshold; // same throttling condition
+        int bucketSize = NQueen.Domain.Settings.SimulationSettings.ProgressThresholdPct;
+        if (bucketSize < 1) bucketSize = 1;
 
         foreach (var root in rootList)
         {
@@ -394,8 +421,25 @@ internal sealed class BitmaskParallelEngine
                 if (request.ReportProgress != null)
                 {
                     int done = Interlocked.Increment(ref rootsCompleted);
-                    double pct = Math.Min(100.0, (double)done / totalRoots * 100.0);
-                    request.ReportProgress(pct);
+                    if (!throttle)
+                    {
+                        double pctFine = Math.Min(100.0, (double)done / totalRoots * 100.0);
+                        request.ReportProgress(pctFine);
+                    }
+                    else
+                    {
+                        int pctInt = (int)((double)done * 100 / totalRoots);
+                        int bucket = (pctInt / bucketSize) * bucketSize;
+                        int observed;
+                        while (bucket > (observed = Volatile.Read(ref lastPercentReported)))
+                        {
+                            if (Interlocked.CompareExchange(ref lastPercentReported, bucket, observed) == observed)
+                            {
+                                request.ReportProgress(bucket);
+                                break;
+                            }
+                        }
+                    }
                 }
 
                 ulong ComputeAvailable(int c)
