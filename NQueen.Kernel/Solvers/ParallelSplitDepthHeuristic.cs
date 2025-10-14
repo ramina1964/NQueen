@@ -1,4 +1,4 @@
-namespace NQueen.Kernel.Solvers;
+namespace NQueen.Kernel.Solvers.Heuristics;
 
 /// <summary>
 /// Heuristic for selecting optimal parallel root split depth based on board size and core count.

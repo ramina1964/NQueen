@@ -1,5 +1,7 @@
 namespace NQueen.Kernel.Solvers;
 
+using NQueen.Kernel.Solvers.Engines;
+
 /// <summary>
 /// BitmaskSolver (Single mode partial) - contains logic for SolutionMode.Single.
 /// </summary>

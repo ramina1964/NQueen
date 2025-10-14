@@ -1,5 +1,9 @@
 namespace NQueen.Kernel.Solvers;
 
+using NQueen.Kernel.Solvers.Engines;
+using NQueen.Kernel.Solvers.Heuristics;
+using NQueen.Kernel.Solvers.Counters;
+
 public partial class BitmaskSolver : ISolver, IDisposable
 {
     // -------------------- Public API & Constructors --------------------

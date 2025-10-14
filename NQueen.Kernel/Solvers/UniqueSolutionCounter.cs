@@ -1,9 +1,5 @@
-namespace NQueen.Kernel.Solvers;
+namespace NQueen.Kernel.Solvers.Counters;
 
-/// <summary>
-/// Static helper to count unique (symmetry-reduced) solutions using parallel outer split.
-/// Extracted from BitmaskSolver to reduce file size and isolate algorithm.
-/// </summary>
 internal static class UniqueSolutionCounter
 {
     public static ulong Count(int boardSize, Action<double>? progress, Guid token, EventHandler<ProgressUpdateEventArgs>? progressEventSource, object? sender)

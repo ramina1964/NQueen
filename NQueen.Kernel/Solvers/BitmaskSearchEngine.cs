@@ -1,4 +1,4 @@
-namespace NQueen.Kernel.Solvers;
+namespace NQueen.Kernel.Solvers.Engines;
 
 internal sealed class BitmaskSearchEngine
 {

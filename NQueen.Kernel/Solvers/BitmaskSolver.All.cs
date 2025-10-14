@@ -1,5 +1,9 @@
 namespace NQueen.Kernel.Solvers;
 
+using NQueen.Kernel.Solvers.Engines;
+using NQueen.Kernel.Solvers.Heuristics;
+using NQueen.Kernel.Solvers.Counters;
+
 /// <summary>
 /// BitmaskSolver (All mode partial) - logic for enumerating or counting all solutions (with symmetry).
 /// </summary>

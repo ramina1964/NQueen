@@ -1,5 +1,8 @@
 namespace NQueen.Kernel.Solvers;
 
+using NQueen.Kernel.Solvers.Engines;
+using NQueen.Kernel.Solvers.Counters;
+
 /// <summary>
 /// BitmaskSolver (Unique mode partial) - logic for unique enumeration & counting.
 /// </summary>

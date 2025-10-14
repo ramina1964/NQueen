@@ -1,9 +1,5 @@
-namespace NQueen.Kernel.Solvers;
+namespace NQueen.Kernel.Solvers.State;
 
-/// <summary>
-/// Bitmask-specific board state for N-Queens search (initial extraction).
-/// Renamed from BoardState to BitmaskBoardState to avoid ambiguity with existing core BoardState.
-/// </summary>
 public sealed class BitmaskBoardState
 {
     private BitmaskBoardState(int size)
@@ -37,7 +33,6 @@ public sealed class BitmaskBoardState
 
     public bool IsComplete => Col == Size;
 
-    // Available = NOT (occupied columns OR main diagonals OR anti diagonals) & fullMask
     public uint GetAvailableMask() =>
         ~(ColMask | Diag1Mask | Diag2Mask) & FullMask;
 
