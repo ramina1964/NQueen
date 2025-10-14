@@ -1,16 +1,12 @@
 ﻿namespace NQueen.UnitTests.Tests.NQueenSolver;
 
-public class SolverNegativeTests : IDisposable
+public class SolverNegativeTests : IClassFixture<SolverBackEndFixture>
 {
-    public SolverNegativeTests()
-    {
-        // Initialize the test-specific service provider
-        var services = new ServiceCollection();
-        services.AddApplicationServices();
-        services.AddTestServices();
+    private readonly ISolverBackEnd _solver;
 
-        _serviceProvider = services.BuildServiceProvider();
-        _solver = _serviceProvider.GetRequiredService<ISolverBackEnd>();
+    public SolverNegativeTests(SolverBackEndFixture fixture)
+    {
+        _solver = fixture.Sut;
     }
 
     [Theory]
@@ -26,13 +22,4 @@ public class SolverNegativeTests : IDisposable
         // Assert
         Assert.Empty(actualSolutions.Solutions);
     }
-
-    public void Dispose()
-    {
-        _serviceProvider.Dispose();
-        GC.SuppressFinalize(this);
-    }
-
-    private readonly ISolverBackEnd _solver;
-    private readonly ServiceProvider _serviceProvider;
 }

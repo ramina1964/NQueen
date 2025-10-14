@@ -1,14 +1,12 @@
 namespace NQueen.UnitTests.Tests.NQueenSolver;
 
-public class SolverPositiveTests : IDisposable
+public class SolverPositiveTests : IClassFixture<SolverBackEndFixture>
 {
-    public SolverPositiveTests()
+    private readonly ISolverBackEnd _solver;
+
+    public SolverPositiveTests(SolverBackEndFixture fixture)
     {
-        var services = new ServiceCollection();
-        services.AddApplicationServices();
-        services.AddTestServices();
-        _serviceProvider = services.BuildServiceProvider();
-        _solver = _serviceProvider.GetRequiredService<ISolverBackEnd>();
+        _solver = fixture.Sut;
     }
 
     [Theory]
@@ -69,14 +67,5 @@ public class SolverPositiveTests : IDisposable
             expectedSolutions,
             $"N={boardSize} {solutionMode}");
     }
-
-    public void Dispose()
-    {
-        _serviceProvider.Dispose();
-        GC.SuppressFinalize(this);
-    }
-    
-    private readonly ISolverBackEnd _solver;
-    private readonly ServiceProvider _serviceProvider;
 }
 
