@@ -205,12 +205,7 @@ public class BitmaskSolver : ISolver, IDisposable
                     lock (_solutions)
                     {
                         if (ShouldAddSolution())
-                        {
-                            _solutions.Add(rows);
-                            if (ShouldRaiseEvents())
-                                SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows)));
-                            MaybeSuppressEventsAfterCap();
-                        }
+                            TryStoreSolution(rows, clone: false);
                     }
                 }
             },
@@ -236,11 +231,7 @@ public class BitmaskSolver : ISolver, IDisposable
                 _solutionCount++;
                 if (ShouldAddSolution())
                 {
-                    var copy = (int[])rows.Clone();
-                    _solutions.Add(copy);
-                    if (ShouldRaiseEvents())
-                        SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(copy)));
-                    MaybeSuppressEventsAfterCap();
+                    TryStoreSolution(rows, clone: true); // need independent copy
                 }
                 return false; // keep searching
             }
@@ -409,12 +400,7 @@ public class BitmaskSolver : ISolver, IDisposable
                     lock (_solutions)
                     {
                         if (ShouldAddSolution())
-                        {
-                            _solutions.Add(rows);
-                            if (ShouldRaiseEvents())
-                                SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows)));
-                            MaybeSuppressEventsAfterCap();
-                        }
+                            TryStoreSolution(rows, clone: false);
                     }
                 }
             },
@@ -490,10 +476,8 @@ public class BitmaskSolver : ISolver, IDisposable
                     _solutionCount++;
                     if (ShouldAddSolution())
                     {
-                        _solutions.Add(canonical.ToArray());
-                        if (ShouldRaiseEvents())
-                            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(canonical.ToArray())));
-                        MaybeSuppressEventsAfterCap();
+                        // canonical already materialized
+                        TryStoreSolution(canonical.ToArray(), clone: false);
                     }
                 }
                 return false; // continue search
@@ -509,6 +493,16 @@ public class BitmaskSolver : ISolver, IDisposable
         return cap <= 0 || _solutions.Count < cap;
     }
 
+    private void TryStoreSolution(int[] rows, bool clone)
+    {
+        if (!ShouldAddSolution()) return;
+        int[] toStore = clone ? (int[])rows.Clone() : rows;
+        _solutions.Add(toStore);
+        if (ShouldRaiseEvents())
+            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(toStore)));
+        MaybeSuppressEventsAfterCap();
+    }
+
     // -------------------- Private Fields --------------------
     private readonly ISolutionFormatter _solutionFormatter;
     private readonly List<int[]> _solutions = [];
@@ -520,25 +514,4 @@ public class BitmaskSolver : ISolver, IDisposable
     private bool _disposed;
     private readonly int _maxSolutionsInOutput;
     private volatile bool _eventsSuppressedAfterCap; // dynamic flag to stop event traffic after cap reached
-
-    //private sealed class IntArrayComparer : IEqualityComparer<int[]>
-    //{
-    //    public bool Equals(int[]? x, int[]? y)
-    //    {
-    //        if (ReferenceEquals(x, y)) return true;
-    //        if (x is null || y is null || x.Length != y.Length) return false;
-    //        for (int i = 0; i < x.Length; i++)
-    //            if (x[i] != y[i]) return false;
-    //        return true;
-    //    }
-    //    public int GetHashCode(int[] obj)
-    //    {
-    //        unchecked
-    //        {
-    //            int hash = 17;
-    //            foreach (var v in obj) hash = hash * 31 + v;
-    //            return hash;
-    //        }
-    //    }
-    //}
 }
