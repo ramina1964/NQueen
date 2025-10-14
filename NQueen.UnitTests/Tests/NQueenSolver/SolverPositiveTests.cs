@@ -2,7 +2,8 @@ namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 using NQueen.UnitTests.Fixtures;
 
-public class SolverPositiveTests : IClassFixture<SolverBackEndFixture>
+[Collection("SolverBackend")]
+public class SolverPositiveTests
 {
     private readonly ISolverBackEnd _solver;
 

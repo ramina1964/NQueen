@@ -2,7 +2,8 @@
 
 using NQueen.UnitTests.Fixtures;
 
-public class SolverNegativeTests : IClassFixture<SolverBackEndFixture>
+[Collection("SolverBackend")]
+public class SolverNegativeTests
 {
     private readonly ISolverBackEnd _solver;
 
