@@ -19,7 +19,7 @@ public class UniqueExamplesVsCountOnlyBenchmark
     public SimulationResults MaterializeExamples()
     {
         var context = new SimulationContext(BoardSize, SolutionMode.Unique, DisplayMode.Hide);
-        var solver = new UniqueSolutionExamplesAndCountSolver(_formatter, exampleCap: SimulationSettings.MaxNoOfSolutionsInOutput);
+        var solver = new UniqueExamplesOrCountSolver(_formatter, exampleCap: SimulationSettings.MaxNoOfSolutionsInOutput);
         var (examples, _) = solver.Solve(context);
         return examples;
     }
@@ -28,8 +28,8 @@ public class UniqueExamplesVsCountOnlyBenchmark
     public SimulationResults CountOnly()
     {
         var context = new SimulationContext(BoardSize, SolutionMode.Unique, DisplayMode.Hide);
-        var solver = new UniqueSolutionExamplesAndCountSolver(_formatter, exampleCap: 0);
-        var (_, countOnly) = solver.Solve(context);
+        var solver = new UniqueExamplesOrCountSolver(_formatter, exampleCap: 0);
+        var (_, countOnly) = solver.Solve(context, countOnly: true);
         return countOnly;
     }
 }
