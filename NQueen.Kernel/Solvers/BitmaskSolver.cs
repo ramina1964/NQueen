@@ -1,6 +1,6 @@
 namespace NQueen.Kernel.Solvers;
 
-public class BitmaskSolver : ISolver, IDisposable
+public partial class BitmaskSolver : ISolver, IDisposable
 {
     // -------------------- Public API & Constructors --------------------
     public BitmaskSolver(ISolutionFormatter solutionFormatter, int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput)
@@ -135,7 +135,7 @@ public class BitmaskSolver : ISolver, IDisposable
         _disposed = true;
     }
 
-    // -------------------- Private Methods & Fields --------------------
+    // -------------------- Shared Helpers (used by partials) --------------------
     private void ResetForSolve()
     {
         _solutions.Clear();
@@ -153,343 +153,23 @@ public class BitmaskSolver : ISolver, IDisposable
         int cap = _maxSolutionsInOutput; // respect ctor argument
         if (cap > 0 && _solutions.Count >= cap)
         {
-            // Stop further QueenPlaced / SolutionFound notifications to reduce allocations & GC.
-            _eventsSuppressedAfterCap = true;
+            _eventsSuppressedAfterCap = true; // stop further queen / solution events
         }
     }
-
-    private void SolveSingleMode() =>
-        _searchEngine.Run(new BitmaskSearchEngine.Request(
-            BoardSize,
-            RestrictFirstCol: false,
-            EnhancedSymmetry: false,
-            DisplayMode,
-            DelayInMillisec,
-            _currentSimToken,
-            () => IsSolverCanceled,
-            p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-            m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
-            rows =>
-            {
-                _solutionCount++;
-                if (_solutions.Count == 0 && ShouldAddSolution())
-                {
-                    _solutions.Add((int[])rows.Clone());
-                    MaybeSuppressEventsAfterCap();
-                }
-                return true;
-            }
-        ));
 
     private SimulationResults BuildResults(TimeSpan elapsed)
     {
         var resultSolutions = _solutions
             .Select((sol, idx) => new Solution(sol, _solutionFormatter, idx + 1))
             .ToList();
-
-        // Always return the total number of solutions found, not just the number stored
         return new SimulationResults(resultSolutions, _solutionCount, Math.Round(elapsed.TotalSeconds, 1));
-    }
-
-    private void RunAllParallel(int splitDepth)
-    {
-        _parallelEngine.RunAll(new BitmaskParallelEngine.AllRequest(
-            BoardSize,
-            EnableEvents,
-            splitDepth < 1 ? 1 : splitDepth,
-            rows =>
-            {
-                Interlocked.Increment(ref _solutionCount);
-                if (ShouldAddSolution())
-                {
-                    lock (_solutions)
-                    {
-                        if (ShouldAddSolution())
-                            TryStoreSolution(rows, clone: false);
-                    }
-                }
-            },
-            pct => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken))
-        ));
-    }
-
-    private void RunAllSequential()
-    {
-        // Single-threaded enumeration of all solutions
-        _searchEngine.Run(new BitmaskSearchEngine.Request(
-            BoardSize,
-            RestrictFirstCol: false,
-            EnhancedSymmetry: false,
-            DisplayMode,
-            DelayInMillisec,
-            _currentSimToken,
-            () => IsSolverCanceled,
-            p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-            m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
-            rows =>
-            {
-                _solutionCount++;
-                if (ShouldAddSolution())
-                {
-                    TryStoreSolution(rows, clone: true); // need independent copy
-                }
-                return false; // keep searching
-            }
-        ));
-    }
-
-    private void SolveAllCountOnlyMode()
-    {
-        if (UseParallel)
-        {
-            ulong count = 0;
-            _parallelEngine.RunAllCountOnly(new BitmaskParallelEngine.AllCountOnlyRequest(
-                BoardSize,
-                UseAdaptiveDepth ? -1 : ParallelRootSplitDepth,
-                c => count = c,
-                pct => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken))
-            ));
-            _solutionCount = count;
-            _solutions.Clear();
-        }
-        else
-        {
-            ulong count = 0;
-            _searchEngine.Run(new BitmaskSearchEngine.Request(
-                BoardSize,
-                RestrictFirstCol: false,
-                EnhancedSymmetry: false,
-                DisplayMode,
-                DelayInMillisec,
-                _currentSimToken,
-                () => IsSolverCanceled,
-                p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-                m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
-                rows =>
-                {
-                    count++;
-                    return false;
-                }
-            ));
-            _solutionCount = count;
-            _solutions.Clear();
-        }
-    }
-
-    private static ulong CountUniqueForRoot(int N, int firstRow)
-    {
-        ulong count = 0;
-        var rowsArr = new int[N];
-        Array.Fill(rowsArr, -1);
-        rowsArr[0] = firstRow;
-
-        ulong bitFirst = 1UL << firstRow;
-        ulong cols = bitFirst;
-        ulong d1 = bitFirst << 1;
-        ulong d2 = bitFirst >> 1;
-        ulong mask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
-
-        ulong[] stackCols = new ulong[N];
-        ulong[] stackD1 = new ulong[N];
-        ulong[] stackD2 = new ulong[N];
-        ulong[] stackRemaining = new ulong[N];
-
-        int col = 1;
-        ulong remaining = ~(cols | d1 | d2) & mask;
-
-        while (true)
-        {
-            if (col == N)
-            {
-                count++;
-                col--;
-                if (col <= 0) break;
-                Restore(col, out remaining);
-                continue;
-            }
-            if (remaining == 0)
-            {
-                col--;
-                if (col <= 0) break;
-                Restore(col, out remaining);
-                continue;
-            }
-            ulong bit = remaining & (ulong)-(long)remaining;
-            remaining ^= bit;
-            int row = BitOperations.TrailingZeroCount(bit);
-            rowsArr[col] = row;
-
-            stackCols[col] = cols;
-            stackD1[col] = d1;
-            stackD2[col] = d2;
-            stackRemaining[col] = remaining;
-
-            cols |= bit;
-            d1 = (d1 | bit) << 1;
-            d2 = (d2 | bit) >> 1;
-
-            col++;
-            if (col == N) continue;
-            remaining = ~(cols | d1 | d2) & mask;
-        }
-
-        void Restore(int c, out ulong rem)
-        {
-            rem = stackRemaining[c];
-            cols = stackCols[c];
-            d1 = stackD1[c];
-            d2 = stackD2[c];
-        }
-
-        return count;
-    }
-
-    private ulong CountUniqueSolutionsSymmetryAware(int N)
-    {
-        if (N <= 0) return 0;
-        ulong total = 0;
-        int half = N / 2;
-        int totalSteps = half + ((N & 1) == 1 ? 1 : 0);
-        int progressCounter = 0;
-        object lockObj = new object();
-
-        // Parallelize the outer loop over firstRow
-        Parallel.For(0, half, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, firstRow =>
-        {
-            ulong localCount = CountUniqueForRoot(N, firstRow) * 2;
-            lock (lockObj)
-            {
-                total += localCount;
-                progressCounter++;
-                if (ProgressValueChanged != null)
-                {
-                    double pct = (double)progressCounter / totalSteps * 100.0;
-                    ProgressValueChanged(this, new ProgressUpdateEventArgs(pct, _currentSimToken));
-                }
-            }
-        });
-        if ((N & 1) == 1)
-        {
-            // Center row (only for odd N)
-            total += CountUniqueForRoot(N, half); // no mirror
-            if (ProgressValueChanged != null)
-            {
-                ProgressValueChanged(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
-            }
-        }
-        return total;
-    }
-
-    private void RunUniqueParallel()
-    {
-        if (UseCountOnlyUniqueMode)
-        {
-            SolveUniqueCountOnlyMode();
-            return;
-        }
-
-        _parallelEngine.RunUnique(new BitmaskParallelEngine.UniqueRequest(
-            BoardSize,
-            EnableEvents,
-            1, // root split depth currently fixed at 1 for Unique mode
-            rows =>
-            {
-                _solutionCount++;
-                if (ShouldAddSolution())
-                {
-                    lock (_solutions)
-                    {
-                        if (ShouldAddSolution())
-                            TryStoreSolution(rows, clone: false);
-                    }
-                }
-            },
-            pct => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken))
-        ));
-    }
-
-    private void SolveUniqueCountOnlyMode()
-    {
-        if (UseParallel)
-        {
-            // Use symmetry-aware allocation-free counter for large N
-            _solutionCount = CountUniqueSolutionsSymmetryAware(BoardSize);
-            _solutions.Clear();
-            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
-        }
-        else
-        {
-            int N = BoardSize;
-            var uniqueKeys = new HashSet<UInt128>();
-            var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
-
-            _searchEngine.Run(new BitmaskSearchEngine.Request(
-                BoardSize,
-                RestrictFirstCol: true,
-                EnhancedSymmetry: true,
-                DisplayMode,
-                DelayInMillisec,
-                _currentSimToken,
-                () => IsSolverCanceled,
-                p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-                m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
-                rows =>
-                {
-                    // Directly pack key from working array, skip cloning
-                    var key = SymmetryHelper.GetCanonicalKey(rows, scratchBuf, out _);
-                    uniqueKeys.Add(key);
-                    return false;
-                }
-            ));
-            _solutionCount = (ulong)uniqueKeys.Count;
-            _solutions.Clear();
-        }
-    }
-
-    private void RunUniqueSequential()
-    {
-        if (UseCountOnlyUniqueMode)
-        {
-            SolveUniqueCountOnlyMode();
-            return;
-        }
-
-        int N = BoardSize;
-        var uniqueKeys = new HashSet<UInt128>();
-        var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
-
-        _searchEngine.Run(new BitmaskSearchEngine.Request(
-            BoardSize,
-            RestrictFirstCol: true,
-            EnhancedSymmetry: true,
-            DisplayMode,
-            DelayInMillisec,
-            _currentSimToken,
-            () => IsSolverCanceled,
-            p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-            m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
-            rows =>
-            {
-                var copy = (int[])rows.Clone();
-                if (SymmetryHelper.AddIfUniquePacked(copy, uniqueKeys, scratchBuf, out _, out var canonical))
-                {
-                    _solutionCount++;
-                    if (ShouldAddSolution())
-                    {
-                        // canonical already materialized
-                        TryStoreSolution(canonical.ToArray(), clone: false);
-                    }
-                }
-                return false; // continue search
-            }
-        ));
     }
 
     private bool ShouldAddSolution()
     {
         if (_capEnabled == false)
             return true;
-        var cap = _maxSolutionsInOutput; // use instance max
+        var cap = _maxSolutionsInOutput;
         return cap <= 0 || _solutions.Count < cap;
     }
 
