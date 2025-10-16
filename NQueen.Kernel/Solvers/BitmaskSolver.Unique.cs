@@ -16,13 +16,16 @@ public partial class BitmaskSolver
             return;
         }
 
+        // Provide a predicate so parallel engine can skip materialization after cap reached.
         _parallelEngine.RunUnique(new BitmaskParallelEngine.UniqueRequest(
             BoardSize,
             EnableEvents,
             1,
+            ShouldAddSolution,
             rows =>
             {
-                _solutionCount++;
+                // Each callback corresponds to a unique canonical solution chosen to materialize.
+                _solutionCount++; // count every unique whether materialized or not
                 if (ShouldAddSolution())
                 {
                     lock (_solutions)
@@ -61,15 +64,30 @@ public partial class BitmaskSolver
             rows =>
             {
                 var copy = (int[])rows.Clone();
-                if (SymmetryHelper.AddIfUniquePacked(copy, uniqueKeys, scratchBuf, out _, out var canonical))
+                if (SymmetryHelper.AddIfUniquePacked(copy, uniqueKeys, scratchBuf, out var key, out _))
                 {
                     _solutionCount++;
                     if (ShouldAddSolution())
-                        TryStoreSolution(canonical.ToArray(), clone: false);
+                    {
+                        // Materialize only when under cap: unpack canonical from key.
+                        var canonicalRows = UnpackKeyToArray(key, N);
+                        TryStoreSolution(canonicalRows, clone: false);
+                    }
                 }
                 return false;
             }
         ));
+    }
+
+    private static int[] UnpackKeyToArray(UInt128 key, int n)
+    {
+        var rows = new int[n];
+        for (int i = n - 1; i >= 0; i--)
+        {
+            rows[i] = (int)(key & 0x1F);
+            key >>= 5;
+        }
+        return rows;
     }
 
     private void SolveUniqueCountOnlyMode()

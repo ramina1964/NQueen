@@ -3,7 +3,8 @@ namespace NQueen.Kernel.Solvers.Engines;
 internal sealed partial class BitmaskParallelEngine
 {
     public readonly record struct AllRequest(int BoardSize,bool EnableEvents,int RootSplitDepth,Action<int[]> OnSolution,Action<double> ReportProgress);
-    public readonly record struct UniqueRequest(int BoardSize,bool EnableEvents,int RootSplitDepth,Action<int[]> OnUniqueSolution,Action<double> ReportProgress);
+    // Added ShouldMaterialize predicate to avoid unnecessary row array allocations when cap reached.
+    public readonly record struct UniqueRequest(int BoardSize,bool EnableEvents,int RootSplitDepth,Func<bool> ShouldMaterialize,Action<int[]> OnUniqueSolution,Action<double> ReportProgress);
     public readonly record struct AllCountOnlyRequest(int BoardSize,int RootSplitDepth,Action<ulong> OnCount,Action<double> ReportProgress);
     public readonly record struct UniqueCountOnlyRequest(int BoardSize,int RootSplitDepth,Action<ulong> OnCount,Action<double> ReportProgress);
 
