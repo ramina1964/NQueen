@@ -2,12 +2,21 @@ namespace NQueen.Kernel.Solvers;
 
 using NQueen.Kernel.Solvers.Engines;
 using NQueen.Kernel.Solvers.Counters;
+using System.Runtime.CompilerServices;
+using System.Threading;
 
 /// <summary>
 /// BitmaskSolver (Unique mode partial) - logic for unique enumeration & counting.
 /// </summary>
 public partial class BitmaskSolver
 {
+    // Thread-safe increment for parallel unique mode (ulong lacks direct Interlocked overload).
+    private void IncrementSolutionCountAtomic()
+    {
+        // Unsafe cast to long for atomic increment; representation identical.
+        Interlocked.Increment(ref Unsafe.As<ulong, long>(ref _solutionCount));
+    }
+
     private void RunUniqueParallel()
     {
         if (UseCountOnlyUniqueMode)
@@ -25,8 +34,8 @@ public partial class BitmaskSolver
             rows =>
             {
                 // Each callback corresponds to a unique canonical solution chosen to materialize.
-                _solutionCount++; // count every unique whether materialized or not
-                if (ShouldAddSolution())
+                IncrementSolutionCountAtomic(); // atomic increment avoids lost counts under parallelism
+                if (rows.Length > 0 && ShouldAddSolution()) // non-empty only when materialization intended
                 {
                     lock (_solutions)
                     {
@@ -66,7 +75,7 @@ public partial class BitmaskSolver
                 var copy = (int[])rows.Clone();
                 if (SymmetryHelper.AddIfUniquePacked(copy, uniqueKeys, scratchBuf, out var key, out _))
                 {
-                    _solutionCount++;
+                    _solutionCount++; // sequential path safe
                     if (ShouldAddSolution())
                     {
                         // Materialize only when under cap: unpack canonical from key.

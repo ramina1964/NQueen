@@ -4,15 +4,11 @@ public static partial class SymmetryHelper
 {
     public static int MaxRowExclusiveForColumn(int boardSize, int column, int[] queenRows)
     {
+        // Restrict only the first column to half (standard symmetry reduction).
+        // Do NOT restrict column 1 when first queen is centered; canonicalization already removes duplicates.
         if (column == 0)
             return (boardSize + 1) / 2;
-        if (column == 1)
-        {
-            int firstRow = queenRows[0];
-            if ((boardSize & 1) == 1 && firstRow == boardSize / 2)
-                return boardSize / 2; // strictly above center
-        }
-        return boardSize;
+        return boardSize; // full range for other columns
     }
 
     // Packed key uniqueness helper (uses UInt128). Assumes board size <= 32 (true for unique mode limit 20+ packed fits 5 bits per row up to 32).

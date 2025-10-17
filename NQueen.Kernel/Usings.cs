@@ -8,6 +8,6 @@ global using NQueen.Domain.Models;
 global using NQueen.Domain.Settings;
 global using NQueen.Domain.Utils;
 global using NQueen.Kernel.Solvers;
-global using System.Buffers;
+global using NQueen.Kernel.Solvers.Heuristics;
 global using System.Diagnostics;
 global using System.Numerics;
