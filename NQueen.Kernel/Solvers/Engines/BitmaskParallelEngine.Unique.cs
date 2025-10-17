@@ -10,8 +10,7 @@ internal sealed partial class BitmaskParallelEngine
         var globalUnique = new HashSet<UInt128>();
         var globalLock = new object();
         var tasks = new List<Task<ulong>>();
-        int materializedCount = 0; // shared atomic counter
-        // For small N, always materialize all unique solutions (no cap)
+        int materializedCount = 0;
         int cap = (N <= 8) ? int.MaxValue : (request.ShouldMaterialize() ? SimulationSettings.MaxNoOfSolutionsInOutput : 0);
 
         foreach (int fr in Enumerable.Range(0, totalRoots))
@@ -99,6 +98,9 @@ internal sealed partial class BitmaskParallelEngine
                     int maxRow = SymmetryHelper.MaxRowExclusiveForColumn(N, c, rowsArr);
                     if (maxRow < N)
                         avail &= (1UL << maxRow) - 1UL;
+                    // Apply advanced second-column pruning only for larger boards (N > 8) to avoid regression for small N.
+                    if (N > 8)
+                        avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(N, c, rowsArr, avail);
                     return avail;
                 }
                 void Restore(int c, out ulong rem)

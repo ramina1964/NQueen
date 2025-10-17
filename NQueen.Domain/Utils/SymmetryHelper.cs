@@ -4,11 +4,50 @@ public static partial class SymmetryHelper
 {
     public static int MaxRowExclusiveForColumn(int boardSize, int column, int[] queenRows)
     {
-        // Restrict only the first column to half (standard symmetry reduction).
-        // Do NOT restrict column 1 when first queen is centered; canonicalization already removes duplicates.
+        // First column: standard half-board restriction
         if (column == 0)
             return (boardSize + 1) / 2;
-        return boardSize; // full range for other columns
+        return boardSize; // full range for other columns (upper bound only)
+    }
+
+    // Advanced pruning: adjust availability mask using already placed rows.
+    // - Column 0: restrict to half (handled via MaxRowExclusiveForColumn but repeated for clarity)
+    // - Column 1: enforce row > first queen row (except when first queen is centered on odd boards)
+    //   This removes symmetric counterparts obtainable via reflection across main diagonal.
+    public static ulong ApplyAdvancedSymmetryPruning(int boardSize, int column, int[] queenRows, ulong availMask)
+    {
+        if (boardSize <= 1) return availMask;
+        if (column == 0)
+        {
+            int maxRow = (boardSize + 1) / 2;
+            if (maxRow < boardSize)
+                availMask &= (1UL << maxRow) - 1UL;
+            return availMask;
+        }
+        if (column == 1)
+        {
+            int firstRow = queenRows[0];
+            if (firstRow >= 0)
+            {
+                // If odd size and first row centered -> skip second column pruning.
+                if (!((boardSize & 1) == 1 && firstRow == boardSize / 2))
+                {
+                    // Keep only rows strictly greater than firstRow for column 1.
+                    int minRow = firstRow + 1;
+                    if (minRow < boardSize)
+                    {
+                        ulong lowerMask = (1UL << minRow) - 1UL; // rows < minRow
+                        availMask &= ~lowerMask;
+                    }
+                    else
+                    {
+                        // No valid placements remain; return 0 mask.
+                        availMask = 0UL;
+                    }
+                }
+            }
+        }
+        return availMask;
     }
 
     // Packed key uniqueness helper (uses UInt128). Assumes board size <= 32 (true for unique mode limit 20+ packed fits 5 bits per row up to 32).

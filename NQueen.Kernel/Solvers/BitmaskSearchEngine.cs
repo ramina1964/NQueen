@@ -164,6 +164,9 @@ internal sealed class BitmaskSearchEngine
         }
         if (maxRow < s.N)
             avail &= (1UL << maxRow) - 1UL;
+        // Apply advanced pruning (second column ordering) only when enhanced symmetry requested and board large enough.
+        if (request.EnhancedSymmetry && s.N > 8)
+            avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(s.N, col, s.QueenRows, avail);
         return avail;
     }
 
