@@ -16,7 +16,7 @@ internal sealed partial class BitmaskParallelEngine
             splitDepth = ParallelSplitDepthHeuristic.GetOptimalSplitDepth(N);
 
         request.ReportProgress(0.0);
-        var tasks = new List<Task>();
+        var tasks = new List<Task<ulong>>();
         var rootStack = new Stack<RootFrame>();
         rootStack.Push(new RootFrame(0, 0UL, 0UL, 0UL, new int[N]));
         ulong mask = (N == 64)
@@ -51,6 +51,11 @@ internal sealed partial class BitmaskParallelEngine
         if (bucketSize < 1)
             bucketSize = 1;
 
+        // Shared atomic for materialization cap
+        int globalMaterialized = 0;
+        int cap = SimulationSettings.MaxNoOfSolutionsInOutput;
+        object capLock = new object();
+
         foreach (var root in rootList)
         {
             tasks.Add(Task.Run(() =>
@@ -69,12 +74,32 @@ internal sealed partial class BitmaskParallelEngine
                 ulong[] stackRemaining = new ulong[N];
                 int col = startCol;
                 ulong remaining = ComputeAvail();
+                ulong localCount = 0;
+                bool capReached = false;
 
                 while (true)
                 {
                     if (col == N)
                     {
-                        request.OnSolution((int[])rowsArr.Clone()); col--; if (col < startCol) break; Restore(col, out remaining); continue;
+                        // Try to materialize up to cap, then just count
+                        if (!capReached)
+                        {
+                            int mat = Interlocked.Increment(ref globalMaterialized);
+                            if (mat <= cap)
+                            {
+                                request.OnSolution((int[])rowsArr.Clone());
+                            }
+                            else
+                            {
+                                capReached = true;
+                                localCount++; // count-only after cap
+                            }
+                        }
+                        else
+                        {
+                            localCount++;
+                        }
+                        col--; if (col < startCol) break; Restore(col, out remaining); continue;
                     }
 
                     if (remaining == 0)
@@ -98,9 +123,14 @@ internal sealed partial class BitmaskParallelEngine
                     ReportRootProgress(done, totalRoots, throttle, bucketSize, ref lastPercentReported, request.ReportProgress);
                 }
                 ulong ComputeAvail() => ~(cols | d1 | d2) & mask; void Restore(int c, out ulong rem) { rem = stackRemaining[c]; cols = stackCols[c]; d1 = stackD1[c]; d2 = stackD2[c]; }
+                return localCount;
             }));
         }
         Task.WaitAll(tasks.ToArray());
+        // Aggregate the count-only solutions after cap
+        ulong totalCount = (ulong)globalMaterialized;
+        foreach (var t in tasks)
+            totalCount += t.Result;
         request.ReportProgress(100.0);
     }
 }

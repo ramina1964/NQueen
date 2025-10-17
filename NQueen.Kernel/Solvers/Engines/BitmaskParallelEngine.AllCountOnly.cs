@@ -24,6 +24,7 @@ internal sealed partial class BitmaskParallelEngine
             : ((1UL << N) - 1UL);
 
         var rootList = new List<RootFrame>(N * N);
+        var pool = System.Buffers.ArrayPool<int>.Shared;
         while (rootStack.Count > 0)
         {
             var frame = rootStack.Pop();
@@ -33,7 +34,14 @@ internal sealed partial class BitmaskParallelEngine
             while (avail != 0)
             {
                 ulong bit = avail & (ulong)-(long)avail;
-                avail ^= bit; var rowsCopy = (int[])frame.Rows.Clone(); rowsCopy[frame.Col] = BitOperations.TrailingZeroCount(bit); ulong cols = frame.Cols | bit; ulong d1 = (frame.D1 | bit) << 1; ulong d2 = (frame.D2 | bit) >> 1; rootStack.Push(new RootFrame(frame.Col + 1, cols, d1, d2, rowsCopy));
+                avail ^= bit;
+                var rowsCopy = pool.Rent(N);
+                Array.Copy(frame.Rows, rowsCopy, N);
+                rowsCopy[frame.Col] = BitOperations.TrailingZeroCount(bit);
+                ulong cols = frame.Cols | bit;
+                ulong d1 = (frame.D1 | bit) << 1;
+                ulong d2 = (frame.D2 | bit) >> 1;
+                rootStack.Push(new RootFrame(frame.Col + 1, cols, d1, d2, rowsCopy));
             }
         }
 
@@ -107,5 +115,10 @@ internal sealed partial class BitmaskParallelEngine
 
         request.OnCount(totalCount);
         request.ReportProgress(100.0);
+
+        foreach (var frame in rootList)
+        {
+            pool.Return(frame.Rows);
+        }
     }
 }

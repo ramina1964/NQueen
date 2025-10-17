@@ -12,7 +12,7 @@ public class UniqueCountingStrategiesBenchmark
     public int BoardSize;
 
     [Params("Materialize", "CountOnly")]
-    public string Strategy;
+    public string Strategy = string.Empty;
 
     private ISolutionFormatter _formatter = new DefaultSolutionFormatter();
 
@@ -23,8 +23,10 @@ public class UniqueCountingStrategiesBenchmark
         if (Strategy == "Materialize")
         {
             // Materialize up to 10 solutions
-            solver = new BitmaskSolver(BoardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter, 10);
-            solver.UseCountOnlyUniqueMode = false;
+            solver = new BitmaskSolver(BoardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter, 10)
+            {
+                UseCountOnlyUniqueMode = false
+            };
         }
         else // CountOnly
         {

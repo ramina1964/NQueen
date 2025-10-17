@@ -18,13 +18,12 @@ public partial class BitmaskSolver
             rows =>
             {
                 Interlocked.Increment(ref _solutionCount);
-                if (ShouldAddSolution())
+                if (!ShouldAddSolution())
+                    return; // Short-circuit: do not lock/copy/store after cap
+                lock (_solutions)
                 {
-                    lock (_solutions)
-                    {
-                        if (ShouldAddSolution())
-                            TryStoreSolution(rows, clone: false);
-                    }
+                    if (ShouldAddSolution())
+                        TryStoreSolution(rows, clone: false);
                 }
             },
             pct => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken))

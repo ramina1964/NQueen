@@ -11,6 +11,8 @@ internal sealed partial class BitmaskParallelEngine
         var globalUnique = new HashSet<UInt128>();
         var globalLock = new object();
         var tasks = new List<Task>();
+        int materializedCount = 0; // shared atomic counter
+        int cap = request.ShouldMaterialize() ? SimulationSettings.MaxNoOfSolutionsInOutput : 0;
         for (int firstRow = 0; firstRow < totalRoots; firstRow++)
         {
             int fr = firstRow;
@@ -46,8 +48,8 @@ internal sealed partial class BitmaskParallelEngine
                         }
                         if (isUnique)
                         {
-                            // Only invoke callback if materialization desired and still unique globally.
-                            if (request.ShouldMaterialize())
+                            // Only materialize if under cap
+                            if (cap > 0 && Interlocked.Increment(ref materializedCount) <= cap)
                             {
                                 var canonicalRows = new int[N];
                                 canonicalSpan.CopyTo(canonicalRows);
@@ -55,8 +57,7 @@ internal sealed partial class BitmaskParallelEngine
                             }
                             else
                             {
-                                // Even when not materializing we still need to count; solver increments on callback.
-                                request.OnUniqueSolution(Array.Empty<int>()); // pass empty to signal unique found.
+                                request.OnUniqueSolution(Array.Empty<int>()); // count only
                             }
                         }
                         col--; if (col <= 0) break; Restore(col, out remaining); continue;
