@@ -150,31 +150,18 @@ internal sealed class BitmaskSearchEngine
     private static ulong ComputeAvailable(ref SearchState s, in Request request, int col)
     {
         ulong avail = ~(s.Cols | s.Diag1 | s.Diag2) & s.Mask;
-        int maxRow;
-        if (col == 0)
-            maxRow = request.RestrictFirstCol ? s.MaxRow0 : s.N;
-        else if (request.EnhancedSymmetry && request.RestrictFirstCol && col == 1)
+        int maxRow = s.N;
+        // Disable aggressive symmetry pruning for small N (N <= 8)
+        if (s.N > 8)
         {
-            int firstRow = s.QueenRows[0];
-            // For the second column, restrict to avoid symmetric placements
-            // If first queen is in the center (odd N), restrict second queen to half
-            if ((s.N & 1) == 1 && firstRow == s.N / 2)
-                maxRow = s.N / 2;
-            else
-                maxRow = s.N;
-        }
-        else if (request.EnhancedSymmetry && request.RestrictFirstCol && col == 2)
-        {
-            // Aggressive symmetry pruning: restrict third column for firstRow=0 or N-1
-            int firstRow = s.QueenRows[0];
-            if (firstRow == 0 || firstRow == s.N - 1)
+            int splitDepth = s.RootTotal > 0 ? s.RootTotal : 1;
+            if (request.RestrictFirstCol && request.EnhancedSymmetry && col < splitDepth)
+            {
                 maxRow = (s.N + 1) / 2;
-            else
-                maxRow = s.N;
+                if ((s.N & 1) == 1 && col == 0 && s.QueenRows[0] == s.N / 2)
+                    maxRow = s.N / 2;
+            }
         }
-        else
-            maxRow = s.N;
-
         if (maxRow < s.N)
             avail &= (1UL << maxRow) - 1UL;
         return avail;
