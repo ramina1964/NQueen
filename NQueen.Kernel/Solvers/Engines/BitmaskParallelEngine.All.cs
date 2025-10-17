@@ -51,10 +51,8 @@ internal sealed partial class BitmaskParallelEngine
         if (bucketSize < 1)
             bucketSize = 1;
 
-        // Shared atomic for materialization cap
         int globalMaterialized = 0;
         int cap = SimulationSettings.MaxNoOfSolutionsInOutput;
-        object capLock = new object();
 
         foreach (var root in rootList)
         {
@@ -81,24 +79,13 @@ internal sealed partial class BitmaskParallelEngine
                 {
                     if (col == N)
                     {
-                        // Try to materialize up to cap, then just count
-                        if (!capReached)
-                        {
-                            int mat = Interlocked.Increment(ref globalMaterialized);
-                            if (mat <= cap)
-                            {
-                                request.OnSolution((int[])rowsArr.Clone());
-                            }
-                            else
-                            {
-                                capReached = true;
-                                localCount++; // count-only after cap
-                            }
-                        }
-                        else
-                        {
-                            localCount++;
-                        }
+                        ParallelMaterializationHelper.HandleMaterialization(
+                            ref globalMaterialized,
+                            cap,
+                            ref capReached,
+                            (int[])rowsArr.Clone(),
+                            request.OnSolution,
+                            ref localCount);
                         col--; if (col < startCol) break; Restore(col, out remaining); continue;
                     }
 
@@ -127,7 +114,6 @@ internal sealed partial class BitmaskParallelEngine
             }));
         }
         Task.WaitAll(tasks.ToArray());
-        // Aggregate the count-only solutions after cap
         ulong totalCount = (ulong)globalMaterialized;
         foreach (var t in tasks)
             totalCount += t.Result;

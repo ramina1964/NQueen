@@ -7,15 +7,15 @@ internal sealed partial class BitmaskParallelEngine
         int N = request.BoardSize; request.ReportProgress(0.0);
         int totalRoots = (N + 1) / 2;
         int rootsCompleted = 0;
-        // Global uniqueness set to avoid counting same canonical solution across different first-row tasks.
         var globalUnique = new HashSet<UInt128>();
         var globalLock = new object();
-        var tasks = new List<Task>();
+        var tasks = new List<Task<ulong>>();
         int materializedCount = 0; // shared atomic counter
-        int cap = request.ShouldMaterialize() ? SimulationSettings.MaxNoOfSolutionsInOutput : 0;
-        for (int firstRow = 0; firstRow < totalRoots; firstRow++)
+        // For small N, always materialize all unique solutions (no cap)
+        int cap = (N <= 8) ? int.MaxValue : (request.ShouldMaterialize() ? SimulationSettings.MaxNoOfSolutionsInOutput : 0);
+
+        foreach (int fr in Enumerable.Range(0, totalRoots))
         {
-            int fr = firstRow;
             tasks.Add(Task.Run(() =>
             {
                 var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
@@ -34,12 +34,13 @@ internal sealed partial class BitmaskParallelEngine
                 ulong[] stackRemaining = new ulong[N];
                 int col = 1;
                 ulong remaining = ComputeAvail(col);
+                ulong localCount = 0;
+                bool capReached = false;
 
                 while (true)
                 {
                     if (col == N)
                     {
-                        // Compute canonical key and attempt to add globally.
                         UInt128 key = SymmetryHelper.GetCanonicalKey(rowsArr, scratchBuf, out var canonicalSpan);
                         bool isUnique;
                         lock (globalLock)
@@ -48,17 +49,19 @@ internal sealed partial class BitmaskParallelEngine
                         }
                         if (isUnique)
                         {
-                            // Only materialize if under cap
-                            if (cap > 0 && Interlocked.Increment(ref materializedCount) <= cap)
+                            int[] canonicalRows = null!;
+                            if (!capReached && materializedCount < cap)
                             {
-                                var canonicalRows = new int[N];
+                                canonicalRows = new int[N];
                                 canonicalSpan.CopyTo(canonicalRows);
-                                request.OnUniqueSolution(canonicalRows);
                             }
-                            else
-                            {
-                                request.OnUniqueSolution(Array.Empty<int>()); // count only
-                            }
+                            ParallelMaterializationHelper.HandleMaterialization(
+                                ref materializedCount,
+                                cap,
+                                ref capReached,
+                                canonicalRows,
+                                canonicalRowsArg => { if (canonicalRowsArg != null) request.OnUniqueSolution(canonicalRowsArg); },
+                                ref localCount);
                         }
                         col--; if (col <= 0) break; Restore(col, out remaining); continue;
                     }
@@ -67,7 +70,6 @@ internal sealed partial class BitmaskParallelEngine
                         col--;
                         if (col <= 0)
                             break;
-
                         Restore(col, out remaining); continue;
                     }
                     ulong bit = remaining & (ulong)-(long)remaining; remaining ^= bit;
@@ -83,7 +85,6 @@ internal sealed partial class BitmaskParallelEngine
                     col++;
                     if (col == N)
                         continue;
-
                     remaining = ComputeAvail(col);
                 }
                 if (request.EnableEvents)
@@ -98,7 +99,6 @@ internal sealed partial class BitmaskParallelEngine
                     int maxRow = SymmetryHelper.MaxRowExclusiveForColumn(N, c, rowsArr);
                     if (maxRow < N)
                         avail &= (1UL << maxRow) - 1UL;
-
                     return avail;
                 }
                 void Restore(int c, out ulong rem)
@@ -108,11 +108,13 @@ internal sealed partial class BitmaskParallelEngine
                     d1 = stackD1[c];
                     d2 = stackD2[c];
                 }
+                return localCount;
             }));
         }
         Task.WaitAll(tasks.ToArray());
-
-        // No need to rebuild solutions here; callbacks already handled counting/materialization.
+        ulong totalCount = (ulong)materializedCount;
+        foreach (var t in tasks)
+            totalCount += t.Result;
         request.ReportProgress(100.0);
     }
 }

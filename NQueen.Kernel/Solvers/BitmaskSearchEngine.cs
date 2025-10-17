@@ -156,7 +156,21 @@ internal sealed class BitmaskSearchEngine
         else if (request.EnhancedSymmetry && request.RestrictFirstCol && col == 1)
         {
             int firstRow = s.QueenRows[0];
-            maxRow = ((s.N & 1) == 1 && firstRow == s.N / 2) ? s.N / 2 : s.N;
+            // For the second column, restrict to avoid symmetric placements
+            // If first queen is in the center (odd N), restrict second queen to half
+            if ((s.N & 1) == 1 && firstRow == s.N / 2)
+                maxRow = s.N / 2;
+            else
+                maxRow = s.N;
+        }
+        else if (request.EnhancedSymmetry && request.RestrictFirstCol && col == 2)
+        {
+            // Aggressive symmetry pruning: restrict third column for firstRow=0 or N-1
+            int firstRow = s.QueenRows[0];
+            if (firstRow == 0 || firstRow == s.N - 1)
+                maxRow = (s.N + 1) / 2;
+            else
+                maxRow = s.N;
         }
         else
             maxRow = s.N;
