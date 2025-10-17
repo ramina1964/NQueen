@@ -1,7 +1,5 @@
 ﻿namespace NQueen.ConsoleApp.Services;
 
-using NQueen.Kernel.Solvers.State;
-
 /// <summary>
 /// Console host DI registrations.
 /// Focuses on lightweight services needed for command dispatch & solver usage.

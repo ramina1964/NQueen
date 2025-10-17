@@ -8,7 +8,8 @@ internal sealed partial class BitmaskParallelEngine
         int totalRoots = (N + 1) / 2;
         int rootsCompleted = 0;
         // Global uniqueness set to avoid counting same canonical solution across different first-row tasks.
-        var globalUnique = new System.Collections.Concurrent.ConcurrentDictionary<UInt128, byte>();
+        var globalUnique = new HashSet<UInt128>();
+        var globalLock = new object();
         var tasks = new List<Task>();
         for (int firstRow = 0; firstRow < totalRoots; firstRow++)
         {
@@ -38,7 +39,12 @@ internal sealed partial class BitmaskParallelEngine
                     {
                         // Compute canonical key and attempt to add globally.
                         UInt128 key = SymmetryHelper.GetCanonicalKey(rowsArr, scratchBuf, out var canonicalSpan);
-                        if (globalUnique.TryAdd(key, 0))
+                        bool isUnique;
+                        lock (globalLock)
+                        {
+                            isUnique = globalUnique.Add(key);
+                        }
+                        if (isUnique)
                         {
                             // Only invoke callback if materialization desired and still unique globally.
                             if (request.ShouldMaterialize())

@@ -9,10 +9,10 @@ global using NQueen.Domain.Models;
 global using NQueen.Domain.Settings;
 global using NQueen.Kernel.Services;
 global using NQueen.Kernel.Solvers;
+global using NQueen.Kernel.Solvers.State;
 global using NQueen.Shared.Utils;
 global using System;
 global using System.Diagnostics;
 global using System.Linq;
 global using System.Text.RegularExpressions;
 global using System.Threading.Tasks;
-
