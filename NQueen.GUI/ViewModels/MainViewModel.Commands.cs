@@ -66,7 +66,7 @@ public sealed partial class MainViewModel
             // Always show the true total number of solutions
             NoOfSolutions = $"{SimulationResults.SolutionsCount,0:N0}";
             ElapsedTimeInSec = $"{SimulationResults.ElapsedTimeInSec,0:N1}";
-            MemoryUsage = NumericUtils.UpdateMemoryUsage();
+            MemoryConsumption = NumericUtils.UpdateMemoryUsage();
 
             if (ObservableSolutions.Count > 0)
                 SelectedSolution = ObservableSolutions[0];
@@ -159,7 +159,7 @@ public sealed partial class MainViewModel
 
             NoOfSolutions = "0";
             ElapsedTimeInSec = $"{0,0:N1}";
-            MemoryUsage = "0";
+            MemoryConsumption = "0";
             IsOutputReady = false;
 
             _progressFinalized = false;
@@ -270,7 +270,7 @@ public sealed partial class MainViewModel
         sb.AppendLine($"Number of Solutions: {NoOfSolutions}");
         sb.AppendLine($"Max Number of Solutions Included: {SimulationSettings.MaxNoOfSolutionsInOutput}");
         sb.AppendLine($"Elapsed Time: {ElapsedTimeInSec} seconds");
-        sb.AppendLine($"Memory Usage: {MemoryUsage} MB");
+        sb.AppendLine($"Memory Usage: {MemoryConsumption} MB");
         sb.AppendLine();
         sb.AppendLine("Solutions:");
 
@@ -291,7 +291,7 @@ public sealed partial class MainViewModel
         ObservableSolutions.Clear();
         NoOfSolutions = "0";
         ElapsedTimeInSec = $"{0,0:N1}";
-        MemoryUsage = "0";
+        MemoryConsumption = "0";
         ChessboardVm?.CreateSquares(boardSize);
     }
 

@@ -24,12 +24,12 @@ public class SolutionFormatter : ISolutionFormatter
         return sb.ToString();
     }
 
-    public static string UpdateSolutionTitle(SolutionMode solutionMode) =>
+    public static string UpdateSolutionLabel(SolutionMode solutionMode) =>
         solutionMode == SolutionMode.Single
                 ? $"Solution"
                 : solutionMode == SolutionMode.Unique
-                ? $"Unique Solutions (Max: {SimulationSettings.MaxNoOfSolutionsInOutput})"
-                : $"All Solutions (Max: {SimulationSettings.MaxNoOfSolutionsInOutput})";
+                ? $"Unique Solutions (Max Displayed: {SimulationSettings.MaxNoOfSolutionsInOutput})"
+                : $"All Solutions (Max Displayed: {SimulationSettings.MaxNoOfSolutionsInOutput})";
 
     private static List<List<Position>> SplitIntoLines(
         IEnumerable<Position> positions, int lineLength)

@@ -219,7 +219,7 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         ProgressLabel = "0%";
         NoOfSolutions = "0";
         ElapsedTimeInSec = $"{0,0:N1}";
-        MemoryUsage = "0";
+        MemoryConsumption = "0";
         IsOutputReady = false;
         IsSimulating = false;
         if (ChessboardVm != null)

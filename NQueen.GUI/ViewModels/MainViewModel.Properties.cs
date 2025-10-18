@@ -95,11 +95,11 @@ public sealed partial class MainViewModel : ObservableObject
     private string _solutionTitle = string.Empty;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ResultTitle))]
+    [NotifyPropertyChangedFor(nameof(ResultLabel))]
     private string _noOfSolutions = "0";
 
     [ObservableProperty]
-    private string _memoryUsage = "0";
+    private string _memoryConsumption = "0";
 
     [ObservableProperty]
     private string _elapsedTimeInSec = string.Empty;
