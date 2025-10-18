@@ -1,21 +1,11 @@
 namespace NQueen.UnitTests.Tests.NQueenSolver;
 
-using NQueen.UnitTests.Fixtures;
-
 [Collection("SolverBackend")]
-public class SolverPositiveTests
+public class SolverPositiveTests(SolverBackEndFixture fixture)
 {
-    private readonly ISolverBackEnd _solver;
-
-    private const int ExhaustiveSetVerificationMaxSize = 6; // full solution set equivalence only up to this size
-
-    public SolverPositiveTests(SolverBackEndFixture fixture)
-    {
-        _solver = fixture.Sut;
-    }
-
     [Theory]
-    [MemberData(nameof(NQueenTestSets.SolverShouldGenerateOneSingleSolutionData), MemberType = typeof(NQueenTestSets))]
+    [MemberData(nameof(NQueenTestSets.SolverShouldGenerateOneSingleSolutionData),
+        MemberType = typeof(NQueenTestSets))]
     public async Task SolverShouldGenerateOneSingleSolution(int boardSize, SolutionMode solutionMode)
     {
         var simContext = new SimulationContext(boardSize, solutionMode, DisplayMode.Hide);
@@ -41,11 +31,18 @@ public class SolverPositiveTests
             var actualSolutionsList = actualResults.Solutions
                 .Select(s => s.QueenPositions.ToArray())
                 .ToList();
-            SolutionAssertions.AssertSolutionsSetEquivalent(actualSolutionsList, expectedSolutions, $"N={boardSize} {solutionMode}");
+
+            SolutionAssertions
+                .AssertSolutionsSetEquivalent(actualSolutionsList, expectedSolutions,
+                    $"N={boardSize} {solutionMode}");
         }
         else
         {
-            actualResults.SolutionsCount.Should().Be((ulong)expectedSolutions.Count, $"Unique count should match expected for N={boardSize}");
+            actualResults
+                .SolutionsCount
+                .Should()
+                .Be((ulong)expectedSolutions.Count,
+                    $"Unique count should match expected for N={boardSize}");
         }
     }
 
@@ -62,12 +59,22 @@ public class SolverPositiveTests
             var actualSolutionsList = actualResults.Solutions
                 .Select(s => s.QueenPositions.ToArray())
                 .ToList();
-            SolutionAssertions.AssertSolutionsSetEquivalent(actualSolutionsList, expectedSolutions, $"N={boardSize} {solutionMode}");
+            
+            SolutionAssertions
+                .AssertSolutionsSetEquivalent(actualSolutionsList, expectedSolutions,
+                    $"N={boardSize} {solutionMode}");
         }
         else
         {
-            actualResults.SolutionsCount.Should().Be((ulong)expectedSolutions.Count, $"All-solutions count should match expected for N={boardSize}");
+            actualResults
+                .SolutionsCount
+                .Should()
+                .Be((ulong)expectedSolutions.Count,
+                    $"All-solutions count should match expected for N={boardSize}");
         }
     }
+
+    private readonly ISolverBackEnd _solver = fixture.Sut;
+    private const int ExhaustiveSetVerificationMaxSize = 6;
 }
 

@@ -4,17 +4,8 @@ namespace NQueen.Kernel.Solvers;
 /// Runs Unique-mode either materializing up to a sample cap of solutions or in count-only mode.
 /// Returns a tuple where only one side is populated depending on requested path.
 /// </summary>
-public class UniqueExamplesOrCountSolver
+public class UniqueExamplesOrCountSolver(ISolutionFormatter formatter, int exampleCap = 5)
 {
-    private readonly ISolutionFormatter _formatter;
-    private readonly int _exampleCap;
-
-    public UniqueExamplesOrCountSolver(ISolutionFormatter formatter, int exampleCap = 5)
-    {
-        _formatter = formatter;
-        _exampleCap = exampleCap;
-    }
-
     public (SimulationResults examples, SimulationResults countOnly) Solve(SimulationContext context, bool countOnly = false)
     {
         if (countOnly)
@@ -37,4 +28,7 @@ public class UniqueExamplesOrCountSolver
             return (examples, new SimulationResults([], 0, examples.ElapsedTimeInSec));
         }
     }
+
+    private readonly ISolutionFormatter _formatter = formatter;
+    private readonly int _exampleCap = exampleCap;
 }

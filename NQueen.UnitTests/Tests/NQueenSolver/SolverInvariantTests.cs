@@ -1,19 +1,13 @@
 namespace NQueen.UnitTests.Tests.NQueenSolver;
 
-using NQueen.UnitTests.Fixtures;
-
 /// <summary>
 /// Verifies solver solution shape invariants: every returned solution must have
 /// queenPositions.Length == requested board size and > 0.
 /// Ensures the centralized ValidateRows logic in BitmaskSolver is effective across modes.
 /// </summary>
 [Collection("SolverBackend")]
-public class SolverInvariantTests
+public class SolverInvariantTests(SolverBackEndFixture fixture)
 {
-    private readonly ISolverBackEnd _solver;
-
-    public SolverInvariantTests(SolverBackEndFixture fixture) => _solver = fixture.Sut;
-
     [Theory]
     [MemberData(nameof(NQueenTestSets.SmallValueCases), MemberType = typeof(NQueenTestSets))]
     public async Task SolutionsHaveExpectedLength(int boardSize, SolutionMode mode)
@@ -39,4 +33,6 @@ public class SolverInvariantTests
         results.Solutions.Should().BeEmpty("No solutions exist for N={boardSize} in mode {mode}.");
         results.SolutionsCount.Should().Be(0);
     }
+
+    private readonly ISolverBackEnd _solver = fixture.Sut;
 }
