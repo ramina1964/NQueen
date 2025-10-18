@@ -21,6 +21,7 @@ internal sealed class BitmaskSearchEngine
     {
         ValidateBoardSize(request.BoardSize);
         var state = CreateState(request);
+        state.Col = 0; // Ensure search always starts from the first column
         request.ReportProgress(0.0);
         state.Remaining = ComputeAvailable(ref state, request, 0);
         MainLoop(ref state, request);
@@ -71,8 +72,21 @@ internal sealed class BitmaskSearchEngine
 
             if (s.Col == s.N)
             {
-                if (request.OnSolution(s.QueenRows))
-                    break;
+                // Only call callback if all entries are non-negative
+                bool valid = true;
+                for (int i = 0; i < s.N; i++)
+                {
+                    if (s.QueenRows[i] < 0)
+                    {
+                        valid = false;
+                        break;
+                    }
+                }
+                if (valid)
+                {
+                    if (request.OnSolution((int[])s.QueenRows.Clone()))
+                        break;
+                }
                 if (!Backtrack(ref s, out _)) break;
                 continue;
             }

@@ -3,43 +3,45 @@ namespace NQueen.Kernel.Solvers;
 using NQueen.Kernel.Solvers.Engines;
 using NQueen.Kernel.Solvers.Heuristics;
 using NQueen.Kernel.Solvers.Counters;
+using NQueen.Domain.Utils;
 
-/// <summary>
-/// BitmaskSolver (All mode partial) - logic for enumerating or counting all solutions (with symmetry).
-/// </summary>
 public partial class BitmaskSolver
 {
     private void RunAllParallel(int splitDepth)
     {
         int N = BoardSize;
-        int materializedCount = 0;
         ulong totalCount = 0;
-        var solutions = new List<int[]>();
-        // Order matches AllRequest signature: (BoardSize, RootSplitDepth, EnableEvents, ...)
+        var solutions = new List<(UInt128 packed, int boardSize)>();
+        var rawSolutions = new List<int[]>();
+        int limit = _capEnabled ? SimulationSettings.MaxNoOfSolutionsInOutput : int.MaxValue;
         _parallelEngine.RunAll(new BitmaskParallelEngine.AllRequest(
             BoardSize,
             splitDepth,
             EnableEvents,
             rows =>
             {
-                // Always increment totalCount for every solution found
                 totalCount++;
-                // Only materialize if under cap and array is non-empty
-                if (rows.Length > 0 && materializedCount < SimulationSettings.MaxNoOfSolutionsInOutput)
+                if (limit <= 0 || solutions.Count < limit)
                 {
-                    solutions.Add((int[])rows.Clone());
-                    materializedCount++;
+                    rawSolutions.Add(rows);
+                    solutions.Add((0, rows.Length));
                 }
+                // Always continue search
             },
             pct => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken))
         ));
         _solutionCount = totalCount;
         _solutions.Clear();
         _solutions.AddRange(solutions);
+        _rawSolutions = rawSolutions;
     }
 
     private void RunAllSequential()
     {
+        var solutions = new List<(UInt128 packed, int boardSize)>();
+        var rawSolutions = new List<int[]>();
+        ulong totalCount = 0;
+        int limit = _capEnabled ? SimulationSettings.MaxNoOfSolutionsInOutput : int.MaxValue;
         _searchEngine.Run(new BitmaskSearchEngine.Request(
             BoardSize,
             RestrictFirstCol: false,
@@ -49,15 +51,22 @@ public partial class BitmaskSolver
             _currentSimToken,
             () => IsSolverCanceled,
             p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-            m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
+            m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
             rows =>
             {
-                _solutionCount++;
-                if (ShouldAddSolution())
-                    TryStoreSolution(rows, clone: true); // need copy
-                return false; // continue search
+                totalCount++;
+                if (limit <= 0 || solutions.Count < limit)
+                {
+                    rawSolutions.Add(rows);
+                    solutions.Add((0, rows.Length));
+                }
+                return false; // Always continue search
             }
         ));
+        _solutionCount = totalCount;
+        _solutions.Clear();
+        _solutions.AddRange(solutions);
+        _rawSolutions = rawSolutions;
     }
 
     private void SolveAllCountOnlyMode()
@@ -86,7 +95,7 @@ public partial class BitmaskSolver
                 _currentSimToken,
                 () => IsSolverCanceled,
                 p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-                m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
+                m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
                 rows => { count++; return false; }
             ));
             _solutionCount = count;

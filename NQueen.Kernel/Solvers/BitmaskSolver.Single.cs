@@ -1,10 +1,8 @@
 namespace NQueen.Kernel.Solvers;
 
 using NQueen.Kernel.Solvers.Engines;
+using NQueen.Domain.Utils;
 
-/// <summary>
-/// BitmaskSolver (Single mode partial) - contains logic for SolutionMode.Single.
-/// </summary>
 public partial class BitmaskSolver
 {
     private void SolveSingleMode() =>
@@ -17,16 +15,31 @@ public partial class BitmaskSolver
             _currentSimToken,
             () => IsSolverCanceled,
             p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-            m => { if (ShouldRaiseEvents()) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
+            m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
             rows =>
             {
-                _solutionCount++;
                 if (_solutions.Count == 0 && ShouldAddSolution())
                 {
-                    _solutions.Add((int[])rows.Clone());
-                    MaybeSuppressEventsAfterCap();
+                    _solutionCount++;
+                    // Always store full first solution when uncapped, otherwise respect cap logic
+                    if (rows.Length <= 25)
+                    {
+                        var packed = SymmetryHelper.GetCanonicalKey(rows, new int[rows.Length * 2], out _);
+                        _solutions.Add((packed, rows.Length));
+                    }
+                    else
+                    {
+                        if (_rawSolutions == null) _rawSolutions = new List<int[]>();
+                        _rawSolutions.Add(rows);
+                        _solutions.Add((0, rows.Length));
+                    }
+                    if (EnableEvents && !_eventsSuppressedAfterCap)
+                        SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows)));
+                    if (_capEnabled && _solutions.Count >= _maxSolutionsInOutput)
+                        _eventsSuppressedAfterCap = true;
+                    return true; // Stop after first solution
                 }
-                return true; // stop after first solution
+                return false;
             }
         ));
 }

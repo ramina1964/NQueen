@@ -3,6 +3,9 @@ namespace NQueen.Kernel.Solvers;
 using NQueen.Kernel.Solvers.Engines;
 using NQueen.Kernel.Solvers.Heuristics;
 using NQueen.Kernel.Solvers.Counters;
+using NQueen.Domain.Utils;
+using System.Runtime.CompilerServices;
+using System.Threading;
 
 public partial class BitmaskSolver : ISolver, IDisposable
 {
@@ -145,34 +148,28 @@ public partial class BitmaskSolver : ISolver, IDisposable
         _solutions.Clear();
         _solutionCount = 0;
         IsSolverCanceled = false;
-        _eventsSuppressedAfterCap = false; // allow events for new run
-    }
-
-    private bool ShouldRaiseEvents() => EnableEvents && !_eventsSuppressedAfterCap;
-
-    private void MaybeSuppressEventsAfterCap()
-    {
-        if (_eventsSuppressedAfterCap) return;
-        if (_capEnabled == false) return;
-        int cap = _maxSolutionsInOutput; // respect ctor argument
-        if (cap > 0 && _solutions.Count >= cap)
-        {
-            _eventsSuppressedAfterCap = true; // stop further queen / solution events
-        }
+        _eventsSuppressedAfterCap = false;
+        _rawSolutions = null; // ensure no stale arrays from previous run
     }
 
     private SimulationResults BuildResults(TimeSpan elapsed)
     {
-        // Only materialize up to the cap IF cap enforcement enabled. Always report the true total count.
         var cap = (_capEnabled ? _maxSolutionsInOutput : 0);
-        List<int[]> rawSolutions;
-        if (cap > 0 && _solutions.Count > cap)
-            rawSolutions = _solutions.Take(cap).ToList();
-        else
-            rawSolutions = _solutions.ToList();
-        var resultSolutions = rawSolutions
-            .Select((sol, idx) => new Solution(sol, _solutionFormatter, idx + 1))
-            .ToList();
+        var resultSolutions = new List<NQueen.Domain.Models.Solution>(_solutions.Count);
+        int idx = 1;
+        foreach (var sol in (cap > 0 && _solutions.Count > cap ? _solutions.Take(cap) : _solutions))
+        {
+            // Prefer array materialization when raw arrays are stored (ensures exact board layout, needed for unit tests)
+            if (_rawSolutions != null && _rawSolutions.Count >= idx)
+            {
+                resultSolutions.Add(new NQueen.Domain.Models.Solution(_rawSolutions[idx - 1], _solutionFormatter, idx));
+            }
+            else
+            {
+                resultSolutions.Add(new NQueen.Domain.Models.Solution(sol.packed, sol.boardSize, _solutionFormatter, idx));
+            }
+            idx++;
+        }
         return new SimulationResults(resultSolutions, _solutionCount, Math.Round(elapsed.TotalSeconds, 1));
     }
 
@@ -187,16 +184,76 @@ public partial class BitmaskSolver : ISolver, IDisposable
     private void TryStoreSolution(int[] rows, bool clone)
     {
         if (!ShouldAddSolution()) return;
-        int[] toStore = clone ? (int[])rows.Clone() : rows;
-        _solutions.Add(toStore);
-        if (ShouldRaiseEvents())
-            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(toStore)));
-        MaybeSuppressEventsAfterCap();
+        // Always store raw arrays for correctness in tests (packing optional elsewhere)
+        if (_rawSolutions == null) _rawSolutions = new List<int[]>();
+        var arr = clone ? (int[])rows.Clone() : rows;
+        _rawSolutions.Add(arr);
+        _solutions.Add((0, rows.Length));
+        if (EnableEvents && !_eventsSuppressedAfterCap)
+            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows)));
+        if (_capEnabled && _solutions.Count >= _maxSolutionsInOutput)
+            _eventsSuppressedAfterCap = true;
+    }
+
+    // Helper methods for partial accessibility
+    private void SolveUniqueCountOnlyMode()
+    {
+        if (UseParallel)
+        {
+            _solutionCount = UniqueSolutionCounter.Count(BoardSize, null, _currentSimToken, ProgressValueChanged, this);
+            _solutions.Clear();
+        }
+        else
+        {
+            int N = BoardSize;
+            int estimatedUnique = EstimateUniqueSolutionCount(N);
+            var uniqueKeys = new HashSet<UInt128>(estimatedUnique);
+            var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
+
+            _searchEngine.Run(new BitmaskSearchEngine.Request(
+                BoardSize,
+                RestrictFirstCol: true,
+                EnhancedSymmetry: true,
+                DisplayMode,
+                DelayInMillisec,
+                _currentSimToken,
+                () => IsSolverCanceled,
+                p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
+                m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
+                rows =>
+                {
+                    var key = SymmetryHelper.GetCanonicalKey(rows, scratchBuf, out _);
+                    uniqueKeys.Add(key);
+                    return false;
+                }
+            ));
+            _solutionCount = (ulong)uniqueKeys.Count;
+            _solutions.Clear();
+        }
+        ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+    }
+
+    private void IncrementSolutionCountAtomic()
+    {
+        Interlocked.Increment(ref Unsafe.As<ulong, long>(ref _solutionCount));
+    }
+
+    private static int EstimateUniqueSolutionCount(int boardSize)
+    {
+        return boardSize switch
+        {
+            12 => 14200,
+            13 => 73712,
+            14 => 365596,
+            15 => 2279184,
+            16 => 14772512,
+            _ => 1000000
+        };
     }
 
     // -------------------- Private Fields --------------------
     private readonly ISolutionFormatter _solutionFormatter;
-    private readonly List<int[]> _solutions = [];
+    private readonly List<(UInt128 packed, int boardSize)> _solutions = [];
     private readonly BitmaskSearchEngine _searchEngine = new();
     private readonly BitmaskParallelEngine _parallelEngine = new();
     private ulong _solutionCount;
@@ -205,4 +262,5 @@ public partial class BitmaskSolver : ISolver, IDisposable
     private bool _disposed;
     private readonly int _maxSolutionsInOutput;
     private volatile bool _eventsSuppressedAfterCap;
+    private List<int[]>? _rawSolutions; // added raw solutions storage field
 }
