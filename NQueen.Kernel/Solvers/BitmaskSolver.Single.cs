@@ -1,7 +1,5 @@
 namespace NQueen.Kernel.Solvers;
 
-using NQueen.Domain.Utils;
-
 public partial class BitmaskSolver
 {
     private void SolveSingleMode() =>
@@ -17,10 +15,12 @@ public partial class BitmaskSolver
             m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
             rows =>
             {
+                // Central invariant check (single place)
+                if (!ValidateRows(rows)) return false;
+
                 if (_solutions.Count == 0 && ShouldAddSolution())
                 {
                     _solutionCount++;
-                    // Always store full first solution when uncapped, otherwise respect cap logic
                     if (rows.Length <= 25)
                     {
                         var packed = SymmetryHelper.GetCanonicalKey(rows, new int[rows.Length * 2], out _);

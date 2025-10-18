@@ -1,11 +1,5 @@
-using BenchmarkDotNet.Attributes;
-using NQueen.Kernel.Solvers;
-using NQueen.Domain.Models;
-using NQueen.Domain.Enums;
-using NQueen.Domain.Settings;
-using Microsoft.VSDiagnostics;
-
 namespace NQueen.Benchmarking;
+
 [CPUUsageDiagnoser]
 public class BitmaskSolver_UniqueTracking_Benchmark
 {

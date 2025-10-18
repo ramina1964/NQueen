@@ -1,10 +1,3 @@
-using BenchmarkDotNet.Attributes;
-using NQueen.Kernel.Solvers;
-using NQueen.Domain.Models;
-using NQueen.Domain.Context;
-using NQueen.Domain.Settings;
-using NQueen.Kernel.Solvers;
-
 namespace NQueen.Benchmarking;
 
 [MemoryDiagnoser]

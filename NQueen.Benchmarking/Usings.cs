@@ -1,11 +1,13 @@
 ﻿global using BenchmarkDotNet.Attributes;
-global using BenchmarkDotNet.Running;
+global using BenchmarkDotNet.Jobs;
+global using BenchmarkDotNet.Order;
 global using Microsoft.VSDiagnostics;
+global using NQueen.Domain.Context;
 global using NQueen.Domain.Enums;
 global using NQueen.Domain.Formatters;
 global using NQueen.Domain.Interfaces;
 global using NQueen.Domain.Models;
+global using NQueen.Domain.Settings;
+global using NQueen.Domain.Utils;
 global using NQueen.Kernel.Solvers;
 global using System.Collections.ObjectModel;
-global using BenchmarkDotNet.Jobs;
-global using NQueen.Domain.Settings;

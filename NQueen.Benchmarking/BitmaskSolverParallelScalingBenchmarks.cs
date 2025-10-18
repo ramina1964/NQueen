@@ -1,8 +1,3 @@
-using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Diagnosers;
-using NQueen.Kernel.Solvers;
-using NQueen.Domain.Models;
-
 namespace NQueen.Benchmarking;
 
 // Measures impact of new parallel tunables (UseParallel + ParallelRootSplitDepth)

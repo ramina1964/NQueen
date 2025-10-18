@@ -1,6 +1,5 @@
 namespace NQueen.Kernel.Solvers;
 
-
 public partial class BitmaskSolver
 {
     private void RunUniqueParallel()
@@ -19,8 +18,9 @@ public partial class BitmaskSolver
             () => true,
             rows =>
             {
+                if (!ValidateRows(rows)) return; // enforce invariant
                 IncrementSolutionCountAtomic();
-                if (rows.Length > 0 && _solutions.Count < limit)
+                if (_solutions.Count < limit)
                 {
                     var packed = rows.Length <= 25 ? SymmetryHelper.GetCanonicalKey(rows, new int[rows.Length * 2], out _) : 0;
                     lock (_solutions)
@@ -60,6 +60,7 @@ public partial class BitmaskSolver
             m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
             rows =>
             {
+                if (!ValidateRows(rows)) return false;
                 var copy = (int[])rows.Clone();
                 if (SymmetryHelper.AddIfUniquePacked(copy, uniqueKeys, scratchBuf, out var key, out _))
                 {

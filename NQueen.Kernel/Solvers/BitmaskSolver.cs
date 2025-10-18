@@ -1,10 +1,16 @@
 namespace NQueen.Kernel.Solvers;
 
-using System.Diagnostics;
-
 public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput) : ISolver, IDisposable
 {
+    // Central validation for all solver paths
+    private bool ValidateRows(int[] rows)
+    {
+        bool ok = rows.Length == BoardSize && rows.Length > 0;
+        Debug.Assert(ok, $"[BitmaskSolver] Invalid solution rows length={rows.Length}, BoardSize={BoardSize}");
+        return ok;
+    }
+
     public BitmaskSolver(ISolutionFormatter solutionFormatter, bool enableCap)
         : this(solutionFormatter, SimulationSettings.MaxNoOfSolutionsInOutput) =>
         _capEnabled = enableCap;
@@ -211,6 +217,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                 m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
                 rows =>
                 {
+                    if (!ValidateRows(rows)) return false;
                     var key = SymmetryHelper.GetCanonicalKey(rows, scratchBuf, out _);
                     uniqueKeys.Add(key);
                     return false;

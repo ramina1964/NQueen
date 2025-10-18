@@ -1,11 +1,14 @@
-﻿using NQueen.Domain.Context;
-
-namespace NQueen.Domain.Interfaces;
+﻿namespace NQueen.Domain.Interfaces;
 
 public interface ISolverBackEnd
 {
-    // Backend
+    // Backend control & modes
     bool IsSolverCanceled { get; set; }
+
+    // Count-only mode flags (moved from ISolver to consolidate backend concerns)
+    bool UseCountOnlyUniqueMode { get; set; }
+    
+    bool UseCountOnlyAllMode   { get; set; }
 
     Task<SimulationResults> GetSimResultsAsync(SimulationContext simContext);
 }

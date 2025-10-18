@@ -15,13 +15,15 @@ public partial class BitmaskSolver
             EnableEvents,
             rows =>
             {
+                // Central validation
+                if (!ValidateRows(rows)) return;
                 totalCount++;
                 if (limit <= 0 || solutions.Count < limit)
                 {
                     rawSolutions.Add(rows);
                     solutions.Add((0, rows.Length));
                 }
-                // Always continue search
+                // Always continue search (void callback)
             },
             pct => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken))
         ));
@@ -49,6 +51,7 @@ public partial class BitmaskSolver
             m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
             rows =>
             {
+                if (!ValidateRows(rows)) return false; // skip malformed
                 totalCount++;
                 if (limit <= 0 || solutions.Count < limit)
                 {
@@ -91,7 +94,7 @@ public partial class BitmaskSolver
                 () => IsSolverCanceled,
                 p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
                 m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
-                rows => { count++; return false; }
+                rows => { if (ValidateRows(rows)) count++; return false; }
             ));
             _solutionCount = count;
             _solutions.Clear();

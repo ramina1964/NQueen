@@ -1,8 +1,3 @@
-using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Order;
-using NQueen.Kernel.Solvers;
-using NQueen.Domain.Models;
-
 namespace NQueen.Benchmarking;
 
 // Targeted benchmark for Unique mode performance (materializing vs count-only)

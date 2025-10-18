@@ -1,4 +1,4 @@
-    namespace NQueen.Benchmarking;
+namespace NQueen.Benchmarking;
 
 [MemoryDiagnoser]
 public class BitmaskSolverParallelizationBaselineBenchmark

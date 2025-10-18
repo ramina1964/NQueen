@@ -157,10 +157,24 @@ public sealed partial class MainViewModel
         if (_solver?.IsSolverCanceled == true || !IsSimulating)
             return;
 
+        // Guard: skip invalid / empty solutions to prevent runtime exception
+        if (e.Solution.Length == 0)
+        {
+            Debug.WriteLine("[MainViewModel] Skipping empty solution memory (length 0)." );
+            return;
+        }
+
         _actualTotalSolutions++;
 
         var solutionId = _batchedSolutions.Count + 1;
-        var newSolution = new Solution(e.Solution.ToArray(), _solutionFormatter, solutionId);
+        // Copy only when non-empty
+        var arr = e.Solution.ToArray();
+        if (arr.Length == 0)
+        {
+            Debug.WriteLine("[MainViewModel] Unexpected empty array after ToArray(); ignoring.");
+            return;
+        }
+        var newSolution = new Solution(arr, _solutionFormatter, solutionId);
         _batchedSolutions.Add(newSolution);
 
         if (DisplayMode == DisplayMode.Visualize)
