@@ -1,17 +1,8 @@
 ﻿namespace NQueen.UnitTests.Tests.NQueenSolver;
 
-using NQueen.UnitTests.Fixtures;
-
 [Collection("SolverBackend")]
-public class SolverNegativeTests
+public class SolverNegativeTests(SolverBackEndFixture fixture)
 {
-    private readonly ISolverBackEnd _solver;
-
-    public SolverNegativeTests(SolverBackEndFixture fixture)
-    {
-        _solver = fixture.Sut;
-    }
-
     [Theory]
     [MemberData(nameof(NQueenTestSets.SolverShouldNotGenerateAnySolutionData),
         MemberType = typeof(NQueenTestSets))]
@@ -25,4 +16,6 @@ public class SolverNegativeTests
         // Assert
         Assert.Empty(actualSolutions.Solutions);
     }
+
+    private readonly ISolverBackEnd _solver = fixture.Sut;
 }

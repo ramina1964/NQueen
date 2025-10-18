@@ -14,7 +14,8 @@ public class SolverSymmetryTests
         solutions.Add(baseSolution);
 
         // Generate symmetrical transformations
-        var symmetricalSolutions = SymmetryHelper.GetSymmetricalTransformations(baseSolution.Span.ToArray());
+        var symmetricalSolutions = SymmetryHelper
+            .GetSymmetricalTransformations(baseSolution.Span.ToArray());
 
         // Add symmetrical transformations to the solutions set
         foreach (var symmetrical in symmetricalSolutions)
@@ -29,7 +30,9 @@ public class SolverSymmetryTests
             // Log the result of the assertion
             Debug.WriteLine($"Checking symmetrical solution: {string.Join(",", symmetrical)} - Exists: {exists}");
 
-            exists.Should().BeTrue($"Symmetrical solution {string.Join(",", symmetrical)} should be detected.");
+            exists
+                .Should()
+                .BeTrue($"Symmetrical solution {string.Join(",", symmetrical)} should be detected.");
         }
 
         bool ContainsSolution(Memory<int> solution) =>

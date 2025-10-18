@@ -7,6 +7,7 @@ public static partial class SymmetryHelper
         // First column: standard half-board restriction
         if (column == 0)
             return (boardSize + 1) / 2;
+
         return boardSize; // full range for other columns (upper bound only)
     }
 
@@ -16,7 +17,9 @@ public static partial class SymmetryHelper
     //   This removes symmetric counterparts obtainable via reflection across main diagonal.
     public static ulong ApplyAdvancedSymmetryPruning(int boardSize, int column, int[] queenRows, ulong availMask)
     {
-        if (boardSize <= 1) return availMask;
+        if (boardSize <= 1)
+            return availMask;
+
         if (column == 0)
         {
             int maxRow = (boardSize + 1) / 2;
@@ -57,11 +60,14 @@ public static partial class SymmetryHelper
         canonicalCopy = Array.Empty<int>();
         ArgumentNullException.ThrowIfNull(solution);
         ArgumentNullException.ThrowIfNull(uniqueKeys);
+
         if (scratch.Length < solution.Length * 2)
             throw new ArgumentException("Scratch buffer too small", nameof(scratch));
+
         key = GetCanonicalKey(solution, scratch, out var canonicalSpan);
         if (!uniqueKeys.Add(key))
             return false;
+
         // copy canonical representative so caller may materialize if desired
         canonicalCopy = canonicalSpan.ToArray();
         return true;
@@ -83,27 +89,52 @@ public static partial class SymmetryHelper
 
         // Identity
         solution.AsSpan().CopyTo(buf);
-        if (!minSet || SpanIsLess(buf, min, n)) { buf.CopyTo(min); minSet = true; }
+        if (minSet == false || SpanIsLess(buf, min, n))
+        {
+            buf.CopyTo(min);
+            minSet = true;
+        }
+
         // Rotate 90
-        for (int i = 0; i < n; i++) buf[solution[i]] = n - 1 - i;
+        for (int i = 0; i < n; i++)
+            buf[solution[i]] = n - 1 - i;
+
         if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
+
         // Rotate 180
-        for (int i = 0; i < n; i++) buf[n - 1 - i] = n - 1 - solution[i];
+        for (int i = 0; i < n; i++)
+            buf[n - 1 - i] = n - 1 - solution[i];
+
         if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
+
         // Rotate 270
-        for (int i = 0; i < n; i++) buf[n - 1 - solution[i]] = i;
+        for (int i = 0; i < n; i++)
+            buf[n - 1 - solution[i]] = i;
+
         if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
+
         // Reflect vertical
-        for (int i = 0; i < n; i++) buf[n - 1 - i] = solution[i];
+        for (int i = 0; i < n; i++)
+            buf[n - 1 - i] = solution[i];
+
         if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
+
         // Reflect horizontal
-        for (int i = 0; i < n; i++) buf[i] = n - 1 - solution[i];
+        for (int i = 0; i < n; i++)
+            buf[i] = n - 1 - solution[i];
+
         if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
+
         // Reflect main diagonal
-        for (int i = 0; i < n; i++) buf[solution[i]] = i;
+        for (int i = 0; i < n; i++)
+            buf[solution[i]] = i;
+
         if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
+
         // Reflect anti-diagonal
-        for (int i = 0; i < n; i++) buf[n - 1 - solution[i]] = n - 1 - i;
+        for (int i = 0; i < n; i++)
+            buf[n - 1 - solution[i]] = n - 1 - i;
+
         if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
 
         // Return a cloned array for legacy API expectations
@@ -121,35 +152,60 @@ public static partial class SymmetryHelper
 
         // Identity
         solution.AsSpan().CopyTo(buf);
-        if (!minSet || SpanIsLess(buf, min, n)) { buf.CopyTo(min); minSet = true; }
-        
+        if (minSet == false || SpanIsLess(buf, min, n))
+        {
+            buf.CopyTo(min);
+            minSet = true;
+        }
+
         // Rotate 90
-        for (int i = 0; i < n; i++) buf[solution[i]] = n - 1 - i;
-        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
-        
+        for (int i = 0; i < n; i++)
+            buf[solution[i]] = n - 1 - i;
+
+        if (SpanIsLess(buf, min, n))
+            buf.CopyTo(min);
+
         // Rotate 180
-        for (int i = 0; i < n; i++) buf[n - 1 - i] = n - 1 - solution[i];
-        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
-        
+        for (int i = 0; i < n; i++)
+            buf[n - 1 - i] = n - 1 - solution[i];
+
+        if (SpanIsLess(buf, min, n))
+            buf.CopyTo(min);
+
         // Rotate 270
-        for (int i = 0; i < n; i++) buf[n - 1 - solution[i]] = i;
-        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
-        
+        for (int i = 0; i < n; i++)
+            buf[n - 1 - solution[i]] = i;
+
+        if (SpanIsLess(buf, min, n))
+            buf.CopyTo(min);
+
         // Reflect vertical
-        for (int i = 0; i < n; i++) buf[n - 1 - i] = solution[i];
-        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
-        
+        for (int i = 0; i < n; i++)
+            buf[n - 1 - i] = solution[i];
+
+        if (SpanIsLess(buf, min, n))
+            buf.CopyTo(min);
+
         // Reflect horizontal
-        for (int i = 0; i < n; i++) buf[i] = n - 1 - solution[i];
-        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
-        
+        for (int i = 0; i < n; i++)
+            buf[i] = n - 1 - solution[i];
+
+        if (SpanIsLess(buf, min, n))
+            buf.CopyTo(min);
+
         // Reflect main diagonal
-        for (int i = 0; i < n; i++) buf[solution[i]] = i;
-        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
-        
+        for (int i = 0; i < n; i++)
+            buf[solution[i]] = i;
+
+        if (SpanIsLess(buf, min, n))
+            buf.CopyTo(min);
+
         // Reflect anti-diagonal
-        for (int i = 0; i < n; i++) buf[n - 1 - solution[i]] = n - 1 - i;
-        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
+        for (int i = 0; i < n; i++)
+            buf[n - 1 - solution[i]] = n - 1 - i;
+
+        if (SpanIsLess(buf, min, n))
+            buf.CopyTo(min);
 
         canonical = min;
         return PackCanonical(min, n);
@@ -172,6 +228,7 @@ public static partial class SymmetryHelper
         {
             key = (key << 5) | (uint)rows[i];
         }
+        
         return key;
     }
 
@@ -180,6 +237,7 @@ public static partial class SymmetryHelper
     {
         int n = solution.Length;
         int[] scratch = new int[n * 2];
+        
         return GetCanonicalForm(solution, scratch);
     }
 
@@ -190,6 +248,7 @@ public static partial class SymmetryHelper
             if (a[i] < b[i]) return true;
             if (a[i] > b[i]) return false;
         }
+        
         return false;
     }
 
@@ -200,20 +259,56 @@ public static partial class SymmetryHelper
         var results = new List<int[]>(8);
         var buf = new int[n];
         Array.Copy(solution, buf, n); results.Add((int[])buf.Clone());
-        for (int i = 0; i < n; i++) buf[solution[i]] = n - 1 - i; results.Add((int[])buf.Clone());
-        for (int i = 0; i < n; i++) buf[n - 1 - i] = n - 1 - solution[i]; results.Add((int[])buf.Clone());
-        for (int i = 0; i < n; i++) buf[n - 1 - solution[i]] = i; results.Add((int[])buf.Clone());
-        for (int i = 0; i < n; i++) buf[n - 1 - i] = solution[i]; results.Add((int[])buf.Clone());
-        for (int i = 0; i < n; i++) buf[i] = n - 1 - solution[i]; results.Add((int[])buf.Clone());
-        for (int i = 0; i < n; i++) buf[solution[i]] = i; results.Add((int[])buf.Clone());
-        for (int i = 0; i < n; i++) buf[n - 1 - solution[i]] = n - 1 - i; results.Add((int[])buf.Clone());
+        for (int i = 0; i < n; i++) 
+            buf[solution[i]] = n - 1 - i;
+        
+        results.Add((int[])buf.Clone());
+
+        for (int i = 0; i < n; i++) 
+            buf[n - 1 - i] = n - 1 - solution[i];
+        
+        results.Add((int[])buf.Clone());
+  
+        for (int i = 0; i < n; i++) 
+            buf[n - 1 - solution[i]] = i;
+        
+        results.Add((int[])buf.Clone());
+        
+        for (int i = 0; i < n; i++) 
+            buf[n - 1 - i] = solution[i];
+        
+        results.Add((int[])buf.Clone());
+        
+        for (int i = 0; i < n; i++) 
+            buf[i] = n - 1 - solution[i];
+        
+        results.Add((int[])buf.Clone());
+        
+        for (int i = 0; i < n; i++) 
+            buf[solution[i]] = i;
+        
+        results.Add((int[])buf.Clone());
+        
+        for (int i = 0; i < n; i++) 
+            buf[n - 1 - solution[i]] = n - 1 - i;
+        
+        results.Add((int[])buf.Clone());
+        
         return results;
     }
 
-    public static List<int[]> GetSymmetricalSolutions(Memory<int> solution) => GetSymmetricalSolutions(solution.ToArray());
-    public static List<int[]> GetSymmetricalSolutions(ReadOnlySpan<int> solution) => GetSymmetricalSolutions(solution.ToArray());
-    public static IEnumerable<int[]> GetSymmetricalTransformations(ReadOnlySpan<int> solution) => GetSymmetricalSolutions(solution.ToArray());
-    public static IEnumerable<int[]> GetSymmetricalTransformations(Memory<int> solution) => GetSymmetricalSolutions(solution.ToArray());
+    public static List<int[]> GetSymmetricalSolutions(Memory<int> solution) =>
+        GetSymmetricalSolutions(solution.ToArray());
+    
+    public static List<int[]> GetSymmetricalSolutions(ReadOnlySpan<int> solution) =>
+        GetSymmetricalSolutions(solution.ToArray());
+    
+    public static IEnumerable<int[]> GetSymmetricalTransformations(ReadOnlySpan<int> solution) =>
+        GetSymmetricalSolutions(solution.ToArray());
+    
+    public static IEnumerable<int[]> GetSymmetricalTransformations(Memory<int> solution) =>
+        GetSymmetricalSolutions(solution.ToArray());
 
-    public static int GetScratchBufferSize(int boardSize) => boardSize * 2;
+    public static int GetScratchBufferSize(int boardSize) =>
+        boardSize * 2;
 }
