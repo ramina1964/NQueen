@@ -1,5 +1,7 @@
 namespace NQueen.Kernel.Solvers;
 
+using System.Diagnostics;
+
 public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput) : ISolver, IDisposable
 {
@@ -68,8 +70,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         if (BoardSize > BoardSettings.MaxBitmaskBoardSize)
             throw new NotSupportedException($"Bitmask solver supports boards up to {BoardSettings.MaxBitmaskBoardSize}. (Requested: {BoardSize})");
 
-        // IMPORTANT: Do NOT overwrite the legacy boolean flags here.
-        // Users (e.g. ConsoleApp) may set UseCountOnly* directly. We combine the enum + boolean as an OR.
         bool allCountOnly = UseCountOnlyAllMode || AllStorageMode == ResultStorageMode.CountOnly;
         bool uniqueCountOnly = UseCountOnlyUniqueMode || UniqueStorageMode == ResultStorageMode.CountOnly;
 
@@ -88,7 +88,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                 }
                 else
                 {
-                    // Automatic parallel/sequential selection for All mode
                     bool autoParallel = ParallelSplitDepthHeuristic.ShouldUseParallelForAll(BoardSize);
                     int splitDepth = UseAdaptiveDepth
                         ? ParallelSplitDepthHeuristic.GetOptimalSplitDepth(BoardSize)
@@ -143,20 +142,30 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         _solutionCount = 0;
         IsSolverCanceled = false;
         _eventsSuppressedAfterCap = false;
-        _rawSolutions = null; // ensure no stale arrays from previous run
+        _rawSolutions = null;
     }
 
     private SimulationResults BuildResults(TimeSpan elapsed)
     {
         var cap = (_capEnabled ? _maxSolutionsInOutput : 0);
-        var resultSolutions = new List<NQueen.Domain.Models.Solution>(_solutions.Count);
+        var resultSolutions = new List<Solution>(_solutions.Count);
         int idx = 1;
         foreach (var (packed, boardSize) in (cap > 0 && _solutions.Count > cap ? _solutions.Take(cap) : _solutions))
         {
-            // Prefer array materialization when raw arrays are stored (ensures exact board layout, needed for unit tests)
+            Debug.Assert(boardSize > 0, "Invariant violated: boardSize should be > 0 when constructing results.");
             if (_rawSolutions != null && _rawSolutions.Count >= idx)
             {
-                resultSolutions.Add(new NQueen.Domain.Models.Solution(_rawSolutions[idx - 1], _solutionFormatter, idx));
+                var raw = _rawSolutions[idx - 1];
+                Debug.Assert(raw != null && raw.Length == boardSize, "Raw solution length must equal boardSize.");
+                if (raw != null && raw.Length == boardSize)
+                {
+                    resultSolutions.Add(new NQueen.Domain.Models.Solution(raw, _solutionFormatter, idx));
+                }
+                else
+                {
+                    // Fallback to packed when invariant fails (should not happen)
+                    resultSolutions.Add(new NQueen.Domain.Models.Solution(packed, boardSize, _solutionFormatter, idx));
+                }
             }
             else
             {
