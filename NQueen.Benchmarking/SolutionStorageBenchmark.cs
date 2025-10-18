@@ -1,10 +1,5 @@
-using BenchmarkDotNet.Attributes;
-using NQueen.Domain.Models;
-using NQueen.Domain.Settings;
-using NQueen.Kernel.Solvers;
-using Microsoft.VSDiagnostics;
-
 namespace NQueen.Benchmarking;
+
 [CPUUsageDiagnoser]
 public class SolutionStorageBenchmark
 {

@@ -1,8 +1,5 @@
-using BenchmarkDotNet.Attributes;
-using NQueen.Domain.Utils;
-using Microsoft.VSDiagnostics;
-
 namespace NQueen.Benchmarking;
+
 [CPUUsageDiagnoser]
 public class SymmetryHelperCanonicalKeyBenchmark
 {

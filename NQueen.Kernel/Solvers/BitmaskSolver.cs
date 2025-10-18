@@ -1,7 +1,5 @@
 namespace NQueen.Kernel.Solvers;
 
-using System.Diagnostics;
-
 public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput) : ISolver, IDisposable
 {

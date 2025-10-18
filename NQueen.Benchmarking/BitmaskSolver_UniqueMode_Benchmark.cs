@@ -1,7 +1,4 @@
-using NQueen.Kernel.Solvers;
-using NQueen.Domain.Models;
-using NQueen.Domain.Settings;
-using BenchmarkDotNet.Attributes;
+namespace NQueen.Benchmarking;
 
 [MemoryDiagnoser]
 public class BitmaskSolver_UniqueMode_Benchmark

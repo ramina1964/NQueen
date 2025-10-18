@@ -1,7 +1,5 @@
 namespace NQueen.Kernel.Solvers;
 
-using NQueen.Domain.Utils;
-
 public partial class BitmaskSolver
 {
     private void SolveSingleMode() =>

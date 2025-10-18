@@ -1,6 +1,4 @@
-﻿using NQueen.Domain.Context;
-
-namespace NQueen.Domain.Interfaces;
+﻿namespace NQueen.Domain.Interfaces;
 
 public interface ISolverBackEnd
 {

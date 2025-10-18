@@ -1,9 +1,5 @@
-using BenchmarkDotNet.Attributes;
-using NQueen.Kernel.Solvers;
-using NQueen.Domain.Models;
-using Microsoft.VSDiagnostics;
-
 namespace NQueen.Benchmarking;
+
 [CPUUsageDiagnoser]
 public class UniqueSolverBaselineBenchmark
 {

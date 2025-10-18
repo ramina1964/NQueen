@@ -1,6 +1,5 @@
 namespace NQueen.Kernel.Solvers;
 
-
 public partial class BitmaskSolver
 {
     private void RunUniqueParallel()

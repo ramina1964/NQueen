@@ -1,7 +1,3 @@
-using BenchmarkDotNet.Attributes;
-using NQueen.Kernel.Solvers;
-using NQueen.Domain.Models;
-
 namespace NQueen.Benchmarking;
 
 // Focused memory benchmark: N = 18, Unique mode, Count-Only strategy.

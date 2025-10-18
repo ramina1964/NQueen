@@ -1,6 +1,3 @@
-using System.Collections.ObjectModel;
-using NQueen.Domain.Settings;
-
 namespace NQueen.Benchmarking;
 
 // Goal: Isolate incremental overhead layers that the GUI adds compared to the Console app.
