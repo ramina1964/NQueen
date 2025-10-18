@@ -10,7 +10,9 @@ internal sealed partial class BitmaskParallelEngine
         var globalUnique = new HashSet<UInt128>();
         var globalLock = new object();
         var tasks = new List<Task<ulong>>();
+        // Global materialized counter (shared across tasks)
         int materializedCount = 0;
+        // Cap only applies for N > 8 (small boards fully materialized); when ShouldMaterialize returns false treat as count-only.
         int cap = (N <= 8) ? int.MaxValue : (request.ShouldMaterialize() ? SimulationSettings.MaxNoOfSolutionsInOutput : 0);
 
         foreach (int fr in Enumerable.Range(0, totalRoots))
@@ -33,8 +35,8 @@ internal sealed partial class BitmaskParallelEngine
                 ulong[] stackRemaining = new ulong[N];
                 int col = 1;
                 ulong remaining = ComputeAvail(col);
-                ulong localCount = 0;
-                bool capReached = false;
+                ulong localCount = 0; // count of non-materialized unique solutions for this task
+                bool capReached = cap == 0; // if cap == 0 we are in count-only mode from start
 
                 while (true)
                 {
@@ -48,28 +50,39 @@ internal sealed partial class BitmaskParallelEngine
                         }
                         if (isUnique)
                         {
-                            int[] canonicalRows = null!;
-                            if (!capReached && materializedCount < cap)
+                            // Decide materialization for this unique solution.
+                            bool shouldMaterialize = !capReached && materializedCount < cap;
+                            if (shouldMaterialize)
                             {
-                                canonicalRows = new int[N];
-                                canonicalSpan.CopyTo(canonicalRows);
+                                // Atomically increment global materialized count; re-check against cap.
+                                int newVal = Interlocked.Increment(ref materializedCount);
+                                if (newVal > cap)
+                                {
+                                    // We crossed the cap boundary with this solution -> treat as count-only.
+                                    capReached = true;
+                                    shouldMaterialize = false;
+                                    localCount++; // count-only solution
+                                }
+                                else
+                                {
+                                    // Materialize canonical rows
+                                    int[] canonicalRows = new int[N];
+                                    canonicalSpan.CopyTo(canonicalRows);
+                                    request.OnUniqueSolution(canonicalRows);
+                                }
                             }
-                            ParallelMaterializationHelper.HandleMaterialization(
-                                ref materializedCount,
-                                cap,
-                                ref capReached,
-                                canonicalRows,
-                                canonicalRowsArg => { if (canonicalRowsArg != null) request.OnUniqueSolution(canonicalRowsArg); },
-                                ref localCount);
+                            else
+                            {
+                                // Count-only path: still invoke callback so solver can increment total count.
+                                request.OnUniqueSolution(Array.Empty<int>());
+                                localCount++;
+                            }
                         }
                         col--; if (col <= 0) break; Restore(col, out remaining); continue;
                     }
                     if (remaining == 0)
                     {
-                        col--;
-                        if (col <= 0)
-                            break;
-                        Restore(col, out remaining); continue;
+                        col--; if (col <= 0) break; Restore(col, out remaining); continue;
                     }
                     ulong bit = remaining & (ulong)-(long)remaining; remaining ^= bit;
                     int row = BitOperations.TrailingZeroCount(bit);
@@ -82,8 +95,7 @@ internal sealed partial class BitmaskParallelEngine
                     d1 = (d1 | bit) << 1;
                     d2 = (d2 | bit) >> 1;
                     col++;
-                    if (col == N)
-                        continue;
+                    if (col == N) continue;
                     remaining = ComputeAvail(col);
                 }
                 if (request.EnableEvents)
@@ -114,9 +126,7 @@ internal sealed partial class BitmaskParallelEngine
             }));
         }
         Task.WaitAll(tasks.ToArray());
-        ulong totalCount = (ulong)materializedCount;
-        foreach (var t in tasks)
-            totalCount += t.Result;
+        // Final progress update
         request.ReportProgress(100.0);
     }
 }

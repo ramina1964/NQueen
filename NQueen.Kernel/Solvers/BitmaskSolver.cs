@@ -163,7 +163,14 @@ public partial class BitmaskSolver : ISolver, IDisposable
 
     private SimulationResults BuildResults(TimeSpan elapsed)
     {
-        var resultSolutions = _solutions
+        // Only materialize up to the cap IF cap enforcement enabled. Always report the true total count.
+        var cap = (_capEnabled ? _maxSolutionsInOutput : 0);
+        List<int[]> rawSolutions;
+        if (cap > 0 && _solutions.Count > cap)
+            rawSolutions = _solutions.Take(cap).ToList();
+        else
+            rawSolutions = _solutions.ToList();
+        var resultSolutions = rawSolutions
             .Select((sol, idx) => new Solution(sol, _solutionFormatter, idx + 1))
             .ToList();
         return new SimulationResults(resultSolutions, _solutionCount, Math.Round(elapsed.TotalSeconds, 1));
@@ -197,5 +204,5 @@ public partial class BitmaskSolver : ISolver, IDisposable
     private readonly bool _capEnabled = true;
     private bool _disposed;
     private readonly int _maxSolutionsInOutput;
-    private volatile bool _eventsSuppressedAfterCap; // dynamic flag to stop event traffic after cap reached
+    private volatile bool _eventsSuppressedAfterCap;
 }

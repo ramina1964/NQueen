@@ -11,23 +11,31 @@ public partial class BitmaskSolver
 {
     private void RunAllParallel(int splitDepth)
     {
+        int N = BoardSize;
+        int materializedCount = 0;
+        ulong totalCount = 0;
+        var solutions = new List<int[]>();
+        // Order matches AllRequest signature: (BoardSize, RootSplitDepth, EnableEvents, ...)
         _parallelEngine.RunAll(new BitmaskParallelEngine.AllRequest(
             BoardSize,
+            splitDepth,
             EnableEvents,
-            splitDepth < 1 ? 1 : splitDepth,
             rows =>
             {
-                Interlocked.Increment(ref _solutionCount);
-                if (!ShouldAddSolution())
-                    return; // Short-circuit: do not lock/copy/store after cap
-                lock (_solutions)
+                // Always increment totalCount for every solution found
+                totalCount++;
+                // Only materialize if under cap and array is non-empty
+                if (rows.Length > 0 && materializedCount < SimulationSettings.MaxNoOfSolutionsInOutput)
                 {
-                    if (ShouldAddSolution())
-                        TryStoreSolution(rows, clone: false);
+                    solutions.Add((int[])rows.Clone());
+                    materializedCount++;
                 }
             },
             pct => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken))
         ));
+        _solutionCount = totalCount;
+        _solutions.Clear();
+        _solutions.AddRange(solutions);
     }
 
     private void RunAllSequential()

@@ -2,8 +2,9 @@ namespace NQueen.Kernel.Solvers.Engines;
 
 internal sealed partial class BitmaskParallelEngine
 {
+    // Adjusted order so first three parameters align with usage in BitmaskSolver: (BoardSize, RootSplitDepth, EnableEvents,...)
     public readonly record struct AllRequest(
-        int BoardSize, bool EnableEvents, int RootSplitDepth, Action<int[]> OnSolution,
+        int BoardSize, int RootSplitDepth, bool EnableEvents, Action<int[]> OnSolution,
         Action<double> ReportProgress);
 
     // Added ShouldMaterialize predicate to avoid unnecessary row array allocations when cap reached.

@@ -79,13 +79,22 @@ internal sealed partial class BitmaskParallelEngine
                 {
                     if (col == N)
                     {
-                        ParallelMaterializationHelper.HandleMaterialization(
-                            ref globalMaterialized,
-                            cap,
-                            ref capReached,
-                            (int[])rowsArr.Clone(),
-                            request.OnSolution,
-                            ref localCount);
+                        // Always call OnSolution for every solution found
+                        if (!capReached || globalMaterialized < cap)
+                        {
+                            ParallelMaterializationHelper.HandleMaterialization(
+                                ref globalMaterialized,
+                                cap,
+                                ref capReached,
+                                (int[])rowsArr.Clone(),
+                                request.OnSolution,
+                                ref localCount);
+                        }
+                        else
+                        {
+                            // Call OnSolution with empty array to increment count only
+                            request.OnSolution(Array.Empty<int>());
+                        }
                         col--; if (col < startCol) break; Restore(col, out remaining); continue;
                     }
 

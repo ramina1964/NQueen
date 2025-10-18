@@ -30,17 +30,17 @@ public partial class BitmaskSolver
             BoardSize,
             EnableEvents,
             1,
-            ShouldAddSolution,
+            () => true, // Always allow counting for every unique solution
             rows =>
             {
-                // Each callback corresponds to a unique canonical solution chosen to materialize.
-                IncrementSolutionCountAtomic(); // atomic increment avoids lost counts under parallelism
-                if (rows.Length > 0 && ShouldAddSolution()) // non-empty only when materialization intended
+                // Always increment for every callback (every unique solution)
+                IncrementSolutionCountAtomic();
+                // Only materialize if under cap and array is non-empty
+                if (rows.Length > 0 && _solutions.Count < SimulationSettings.MaxNoOfSolutionsInOutput)
                 {
                     lock (_solutions)
                     {
-                        if (ShouldAddSolution())
-                            TryStoreSolution(rows, clone: false);
+                        TryStoreSolution(rows, clone: false);
                     }
                 }
             },
@@ -57,7 +57,8 @@ public partial class BitmaskSolver
         }
 
         int N = BoardSize;
-        var uniqueKeys = new HashSet<UInt128>();
+        int estimatedUnique = EstimateUniqueSolutionCount(N);
+        var uniqueKeys = new HashSet<UInt128>(estimatedUnique);
         var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
 
         _searchEngine.Run(new BitmaskSearchEngine.Request(
@@ -75,10 +76,10 @@ public partial class BitmaskSolver
                 var copy = (int[])rows.Clone();
                 if (SymmetryHelper.AddIfUniquePacked(copy, uniqueKeys, scratchBuf, out var key, out _))
                 {
-                    _solutionCount++; // sequential path safe
-                    if (ShouldAddSolution())
+                    _solutionCount++; // Always increment for every unique solution found
+                    // Only materialize if under cap
+                    if (_solutions.Count < SimulationSettings.MaxNoOfSolutionsInOutput)
                     {
-                        // Materialize only when under cap: unpack canonical from key.
                         var canonicalRows = UnpackKeyToArray(key, N);
                         TryStoreSolution(canonicalRows, clone: false);
                     }
@@ -109,7 +110,8 @@ public partial class BitmaskSolver
         else
         {
             int N = BoardSize;
-            var uniqueKeys = new HashSet<UInt128>();
+            int estimatedUnique = EstimateUniqueSolutionCount(N);
+            var uniqueKeys = new HashSet<UInt128>(estimatedUnique);
             var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
 
             _searchEngine.Run(new BitmaskSearchEngine.Request(
@@ -133,5 +135,19 @@ public partial class BitmaskSolver
             _solutions.Clear();
         }
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+    }
+
+    private static int EstimateUniqueSolutionCount(int boardSize)
+    {
+        // Empirical values for N=12..16, scale up for larger N
+        return boardSize switch
+        {
+            12 => 14200,
+            13 => 73712,
+            14 => 365596,
+            15 => 2279184,
+            16 => 14772512,
+            _ => 1000000 // fallback for larger N
+        };
     }
 }
