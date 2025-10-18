@@ -1,10 +1,5 @@
 namespace NQueen.Kernel.Solvers;
 
-using NQueen.Kernel.Solvers.Engines;
-using NQueen.Kernel.Solvers.Heuristics;
-using NQueen.Kernel.Solvers.Counters;
-using NQueen.Domain.Utils;
-
 public partial class BitmaskSolver
 {
     private void RunAllParallel(int splitDepth)

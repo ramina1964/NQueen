@@ -1,4 +1,4 @@
-namespace NQueen.Kernel.Solvers.Counters;
+namespace NQueen.Kernel.Solvers;
 
 internal static class UniqueSolutionCounter
 {

@@ -1,4 +1,4 @@
-namespace NQueen.Kernel.Solvers.Heuristics;
+namespace NQueen.Kernel.Solvers;
 
 /// <summary>
 /// Heuristic for selecting optimal parallel root split depth based on board size and core count.
@@ -28,9 +28,7 @@ internal static class ParallelSplitDepthHeuristic
     /// <summary>
     /// Returns true if parallel mode should be used for All solutions, based on board size.
     /// </summary>
-    public static bool ShouldUseParallelForAll(int boardSize)
-    {
-        // Empirical: parallel overhead outweighs benefit for N < 12
-        return boardSize >= 12;
-    }
+    // Empirical: parallel overhead outweighs benefit for N < 12
+    public static bool ShouldUseParallelForAll(int boardSize) =>
+        boardSize >= 12;
 }

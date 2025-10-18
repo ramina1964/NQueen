@@ -1,6 +1,5 @@
 namespace NQueen.Kernel.Solvers;
 
-using NQueen.Kernel.Solvers.Engines;
 using NQueen.Domain.Utils;
 
 public partial class BitmaskSolver
@@ -29,7 +28,7 @@ public partial class BitmaskSolver
                     }
                     else
                     {
-                        if (_rawSolutions == null) _rawSolutions = new List<int[]>();
+                        _rawSolutions ??= [];
                         _rawSolutions.Add(rows);
                         _solutions.Add((0, rows.Length));
                     }

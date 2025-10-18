@@ -1,26 +1,11 @@
 namespace NQueen.Kernel.Solvers;
 
-using NQueen.Kernel.Solvers.Engines;
-using NQueen.Kernel.Solvers.Heuristics;
-using NQueen.Kernel.Solvers.Counters;
-using NQueen.Domain.Utils;
-using System.Runtime.CompilerServices;
-using System.Threading;
-
-public partial class BitmaskSolver : ISolver, IDisposable
+public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
+    int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput) : ISolver, IDisposable
 {
-    // -------------------- Public API & Constructors --------------------
-    public BitmaskSolver(ISolutionFormatter solutionFormatter, int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput)
-    {
-        _solutionFormatter = solutionFormatter;
-        _maxSolutionsInOutput = maxSolutionsInOutput;
-    }
-
     public BitmaskSolver(ISolutionFormatter solutionFormatter, bool enableCap)
-        : this(solutionFormatter, SimulationSettings.MaxNoOfSolutionsInOutput)
-    {
+        : this(solutionFormatter, SimulationSettings.MaxNoOfSolutionsInOutput) =>
         _capEnabled = enableCap;
-    }
 
     public BitmaskSolver(int boardSize, SolutionMode solutionMode, DisplayMode displayMode, ISolutionFormatter solutionFormatter, int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput)
         : this(solutionFormatter, maxSolutionsInOutput)
@@ -35,15 +20,22 @@ public partial class BitmaskSolver : ISolver, IDisposable
     public event EventHandler<ProgressUpdateEventArgs>? ProgressValueChanged;
 
     public int DelayInMillisec { get; set; }
+
     public int ProgressValue { get; set; }
+
     public int BoardSize { get; private set; }
+
     public SolutionMode SolutionMode { get; private set; }
+
     public DisplayMode DisplayMode { get; private set; }
+
     public bool IsSolverCanceled { get; set; }
+
     public bool EnableEvents { get; set; } = true; // External master enable
 
     // Replace legacy booleans with enum-backed properties
     public ResultStorageMode AllStorageMode { get; set; } = SimulationSettings.DefaultAllStorageMode;
+    
     public ResultStorageMode UniqueStorageMode { get; set; } = SimulationSettings.DefaultUniqueStorageMode;
 
     // Backward compatibility properties (optional: keep for UI until migrated)
@@ -52,7 +44,9 @@ public partial class BitmaskSolver : ISolver, IDisposable
 
     // New parallelization tunables
     public bool UseParallel { get; set; } = true; // allow disabling parallel execution (forces single-threaded search)
+    
     public int ParallelRootSplitDepth { get; set; } = 1; // number of leading columns used to create root tasks (>=1). Currently supported for All mode; Unique mode uses 1.
+    
     public bool UseAdaptiveDepth { get; set; } = false; // new property to enable adaptive split depth selection
 
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
@@ -157,7 +151,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
         var cap = (_capEnabled ? _maxSolutionsInOutput : 0);
         var resultSolutions = new List<NQueen.Domain.Models.Solution>(_solutions.Count);
         int idx = 1;
-        foreach (var sol in (cap > 0 && _solutions.Count > cap ? _solutions.Take(cap) : _solutions))
+        foreach (var (packed, boardSize) in (cap > 0 && _solutions.Count > cap ? _solutions.Take(cap) : _solutions))
         {
             // Prefer array materialization when raw arrays are stored (ensures exact board layout, needed for unit tests)
             if (_rawSolutions != null && _rawSolutions.Count >= idx)
@@ -166,7 +160,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
             }
             else
             {
-                resultSolutions.Add(new NQueen.Domain.Models.Solution(sol.packed, sol.boardSize, _solutionFormatter, idx));
+                resultSolutions.Add(new NQueen.Domain.Models.Solution(packed, boardSize, _solutionFormatter, idx));
             }
             idx++;
         }
@@ -179,20 +173,6 @@ public partial class BitmaskSolver : ISolver, IDisposable
             return true;
         var cap = _maxSolutionsInOutput;
         return cap <= 0 || _solutions.Count < cap;
-    }
-
-    private void TryStoreSolution(int[] rows, bool clone)
-    {
-        if (!ShouldAddSolution()) return;
-        // Always store raw arrays for correctness in tests (packing optional elsewhere)
-        if (_rawSolutions == null) _rawSolutions = new List<int[]>();
-        var arr = clone ? (int[])rows.Clone() : rows;
-        _rawSolutions.Add(arr);
-        _solutions.Add((0, rows.Length));
-        if (EnableEvents && !_eventsSuppressedAfterCap)
-            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows)));
-        if (_capEnabled && _solutions.Count >= _maxSolutionsInOutput)
-            _eventsSuppressedAfterCap = true;
     }
 
     // Helper methods for partial accessibility
@@ -233,10 +213,8 @@ public partial class BitmaskSolver : ISolver, IDisposable
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 
-    private void IncrementSolutionCountAtomic()
-    {
+    private void IncrementSolutionCountAtomic() =>
         Interlocked.Increment(ref Unsafe.As<ulong, long>(ref _solutionCount));
-    }
 
     private static int EstimateUniqueSolutionCount(int boardSize)
     {
@@ -252,7 +230,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
     }
 
     // -------------------- Private Fields --------------------
-    private readonly ISolutionFormatter _solutionFormatter;
+    private readonly ISolutionFormatter _solutionFormatter = solutionFormatter;
     private readonly List<(UInt128 packed, int boardSize)> _solutions = [];
     private readonly BitmaskSearchEngine _searchEngine = new();
     private readonly BitmaskParallelEngine _parallelEngine = new();
@@ -260,7 +238,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
     private Guid _currentSimToken = Guid.Empty;
     private readonly bool _capEnabled = true;
     private bool _disposed;
-    private readonly int _maxSolutionsInOutput;
+    private readonly int _maxSolutionsInOutput = maxSolutionsInOutput;
     private volatile bool _eventsSuppressedAfterCap;
     private List<int[]>? _rawSolutions; // added raw solutions storage field
 }

@@ -1,4 +1,4 @@
-namespace NQueen.Kernel.Solvers.State;
+namespace NQueen.Kernel.Solvers;
 
 public sealed class BitmaskBoardState
 {

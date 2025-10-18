@@ -8,25 +8,30 @@ public class SymmetryHelperCanonicalKeyBenchmark
 {
     [Params(12, 14, 16, 18)]
     public int BoardSize;
-    private int[] solution;
-    private int[] scratch;
-    private UInt128 lastKey;
+
     [GlobalSetup]
     public void Setup()
     {
-        solution = new int[BoardSize];
+        _solution = new int[BoardSize];
         for (int i = 0; i < BoardSize; i++)
-            solution[i] = i;
-        scratch = new int[BoardSize * 2];
+            _solution[i] = i;
+        _scratch = new int[BoardSize * 2];
     }
 
     [Benchmark]
     public UInt128 GetCanonicalKey()
     {
-        lastKey = SymmetryHelper.GetCanonicalKey(solution, scratch, out var canonical);
+        if (_solution == null || _scratch == null)
+            throw new InvalidOperationException("Benchmark not initialized. Call Setup() first.");
+        _lastKey = SymmetryHelper.GetCanonicalKey(_solution, _scratch, out _);
+
         // Guard logic to prevent JIT elision
-        if (BoardSize > 8 && lastKey == 0)
+        if (BoardSize > 8 && _lastKey == 0)
             throw new InvalidOperationException();
-        return lastKey;
+        return _lastKey;
     }
+
+    private int[]? _solution;
+    private int[]? _scratch;
+    private UInt128 _lastKey;
 }

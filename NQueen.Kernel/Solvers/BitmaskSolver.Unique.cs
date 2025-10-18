@@ -1,10 +1,5 @@
 namespace NQueen.Kernel.Solvers;
 
-using NQueen.Kernel.Solvers.Engines;
-using NQueen.Kernel.Solvers.Counters;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using NQueen.Domain.Utils;
 
 public partial class BitmaskSolver
 {

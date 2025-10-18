@@ -1,4 +1,4 @@
-namespace NQueen.Kernel.Solvers.Engines;
+namespace NQueen.Kernel.Solvers;
 
 internal sealed class BitmaskSearchEngine
 {
@@ -12,12 +12,14 @@ internal sealed class BitmaskSearchEngine
         Func<bool> IsCanceled,
         Action<double> ReportProgress,
         Action<Memory<int>> OnQueenPlaced,
-        Func<int[], bool> OnSolution);
+        Func<int[], bool> OnSolution,
+        Func<ReadOnlySpan<int>, bool>? OnSolutionSpan = null // NEW: optional span-based callback
+    );
 
     public void Run(Request request) => ExecuteDepthFirst(request);
 
     // --- Private Implementation ---
-    private void ExecuteDepthFirst(Request request)
+    private static void ExecuteDepthFirst(Request request)
     {
         ValidateBoardSize(request.BoardSize);
         var state = CreateState(request);
@@ -84,8 +86,17 @@ internal sealed class BitmaskSearchEngine
                 }
                 if (valid)
                 {
-                    if (request.OnSolution((int[])s.QueenRows.Clone()))
-                        break;
+                    // Use span-based callback if provided, else fallback to array clone
+                    if (request.OnSolutionSpan != null)
+                    {
+                        if (request.OnSolutionSpan(s.QueenRows.AsSpan()))
+                            break;
+                    }
+                    else
+                    {
+                        if (request.OnSolution((int[])s.QueenRows.Clone()))
+                            break;
+                    }
                 }
                 if (!Backtrack(ref s, out _)) break;
                 continue;
@@ -190,16 +201,16 @@ internal sealed class BitmaskSearchEngine
     private sealed class SearchState
     {
         public int N;
-        public int[] QueenRows = Array.Empty<int>();
+        public int[] QueenRows = [];
         public ulong Mask;
         public ulong Cols;
         public ulong Diag1;
         public ulong Diag2;
         public int MaxRow0;
-        public ulong[] StackCols = Array.Empty<ulong>();
-        public ulong[] StackD1 = Array.Empty<ulong>();
-        public ulong[] StackD2 = Array.Empty<ulong>();
-        public ulong[] StackRemaining = Array.Empty<ulong>();
+        public ulong[] StackCols = [];
+        public ulong[] StackD1 = [];
+        public ulong[] StackD2 = [];
+        public ulong[] StackRemaining = [];
         public int RootPlacements;
         public int RootTotal;
         public int QueenPlacedCounter;
