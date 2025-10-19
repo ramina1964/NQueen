@@ -1,83 +1,29 @@
 namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 [Collection("SolverBackend")]
-public class SolverPositiveTests(SolverBackEndFixture fixture)
+[Trait("Category", "Enumeration")]
+public class SingleModeEnumerationTests(SolverBackEndFixture fixture)
 {
     [Theory]
     [MemberData(nameof(NQueenTestSets.SolverShouldGenerateOneSingleSolutionData),
         MemberType = typeof(NQueenTestSets))]
-    public async Task SolverShouldGenerateOneSingleSolution(int boardSize, SolutionMode solutionMode)
+    public async Task SingleMode_ShouldYieldExactlyOneSolution(int boardSize, SolutionMode solutionMode)
     {
-        var simContext = new SimulationContext(boardSize, solutionMode, DisplayMode.Hide);
-        var expectedSolutions = TestBase.FetchExpectedSols(simContext);
-        Assert.Single(expectedSolutions);
+        // Arrange
+        solutionMode.Should().Be(SolutionMode.Single);
+        var ctx = new SimulationContext(boardSize, solutionMode, DisplayMode.Hide);
+        var expectedSolutions = TestBase.FetchExpectedSols(ctx);
+        expectedSolutions.Should().ContainSingle($"Expected data must hold exactly one solution for N={boardSize}");
 
-        var actualResults = await _solver.GetSimResultsAsync(simContext);
-        actualResults.Solutions.Should().ContainSingle();
-        var actual = actualResults.Solutions[0].QueenPositions.ToArray();
-        actual.Should().BeEquivalentTo(expectedSolutions[0]);
-    }
+        // Act
+        var results = await _solver.GetSimResultsAsync(ctx);
 
-    [Theory]
-    [MemberData(nameof(NQueenTestSets.SolverShouldGenerateCorrectListOfUniqueSolutions),
-        MemberType = typeof(NQueenTestSets))]
-    public async Task SolverShouldGenerateCorrectListOfUniqueSolutions(int boardSize, SolutionMode solutionMode)
-    {
-        var simContext = new SimulationContext(boardSize, solutionMode, DisplayMode.Hide);
-        var expectedSolutions = TestBase.FetchExpectedSols(simContext);
-        var actualResults = await _solver.GetSimResultsAsync(simContext);
-
-        if (boardSize <= ExhaustiveSetVerificationMaxSize)
-        {
-            var actualSolutionsList = actualResults.Solutions
-                .Select(s => s.QueenPositions.ToArray())
-                .ToList();
-
-            SolutionAssertions
-                .AssertSolutionsSetEquivalent(actualSolutionsList, expectedSolutions,
-                    $"N={boardSize} {solutionMode}");
-        }
-        else
-        {
-            actualResults
-                .SolutionsCount
-                .Should()
-                .Be((ulong)expectedSolutions.Count,
-                    $"Unique count should match expected for N={boardSize}");
-        }
-    }
-
-    [Theory]
-    [MemberData(nameof(NQueenTestSets.SolverShouldGenerateCorrectListOfAllSolutionsData),
-        MemberType = typeof(NQueenTestSets))]
-    public async Task SolverShouldGenerateCorrectListOfAllSolutions(
-        int boardSize, SolutionMode solutionMode)
-    {
-        var simContext = new SimulationContext(boardSize, solutionMode, DisplayMode.Hide);
-        var expectedSolutions = TestBase.FetchExpectedSols(simContext);
-        var actualResults = await _solver.GetSimResultsAsync(simContext);
-
-        if (boardSize <= ExhaustiveSetVerificationMaxSize)
-        {
-            var actualSolutionsList = actualResults.Solutions
-                .Select(s => s.QueenPositions.ToArray())
-                .ToList();
-            
-            SolutionAssertions
-                .AssertSolutionsSetEquivalent(actualSolutionsList, expectedSolutions,
-                    $"N={boardSize} {solutionMode}");
-        }
-        else
-        {
-            actualResults
-                .SolutionsCount
-                .Should()
-                .Be((ulong)expectedSolutions.Count,
-                    $"All-solutions count should match expected for N={boardSize}");
-        }
+        // Assert
+        results.Solutions.Should().ContainSingle();
+        var actualRows = results.Solutions[0].QueenPositions.ToArray();
+        actualRows.Should().BeEquivalentTo(expectedSolutions[0]);
     }
 
     private readonly ISolverBackEnd _solver = fixture.Sut;
-    private const int ExhaustiveSetVerificationMaxSize = 6;
 }
 

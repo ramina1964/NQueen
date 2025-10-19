@@ -1,11 +1,10 @@
 namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 /// <summary>
-/// Verifies solver solution shape invariants: every returned solution must have
-/// queenPositions.Length == requested board size and > 0.
-/// Ensures the centralized ValidateRows logic in BitmaskSolver is effective across modes.
+/// Solver invariants & edge cases: solution array shape and boards with no solutions.
 /// </summary>
 [Collection("SolverBackend")]
+[Trait("Category", "Enumeration")]
 public class SolverInvariantTests(SolverBackEndFixture fixture)
 {
     [Theory]
@@ -14,13 +13,12 @@ public class SolverInvariantTests(SolverBackEndFixture fixture)
     {
         var ctx = new SimulationContext(boardSize, mode, DisplayMode.Hide);
         var results = await _solver.GetSimResultsAsync(ctx);
-
         foreach (var sol in results.Solutions)
         {
             var rows = sol.QueenPositions;
             rows.Should().NotBeNull();
-            rows.Length.Should().Be(boardSize, $"Each solution must have length equal to board size (N={boardSize}).");
-            rows.Length.Should().BeGreaterThan(0, "Solution arrays must be non-empty.");
+            rows.Length.Should().Be(boardSize);
+            rows.Length.Should().BeGreaterThan(0);
         }
     }
 
@@ -30,7 +28,7 @@ public class SolverInvariantTests(SolverBackEndFixture fixture)
     {
         var ctx = new SimulationContext(boardSize, mode, DisplayMode.Hide);
         var results = await _solver.GetSimResultsAsync(ctx);
-        results.Solutions.Should().BeEmpty("No solutions exist for N={boardSize} in mode {mode}.");
+        results.Solutions.Should().BeEmpty();
         results.SolutionsCount.Should().Be(0);
     }
 

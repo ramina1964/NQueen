@@ -1,6 +1,8 @@
 namespace NQueen.UnitTests.Tests.SymmetryPruning;
 
 // Todo : Find out which of these methods has the best resource management and performance.
+// Todo: Consider using existing data sets, alternatively, add these data to the common data sets.
+
 public class MemoryIntArrayComparerTests
 {
     [Theory]

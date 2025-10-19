@@ -193,39 +193,9 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     // Helper methods for partial accessibility
     private void SolveUniqueCountOnlyMode()
     {
-        if (UseParallel)
-        {
-            _solutionCount = UniqueSolutionCounter.Count(BoardSize, null, _currentSimToken, ProgressValueChanged, this);
-            _solutions.Clear();
-        }
-        else
-        {
-            int N = BoardSize;
-            int estimatedUnique = EstimateUniqueSolutionCount(N);
-            var uniqueKeys = new HashSet<UInt128>(estimatedUnique);
-            var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
-
-            _searchEngine.Run(new BitmaskSearchEngine.Request(
-                BoardSize,
-                RestrictFirstCol: true,
-                EnhancedSymmetry: true,
-                DisplayMode,
-                DelayInMillisec,
-                _currentSimToken,
-                () => IsSolverCanceled,
-                p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-                m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
-                rows =>
-                {
-                    if (!ValidateRows(rows)) return false;
-                    var key = SymmetryHelper.GetCanonicalKey(rows, scratchBuf, out _);
-                    uniqueKeys.Add(key);
-                    return false;
-                }
-            ));
-            _solutionCount = (ulong)uniqueKeys.Count;
-            _solutions.Clear();
-        }
+        // Unified implementation: always use symmetry-aware unique counter.
+        _solutionCount = UniqueSolutionCounter.Count(BoardSize, null, _currentSimToken, ProgressValueChanged, this);
+        _solutions.Clear();
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 

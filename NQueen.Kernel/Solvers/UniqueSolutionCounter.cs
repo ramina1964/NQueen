@@ -1,43 +1,38 @@
+using System.Collections.Concurrent;
+
 namespace NQueen.Kernel.Solvers;
 
 internal static class UniqueSolutionCounter
 {
+    // Counts fundamental (unique) solutions using canonical symmetry key aggregation.
+    // Parallelizes over first column placements; each task enumerates full solutions for its root and adds canonical keys.
     public static ulong Count(int boardSize, Action<double>? progress, Guid token, EventHandler<ProgressUpdateEventArgs>? progressEventSource, object? sender)
     {
         if (boardSize <= 0) return 0;
-        ulong total = 0;
-        int half = boardSize / 2;
-        int totalSteps = half + ((boardSize & 1) == 1 ? 1 : 0);
-        int progressCounter = 0;
-        object lockObj = new();
+        var uniqueKeys = new ConcurrentDictionary<UInt128, byte>();
 
-        Parallel.For(0, half, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, firstRow =>
+        int totalRoots = boardSize; // explore all first-column row placements; symmetry handled by canonical key
+        int progressCounter = 0;
+
+        Parallel.For(0, totalRoots, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, firstRow =>
         {
-            ulong localCount = CountUniqueForRoot(boardSize, firstRow) * 2; // mirror
-            lock (lockObj)
-            {
-                total += localCount;
-                progressCounter++;
-                double pct = (double)progressCounter / totalSteps * 100.0;
-                if (progress != null) progress(pct);
-                else if (progressEventSource != null && sender != null)
-                    progressEventSource(sender, new ProgressUpdateEventArgs(pct, token));
-            }
+            CountUniqueForRoot(boardSize, firstRow, uniqueKeys);
+            int done = Interlocked.Increment(ref progressCounter);
+            double pct = (double)done / totalRoots * 100.0;
+            if (progress != null) progress(pct);
+            else if (progressEventSource != null && sender != null)
+                progressEventSource(sender, new ProgressUpdateEventArgs(pct, token));
         });
 
-        if ((boardSize & 1) == 1)
-        {
-            total += CountUniqueForRoot(boardSize, half); // center row (no mirror)
-            if (progress != null) progress(100.0);
-            else if (progressEventSource != null && sender != null)
-                progressEventSource(sender, new ProgressUpdateEventArgs(100.0, token));
-        }
-        return total;
+        // Ensure final 100% notification
+        if (progress == null && progressEventSource != null && sender != null)
+            progressEventSource(sender, new ProgressUpdateEventArgs(100.0, token));
+
+        return (ulong)uniqueKeys.Count;
     }
 
-    private static ulong CountUniqueForRoot(int N, int firstRow)
+    private static void CountUniqueForRoot(int N, int firstRow, ConcurrentDictionary<UInt128, byte> uniqueKeys)
     {
-        ulong count = 0;
         var rowsArr = new int[N];
         Array.Fill(rowsArr, -1);
         rowsArr[0] = firstRow;
@@ -55,12 +50,15 @@ internal static class UniqueSolutionCounter
 
         int col = 1;
         ulong remaining = ~(cols | d1 | d2) & mask;
+        var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
 
         while (true)
         {
             if (col == N)
             {
-                count++;
+                // Found complete solution -> compute canonical key and register.
+                var canonicalKey = SymmetryHelper.GetCanonicalKey(rowsArr, scratchBuf, out _);
+                uniqueKeys.TryAdd(canonicalKey, 0);
                 col--;
                 if (col <= 0) break;
                 Restore(col, out remaining);
@@ -99,6 +97,5 @@ internal static class UniqueSolutionCounter
             d1 = stackD1[c];
             d2 = stackD2[c];
         }
-        return count;
     }
 }

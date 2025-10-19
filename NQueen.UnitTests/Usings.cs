@@ -5,6 +5,7 @@ global using NQueen.Domain.Enums;
 global using NQueen.Domain.Interfaces;
 global using NQueen.Domain.Utils;
 global using NQueen.Kernel.Services;
+global using NQueen.Kernel.Solvers;
 global using NQueen.TestShared.Assertions;
 global using NQueen.TestShared.Data;
 global using NQueen.TestShared.Mocks;
