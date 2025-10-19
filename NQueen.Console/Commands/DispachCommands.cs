@@ -79,19 +79,19 @@ public partial class DispatchCommands
         SimulationResults results;
         if (mode == SolutionMode.Unique)
         {
-            var solver = new BitmaskSolver(context.BoardSize, SolutionMode.Unique, context.DisplayMode, formatter, SimulationSettings.MaxNoOfSolutionsInOutput);
+            var solver = new BitmaskSolver(context.BoardSize, SolutionMode.Unique, context.DisplayMode, formatter, SimulationSettings.MaxDisplayedCount);
             solver.UseCountOnlyUniqueMode = useCountOnly;
             results = solver.Solve();
         }
         else if (mode == SolutionMode.All)
         {
-            var solver = new BitmaskSolver(context.BoardSize, SolutionMode.All, context.DisplayMode, formatter, SimulationSettings.MaxNoOfSolutionsInOutput);
+            var solver = new BitmaskSolver(context.BoardSize, SolutionMode.All, context.DisplayMode, formatter, SimulationSettings.MaxDisplayedCount);
             solver.UseCountOnlyAllMode = useCountOnly;
             results = solver.Solve();
         }
         else
         {
-            var solver = new BitmaskSolver(context.BoardSize, mode, context.DisplayMode, formatter, SimulationSettings.MaxNoOfSolutionsInOutput);
+            var solver = new BitmaskSolver(context.BoardSize, mode, context.DisplayMode, formatter, SimulationSettings.MaxDisplayedCount);
             results = solver.Solve();
         }
         var sb = new System.Text.StringBuilder();
@@ -110,7 +110,7 @@ public partial class DispatchCommands
         }
         else
         {
-            sb.AppendLine($"Showing up to {SimulationSettings.MaxNoOfSolutionsInOutput} example solutions:");
+            sb.AppendLine($"Showing up to {SimulationSettings.MaxDisplayedCount} example solutions:");
             foreach (var solution in results.Solutions)
             {
                 sb.AppendLine($"Solution {solution.Id}: {solution.Details}");

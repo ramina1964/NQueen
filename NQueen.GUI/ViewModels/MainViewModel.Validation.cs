@@ -166,6 +166,8 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
                 BoardSizeText = previousBoardSizeText;
         }
         AutoAdjustParallel();
+        // Update solution label to reflect new mode
+        OnPropertyChanged(nameof(ResultLabel));
     }
 
     partial void OnDisplayModeChanged(DisplayMode value)

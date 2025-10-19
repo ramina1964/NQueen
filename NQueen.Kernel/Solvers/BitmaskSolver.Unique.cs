@@ -10,7 +10,7 @@ public partial class BitmaskSolver
             return;
         }
 
-        int limit = _capEnabled ? SimulationSettings.MaxNoOfSolutionsInOutput : int.MaxValue;
+        int limit = _capEnabled ? SimulationSettings.MaxDisplayedCount : int.MaxValue;
         _parallelEngine.RunUnique(new BitmaskParallelEngine.UniqueRequest(
             BoardSize,
             EnableEvents,
@@ -46,7 +46,7 @@ public partial class BitmaskSolver
         var uniqueKeys = new HashSet<UInt128>(estimatedUnique);
         var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
         var solutions = new List<(UInt128 packed, int boardSize)>();
-        int limit = _capEnabled ? SimulationSettings.MaxNoOfSolutionsInOutput : int.MaxValue;
+        int limit = _capEnabled ? SimulationSettings.MaxDisplayedCount : int.MaxValue;
 
         _searchEngine.Run(new BitmaskSearchEngine.Request(
             BoardSize,

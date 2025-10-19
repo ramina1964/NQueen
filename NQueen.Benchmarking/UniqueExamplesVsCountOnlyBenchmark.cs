@@ -12,7 +12,7 @@ public class UniqueExamplesVsCountOnlyBenchmark
     public SimulationResults MaterializeExamples()
     {
         var context = new SimulationContext(BoardSize, SolutionMode.Unique, DisplayMode.Hide);
-        var solver = new UniqueExamplesOrCountSolver(_formatter, exampleCap: SimulationSettings.MaxNoOfSolutionsInOutput);
+        var solver = new UniqueExamplesOrCountSolver(_formatter, exampleCap: SimulationSettings.MaxDisplayedCount);
         var (examples, _) = solver.Solve(context);
         return examples;
     }

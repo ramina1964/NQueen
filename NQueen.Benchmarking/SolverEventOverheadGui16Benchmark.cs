@@ -20,7 +20,7 @@ public class SolverEventOverheadGui16Benchmark
             DelayInMillisec = 0
         };
 
-        var cap = SimulationSettings.MaxNoOfSolutionsInOutput;
+        var cap = SimulationSettings.MaxDisplayedCount;
         var solutionsOc = new ObservableCollection<Solution>();
         int queenPlacedCounter = 0;
         int progressCounter = 0;

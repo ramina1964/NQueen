@@ -2,7 +2,8 @@
 
 public static class SimulationSettings
 {
-    public const int MaxNoOfSolutionsInOutput = 5;
+    // Maximum count of displayed solutions
+    public const int MaxDisplayedCount = 5;
     public const int DefaultDelayInMilliseconds = 70;
     public const SolutionMode DefaultSolutionMode = SolutionMode.Unique;
     public const DisplayMode DefaultDisplayMode = DisplayMode.Hide;

@@ -13,7 +13,7 @@ internal sealed partial class BitmaskParallelEngine
         // Global materialized counter (shared across tasks)
         int materializedCount = 0;
         // Cap only applies for N > 8 (small boards fully materialized); when ShouldMaterialize returns false treat as count-only.
-        int cap = (N <= 8) ? int.MaxValue : (request.ShouldMaterialize() ? SimulationSettings.MaxNoOfSolutionsInOutput : 0);
+        int cap = (N <= 8) ? int.MaxValue : (request.ShouldMaterialize() ? SimulationSettings.MaxDisplayedCount : 0);
 
         foreach (int fr in Enumerable.Range(0, totalRoots))
         {

@@ -125,7 +125,10 @@ public sealed partial class MainViewModel
     {
         SimulationCompleted?.Invoke(this, EventArgs.Empty);
 
-        if (DisplayMode == DisplayMode.Hide && _batchedSolutions.Count > 0)
+        bool hideMode = DisplayMode == DisplayMode.Hide;
+        bool anyMaterialized = _batchedSolutions.Count > 0;
+
+        if (hideMode && anyMaterialized)
         {
             _uiDispatcher.Invoke(() =>
             {
@@ -133,17 +136,22 @@ public sealed partial class MainViewModel
                 foreach (var sol in _batchedSolutions)
                     ObservableSolutions.Add(sol);
 
-                if (SimulationResults != null)
-                    NoOfSolutions = $"{SimulationResults.SolutionsCount,0:N0}";
-
                 if (_batchedSolutions.Count > 0)
                 {
                     var first = _batchedSolutions[0];
                     if (!ReferenceEquals(SelectedSolution, first))
                         SelectedSolution = first;
-
                     RenderSelectedSolution();
                 }
+            });
+        }
+
+        // Unconditional total solutions update (covers count-only modes with 0 materialized solutions)
+        if (SimulationResults != null)
+        {
+            _uiDispatcher.Invoke(() =>
+            {
+                NoOfSolutions = $"{SimulationResults.SolutionsCount,0:N0}";
             });
         }
 
@@ -157,22 +165,22 @@ public sealed partial class MainViewModel
         if (_solver?.IsSolverCanceled == true || !IsSimulating)
             return;
 
-        // Guard: skip invalid / empty solutions to prevent runtime exception
+        // Increment total solutions regardless of whether solution is materialized (empty array signals count-only increment).
+        _actualTotalSolutions++;
+        // Live update of total found solutions (not truncated list count)
+        _uiDispatcher.Invoke(() => NoOfSolutions = $"{_actualTotalSolutions,0:N0}");
+
+        // Guard: skip invalid / empty solutions (count-only increment already recorded)
         if (e.Solution.Length == 0)
         {
-            Debug.WriteLine("[MainViewModel] Skipping empty solution memory (length 0)." );
             return;
         }
 
-        _actualTotalSolutions++;
-
         var solutionId = _batchedSolutions.Count + 1;
-        // Copy only when non-empty
         var arr = e.Solution.ToArray();
         if (arr.Length == 0)
         {
-            Debug.WriteLine("[MainViewModel] Unexpected empty array after ToArray(); ignoring.");
-            return;
+            return; // defensive, should not happen
         }
         var newSolution = new Solution(arr, _solutionFormatter, solutionId);
         _batchedSolutions.Add(newSolution);
@@ -183,7 +191,7 @@ public sealed partial class MainViewModel
             {
                 if (!IsSimulating || DisplayMode != DisplayMode.Visualize) return;
 
-                var cap = SimulationSettings.MaxNoOfSolutionsInOutput;
+                var cap = SimulationSettings.MaxDisplayedCount;
                 bool underCap = cap <= 0 || ObservableSolutions.Count < cap;
                 if (underCap)
                     ObservableSolutions.Add(newSolution);

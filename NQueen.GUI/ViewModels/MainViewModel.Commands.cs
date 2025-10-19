@@ -248,7 +248,7 @@ public sealed partial class MainViewModel
         if (SimulationResults == null)
             return;
 
-        var cap = SimulationSettings.MaxNoOfSolutionsInOutput;
+        var cap = SimulationSettings.MaxDisplayedCount;
         IEnumerable<Solution> sols = SimulationResults.Solutions;
 
         if (cap > 0 && SimulationResults.SolutionsCount > (ulong)cap)
@@ -268,7 +268,7 @@ public sealed partial class MainViewModel
         sb.AppendLine($"Board Size: {BoardSizeText}");
         sb.AppendLine($"SolutionMode: {SolutionMode}");
         sb.AppendLine($"Number of Solutions: {NoOfSolutions}");
-        sb.AppendLine($"Max Number of Solutions Included: {SimulationSettings.MaxNoOfSolutionsInOutput}");
+        sb.AppendLine($"Max Number of Solutions Included: {SimulationSettings.MaxDisplayedCount}");
         sb.AppendLine($"Elapsed Time: {ElapsedTimeInSec} seconds");
         sb.AppendLine($"Memory Usage: {MemoryConsumption} MB");
         sb.AppendLine();

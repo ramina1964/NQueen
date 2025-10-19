@@ -1,7 +1,7 @@
 namespace NQueen.Kernel.Solvers;
 
 public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
-    int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput) : ISolver, IDisposable
+    int maxDisplayed = SimulationSettings.MaxDisplayedCount) : ISolver, IDisposable
 {
     // Central validation for all solver paths
     private bool ValidateRows(int[] rows)
@@ -12,10 +12,10 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     }
 
     public BitmaskSolver(ISolutionFormatter solutionFormatter, bool enableCap)
-        : this(solutionFormatter, SimulationSettings.MaxNoOfSolutionsInOutput) =>
+        : this(solutionFormatter, SimulationSettings.MaxDisplayedCount) =>
         _capEnabled = enableCap;
 
-    public BitmaskSolver(int boardSize, SolutionMode solutionMode, DisplayMode displayMode, ISolutionFormatter solutionFormatter, int maxSolutionsInOutput = SimulationSettings.MaxNoOfSolutionsInOutput)
+    public BitmaskSolver(int boardSize, SolutionMode solutionMode, DisplayMode displayMode, ISolutionFormatter solutionFormatter, int maxSolutionsInOutput = SimulationSettings.MaxDisplayedCount)
         : this(solutionFormatter, maxSolutionsInOutput)
     {
         BoardSize = boardSize;
@@ -153,7 +153,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
     private SimulationResults BuildResults(TimeSpan elapsed)
     {
-        var cap = (_capEnabled ? _maxSolutionsInOutput : 0);
+        var cap = (_capEnabled ? _maxDisplayed : 0);
         var resultSolutions = new List<Solution>(_solutions.Count);
         int idx = 1;
         foreach (var (packed, boardSize) in (cap > 0 && _solutions.Count > cap ? _solutions.Take(cap) : _solutions))
@@ -165,17 +165,17 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                 Debug.Assert(raw != null && raw.Length == boardSize, "Raw solution length must equal boardSize.");
                 if (raw != null && raw.Length == boardSize)
                 {
-                    resultSolutions.Add(new NQueen.Domain.Models.Solution(raw, _solutionFormatter, idx));
+                    resultSolutions.Add(new NQueen.Domain.Models.Solution(raw, _formatter, idx));
                 }
                 else
                 {
                     // Fallback to packed when invariant fails (should not happen)
-                    resultSolutions.Add(new NQueen.Domain.Models.Solution(packed, boardSize, _solutionFormatter, idx));
+                    resultSolutions.Add(new NQueen.Domain.Models.Solution(packed, boardSize, _formatter, idx));
                 }
             }
             else
             {
-                resultSolutions.Add(new NQueen.Domain.Models.Solution(packed, boardSize, _solutionFormatter, idx));
+                resultSolutions.Add(new Solution(packed, boardSize, _formatter, idx));
             }
             idx++;
         }
@@ -186,8 +186,8 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     {
         if (_capEnabled == false)
             return true;
-        var cap = _maxSolutionsInOutput;
-        return cap <= 0 || _solutions.Count < cap;
+
+        return _maxDisplayed <= 0 || _solutions.Count < _maxDisplayed;
     }
 
     // Helper methods for partial accessibility
@@ -204,19 +204,13 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
     private static int EstimateUniqueSolutionCount(int boardSize)
     {
-        return boardSize switch
-        {
-            12 => 14200,
-            13 => 73712,
-            14 => 365596,
-            15 => 2279184,
-            16 => 14772512,
-            _ => 1000000
-        };
+        ulong count = SolutionCounts.GetUnique(boardSize);
+        if (count == 0) return 1_000_000; // heuristic fallback
+        return count > int.MaxValue ? int.MaxValue : (int)count;
     }
 
     // -------------------- Private Fields --------------------
-    private readonly ISolutionFormatter _solutionFormatter = solutionFormatter;
+    private readonly ISolutionFormatter _formatter = solutionFormatter;
     private readonly List<(UInt128 packed, int boardSize)> _solutions = [];
     private readonly BitmaskSearchEngine _searchEngine = new();
     private readonly BitmaskParallelEngine _parallelEngine = new();
@@ -224,7 +218,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     private Guid _currentSimToken = Guid.Empty;
     private readonly bool _capEnabled = true;
     private bool _disposed;
-    private readonly int _maxSolutionsInOutput = maxSolutionsInOutput;
+    private readonly int _maxDisplayed = maxDisplayed;
     private volatile bool _eventsSuppressedAfterCap;
-    private List<int[]>? _rawSolutions; // added raw solutions storage field
+    private List<int[]>? _rawSolutions;
 }

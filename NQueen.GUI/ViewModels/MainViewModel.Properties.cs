@@ -101,6 +101,10 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _memoryConsumption = "0";
 
+    // Backward compatibility alias: some XAML may still bind to MemoryUsage.
+    public string MemoryUsage => MemoryConsumption;
+    partial void OnMemoryConsumptionChanged(string value) => OnPropertyChanged(nameof(MemoryUsage));
+
     [ObservableProperty]
     private string _elapsedTimeInSec = string.Empty;
 

@@ -277,7 +277,7 @@ public class MainViewModelPositiveTests : IDisposable
 
         dict.Should().ContainKey("Max Number of Solutions Included");
         dict["Max Number of Solutions Included"].Should()
-            .Be(SimulationSettings.MaxNoOfSolutionsInOutput.ToString());
+            .Be(SimulationSettings.MaxDisplayedCount.ToString());
 
         dict.Should().ContainKey("Elapsed Time");
         dict["Elapsed Time"].Should().Contain("seconds");

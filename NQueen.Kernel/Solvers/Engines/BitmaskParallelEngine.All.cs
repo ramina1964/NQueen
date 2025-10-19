@@ -52,7 +52,7 @@ internal sealed partial class BitmaskParallelEngine
             bucketSize = 1;
 
         int globalMaterialized = 0;
-        int cap = SimulationSettings.MaxNoOfSolutionsInOutput;
+        int cap = SimulationSettings.MaxDisplayedCount;
 
         foreach (var root in rootList)
         {

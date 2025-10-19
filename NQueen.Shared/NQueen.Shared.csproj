@@ -15,4 +15,8 @@
 		<ProjectReference Include="..\NQueen.Domain\NQueen.Domain.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="SolutionCounts\" />
+	</ItemGroup>
+
 </Project>

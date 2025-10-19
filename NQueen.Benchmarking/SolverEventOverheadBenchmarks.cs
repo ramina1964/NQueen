@@ -62,7 +62,7 @@ public class SolverEventOverheadBenchmarks
                 break;
 
             case OverheadScenario.GuiLikeHandlers:
-                var cap = SimulationSettings.MaxNoOfSolutionsInOutput;
+                var cap = SimulationSettings.MaxDisplayedCount;
                 solver.QueenPlaced += (_, e) =>
                 {
                     // Approximate conflict depth calculation from MainViewModel.OnQueenPlaced
