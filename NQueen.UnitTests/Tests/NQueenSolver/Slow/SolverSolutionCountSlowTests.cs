@@ -59,6 +59,4 @@ public class SolverSolutionCountSlowTests(SolverBackEndFixture fixture)
     public static TheoryData<int> AllBoards => [9, 10, 11, 12, 13, 14];
 
     private readonly ISolverBackEnd _solver = fixture.Sut;
-
-
 }
