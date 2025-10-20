@@ -6,9 +6,6 @@ public class TestBase(ISolverBackEnd sut)
 
     public List<int[]> ActualSolutions { get; set; } = [];
 
-    protected readonly ISolverBackEnd Sut = sut
-        ?? throw new ArgumentNullException(nameof(sut));
-
     public static List<int[]> FetchExpectedSols(SimulationContext simContext)
     {
         return simContext.SolutionMode switch
@@ -16,19 +13,23 @@ public class TestBase(ISolverBackEnd sut)
             SolutionMode.Single => ExpectedSolutionData.SingleSolutions
                 .TryGetValue(simContext.BoardSize, out var singleSolutions)
                 ? singleSolutions
-                : throw new KeyNotFoundException($"No single solutions found for board size {simContext.BoardSize}."),
+                : throw new KeyNotFoundException(
+                    $"No single solutions found for board size {simContext.BoardSize}."),
 
             SolutionMode.Unique => ExpectedSolutionData.UniqueSolutions
                 .TryGetValue(simContext.BoardSize, out var uniqueSolutions)
                 ? uniqueSolutions
-                : throw new KeyNotFoundException($"No unique solutions found for board size {simContext.BoardSize}."),
+                : throw new KeyNotFoundException(
+                    $"No unique solutions found for board size {simContext.BoardSize}."),
 
             SolutionMode.All => ExpectedSolutionData.AllSolutions
                 .TryGetValue(simContext.BoardSize, out var allSolutions)
                 ? allSolutions
-                : throw new KeyNotFoundException($"No all solutions found for board size {simContext.BoardSize}."),
+                : throw new KeyNotFoundException(
+                    $"No all solutions found for board size {simContext.BoardSize}."),
 
-            _ => throw new ArgumentOutOfRangeException(nameof(simContext.BoardSize), "Invalid solution mode.")
+            _ => throw new ArgumentOutOfRangeException(nameof(simContext),
+                    "Invalid solution mode.")
         };
     }
 
@@ -37,7 +38,9 @@ public class TestBase(ISolverBackEnd sut)
         .Solutions
         .Select(sol => sol.QueenPositions);
 
-    // Helper method for assertions (now uses set equivalence)
+    protected readonly ISolverBackEnd Sut = sut
+        ?? throw new ArgumentNullException(nameof(sut));
+
     protected async Task AssertSolutionsAsync(SimulationContext simContext)
     {
         // Arrange
@@ -52,4 +55,3 @@ public class TestBase(ISolverBackEnd sut)
             $"N={simContext.BoardSize} {simContext.SolutionMode}");
     }
 }
-
