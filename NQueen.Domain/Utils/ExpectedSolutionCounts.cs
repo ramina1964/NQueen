@@ -1,6 +1,6 @@
 namespace NQueen.Domain.Utils;
 
-// ============================================================================
+// =============================================================================
 // THIS FILE IS PART OF THE NQueen DATA SET //
 // File: ExpectedSolutionCounts.cs
 // Purpose: Curated immutable solution layouts (Single, Unique, All) for select board sizes used
@@ -14,7 +14,7 @@ namespace NQueen.Domain.Utils;
 // Source Verification: Each array is an ordered list of row positions (0-based) defining a valid
 // N-Queens placement with no conflicts.
 // Accidental changes should be reverted before commit.
-// ============================================================================
+// =============================================================================
 
 /// <summary>
 /// Centralized immutable lookup for known N-Queens solution counts (all + unique)
