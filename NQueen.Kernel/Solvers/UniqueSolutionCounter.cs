@@ -1,5 +1,3 @@
-using System.Collections.Concurrent;
-
 namespace NQueen.Kernel.Solvers;
 
 internal static class UniqueSolutionCounter

@@ -204,7 +204,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
     private static int EstimateUniqueSolutionCount(int boardSize)
     {
-        ulong count = SolutionCounts.GetUnique(boardSize);
+        ulong count = ExpectedSolutionCounts.GetUnique(boardSize);
         if (count == 0) return 1_000_000; // heuristic fallback
         return count > int.MaxValue ? int.MaxValue : (int)count;
     }

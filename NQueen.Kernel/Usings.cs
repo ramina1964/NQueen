@@ -9,7 +9,7 @@ global using NQueen.Domain.Settings;
 global using NQueen.Domain.Utils;
 global using NQueen.Kernel.Solvers;
 global using NQueen.Kernel.Solvers.Engines;
+global using System.Collections.Concurrent;
 global using System.Diagnostics;
 global using System.Numerics;
 global using System.Runtime.CompilerServices;
-

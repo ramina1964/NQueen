@@ -1,6 +1,4 @@
-﻿using NQueen.Domain.Utils;
-
-namespace NQueen.TestShared.Assertions;
+﻿namespace NQueen.TestShared.Assertions;
 
 public static class SolutionAssertions
 {

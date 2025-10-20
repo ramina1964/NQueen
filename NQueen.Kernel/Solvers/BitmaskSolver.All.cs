@@ -1,14 +1,12 @@
 namespace NQueen.Kernel.Solvers;
 
-using NQueen.Domain.Utils;
-
 public partial class BitmaskSolver
 {
     private void RunAllParallel(int splitDepth)
     {
         int N = BoardSize;
         ulong totalCount = 0;
-        ulong expectedTotal = SolutionCounts.GetAll(N); // 0 if unknown => fallback root progress only
+        ulong expectedTotal = ExpectedSolutionCounts.GetAll(N); // 0 if unknown => fallback root progress only
         int lastPct = -1;
         var solutions = new List<(UInt128 packed, int boardSize)>();
         var rawSolutions = new List<int[]>();
@@ -60,7 +58,7 @@ public partial class BitmaskSolver
         var solutions = new List<(UInt128 packed, int boardSize)>();
         var rawSolutions = new List<int[]>();
         ulong totalCount = 0;
-        ulong expectedTotal = SolutionCounts.GetAll(BoardSize);
+        ulong expectedTotal = ExpectedSolutionCounts.GetAll(BoardSize);
         int lastPct = -1;
         int limit = _capEnabled ? SimulationSettings.MaxDisplayedCount : int.MaxValue;
         _searchEngine.Run(new BitmaskSearchEngine.Request(
@@ -105,7 +103,7 @@ public partial class BitmaskSolver
 
     private void SolveAllCountOnlyMode()
     {
-        ulong expectedTotal = SolutionCounts.GetAll(BoardSize);
+        ulong expectedTotal = ExpectedSolutionCounts.GetAll(BoardSize);
         if (UseParallel)
         {
             // Parallel count-only path: we rely on root progress if expected total unknown, else we synthesize solution-based progress after completion (cannot update mid-task without engine changes).
