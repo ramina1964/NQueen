@@ -1,5 +1,21 @@
 ﻿namespace NQueen.Domain.Utils;
 
+// ============================================================================
+// THIS FILE IS PART OF THE NQueen DATA SET //
+// File: ExpectedSolutionData.cs
+// Purpose: Curated immutable solution layouts (Single, Unique, All) for select board sizes used
+// to validate solver correctness in tests.
+// Integrity: DO NOT EDIT MANUALLY.
+// Protection: May be read-only, skip-worktree, and blocked by pre-commit hook.
+// To modify intentionally:
+//   1. Produce new data via verified solver run or generator.
+//   2. Remove read-only / skip-worktree flags.
+//   3. Stage file and commit with: ALLOW_PROTECTED=1 git commit -m "Update data"
+// Source Verification: Each array is an ordered list of row positions (0-based) defining a valid
+// N-Queens placement with no conflicts.
+// Accidental changes should be reverted before commit.
+// ============================================================================
+
 public static class ExpectedSolutionData
 {
     public static readonly Dictionary<int, List<int[]>> SingleSolutions = new()
