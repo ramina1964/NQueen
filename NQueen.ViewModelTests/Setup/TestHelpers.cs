@@ -1,6 +1,4 @@
-﻿using NQueen.Domain.Context;
-
-namespace NQueen.ViewModelTests.Setup;
+﻿namespace NQueen.ViewModelTests.Setup;
 
 public static class TestHelpers
 {

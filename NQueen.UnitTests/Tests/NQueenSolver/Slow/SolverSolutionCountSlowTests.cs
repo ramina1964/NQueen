@@ -29,7 +29,7 @@ public class SolverSolutionCountSlowTests(SolverBackEndFixture fixture)
         // Enable count-only to avoid storing solutions
         _solver.UseCountOnlyUniqueMode = true;
         _solver.UseCountOnlyAllMode = false;
-        var expected = SolutionCounts.GetUnique(n);
+        var expected = ExpectedSolutionCounts.GetUnique(n);
         expected.Should().BeGreaterThan(0UL, "Expected unique count must be positive.");
         var ctx = new SimulationContext(n, SolutionMode.Unique, DisplayMode.Hide);
         var res = await _solver.GetSimResultsAsync(ctx);
@@ -44,7 +44,7 @@ public class SolverSolutionCountSlowTests(SolverBackEndFixture fixture)
     {
         _solver.UseCountOnlyAllMode = true;
         _solver.UseCountOnlyUniqueMode = false;
-        var expected = SolutionCounts.GetAll(n);
+        var expected = ExpectedSolutionCounts.GetAll(n);
         expected.Should().BeGreaterThan(0UL, "Expected all count must be positive.");
         var ctx = new SimulationContext(n, SolutionMode.All, DisplayMode.Hide);
         var res = await _solver.GetSimResultsAsync(ctx);

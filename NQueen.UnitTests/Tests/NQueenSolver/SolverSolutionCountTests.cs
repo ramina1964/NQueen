@@ -22,7 +22,7 @@ public class SolverSolutionCountTests(SolverBackEndFixture fixture)
     public async Task UniqueMode_CountMatchesExpected(int n)
     {
         // Arrange
-        ulong expected = SolutionCounts.GetUnique(n);
+        ulong expected = ExpectedSolutionCounts.GetUnique(n);
         expected.Should().BeGreaterThanOrEqualTo(0UL);
         var ctx = new SimulationContext(n, SolutionMode.Unique, DisplayMode.Hide);
 
@@ -42,7 +42,7 @@ public class SolverSolutionCountTests(SolverBackEndFixture fixture)
     public async Task AllMode_CountMatchesExpected(int n)
     {
         // Arrange
-        ulong expected = SolutionCounts.GetAll(n);
+        ulong expected = ExpectedSolutionCounts.GetAll(n);
         expected.Should().BeGreaterThanOrEqualTo(0UL);
         var ctx = new SimulationContext(n, SolutionMode.All, DisplayMode.Hide);
 
@@ -66,7 +66,7 @@ public class SolverSolutionCountTests(SolverBackEndFixture fixture)
         // Force count-only to ensure full unique enumeration beyond materialization cap.
         _solver.UseCountOnlyUniqueMode = true;
         _solver.UseCountOnlyAllMode = false;
-        ulong expected = SolutionCounts.GetUnique(n);
+        ulong expected = ExpectedSolutionCounts.GetUnique(n);
         expected.Should().BeGreaterThan(0UL, "Expected unique count must be > 0 for larger boards.");
         var ctx = new SimulationContext(n, SolutionMode.Unique, DisplayMode.Hide);
         var results = await _solver.GetSimResultsAsync(ctx);
@@ -85,7 +85,7 @@ public class SolverSolutionCountTests(SolverBackEndFixture fixture)
         // Force count-only to bypass materialization cap and ensure full enumeration.
         _solver.UseCountOnlyAllMode = true;
         _solver.UseCountOnlyUniqueMode = false;
-        ulong expected = SolutionCounts.GetAll(n);
+        ulong expected = ExpectedSolutionCounts.GetAll(n);
         expected.Should().BeGreaterThan(0UL, "Expected all count must be > 0 for larger boards.");
         var ctx = new SimulationContext(n, SolutionMode.All, DisplayMode.Hide);
 
