@@ -1,20 +1,20 @@
 ﻿namespace NQueen.Domain.Utils;
 
-// ============================================================================
+// =============================================================================
 // THIS FILE IS PART OF THE NQueen DATA SET //
 // File: ExpectedSolutionData.cs
-// Purpose: Curated immutable solution layouts (Single, Unique, All) for select board sizes used
-// to validate solver correctness in tests.
+// Purpose: Curated immutable solution layouts (Single, Unique, All) for select board sizes
+// used to validate solver correctness in tests.
 // Integrity: DO NOT EDIT MANUALLY.
 // Protection: May be read-only, skip-worktree, and blocked by pre-commit hook.
 // To modify intentionally:
 //   1. Produce new data via verified solver run or generator.
 //   2. Remove read-only / skip-worktree flags.
 //   3. Stage file and commit with: ALLOW_PROTECTED=1 git commit -m "Update data"
-// Source Verification: Each array is an ordered list of row positions (0-based) defining a valid
-// N-Queens placement with no conflicts.
+// Source Verification: Each array is an ordered list of row positions (0-based) defining
+// a valid N-Queens placement with no conflicts.
 // Accidental changes should be reverted before commit.
-// ============================================================================
+// =============================================================================
 
 public static class ExpectedSolutionData
 {
@@ -48,56 +48,57 @@ public static class ExpectedSolutionData
         {
             22,
             new List<int[]>
-                { new int[] {0, 2, 4, 1, 3, 9, 13, 16, 19, 12, 18, 21, 17, 7, 20, 11, 8, 5, 15,
-                    6, 10, 14 } }
+                { new int[] {0, 2, 4, 1, 3, 9, 13, 16, 19, 12, 18, 21, 17, 7, 20, 11, 8, 5,
+                    15, 6, 10, 14 } }
         },
 
         {
             23,
             new List<int[]>
-                { new int[] {0, 2, 4, 1, 3, 8, 10, 12, 17, 19, 21, 18, 20, 9, 7, 5, 22, 6, 15,
-                    11, 14, 16, 13 } }
+                { new int[] {0, 2, 4, 1, 3, 8, 10, 12, 17, 19, 21, 18, 20, 9, 7, 5, 22, 6,
+                    15, 11, 14, 16, 13 } }
         },
 
         {
             24,
             new List<int[]>
-                { new int[] {0, 2, 4, 1, 3, 8, 10, 13, 17, 21, 18, 22, 19, 23, 9, 20, 5, 7, 11,
-                    15, 12, 6, 16, 14 } }
+                { new int[] {0, 2, 4, 1, 3, 8, 10, 13, 17, 21, 18, 22, 19, 23, 9, 20, 5, 7,
+                    11, 15, 12, 6, 16, 14 } }
         },
 
         {
             25,
             new List<int[]>
-                { new int[] {0, 2, 4, 1, 3, 8, 10, 12, 14, 18, 20, 23, 19, 24, 22, 5, 7, 9, 6,
-                    13, 15, 17, 11, 16, 21} }
+                { new int[] {0, 2, 4, 1, 3, 8, 10, 12, 14, 18, 20, 23, 19, 24, 22, 5, 7, 9,
+                    6, 13, 15, 17, 11, 16, 21} }
         },
 
         {
             26,
-            new List<int[]> { new int[] {0, 2, 4, 1, 3, 8, 10, 12, 14, 20, 22, 24, 19, 21, 23,
-                25, 9, 6, 15, 11, 7, 5, 17, 13, 18, 16 } }
+            new List<int[]> { new int[] {0, 2, 4, 1, 3, 8, 10, 12, 14, 20, 22, 24, 19, 21,
+                23, 25, 9, 6, 15, 11, 7, 5, 17, 13, 18, 16 } }
         },
 
         {
             27,
             new List<int[]>
-                { new int[] {0, 2, 4, 1, 3, 8, 10, 12, 14, 16, 18, 22, 24, 26, 23, 25, 5, 9, 6,
-                    15, 7, 11, 13, 20, 17, 19, 21 } }
+                { new int[] {0, 2, 4, 1, 3, 8, 10, 12, 14, 16, 18, 22, 24, 26, 23, 25, 5,
+                    9, 6, 15, 7, 11, 13, 20, 17, 19, 21 } }
         },
 
         {
             28,
             new List<int[]>
-                { new int[] {0, 2, 4, 1, 3, 8, 10, 12, 14, 16, 22, 24, 21, 27, 25, 23, 26, 6,
-                    11, 15, 17, 7, 9, 13, 19, 5, 20, 18 } }
+                { new int[] {0, 2, 4, 1, 3, 8, 10, 12, 14, 16, 22, 24, 21, 27, 25, 23, 26,
+                    6, 11, 15, 17, 7, 9, 13, 19, 5, 20, 18 } }
         },
 
         {
             37,
             new List<int[]>
-                { new int[] {0, 2, 4, 1, 3, 8, 10, 12, 14, 5, 7, 18, 20, 22, 29, 33, 28, 34,
-                    32, 30, 36, 31, 35, 15, 6, 9, 19, 13, 11, 17, 25, 16, 21, 27, 24, 26, 23} }
+                { new int[] {0, 2, 4, 1, 3, 8, 10, 12, 14, 5, 7, 18, 20, 22, 29, 33, 28,
+                    34, 32, 30, 36, 31, 35, 15, 6, 9, 19, 13, 11, 17, 25, 16, 21, 27, 24,
+                    26, 23} }
         }
     };
 
