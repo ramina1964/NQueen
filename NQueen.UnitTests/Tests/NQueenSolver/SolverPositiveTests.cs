@@ -21,7 +21,9 @@ public class SolverSingleModeTests(SolverBackEndFixture fixture)
         var results = await _solver.GetSimResultsAsync(ctx);
 
         // Assert
-        results.SolutionsCount.Should().Be(1UL, $"Single mode should return exactly one solution for N={boardSize}");
+        results.SolutionsCount.Should().Be(1UL,
+            $"Single mode should return exactly one solution for N={boardSize}");
+
         results.Solutions.Should().ContainSingle();
         var actualRows = results.Solutions[0].QueenPositions.ToArray();
         actualRows.Should().BeEquivalentTo(expectedSolutions[0]);
