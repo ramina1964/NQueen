@@ -6,6 +6,7 @@ internal sealed class BitmaskSearchEngine
         int BoardSize,
         bool RestrictFirstCol,
         bool EnhancedSymmetry,
+        bool AggressiveSymmetry,
         DisplayMode DisplayMode,
         int DelayInMillisec,
         Guid SimulationToken,
@@ -192,6 +193,13 @@ internal sealed class BitmaskSearchEngine
         // Apply advanced pruning (second column ordering) only when enhanced symmetry requested and board large enough.
         if (request.EnhancedSymmetry && s.N > 8)
             avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(s.N, col, s.QueenRows, avail);
+        if (request.AggressiveSymmetry && s.N > 8)
+        {
+            // Placeholder for future aggressive pruning (e.g. third-column ordering).
+            // Currently no additional mask mutation to preserve correctness; hook installed.
+            // Example (disabled): enforce monotonic increase for first three columns.
+            // if (col ==2 && s.QueenRows[1] >=0) { /* potential future constraint here */ }
+        }
         return avail;
     }
 

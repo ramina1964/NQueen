@@ -7,6 +7,7 @@ public partial class BitmaskSolver
             BoardSize,
             RestrictFirstCol: false,
             EnhancedSymmetry: false,
+            AggressiveSymmetry: false,
             DisplayMode,
             DelayInMillisec,
             _currentSimToken,
