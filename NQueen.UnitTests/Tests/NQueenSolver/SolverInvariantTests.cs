@@ -1,15 +1,12 @@
 namespace NQueen.UnitTests.Tests.NQueenSolver;
 
-/// <summary>
-/// Solver invariants & edge cases: solution array shape and boards with no solutions.
-/// </summary>
 [Collection("SolverBackend")]
 [Trait("Category", "Enumeration")]
 public class SolverInvariantTests(SolverBackEndFixture fixture)
 {
     [Theory]
     [MemberData(nameof(NQueenTestSets.SmallValueCases), MemberType = typeof(NQueenTestSets))]
-    public async Task SolutionsHaveExpectedLength(int boardSize, SolutionMode mode)
+    public async Task GetSimResults_ForAnyMode_SolutionsHaveExpectedLength(int boardSize, SolutionMode mode)
     {
         var ctx = new SimulationContext(boardSize, mode, DisplayMode.Hide);
         var results = await _solver.GetSimResultsAsync(ctx);
@@ -24,7 +21,7 @@ public class SolverInvariantTests(SolverBackEndFixture fixture)
 
     [Theory]
     [MemberData(nameof(NQueenTestSets.SolverShouldNotGenerateAnySolutionData), MemberType = typeof(NQueenTestSets))]
-    public async Task BoardsWithoutSolutionsReturnEmptyList(int boardSize, SolutionMode mode)
+    public async Task GetSimResults_BoardsWithoutSolutions_ReturnsEmptyList(int boardSize, SolutionMode mode)
     {
         var ctx = new SimulationContext(boardSize, mode, DisplayMode.Hide);
         var results = await _solver.GetSimResultsAsync(ctx);
