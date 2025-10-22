@@ -5,7 +5,7 @@ public partial class BitmaskSolver
     private void RunAllParallel(int splitDepth)
     {
         int N = BoardSize;
-        ulong expectedTotal = ExpectedSolutionCounts.GetAll(N); //0 if unknown => fallback to root progress only
+        ulong expectedTotal = ExpectedSolutionCounts.GetAll(N);
         var solutions = new List<(UInt128 packed, int boardSize)>();
         var rawSolutions = new List<int[]>();
         int materializeLimit = _capEnabled ? SimulationSettings.MaxDisplayedCount : int.MaxValue;
@@ -83,6 +83,7 @@ public partial class BitmaskSolver
             BoardSize,
             RestrictFirstCol: false,
             EnhancedSymmetry: false,
+            AggressiveSymmetry: false,
             DisplayMode,
             DelayInMillisec,
             _currentSimToken,
@@ -158,6 +159,7 @@ public partial class BitmaskSolver
                 BoardSize,
                 RestrictFirstCol: false,
                 EnhancedSymmetry: false,
+                AggressiveSymmetry: false,
                 DisplayMode,
                 DelayInMillisec,
                 _currentSimToken,
