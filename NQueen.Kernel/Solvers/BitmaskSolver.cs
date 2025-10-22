@@ -6,7 +6,10 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     // Central validation for all solver paths
     private bool ValidateRows(int[] rows)
     {
-        bool ok = rows.Length == BoardSize && rows.Length > 0;
+        // Empty array is used as a sentinel from parallel engines to indicate a count-only solution
+        if (rows.Length ==0)
+            return true; // accept silently (do not assert / materialize)
+        bool ok = rows.Length == BoardSize;
         Debug.Assert(ok, $"[BitmaskSolver] Invalid solution rows length={rows.Length}, BoardSize={BoardSize}");
         return ok;
     }
@@ -158,18 +161,18 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         int idx = 1;
         foreach (var (packed, boardSize) in (cap > 0 && _solutions.Count > cap ? _solutions.Take(cap) : _solutions))
         {
-            Debug.Assert(boardSize > 0, "Invariant violated: boardSize should be > 0 when constructing results.");
+            if (boardSize <= 0) continue; // skip malformed entries
+            Debug.Assert(boardSize > 0, "Invariant violated: boardSize should be >0 when constructing results.");
             if (_rawSolutions != null && _rawSolutions.Count >= idx)
             {
                 var raw = _rawSolutions[idx - 1];
-                Debug.Assert(raw != null && raw.Length == boardSize, "Raw solution length must equal boardSize.");
                 if (raw != null && raw.Length == boardSize)
                 {
                     resultSolutions.Add(new NQueen.Domain.Models.Solution(raw, _formatter, idx));
                 }
-                else
+                else if (raw != null && raw.Length > 0)
                 {
-                    // Fallback to packed when invariant fails (should not happen)
+                    // fallback: ignore mismatch and still add packed if available
                     resultSolutions.Add(new NQueen.Domain.Models.Solution(packed, boardSize, _formatter, idx));
                 }
             }

@@ -1,7 +1,7 @@
 ﻿namespace NQueen.Domain.Utils;
 
 // =============================================================================
-// THIS FILE IS PART OF THE NQueen DATA SET //
+// THIS FILE IS PART OF THE NQueen DATA SET
 // File: ExpectedSolutionData.cs
 // Purpose: Curated immutable solution layouts (Single, Unique, All) for select board sizes
 // used to validate solver correctness in tests.

@@ -4,8 +4,8 @@ internal sealed partial class BitmaskParallelEngine
 {
     // Adjusted order so first three parameters align with usage in BitmaskSolver: (BoardSize, RootSplitDepth, EnableEvents,...)
     public readonly record struct AllRequest(
-        int BoardSize, int RootSplitDepth, bool EnableEvents, Action<int[]> OnSolution,
-        Action<double> ReportProgress);
+        int BoardSize, int RootSplitDepth, bool EnableEvents, int MaterializeCap, Action<int[]> OnSolution,
+        Action<ulong> OnCompleted, Action<double> ReportProgress);
 
     // Added ShouldMaterialize predicate to avoid unnecessary row array allocations when cap reached.
     public readonly record struct UniqueRequest(
