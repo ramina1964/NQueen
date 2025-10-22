@@ -67,18 +67,4 @@ public class SolverSolutionCountTests(SolverBackEndFixture fixture)
         results.Solutions.Should().BeEmpty();
         results.SolutionsCount.Should().Be(expected);
     }
-
-    [Theory]
-    [InlineData(4)]
-    [InlineData(5)]
-    [InlineData(6)]
-    [InlineData(7)]
-    [InlineData(8)]
-    public async Task GetSimResults_SingleMode_SmallBoards_CountIsOne(int n)
-    {
-        var ctx = new SimulationContext(n, SolutionMode.Single, DisplayMode.Hide);
-        var results = await _solver.GetSimResultsAsync(ctx);
-        results.SolutionsCount.Should().Be(1UL, $"Single mode should return exactly one solution for N={n}");
-        results.Solutions.Should().ContainSingle();
-    }
 }

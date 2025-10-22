@@ -7,7 +7,8 @@ public class SolverSingleModeTests(SolverBackEndFixture fixture)
     [Theory]
     [MemberData(nameof(NQueenTestSets.SolverShouldGenerateOneSingleSolutionData),
         MemberType = typeof(NQueenTestSets))]
-    public async Task GetSimResults_SingleMode_ReturnsExactlyOneExpectedSolution(int boardSize, SolutionMode solutionMode)
+    public async Task GetSimResults_SingleMode_ExactlyOneSolutionMatchesExpected(
+        int boardSize, SolutionMode solutionMode)
     {
         // Arrange
         solutionMode.Should().Be(SolutionMode.Single);
@@ -20,6 +21,7 @@ public class SolverSingleModeTests(SolverBackEndFixture fixture)
         var results = await _solver.GetSimResultsAsync(ctx);
 
         // Assert
+        results.SolutionsCount.Should().Be(1UL, $"Single mode should return exactly one solution for N={boardSize}");
         results.Solutions.Should().ContainSingle();
         var actualRows = results.Solutions[0].QueenPositions.ToArray();
         actualRows.Should().BeEquivalentTo(expectedSolutions[0]);
