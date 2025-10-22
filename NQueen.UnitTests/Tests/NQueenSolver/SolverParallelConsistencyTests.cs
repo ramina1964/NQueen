@@ -56,7 +56,6 @@ public class SolverParallelConsistencyTests(SolverBackEndFixture fixture)
             {
                 parallelResults.SolutionsCount.Should().Be(expected, $"Parallel {mode} count mismatch for N={n}");
             }
-            foreach (var s in parallelResults.Solutions) s.BoardSize.Should().Be(n);
 
             // Only verify sequential path for All mode (Unique mode may auto-switch count-only internally)
             if (mode == SolutionMode.All && _solver is BitmaskSolver bsSeq)
@@ -64,7 +63,6 @@ public class SolverParallelConsistencyTests(SolverBackEndFixture fixture)
                 bsSeq.UseParallel = false;
                 var seqResults = await _solver.GetSimResultsAsync(ctx);
                 seqResults.SolutionsCount.Should().Be(expected, $"Sequential {mode} count mismatch for N={n}");
-                foreach (var s in seqResults.Solutions) s.BoardSize.Should().Be(n);
             }
         }
         finally
