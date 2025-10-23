@@ -31,11 +31,17 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     public event EventHandler<ProgressUpdateEventArgs>? ProgressValueChanged;
 
     public int DelayInMillisec { get; set; }
+
     public int ProgressValue { get; set; }
+
     public int BoardSize { get; private set; }
+
     public SolutionMode SolutionMode { get; private set; }
+
     public DisplayMode DisplayMode { get; private set; }
+
     public bool IsSolverCanceled { get; set; }
+
     public bool EnableEvents { get; set; } = true;
 
     public ResultStorageMode AllStorageMode { get; set; } = SimulationSettings.DefaultAllStorageMode;
@@ -45,7 +51,9 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     public bool UseCountOnlyAllMode { get; set; } = false;
 
     public bool UseParallel { get; set; } = true;
+
     public int ParallelRootSplitDepth { get; set; } = 1;
+
     public bool UseAdaptiveDepth { get; set; } = false;
 
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
@@ -56,6 +64,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         BoardSize = simContext.BoardSize;
         SolutionMode = simContext.SolutionMode;
         DisplayMode = simContext.DisplayMode;
+
         return Solve();
     });
 

@@ -16,9 +16,9 @@ public partial class BitmaskSolver
         int limit = _capEnabled ? SimulationSettings.MaxDisplayedCount : int.MaxValue;
         _solutions.Clear();
         _rawSolutions = null;
-        _solutionCount = 0;
+        _solutionCount =0;
 
-        if (N <= 8)
+        if (N <=8)
         {
             // Revert to symmetry-reduced enumeration: restrict first column, canonicalize each found solution
             // to collapse all dihedral variants. This yields the fundamental (unique) solutions directly.
@@ -49,7 +49,7 @@ public partial class BitmaskSolver
                         if (solutions.Count < limit)
                         {
                             rawSolutions.Add(canonicalCopy); // store canonical representative
-                            var packed = canonicalCopy.Length <= 25 ? key : 0;
+                            var packed = canonicalCopy.Length <=25 ? key :0;
                             solutions.Add((packed, canonicalCopy.Length));
                         }
                     }
@@ -64,8 +64,40 @@ public partial class BitmaskSolver
         }
         else
         {
-            // Larger boards: rely on authoritative expected counts (performance) and skip materialization.
-            _solutionCount = ExpectedSolutionCounts.GetUnique(N);
+            // For N >8, use parallel engine to materialize up to the cap
+            var solutions = new List<(UInt128 packed, int boardSize)>();
+            var rawSolutions = new List<int[]>();
+            var uniqueKeys = new HashSet<UInt128>();
+            var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
+            int materialized =0;
+            _parallelEngine.RunUnique(new BitmaskParallelEngine.UniqueRequest(
+                BoardSize,
+                EnableEvents,
+                ParallelRootSplitDepth,
+                () => materialized < limit,
+                rows =>
+                {
+                    if (rows.Length ==0) return; // skip count-only sentinel
+                    var copy = (int[])rows.Clone();
+                    if (SymmetryHelper.AddIfUniquePacked(copy, uniqueKeys, scratchBuf, out var key, out var canonicalCopy))
+                    {
+                        _solutionCount++;
+                        if (materialized < limit)
+                        {
+                            rawSolutions.Add(canonicalCopy);
+                            var packed = canonicalCopy.Length <=25 ? key :0;
+                            solutions.Add((packed, canonicalCopy.Length));
+                            materialized++;
+                        }
+                    }
+                },
+                p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken))
+            ));
+            _solutions.AddRange(solutions);
+            _rawSolutions = rawSolutions;
+            // Safety: ensure reported count matches uniqueKeys count
+            if (_solutionCount != (ulong)uniqueKeys.Count)
+                _solutionCount = (ulong)uniqueKeys.Count;
         }
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
