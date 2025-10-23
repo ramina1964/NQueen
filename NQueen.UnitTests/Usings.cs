@@ -3,6 +3,8 @@ global using Microsoft.Extensions.DependencyInjection;
 global using NQueen.Domain.Context;
 global using NQueen.Domain.Enums;
 global using NQueen.Domain.Interfaces;
+global using NQueen.Domain.Models;
+global using NQueen.Domain.Settings;
 global using NQueen.Domain.Utils;
 global using NQueen.Kernel.Services;
 global using NQueen.Kernel.Solvers;
@@ -14,7 +16,7 @@ global using NQueen.UnitTests.Fixtures;
 global using NQueen.UnitTests.Setup;
 global using System;
 global using System.Collections.Generic;
-global using System.Diagnostics;
 global using System.Linq;
 global using System.Threading.Tasks;
 global using Xunit;
+

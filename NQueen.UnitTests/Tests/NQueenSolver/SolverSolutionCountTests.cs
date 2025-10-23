@@ -26,6 +26,18 @@ public class SolverSolutionCountTests(SolverBackEndFixture fixture)
         {13, SolutionMode.Unique}, {13, SolutionMode.All}
     };
 
+    public static TheoryData<int, SolutionMode> MaterializeCapBoards => new()
+    {
+        {4, SolutionMode.Unique}, {4, SolutionMode.All},
+        {5, SolutionMode.Unique}, {5, SolutionMode.All},
+        {6, SolutionMode.Unique}, {6, SolutionMode.All},
+        {7, SolutionMode.Unique}, {7, SolutionMode.All},
+        {8, SolutionMode.Unique}, {8, SolutionMode.All},
+        {9, SolutionMode.Unique}, {9, SolutionMode.All},
+        {10, SolutionMode.Unique}, {10, SolutionMode.All},
+        {12, SolutionMode.Unique}, {12, SolutionMode.All}
+    };
+
     [Theory]
     [MemberData(nameof(SmallBoardsCountModes))]
     public async Task GetSimResults_SmallBoards_CountMatchesExpected(int n, SolutionMode mode)
@@ -87,4 +99,62 @@ public class SolverSolutionCountTests(SolverBackEndFixture fixture)
             _solver.UseCountOnlyUniqueMode = origUnique;
         }
     }
+
+    [Theory]
+    [MemberData(nameof(MaterializeCapBoards))]
+    public async Task GetSimResults_MaterializeMode_ProducesExpectedNumberOfSolutions(int n, SolutionMode mode)
+    {
+        var formatter = new SolutionFormatter();
+        var solver = new BitmaskSolver(n, mode, DisplayMode.Hide, formatter)
+        {
+            UseCountOnlyUniqueMode = false,
+            UseCountOnlyAllMode = false,
+            EnableEvents = false
+        };
+        var ctx = new SimulationContext(n, mode, DisplayMode.Hide);
+        var results = await Task.Run(() => solver.Solve());
+        ulong expected = mode switch
+        {
+            SolutionMode.Unique => ExpectedSolutions.GetUniqueCount(n),
+            SolutionMode.All => ExpectedSolutions.GetAllCount(n),
+            _ => throw new ArgumentOutOfRangeException(nameof(mode))
+        };
+
+        int expectedMaterialized = (int)Math.Min(_maxDsipayedCount, expected);
+        results.Solutions.Should().NotBeNull();
+        results.Solutions.Count.Should().Be(expectedMaterialized, $"Materialize mode should produce min(cap, expected) solutions for {mode} N={n}.");
+        results.SolutionsCount.Should().Be(expected, $"Total solutions count for {mode} N={n} should match expected.");
+        foreach (var s in results.Solutions)
+            s.BoardSize.Should().Be(n);
+    }
+
+    [Theory]
+    [MemberData(nameof(MaterializeCapBoards))]
+    public async Task GetSimResults_MaterializeMode_ProducesExpectedNumberOfSolutions_WithMaxDisplayedCount(int n, SolutionMode mode)
+    {
+        var formatter = new SolutionFormatter();
+        var cap = NQueen.Domain.Settings.SimulationSettings.MaxDisplayedCount;
+        var solver = new BitmaskSolver(n, mode, DisplayMode.Hide, formatter, maxSolutionsInOutput: cap)
+        {
+            UseCountOnlyUniqueMode = false,
+            UseCountOnlyAllMode = false,
+            EnableEvents = false
+        };
+        var ctx = new SimulationContext(n, mode, DisplayMode.Hide);
+        var results = await Task.Run(() => solver.Solve());
+        ulong expected = mode switch
+        {
+            SolutionMode.Unique => ExpectedSolutions.GetUniqueCount(n),
+            SolutionMode.All => ExpectedSolutions.GetAllCount(n),
+            _ => throw new ArgumentOutOfRangeException(nameof(mode))
+        };
+        int expectedMaterialized = (int)Math.Min((ulong)cap, expected);
+        results.Solutions.Should().NotBeNull();
+        results.Solutions.Count.Should().Be(expectedMaterialized, $"Materialize mode should produce min(MaxDisplayedCount, expected) solutions for {mode} N={n}.");
+        results.SolutionsCount.Should().Be(expected, $"Total solutions count for {mode} N={n} should match expected.");
+        foreach (var s in results.Solutions)
+            s.BoardSize.Should().Be(n);
+    }
+
+    private const int _maxDsipayedCount = SimulationSettings.MaxDisplayedCount;
 }
