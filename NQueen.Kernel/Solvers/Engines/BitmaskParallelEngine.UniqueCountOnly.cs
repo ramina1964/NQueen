@@ -15,7 +15,7 @@ internal sealed partial class BitmaskParallelEngine
             tasks.Add(Task.Run(() =>
             {
                 var localUnique = new HashSet<UInt128>();
-                var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
+                var scratchBuf = new int[N *8];
                 var rowsArr = new int[N];
                 Array.Fill(rowsArr, -1);
                 rowsArr[0] = fr;

@@ -7,29 +7,56 @@ internal static class UniqueSolutionCounter
     public static ulong Count(int boardSize, Action<double>? progress, Guid token, EventHandler<ProgressUpdateEventArgs>? progressEventSource, object? sender)
     {
         if (boardSize <= 0) return 0;
-        var uniqueKeys = new ConcurrentDictionary<UInt128, byte>();
-
-        int totalRoots = boardSize; // explore all first-column row placements; symmetry handled by canonical key
         int progressCounter = 0;
-
-        Parallel.For(0, totalRoots, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, firstRow =>
+        // Symmetry reduction for small boards
+        if (boardSize <= 8)
         {
-            CountUniqueForRoot(boardSize, firstRow, uniqueKeys);
-            int done = Interlocked.Increment(ref progressCounter);
-            double pct = (double)done / totalRoots * 100.0;
-            if (progress != null) progress(pct);
-            else if (progressEventSource != null && sender != null)
-                progressEventSource(sender, new ProgressUpdateEventArgs(pct, token));
-        });
-
-        // Ensure final 100% notification
-        if (progress == null && progressEventSource != null && sender != null)
-            progressEventSource(sender, new ProgressUpdateEventArgs(100.0, token));
-
-        return (ulong)uniqueKeys.Count;
+            int halfN = (boardSize + 1) / 2;
+            var uniqueMinKeys = new ConcurrentDictionary<UInt128, byte>();
+            Parallel.For(0, halfN, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, firstRow =>
+            {
+                // Allocate correct scratch size (8 * N) for canonical transforms
+                var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(boardSize)];
+                CountUniqueForRoot(boardSize, firstRow, uniqueMinKeys, scratchBuf);
+                int done = Interlocked.Increment(ref progressCounter);
+                double pct = (double)done / halfN * 100.0;
+                if (progress != null) progress(pct);
+                else if (progressEventSource != null && sender != null)
+                    progressEventSource(sender, new ProgressUpdateEventArgs(pct, token));
+            });
+            ulong count = (ulong)uniqueMinKeys.Count * 2UL;
+            // For odd N, handle center root separately
+            if ((boardSize & 1) == 1)
+            {
+                var centerKeys = new ConcurrentDictionary<UInt128, byte>();
+                var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(boardSize)];
+                CountUniqueForRoot(boardSize, boardSize / 2, centerKeys, scratchBuf);
+                count += (ulong)centerKeys.Count;
+            }
+            if (progress == null && progressEventSource != null && sender != null)
+                progressEventSource(sender, new ProgressUpdateEventArgs(100.0, token));
+            return count;
+        }
+        else
+        {
+            var uniqueMinKeys = new ConcurrentDictionary<UInt128, byte>();
+            Parallel.For(0, boardSize, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, firstRow =>
+            {
+                var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(boardSize)];
+                CountUniqueForRoot(boardSize, firstRow, uniqueMinKeys, scratchBuf);
+                int done = Interlocked.Increment(ref progressCounter);
+                double pct = (double)done / boardSize * 100.0;
+                if (progress != null) progress(pct);
+                else if (progressEventSource != null && sender != null)
+                    progressEventSource(sender, new ProgressUpdateEventArgs(pct, token));
+            });
+            if (progress == null && progressEventSource != null && sender != null)
+                progressEventSource(sender, new ProgressUpdateEventArgs(100.0, token));
+            return (ulong)uniqueMinKeys.Count;
+        }
     }
 
-    private static void CountUniqueForRoot(int N, int firstRow, ConcurrentDictionary<UInt128, byte> uniqueKeys)
+    private static void CountUniqueForRoot(int N, int firstRow, ConcurrentDictionary<UInt128, byte> uniqueMinKeys, int[] scratchBuf)
     {
         var rowsArr = new int[N];
         Array.Fill(rowsArr, -1);
@@ -48,15 +75,13 @@ internal static class UniqueSolutionCounter
 
         int col = 1;
         ulong remaining = ~(cols | d1 | d2) & mask;
-        var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
 
         while (true)
         {
             if (col == N)
             {
-                // Found complete solution -> compute canonical key and register.
-                var canonicalKey = SymmetryHelper.GetCanonicalKey(rowsArr, scratchBuf, out _);
-                uniqueKeys.TryAdd(canonicalKey, 0);
+                UInt128 key = SymmetryHelper.GetCanonicalKey(rowsArr, scratchBuf, out _);
+                uniqueMinKeys.TryAdd(key, 0);
                 col--;
                 if (col <= 0) break;
                 Restore(col, out remaining);

@@ -195,10 +195,24 @@ internal sealed class BitmaskSearchEngine
             avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(s.N, col, s.QueenRows, avail);
         if (request.AggressiveSymmetry && s.N > 8)
         {
-            // Placeholder for future aggressive pruning (e.g. third-column ordering).
-            // Currently no additional mask mutation to preserve correctness; hook installed.
-            // Example (disabled): enforce monotonic increase for first three columns.
-            // if (col ==2 && s.QueenRows[1] >=0) { /* potential future constraint here */ }
+            // Aggressive pruning: enforce monotonic increase for first three columns
+            if (col == 2 && s.QueenRows[1] >= 0)
+            {
+                int minRow = s.QueenRows[1];
+                // For odd boards, skip if first queen is centered
+                if (!((s.N & 1) == 1 && s.QueenRows[0] == s.N / 2))
+                {
+                    if (minRow < s.N)
+                    {
+                        ulong lowerMask = (1UL << minRow) - 1UL;
+                        avail &= ~lowerMask;
+                    }
+                    else
+                    {
+                        avail = 0UL;
+                    }
+                }
+            }
         }
         return avail;
     }

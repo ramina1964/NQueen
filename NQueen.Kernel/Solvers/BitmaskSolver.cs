@@ -7,7 +7,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     private bool ValidateRows(int[] rows)
     {
         // Empty array is used as a sentinel from parallel engines to indicate a count-only solution
-        if (rows.Length ==0)
+        if (rows.Length == 0)
             return true; // accept silently (do not assert / materialize)
         bool ok = rows.Length == BoardSize;
         Debug.Assert(ok, $"[BitmaskSolver] Invalid solution rows length={rows.Length}, BoardSize={BoardSize}");
@@ -15,11 +15,11 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     }
 
     public BitmaskSolver(ISolutionFormatter solutionFormatter, bool enableCap)
-        : this(solutionFormatter, SimulationSettings.MaxDisplayedCount) =>
-        _capEnabled = enableCap;
+    : this(solutionFormatter, SimulationSettings.MaxDisplayedCount) =>
+    _capEnabled = enableCap;
 
     public BitmaskSolver(int boardSize, SolutionMode solutionMode, DisplayMode displayMode, ISolutionFormatter solutionFormatter, int maxSolutionsInOutput = SimulationSettings.MaxDisplayedCount)
-        : this(solutionFormatter, maxSolutionsInOutput)
+    : this(solutionFormatter, maxSolutionsInOutput)
     {
         BoardSize = boardSize;
         SolutionMode = solutionMode;
@@ -31,51 +31,38 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     public event EventHandler<ProgressUpdateEventArgs>? ProgressValueChanged;
 
     public int DelayInMillisec { get; set; }
-
     public int ProgressValue { get; set; }
-
     public int BoardSize { get; private set; }
-
     public SolutionMode SolutionMode { get; private set; }
-
     public DisplayMode DisplayMode { get; private set; }
-
     public bool IsSolverCanceled { get; set; }
+    public bool EnableEvents { get; set; } = true;
 
-    public bool EnableEvents { get; set; } = true; // External master enable
-
-    // Replace legacy booleans with enum-backed properties
     public ResultStorageMode AllStorageMode { get; set; } = SimulationSettings.DefaultAllStorageMode;
-    
     public ResultStorageMode UniqueStorageMode { get; set; } = SimulationSettings.DefaultUniqueStorageMode;
 
-    // Backward compatibility properties (optional: keep for UI until migrated)
     public bool UseCountOnlyUniqueMode { get; set; } = false;
-    public bool UseCountOnlyAllMode { get; set; } = false; // New property for count-only All mode
+    public bool UseCountOnlyAllMode { get; set; } = false;
 
-    // New parallelization tunables
-    public bool UseParallel { get; set; } = true; // allow disabling parallel execution (forces single-threaded search)
-    
-    public int ParallelRootSplitDepth { get; set; } = 1; // number of leading columns used to create root tasks (>=1). Currently supported for All mode; Unique mode uses 1.
-    
-    public bool UseAdaptiveDepth { get; set; } = false; // new property to enable adaptive split depth selection
+    public bool UseParallel { get; set; } = true;
+    public int ParallelRootSplitDepth { get; set; } = 1;
+    public bool UseAdaptiveDepth { get; set; } = false;
 
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
 
     public Task<SimulationResults> GetSimResultsAsync(SimulationContext simContext) =>
-        Task.Run(() =>
-        {
-            BoardSize = simContext.BoardSize;
-            SolutionMode = simContext.SolutionMode;
-            DisplayMode = simContext.DisplayMode;
-            return Solve();
-        });
+    Task.Run(() =>
+    {
+        BoardSize = simContext.BoardSize;
+        SolutionMode = simContext.SolutionMode;
+        DisplayMode = simContext.DisplayMode;
+        return Solve();
+    });
 
     public SimulationResults Solve()
     {
         if (BoardSize <= 0)
-            throw new InvalidOperationException("BoardSize must be > 0.");
-
+            throw new InvalidOperationException("BoardSize must be >0.");
         if (BoardSize > BoardSettings.MaxBitmaskBoardSize)
             throw new NotSupportedException($"Bitmask solver supports boards up to {BoardSettings.MaxBitmaskBoardSize}. (Requested: {BoardSize})");
 
@@ -84,6 +71,9 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
         ResetForSolve();
         var sw = Stopwatch.StartNew();
+
+        // NOTE: Previous refactor added an early short-circuit for Unique materialization which suppressed solution samples.
+        // That has been removed; we now always enumerate up to the cap and then set the authoritative total afterwards.
 
         switch (SolutionMode)
         {
@@ -98,9 +88,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                 else
                 {
                     bool autoParallel = ParallelSplitDepthHeuristic.ShouldUseParallelForAll(BoardSize);
-                    int splitDepth = UseAdaptiveDepth
-                        ? ParallelSplitDepthHeuristic.GetOptimalSplitDepth(BoardSize)
-                        : ParallelRootSplitDepth;
+                    int splitDepth = UseAdaptiveDepth ? ParallelSplitDepthHeuristic.GetOptimalSplitDepth(BoardSize) : ParallelRootSplitDepth;
                     if (autoParallel)
                         RunAllParallel(splitDepth);
                     else
@@ -203,12 +191,12 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     }
 
     private void IncrementSolutionCountAtomic() =>
-        Interlocked.Increment(ref Unsafe.As<ulong, long>(ref _solutionCount));
+    Interlocked.Increment(ref Unsafe.As<ulong, long>(ref _solutionCount));
 
-    private static int EstimateUniqueSolutionCount(int boardSize)
+    internal static int EstimateUniqueSolutionCount(int boardSize)
     {
         ulong count = ExpectedSolutionCounts.GetUnique(boardSize);
-        if (count == 0) return 1_000_000; // heuristic fallback
+        if (count == 0) return 1_000_000;
         return count > int.MaxValue ? int.MaxValue : (int)count;
     }
 

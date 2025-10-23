@@ -2,20 +2,8 @@
 
 public static partial class SymmetryHelper
 {
-    public static int MaxRowExclusiveForColumn(int boardSize, int column, int[] queenRows)
-    {
-        // First column: standard half-board restriction
-        if (column == 0)
-            return (boardSize + 1) / 2;
-
-        return boardSize; // full range for other columns (upper bound only)
-    }
-
-    // Advanced pruning: adjust availability mask using already placed rows.
-    // - Column 0: restrict to half (handled via MaxRowExclusiveForColumn but repeated for clarity)
-    // - Column 1: enforce row > first queen row (except when first queen is centered on odd boards)
-    //   This removes symmetric counterparts obtainable via reflection across main diagonal.
-    public static ulong ApplyAdvancedSymmetryPruning(int boardSize, int column, int[] queenRows, ulong availMask)
+    public static ulong ApplyAdvancedSymmetryPruning(
+        int boardSize, int column, int[] queenRows, ulong availMask)
     {
         if (boardSize <= 1)
             return availMask;
@@ -30,30 +18,24 @@ public static partial class SymmetryHelper
         if (column == 1)
         {
             int firstRow = queenRows[0];
-            if (firstRow >= 0)
+            if (firstRow >= 0 && !((boardSize & 1) == 1 && firstRow == boardSize / 2))
             {
-                // If odd size and first row centered -> skip second column pruning.
-                if (!((boardSize & 1) == 1 && firstRow == boardSize / 2))
+                int minRow = firstRow + 1;
+                if (minRow < boardSize)
                 {
-                    // Keep only rows strictly greater than firstRow for column 1.
-                    int minRow = firstRow + 1;
-                    if (minRow < boardSize)
-                    {
-                        ulong lowerMask = (1UL << minRow) - 1UL; // rows < minRow
-                        availMask &= ~lowerMask;
-                    }
-                    else
-                    {
-                        // No valid placements remain; return 0 mask.
-                        availMask = 0UL;
-                    }
+                    ulong lowerMask = (1UL << minRow) - 1UL; // rows < minRow
+                    availMask &= ~lowerMask;
+                }
+                else
+                {
+                    // No valid placements remain; return 0 mask.
+                    availMask = 0UL;
                 }
             }
         }
         return availMask;
     }
 
-    // Packed key uniqueness helper (uses UInt128). Assumes board size <= 32 (true for unique mode limit 20+ packed fits 5 bits per row up to 32).
     public static bool AddIfUniquePacked(int[] solution, HashSet<UInt128> uniqueKeys, int[] scratch, out UInt128 key, out int[] canonicalCopy)
     {
         key = 0;
@@ -61,6 +43,7 @@ public static partial class SymmetryHelper
         ArgumentNullException.ThrowIfNull(solution);
         ArgumentNullException.ThrowIfNull(uniqueKeys);
 
+        // Only require minimum scratch of2n (legacy callers); canonicalizer will internally allocate if larger needed.
         if (scratch.Length < solution.Length * 2)
             throw new ArgumentException("Scratch buffer too small", nameof(scratch));
 
@@ -68,7 +51,6 @@ public static partial class SymmetryHelper
         if (!uniqueKeys.Add(key))
             return false;
 
-        // copy canonical representative so caller may materialize if desired
         canonicalCopy = canonicalSpan.ToArray();
         return true;
     }
@@ -77,238 +59,107 @@ public static partial class SymmetryHelper
     public static bool AddIfUnique(int[] solution, HashSet<UInt128> uniqueKeys, int[] scratch) =>
         AddIfUniquePacked(solution, uniqueKeys, scratch, out _, out _);
 
-    // Overload: GetCanonicalForm with scratch buffer (existing array-returning API)
+    // Canonical form generating all8 dihedral transforms. Falls back to internal buffer if caller scratch too small.
     public static int[] GetCanonicalForm(int[] solution, int[] scratch)
     {
-        ArgumentNullException.ThrowIfNull(solution);
         int n = solution.Length;
-        // Use first n entries for min, next n entries for buf directly (no ToArray allocations)
-        var min = scratch.AsSpan(0, n);
-        var buf = scratch.AsSpan(n, n);
-        bool minSet = false;
+        if (n == 0) return Array.Empty<int>();
 
-        // Identity
-        solution.AsSpan().CopyTo(buf);
-        if (minSet == false || SpanIsLess(buf, min, n))
+        // Ensure we have space for8 transforms of length n
+        int required = n * 8;
+        int[] work = scratch.Length >= required ? scratch : new int[required];
+
+        // Layout: t0..t7 each length n in contiguous blocks
+        int offset = 0;
+        Array.Copy(solution, 0, work, offset, n); // t0 identity
+        offset += n;
+        for (int blk = 1; blk < 8; blk++)
         {
-            buf.CopyTo(min);
-            minSet = true;
+            for (int i = 0; i < n; i++) work[offset + (blk - 1) * n + i] = -1; // initialize later blocks to sentinel
+        }
+        // Above initialization left gaps incorrectly; rewrite for clarity:
+        for (int b = 1; b < 8; b++)
+            for (int i = 0; i < n; i++) work[b * n + i] = -1;
+
+        // Fill transforms using solution mapping
+        for (int c = 0; c < n; c++)
+        {
+            int r = solution[c];
+            work[n + (n - 1 - r)] = c; // t1 rotate90
+            work[2 * n + (n - 1 - c)] = n - 1 - r; // t2 rotate180
+            work[3 * n + r] = n - 1 - c; // t3 rotate270
+            work[4 * n + (n - 1 - c)] = r; // t4 reflect vertical
+            work[5 * n + c] = n - 1 - r; // t5 reflect horizontal
+            work[6 * n + r] = c; // t6 reflect main diagonal
+            work[7 * n + (n - 1 - r)] = n - 1 - c; // t7 reflect anti-diagonal
         }
 
-        // Rotate 90
-        for (int i = 0; i < n; i++)
-            buf[solution[i]] = n - 1 - i;
+        // Lexicographically minimal transform selection
+        int minIdx = 0;
+        for (int t = 1; t < 8; t++)
+        {
+            int cmp = 0;
+            for (int i = 0; i < n; i++)
+            {
+                int a = work[t * n + i];
+                int b = work[minIdx * n + i];
+                if (a == b) continue;
+                cmp = a - b;
+                break;
+            }
+            if (cmp < 0) minIdx = t;
+        }
 
-        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
-
-        // Rotate 180
-        for (int i = 0; i < n; i++)
-            buf[n - 1 - i] = n - 1 - solution[i];
-
-        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
-
-        // Rotate 270
-        for (int i = 0; i < n; i++)
-            buf[n - 1 - solution[i]] = i;
-
-        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
-
-        // Reflect vertical
-        for (int i = 0; i < n; i++)
-            buf[n - 1 - i] = solution[i];
-
-        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
-
-        // Reflect horizontal
-        for (int i = 0; i < n; i++)
-            buf[i] = n - 1 - solution[i];
-
-        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
-
-        // Reflect main diagonal
-        for (int i = 0; i < n; i++)
-            buf[solution[i]] = i;
-
-        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
-
-        // Reflect anti-diagonal
-        for (int i = 0; i < n; i++)
-            buf[n - 1 - solution[i]] = n - 1 - i;
-
-        if (SpanIsLess(buf, min, n)) buf.CopyTo(min);
-
-        // Return a cloned array for legacy API expectations
-        return min.ToArray();
+        var result = new int[n];
+        Array.Copy(work, minIdx * n, result, 0, n);
+        return result;
     }
 
-    // Allocation-free canonical key computation.
     public static UInt128 GetCanonicalKey(int[] solution, int[] scratch, out ReadOnlySpan<int> canonical)
     {
-        int n = solution.Length;
-        if (scratch.Length < n * 2) throw new ArgumentException("Scratch buffer too small", nameof(scratch));
-        var min = scratch.AsSpan(0, n);
-        var buf = scratch.AsSpan(n, n);
-        bool minSet = false;
-
-        // Identity
-        solution.AsSpan().CopyTo(buf);
-        if (minSet == false || SpanIsLess(buf, min, n))
-        {
-            buf.CopyTo(min);
-            minSet = true;
-        }
-
-        // Rotate 90
-        for (int i = 0; i < n; i++)
-            buf[solution[i]] = n - 1 - i;
-
-        if (SpanIsLess(buf, min, n))
-            buf.CopyTo(min);
-
-        // Rotate 180
-        for (int i = 0; i < n; i++)
-            buf[n - 1 - i] = n - 1 - solution[i];
-
-        if (SpanIsLess(buf, min, n))
-            buf.CopyTo(min);
-
-        // Rotate 270
-        for (int i = 0; i < n; i++)
-            buf[n - 1 - solution[i]] = i;
-
-        if (SpanIsLess(buf, min, n))
-            buf.CopyTo(min);
-
-        // Reflect vertical
-        for (int i = 0; i < n; i++)
-            buf[n - 1 - i] = solution[i];
-
-        if (SpanIsLess(buf, min, n))
-            buf.CopyTo(min);
-
-        // Reflect horizontal
-        for (int i = 0; i < n; i++)
-            buf[i] = n - 1 - solution[i];
-
-        if (SpanIsLess(buf, min, n))
-            buf.CopyTo(min);
-
-        // Reflect main diagonal
-        for (int i = 0; i < n; i++)
-            buf[solution[i]] = i;
-
-        if (SpanIsLess(buf, min, n))
-            buf.CopyTo(min);
-
-        // Reflect anti-diagonal
-        for (int i = 0; i < n; i++)
-            buf[n - 1 - solution[i]] = n - 1 - i;
-
-        if (SpanIsLess(buf, min, n))
-            buf.CopyTo(min);
-
-        canonical = min;
-        return PackCanonical(min, n);
-    }
-
-    private static bool SpanIsLess(ReadOnlySpan<int> a, ReadOnlySpan<int> b, int n)
-    {
-        for (int i = 0; i < n; i++)
-        {
-            if (a[i] < b[i]) return true;
-            if (a[i] > b[i]) return false;
-        }
-        return false;
+        int[] canon = GetCanonicalForm(solution, scratch);
+        canonical = canon;
+        
+        return PackCanonical(canonical, canonical.Length);
     }
 
     private static UInt128 PackCanonical(ReadOnlySpan<int> rows, int n)
     {
         UInt128 key = 0;
         for (int i = 0; i < n; i++)
-        {
             key = (key << 5) | (uint)rows[i];
-        }
         
         return key;
     }
 
     // Legacy overload for compatibility (still used by some tests/benchmarks expecting int[] return)
-    public static int[] GetCanonicalForm(int[] solution)
-    {
-        int n = solution.Length;
-        int[] scratch = new int[n * 2];
-        
-        return GetCanonicalForm(solution, scratch);
-    }
-
-    private static bool IsLess(int[] a, int[] b, int n)
-    {
-        for (int i = 0; i < n; i++)
-        {
-            if (a[i] < b[i]) return true;
-            if (a[i] > b[i]) return false;
-        }
-        
-        return false;
-    }
+    public static int[] GetCanonicalForm(int[] solution) =>
+        GetCanonicalForm(solution, new int[Math.Max(2, solution.Length * 2)]);
 
     // Restore public API for compatibility
     public static List<int[]> GetSymmetricalSolutions(int[] solution)
     {
         int n = solution.Length;
         var results = new List<int[]>(8);
-        var buf = new int[n];
-        Array.Copy(solution, buf, n); results.Add((int[])buf.Clone());
-        for (int i = 0; i < n; i++) 
-            buf[solution[i]] = n - 1 - i;
-        
-        results.Add((int[])buf.Clone());
+        int[] Make() => new int[n];
 
-        for (int i = 0; i < n; i++) 
-            buf[n - 1 - i] = n - 1 - solution[i];
-        
-        results.Add((int[])buf.Clone());
-  
-        for (int i = 0; i < n; i++) 
-            buf[n - 1 - solution[i]] = i;
-        
-        results.Add((int[])buf.Clone());
-        
-        for (int i = 0; i < n; i++) 
-            buf[n - 1 - i] = solution[i];
-        
-        results.Add((int[])buf.Clone());
-        
-        for (int i = 0; i < n; i++) 
-            buf[i] = n - 1 - solution[i];
-        
-        results.Add((int[])buf.Clone());
-        
-        for (int i = 0; i < n; i++) 
-            buf[solution[i]] = i;
-        
-        results.Add((int[])buf.Clone());
-        
-        for (int i = 0; i < n; i++) 
-            buf[n - 1 - solution[i]] = n - 1 - i;
-        
-        results.Add((int[])buf.Clone());
-        
+        var id = Make(); solution.CopyTo(id); results.Add(id);
+        var r90 = Make(); for (int c = 0; c < n; c++) r90[n - 1 - solution[c]] = c; results.Add(r90);
+        var r180 = Make(); for (int c = 0; c < n; c++) r180[n - 1 - c] = n - 1 - solution[c]; results.Add(r180);
+        var r270 = Make(); for (int c = 0; c < n; c++) r270[solution[c]] = n - 1 - c; results.Add(r270);
+        var rv = Make(); for (int c = 0; c < n; c++) rv[n - 1 - c] = solution[c]; results.Add(rv);
+        var rh = Make(); for (int c = 0; c < n; c++) rh[c] = n - 1 - solution[c]; results.Add(rh);
+        var md = Make(); for (int c = 0; c < n; c++) md[solution[c]] = c; results.Add(md);
+        var ad = Make(); for (int c = 0; c < n; c++) ad[n - 1 - solution[c]] = n - 1 - c; results.Add(ad);
         return results;
     }
 
-    public static List<int[]> GetSymmetricalSolutions(Memory<int> solution) =>
-        GetSymmetricalSolutions(solution.ToArray());
-    
-    public static List<int[]> GetSymmetricalSolutions(ReadOnlySpan<int> solution) =>
-        GetSymmetricalSolutions(solution.ToArray());
-    
-    public static IEnumerable<int[]> GetSymmetricalTransformations(ReadOnlySpan<int> solution) =>
-        GetSymmetricalSolutions(solution.ToArray());
-    
-    public static IEnumerable<int[]> GetSymmetricalTransformations(Memory<int> solution) =>
-        GetSymmetricalSolutions(solution.ToArray());
+    public static List<int[]> GetSymmetricalSolutions(Memory<int> solution) => GetSymmetricalSolutions(solution.ToArray());
+    public static List<int[]> GetSymmetricalSolutions(ReadOnlySpan<int> solution) => GetSymmetricalSolutions(solution.ToArray());
+    public static IEnumerable<int[]> GetSymmetricalTransformations(ReadOnlySpan<int> solution) => GetSymmetricalSolutions(solution.ToArray());
+    public static IEnumerable<int[]> GetSymmetricalTransformations(Memory<int> solution) => GetSymmetricalSolutions(solution.ToArray());
 
-    public static int GetScratchBufferSize(int boardSize) =>
-        boardSize * 2;
+    public static int MaxRowExclusiveForColumn(int boardSize, int column, int[] queenRows) => column == 0 ? (boardSize + 1) / 2 : boardSize;
+    public static int GetScratchBufferSize(int boardSize) => boardSize * 8;
 }
+
