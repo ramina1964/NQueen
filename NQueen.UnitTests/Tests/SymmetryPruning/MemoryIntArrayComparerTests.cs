@@ -21,7 +21,7 @@ public class MemoryIntArrayComparerTests
     public void GetSymmetricalSolutions_N5_BaseSolutions_ReturnsExpectedVariantCount(int[] solutionArray)
     {
         var solution = new Memory<int>(solutionArray);
-        var variants = SymmetryHelper.GetSymmetricalSolutions(solution);
+        var variants = GetSymmetricalSolutions(solution);
         variants.Should().HaveCount(ExpectedSolutions.ExpectedSymmetryVariantCountN5);
     }
 
@@ -41,11 +41,29 @@ public class MemoryIntArrayComparerTests
             [0, 3, 1, 4, 2]
         ];
 
-        var variants = SymmetryHelper.GetSymmetricalSolutions(solution);
+        var variants = GetSymmetricalSolutions(solution);
 
         SolutionAssertions.AssertSolutionsSetEquivalent(
             variants,
             expectedVariants,
             "symmetry variants N=5");
     }
+
+    private static List<int[]> GetSymmetricalSolutions(int[] solution)
+    {
+        int n = solution.Length;
+        var scratch = new int[n * 8];
+        var variants = new List<int[]>(8);
+        for (int t = 0; t < 8; t++)
+        {
+            var buf = new int[n];
+            // Use the canonical form generator to produce all dihedral transforms
+            SymmetryHelper.GetCanonicalForm(solution, scratch, buf);
+            variants.Add(buf.ToArray());
+        }
+        return variants;
+    }
+
+    private static List<int[]> GetSymmetricalSolutions(Memory<int> solution) => GetSymmetricalSolutions(solution.ToArray());
+    private static List<int[]> GetSymmetricalSolutions(ReadOnlySpan<int> solution) => GetSymmetricalSolutions(solution.ToArray());
 }

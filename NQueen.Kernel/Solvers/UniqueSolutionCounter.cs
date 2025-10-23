@@ -76,11 +76,16 @@ internal static class UniqueSolutionCounter
         int col = 1;
         ulong remaining = ~(cols | d1 | d2) & mask;
 
+        // Allocate a reusable buffer for canonical form
+        var canonicalBuf = new int[N];
+
         while (true)
         {
             if (col == N)
             {
-                UInt128 key = SymmetryHelper.GetCanonicalKey(rowsArr, scratchBuf, out _);
+                // Use buffer-reuse overload for canonical form
+                int[] canon = SymmetryHelper.GetCanonicalForm(rowsArr, scratchBuf, canonicalBuf);
+                UInt128 key = SymmetryHelper.PackCanonical(canon, N);
                 uniqueMinKeys.TryAdd(key, 0);
                 col--;
                 if (col <= 0) break;
