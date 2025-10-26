@@ -13,7 +13,7 @@ public partial class BitmaskSolver
             _currentSimToken,
             () => IsSolverCanceled,
             p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-            m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
+            m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize)); },
             rows =>
             {
                 // Central invariant check (single place)
@@ -34,7 +34,7 @@ public partial class BitmaskSolver
                         _solutions.Add((0, rows.Length));
                     }
                     if (EnableEvents && !_eventsSuppressedAfterCap)
-                        SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows)));
+                        SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
                     if (_capEnabled && _solutions.Count >= _maxDisplayed)
                         _eventsSuppressedAfterCap = true;
                     return true; // Stop after first solution

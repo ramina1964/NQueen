@@ -51,17 +51,8 @@ public class MemoryIntArrayComparerTests
 
     private static List<int[]> GetSymmetricalSolutions(int[] solution)
     {
-        int n = solution.Length;
-        var scratch = new int[n * 8];
-        var variants = new List<int[]>(8);
-        for (int t = 0; t < 8; t++)
-        {
-            var buf = new int[n];
-            // Use the canonical form generator to produce all dihedral transforms
-            SymmetryHelper.GetCanonicalForm(solution, scratch, buf);
-            variants.Add(buf.ToArray());
-        }
-        return variants;
+        var transforms = SymmetryHelper.GetAllTransforms(solution);
+        return transforms.Select(t => t.ToArray()).ToList();
     }
 
     private static List<int[]> GetSymmetricalSolutions(Memory<int> solution) => GetSymmetricalSolutions(solution.ToArray());

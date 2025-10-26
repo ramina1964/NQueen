@@ -87,15 +87,16 @@ internal sealed class BitmaskSearchEngine
                 }
                 if (valid)
                 {
-                    // Use span-based callback if provided, else fallback to array clone
+                    // Prefer span-based callback to avoid allocations
                     if (request.OnSolutionSpan != null)
                     {
                         if (request.OnSolutionSpan(s.QueenRows.AsSpan()))
                             break;
                     }
-                    else
+                    else if (request.OnSolution != null)
                     {
-                        if (request.OnSolution((int[])s.QueenRows.Clone()))
+                        // Only clone if absolutely necessary
+                        if (request.OnSolution(s.QueenRows))
                             break;
                     }
                 }

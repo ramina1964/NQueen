@@ -21,7 +21,7 @@ public class SymmetryHelperCanonicalFormBenchmark
         return SymmetryHelper.GetCanonicalForm(solution, scratch, resultBuffer);
     }
 
-    private int[] solution;
-    private int[] scratch;
-    private int[] resultBuffer;
+    private int[] solution = System.Array.Empty<int>();
+    private int[] scratch = System.Array.Empty<int>();
+    private int[] resultBuffer = System.Array.Empty<int>();
 }

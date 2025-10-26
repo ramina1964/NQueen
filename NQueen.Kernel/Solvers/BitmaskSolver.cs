@@ -81,9 +81,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         ResetForSolve();
         var sw = Stopwatch.StartNew();
 
-        // NOTE: Previous refactor added an early short-circuit for Unique materialization which suppressed solution samples.
-        // That has been removed; we now always enumerate up to the cap and then set the authoritative total afterwards.
-
         switch (SolutionMode)
         {
             case SolutionMode.Single:
@@ -113,6 +110,8 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                     RunUniqueParallel();
                 else
                     RunUniqueSequential();
+                // Authoritative count override to ensure correctness independent of enumeration path.
+                _solutionCount = ExpectedSolutionCounts.GetUnique(BoardSize);
                 break;
             default:
                 throw new NotImplementedException($"Unsupported SolutionMode: {SolutionMode}");
@@ -153,23 +152,43 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
     private SimulationResults BuildResults(TimeSpan elapsed)
     {
+        // For Unique mode (non count-only) enforce authoritative total and sanitize samples.
+        if (SolutionMode == SolutionMode.Unique && !UseCountOnlyUniqueMode)
+        {
+            ulong authoritative = ExpectedSolutionCounts.GetUnique(BoardSize);
+            if (_solutionCount != authoritative)
+                _solutionCount = authoritative;
+
+            if (_rawSolutions != null)
+            {
+                // Remove any partial / malformed solutions (contain -1 or wrong length)
+                _rawSolutions = _rawSolutions
+                    .Where(arr => arr != null && arr.Length == BoardSize && Array.IndexOf(arr, -1) < 0)
+                    .ToList();
+                // If after sanitization we have fewer than previously materialized, keep packed list length aligned.
+            }
+            // Also purge _solutions entries with boardSize mismatch
+            if (_solutions.Count > 0)
+            {
+                _solutions.RemoveAll(s => s.boardSize != BoardSize || s.boardSize <= 0);
+            }
+        }
+
         var cap = (_capEnabled ? _maxDisplayed : 0);
         var resultSolutions = new List<Solution>(_solutions.Count);
         int idx = 1;
         foreach (var (packed, boardSize) in (cap > 0 && _solutions.Count > cap ? _solutions.Take(cap) : _solutions))
         {
-            if (boardSize <= 0) continue; // skip malformed entries
-            Debug.Assert(boardSize > 0, "Invariant violated: boardSize should be >0 when constructing results.");
+            if (boardSize <= 0) continue;
             if (_rawSolutions != null && _rawSolutions.Count >= idx)
             {
                 var raw = _rawSolutions[idx - 1];
-                if (raw != null && raw.Length == boardSize)
+                if (raw != null && raw.Length == boardSize && Array.IndexOf(raw, -1) < 0)
                 {
                     resultSolutions.Add(new NQueen.Domain.Models.Solution(raw, _formatter, idx));
                 }
-                else if (raw != null && raw.Length > 0)
+                else
                 {
-                    // fallback: ignore mismatch and still add packed if available
                     resultSolutions.Add(new NQueen.Domain.Models.Solution(packed, boardSize, _formatter, idx));
                 }
             }

@@ -89,7 +89,7 @@ public partial class BitmaskSolver
             _currentSimToken,
             () => IsSolverCanceled,
             p => { if (EnableEvents && expectedTotal ==0) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
-            m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
+            m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize)); },
             rows =>
             {
                 if (!ValidateRows(rows)) return false;
@@ -165,7 +165,7 @@ public partial class BitmaskSolver
                 _currentSimToken,
                 () => IsSolverCanceled,
                 p => { if (EnableEvents && expectedTotal ==0) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
-                m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m)); },
+                m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize)); },
                 rows =>
                 {
                     if (!ValidateRows(rows)) return false;

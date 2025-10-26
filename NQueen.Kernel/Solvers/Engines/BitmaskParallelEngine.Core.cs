@@ -7,10 +7,10 @@ internal sealed partial class BitmaskParallelEngine
         int BoardSize, int RootSplitDepth, bool EnableEvents, int MaterializeCap, Action<int[]> OnSolution,
         Action<ulong> OnCompleted, Action<double> ReportProgress);
 
-    // Added ShouldMaterialize predicate to avoid unnecessary row array allocations when cap reached.
+    // Extended: add OnCompletedUniqueCount for final fundamental unique total
     public readonly record struct UniqueRequest(
         int BoardSize, bool EnableEvents, int RootSplitDepth, Func<bool> ShouldMaterialize,
-        Action<int[]> OnUniqueSolution, Action<double> ReportProgress);
+        Action<int[]> OnUniqueSolution, Action<ulong> OnCompletedUniqueCount, Action<double> ReportProgress);
 
     public readonly record struct AllCountOnlyRequest(
         int BoardSize, int RootSplitDepth, Action<ulong> OnCount,

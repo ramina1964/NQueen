@@ -12,8 +12,7 @@ public class SolverSymmetryTests
         solutions.Add(baseSolution);
 
         // Act
-        var symmetricalSolutions = GetSymmetricalTransformations(baseSolution.Span.ToArray())
-            .ToArray();
+        var symmetricalSolutions = SymmetryHelper.GetAllTransforms(baseSolution.Span.ToArray());
 
         foreach (var symmetrical in symmetricalSolutions)
             solutions.Add(new Memory<int>(symmetrical));
@@ -26,19 +25,5 @@ public class SolverSymmetryTests
             var memorySolution = new Memory<int>(symmetrical);
             solutions.Contains(memorySolution).Should().BeTrue($"Symmetrical solution {string.Join(',', symmetrical)} should be detected.");
         }
-    }
-
-    private static List<int[]> GetSymmetricalTransformations(int[] solution)
-    {
-        int n = solution.Length;
-        var scratch = new int[n * 8];
-        var variants = new List<int[]>(8);
-        for (int t = 0; t < 8; t++)
-        {
-            var buf = new int[n];
-            SymmetryHelper.GetCanonicalForm(solution, scratch, buf);
-            variants.Add(buf.ToArray());
-        }
-        return variants;
     }
 }
