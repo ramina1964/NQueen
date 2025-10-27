@@ -68,17 +68,17 @@ internal sealed class BitmaskSearchEngine
 
     private static void MainLoop(ref SearchState s, in Request request)
     {
+        int[] solutionBuffer = new int[s.N];
         while (true)
         {
             if (request.IsCanceled()) break;
 
             if (s.Col == s.N)
             {
-                // Only call callback if all entries are non-negative
                 bool valid = true;
-                for (int i = 0; i < s.N; i++)
+                for (int i =0; i < s.N; i++)
                 {
-                    if (s.QueenRows[i] < 0)
+                    if (s.QueenRows[i] <0)
                     {
                         valid = false;
                         break;
@@ -88,8 +88,9 @@ internal sealed class BitmaskSearchEngine
                 {
                     if (request.OnSolution != null)
                     {
-                        // Only clone if absolutely necessary
-                        if (request.OnSolution(s.QueenRows))
+                        // Copy only if the callback will mutate or store the array
+                        Array.Copy(s.QueenRows, solutionBuffer, s.N);
+                        if (request.OnSolution(solutionBuffer))
                             break;
                     }
                 }
@@ -97,7 +98,7 @@ internal sealed class BitmaskSearchEngine
                 continue;
             }
 
-            if (s.Remaining == 0)
+            if (s.Remaining ==0)
             {
                 if (!Backtrack(ref s, out _)) break;
                 continue;
@@ -108,7 +109,7 @@ internal sealed class BitmaskSearchEngine
             int row = BitOperations.TrailingZeroCount(bit);
             s.QueenRows[s.Col] = row;
 
-            if (s.Col == 0)
+            if (s.Col ==0)
                 ReportRootProgress(ref s, request);
 
             MaybeRaisePlacementEvent(ref s, request);

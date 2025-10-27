@@ -41,10 +41,12 @@ public static partial class SymmetryHelper
         canonicalCopy = Array.Empty<int>();
         ArgumentNullException.ThrowIfNull(solution);
         ArgumentNullException.ThrowIfNull(uniqueKeys);
-        var canonSpan = GetCanonicalForm(solution, scratch, null); // ensure scratch populated
+        // Avoid ToArray: use a stackalloc buffer for small N, or reuse scratch for canonical
+        var canonSpan = GetCanonicalForm(solution, scratch, null);
         key = PackCanonical(canonSpan, canonSpan.Length);
         if (!uniqueKeys.Add(key)) return false;
-        canonicalCopy = canonSpan.ToArray();
+        // Only materialize canonicalCopy if needed (for tests/UI)
+        canonicalCopy = canonSpan.Length <= 32 ? canonSpan.ToArray() : Array.Empty<int>();
         return true;
     }
 
@@ -54,46 +56,45 @@ public static partial class SymmetryHelper
     /// Compute canonical representative under the dihedral group of the square (8 symmetries).
     /// Returns the lexicographically minimal row-array among the8 transformed boards.
     /// </summary>
-    public static ReadOnlySpan<int> GetCanonicalForm(int[] solution)
+    public static int[] GetCanonicalForm(int[] solution)
     {
         int n = solution.Length;
-        if (n == 0) return ReadOnlySpan<int>.Empty;
-        // Allocate8 transforms
-        int[][] t = new int[8][];
-        for (int i = 0; i < 8; i++) t[i] = new int[n];
-        for (int c = 0; c < n; c++)
+        if (n == 0) return Array.Empty<int>();
+        Span<int> min = n <= 32 ? stackalloc int[n] : new int[n];
+        Span<int> temp = n <= 32 ? stackalloc int[n] : new int[n];
+        // identity
+        for (int c = 0; c < n; c++) min[c] = solution[c];
+        // Try all 7 other transforms
+        for (int t = 1; t < 8; t++)
         {
-            int r = solution[c];
-            // identity
-            t[0][c] = r;
-            // rotate90 CCW: (c,r)-> (r, n-1-c)
-            t[1][r] = n - 1 - c;
-            // rotate180: (c,r)->(n-1-c, n-1-r)
-            t[2][n - 1 - c] = n - 1 - r;
-            // rotate270 CCW: (c,r)->(n-1-r, c)
-            t[3][n - 1 - r] = c;
-            // reflect vertical: (c,r)->(n-1-c, r)
-            t[4][n - 1 - c] = r;
-            // reflect horizontal: (c,r)->(c, n-1-r)
-            t[5][c] = n - 1 - r;
-            // reflect main diagonal: (c,r)->(r,c)
-            t[6][r] = c;
-            // reflect anti-diagonal: (c,r)->(n-1-r, n-1-c)
-            t[7][n - 1 - r] = n - 1 - c;
-        }
-        int minIdx = 0;
-        for (int k = 1; k < 8; k++)
-        {
+            for (int i = 0; i < n; i++) temp[i] = -1;
+            for (int c = 0; c < n; c++)
+            {
+                int r = solution[c];
+                switch (t)
+                {
+                    case 1: temp[r] = n - 1 - c; break; // rotate90
+                    case 2: temp[n - 1 - c] = n - 1 - r; break; // rotate180
+                    case 3: temp[n - 1 - r] = c; break; // rotate270
+                    case 4: temp[n - 1 - c] = r; break; // reflect vertical
+                    case 5: temp[c] = n - 1 - r; break; // reflect horizontal
+                    case 6: temp[r] = c; break; // reflect main diagonal
+                    case 7: temp[n - 1 - r] = n - 1 - c; break; // reflect anti-diagonal
+                }
+            }
+            bool isLess = false;
             for (int i = 0; i < n; i++)
             {
-                int a = t[k][i];
-                int b = t[minIdx][i];
-                if (a == b) continue;
-                if (a < b) minIdx = k;
-                break;
+                if (temp[i] < min[i]) { isLess = true; break; }
+                if (temp[i] > min[i]) break;
             }
+            if (isLess)
+                for (int i = 0; i < n; i++) min[i] = temp[i];
         }
-        return t[minIdx];
+        // Copy min to array for safe return
+        var result = new int[n];
+        for (int i = 0; i < n; i++) result[i] = min[i];
+        return result;
     }
 
     // Legacy overload with scratch & optional resultBuffer expected by tests to read all8 transforms from scratch (contiguous blocks)
@@ -187,6 +188,21 @@ public static partial class SymmetryHelper
             result[7][n - 1 - r] = n - 1 - c; // reflect anti-diagonal
         }
         return result;
+    }
+
+    public static bool AddIfUniquePacked(
+        int[] solution, System.Collections.Concurrent.ConcurrentDictionary<UInt128, byte> uniqueKeys, int[] scratch,
+        out UInt128 key, out int[] canonicalCopy)
+    {
+        key = 0;
+        canonicalCopy = Array.Empty<int>();
+        ArgumentNullException.ThrowIfNull(solution);
+        ArgumentNullException.ThrowIfNull(uniqueKeys);
+        var canonArr = GetCanonicalForm(solution, scratch, null);
+        key = PackCanonical(canonArr, canonArr.Length);
+        if (!uniqueKeys.TryAdd(key, 0)) return false;
+        canonicalCopy = canonArr.Length <= 32 ? canonArr.ToArray() : Array.Empty<int>();
+        return true;
     }
 }
 

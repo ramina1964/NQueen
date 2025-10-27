@@ -6,33 +6,34 @@ internal static class UniqueSolutionCounter
         EventHandler<ProgressUpdateEventArgs>? progressEventSource, object? sender)
     {
         if (boardSize <= 0) return 0;
-        var search = new BitmaskSearchEngine();
-        var uniqueKeys = new HashSet<UInt128>();
+        var uniqueKeys = new ConcurrentDictionary<UInt128, byte>();
         int[] scratch = new int[SymmetryHelper.GetScratchBufferSize(boardSize)];
-        // Enumerate and insert canonical keys
-        search.Run(new BitmaskSearchEngine.Request(
-            boardSize,
-            RestrictFirstCol: false,
-            EnhancedSymmetry: false,
-            AggressiveSymmetry: false,
-            DisplayMode.Hide,
-            DelayInMillisec: 0,
-            SimulationToken: token,
-            IsCanceled: () => false,
-            ReportProgress: p =>
-            {
-                if (progress != null) progress(p);
-                else if (progressEventSource != null && sender != null)
-                    progressEventSource(sender, new ProgressUpdateEventArgs(p, token));
-            },
-            OnQueenPlaced: _ => { },
-            OnSolution: rows =>
-            {
-                var copy = (int[])rows.Clone();
-                SymmetryHelper.AddIfUniquePacked(copy, uniqueKeys, scratch, out _, out _);
-                return false;
-            }
-        ));
+        // Use a single buffer for solution reporting
+        int[] solutionBuffer = new int[boardSize];
+        // Enable aggressive symmetry pruning for large boards
+        bool aggressiveSymmetry = boardSize >= 12;
+        int parallelism = Environment.ProcessorCount;
+        Parallel.For(0, boardSize, new ParallelOptions { MaxDegreeOfParallelism = parallelism }, col0 =>
+        {
+            var search = new BitmaskSearchEngine();
+            search.Run(new BitmaskSearchEngine.Request(
+                boardSize,
+                RestrictFirstCol: true,
+                EnhancedSymmetry: true,
+                AggressiveSymmetry: aggressiveSymmetry,
+                DisplayMode.Hide,
+                DelayInMillisec: 0,
+                SimulationToken: token,
+                IsCanceled: () => false,
+                ReportProgress: _ => { },
+                OnQueenPlaced: _ => { },
+                OnSolution: rows =>
+                {
+                    SymmetryHelper.AddIfUniquePacked(rows, uniqueKeys, scratch, out _, out _);
+                    return false;
+                }
+            ));
+        });
         if (progress == null && progressEventSource != null && sender != null)
             progressEventSource(sender, new ProgressUpdateEventArgs(100.0, token));
 
