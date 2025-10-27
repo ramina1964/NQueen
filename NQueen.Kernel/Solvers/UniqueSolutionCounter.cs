@@ -3,15 +3,14 @@ namespace NQueen.Kernel.Solvers;
 internal static class UniqueSolutionCounter
 {
     public static ulong Count(int boardSize, Action<double>? progress, Guid token,
-        EventHandler<ProgressUpdateEventArgs>? progressEventSource, object? sender)
+        EventHandler<ProgressUpdateEventArgs>? progressEventSource, object? sender,
+        bool aggressiveSymmetry = false)
     {
         if (boardSize <= 0) return 0;
         var uniqueKeys = new ConcurrentDictionary<UInt128, byte>();
         int[] scratch = new int[SymmetryHelper.GetScratchBufferSize(boardSize)];
         // Use a single buffer for solution reporting
         int[] solutionBuffer = new int[boardSize];
-        // Enable aggressive symmetry pruning for large boards
-        bool aggressiveSymmetry = boardSize >= 12;
         int parallelism = Environment.ProcessorCount;
         Parallel.For(0, boardSize, new ParallelOptions { MaxDegreeOfParallelism = parallelism }, col0 =>
         {
