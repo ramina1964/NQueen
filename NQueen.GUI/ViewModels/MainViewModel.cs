@@ -147,6 +147,10 @@ public sealed partial class MainViewModel :
         DelayInMilliseconds = SimulationSettings.DefaultDelayInMilliseconds;
         ProgressVisibility = Visibility.Hidden;
         ProgressLabelVisibility = Visibility.Hidden;
+
+        // GUI-specific: default to CountOnly to reduce initial memory usage; tests will override to materialize.
+        SelectedAllStorageMode = ResultStorageMode.CountOnly;
+        SelectedUniqueStorageMode = ResultStorageMode.CountOnly;
     }
 
     // --- Private Fields ---

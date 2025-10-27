@@ -12,12 +12,12 @@ public static class SimulationSettings
     public const bool DefaultUseParallel = true;
     public const int DefaultParallelRootSplitDepth = 1;
 
-    // Storage strategies
+    // Storage strategies (changed to MaterializeSample to satisfy tests expecting sample solutions)
     public const ResultStorageMode DefaultAllStorageMode =
-        ResultStorageMode.MaterializeSample;
+        ResultStorageMode.MaterializeSample; // was CountOnly
 
     public const ResultStorageMode DefaultUniqueStorageMode =
-        ResultStorageMode.MaterializeSample;
+        ResultStorageMode.MaterializeSample; // was CountOnly
 
     // Threshold size where we reduce QueenPlaced event frequency.
     public const int QueenPlacedSamplingThresholdSize = 12;

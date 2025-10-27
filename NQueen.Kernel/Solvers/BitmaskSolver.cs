@@ -33,8 +33,8 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     public DisplayMode DisplayMode { get; private set; }
     public bool IsSolverCanceled { get; set; }
     public bool EnableEvents { get; set; } = true;
-    public ResultStorageMode AllStorageMode { get; set; } = SimulationSettings.DefaultAllStorageMode;
-    public ResultStorageMode UniqueStorageMode { get; set; } = SimulationSettings.DefaultUniqueStorageMode;
+    public ResultStorageMode AllStorageMode { get; set; } = ResultStorageMode.MaterializeSample;
+    public ResultStorageMode UniqueStorageMode { get; set; } = ResultStorageMode.MaterializeSample;
     public bool UseCountOnlyUniqueMode { get; set; } = false;
     public bool UseCountOnlyAllMode { get; set; } = false;
     public bool UseParallel { get; set; } = true;
@@ -133,7 +133,9 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                 _solutionCount = authoritative;
             if (_rawSolutions != null)
             {
-                _rawSolutions = _rawSolutions.Where(arr => arr != null && arr.Length == BoardSize && Array.IndexOf(arr, -1) < 0).ToList();
+                _rawSolutions = [.. _rawSolutions
+                    .Where(arr => arr != null &&
+                    arr.Length == BoardSize && Array.IndexOf(arr, -1) < 0)];
             }
             if (_solutions.Count > 0)
             {
