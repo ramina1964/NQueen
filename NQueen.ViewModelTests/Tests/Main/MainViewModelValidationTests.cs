@@ -96,7 +96,7 @@ public class MainViewModelValidationTests
     }
 
     [Theory]
-    [InlineData("21", "21", SolutionMode.Unique, SolutionMode.All)]
+    [MemberData(nameof(RespectSolutionModeLimitsData))]
     public void BoardSizeText_Validation_ShouldRespectSolutionModeLimits(
         string originalBoardSizeText,
         string finalBoardSizeText,
@@ -140,10 +140,7 @@ public class MainViewModelValidationTests
     }
     
     [Theory]
-    [InlineData("21", SolutionMode.All,    SolutionMode.Single, 21)]
-    [InlineData("21", SolutionMode.Unique, SolutionMode.Single, 21)]
-    [InlineData("37", SolutionMode.All,    SolutionMode.Single, 37)]
-    [InlineData("37", SolutionMode.Unique, SolutionMode.Single, 37)]
+    [MemberData(nameof(ChessboardUpdatesWhenSwitchingToValidModeData))]
     public void Chessboard_Updates_WhenSwitchingToValidMode(string boardSizeText,
         SolutionMode invalidMode, SolutionMode validMode, int expectedBoardSize)
     {
@@ -167,9 +164,7 @@ public class MainViewModelValidationTests
     }
 
     [Theory]
-    [InlineData("37", SolutionMode.Single, SolutionMode.Unique)]
-    [InlineData("21", SolutionMode.Single, SolutionMode.All)]
-    [InlineData("21", SolutionMode.Single, SolutionMode.Unique)]
+    [MemberData(nameof(ChessboardDoesNotUpdateWhenSwitchingToInvalidModeData))]
     public void Chessboard_DoesNotUpdate_WhenSwitchingToInvalidMode(
         string boardSizeText, SolutionMode validMode, SolutionMode invalidMode)
     {
@@ -218,5 +213,53 @@ public class MainViewModelValidationTests
         vm.ChessboardVm.WindowWidth = 800;
         vm.ChessboardVm.WindowHeight = 800;
         vm.ChessboardVm.CreateSquares(size);
+    }
+
+    // ---------------------- DATA PROVIDERS (dynamic) ----------------------
+
+    public static IEnumerable<object[]> RespectSolutionModeLimitsData()
+    {
+        int invalidSize = Math.Max(BoardSettings.MaxSizeForUnique, BoardSettings.MaxSizeForAll) +1; // exceeds both
+        yield return new object[] { invalidSize.ToString(), invalidSize.ToString(), SolutionMode.Unique, SolutionMode.All };
+    }
+
+    public static IEnumerable<object[]> ChessboardUpdatesWhenSwitchingToValidModeData()
+    {
+        int invalidForUniqueAll = Math.Max(BoardSettings.MaxSizeForUnique, BoardSettings.MaxSizeForAll) +1; // valid for Single
+        // Ensure invalidForUniqueAll still within Single mode limit
+        if (invalidForUniqueAll > BoardSettings.MaxSizeForSingle)
+        {
+            // Fallback: choose Single's max (still invalid for Unique/All if their max < Single's)
+            invalidForUniqueAll = BoardSettings.MaxSizeForSingle;
+        }
+        // Case: size invalid for Unique/All, then becomes valid in Single
+        yield return new object[] { invalidForUniqueAll.ToString(), SolutionMode.All, SolutionMode.Single, invalidForUniqueAll };
+        yield return new object[] { invalidForUniqueAll.ToString(), SolutionMode.Unique, SolutionMode.Single, invalidForUniqueAll };
+
+        // Also test the largest Single size if it is still invalid for Unique/All
+        int largestSingle = BoardSettings.MaxSizeForSingle;
+        if (largestSingle > Math.Max(BoardSettings.MaxSizeForUnique, BoardSettings.MaxSizeForAll))
+        {
+            yield return new object[] { largestSingle.ToString(), SolutionMode.All, SolutionMode.Single, largestSingle };
+            yield return new object[] { largestSingle.ToString(), SolutionMode.Unique, SolutionMode.Single, largestSingle };
+        }
+    }
+
+    public static IEnumerable<object[]> ChessboardDoesNotUpdateWhenSwitchingToInvalidModeData()
+    {
+        // Size valid for Single but invalid for Unique/All
+        int invalidForUniqueAll = Math.Max(BoardSettings.MaxSizeForUnique, BoardSettings.MaxSizeForAll) +1;
+        if (invalidForUniqueAll > BoardSettings.MaxSizeForSingle)
+        {
+            // If new limits somehow surpass Single (unlikely), adjust to still test invalidation scenario
+            invalidForUniqueAll = BoardSettings.MaxSizeForSingle; // will still be invalid for modes if their max < Single
+        }
+
+        // Existing large size (Single max) should be invalid for Unique/All
+        int largestSingle = BoardSettings.MaxSizeForSingle;
+
+        yield return new object[] { largestSingle.ToString(), SolutionMode.Single, SolutionMode.Unique };
+        yield return new object[] { invalidForUniqueAll.ToString(), SolutionMode.Single, SolutionMode.All };
+        yield return new object[] { invalidForUniqueAll.ToString(), SolutionMode.Single, SolutionMode.Unique };
     }
 }

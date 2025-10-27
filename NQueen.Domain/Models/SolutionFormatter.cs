@@ -27,7 +27,7 @@ public class SolutionFormatter : ISolutionFormatter
     public static string UpdateSolutionLabel(SolutionMode solutionMode) =>
         solutionMode == SolutionMode.Single
                 ? $"Solution"
-                : $"Solutions (Max Displayed: {_maxDisplayed})";
+                : $"Solutions (Max Displayed: {_maxDisplayedCount})";
 
     private static List<List<Position>> SplitIntoLines(
         IEnumerable<Position> positions, int lineLength)
@@ -58,5 +58,5 @@ public class SolutionFormatter : ISolutionFormatter
             : $"({p.ColumnIndex + 1},{p.RowIndex + 1})";
     }
 
-    private const int _maxDisplayed = SimulationSettings.MaxDisplayedCount;
+    private const int _maxDisplayedCount = SimulationSettings.MaxDisplayedCount;
 }

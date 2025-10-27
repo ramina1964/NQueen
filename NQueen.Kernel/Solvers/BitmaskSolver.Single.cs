@@ -35,7 +35,7 @@ public partial class BitmaskSolver
                     }
                     if (EnableEvents && !_eventsSuppressedAfterCap)
                         SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
-                    if (_capEnabled && _solutions.Count >= _maxDisplayed)
+                    if (_capEnabled && _solutions.Count >= _maxDisplayedCount)
                         _eventsSuppressedAfterCap = true;
                     return true; // Stop after first solution
                 }

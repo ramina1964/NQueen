@@ -1,7 +1,7 @@
 namespace NQueen.Kernel.Solvers;
 
 public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
-    int maxDisplayed = SimulationSettings.MaxDisplayedCount) : ISolver, IDisposable
+    int maxDisplayedCount = SimulationSettings.MaxDisplayedCount) : ISolver, IDisposable
 {
     private bool ValidateRows(int[] rows)
     {
@@ -140,7 +140,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                 _solutions.RemoveAll(s => s.boardSize != BoardSize || s.boardSize <= 0);
             }
         }
-        var cap = (_capEnabled ? _maxDisplayed : 0);
+        var cap = (_capEnabled ? _maxDisplayedCount : 0);
         var resultSolutions = new List<Solution>(_solutions.Count);
         int idx = 1;
         foreach (var (packed, boardSize) in (cap > 0 && _solutions.Count > cap ? _solutions.Take(cap) : _solutions))
@@ -166,7 +166,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     private bool ShouldAddSolution()
     {
         if (_capEnabled == false) return true;
-        return _maxDisplayed <= 0 || _solutions.Count < _maxDisplayed;
+        return _maxDisplayedCount <= 0 || _solutions.Count < _maxDisplayedCount;
     }
 
     private void SolveUniqueCountOnlyMode()
@@ -194,7 +194,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     private Guid _currentSimToken = Guid.Empty;
     private readonly bool _capEnabled = true;
     private bool _disposed;
-    private readonly int _maxDisplayed = maxDisplayed;
+    private readonly int _maxDisplayedCount = maxDisplayedCount;
     private volatile bool _eventsSuppressedAfterCap;
     private List<int[]>? _rawSolutions;
 }

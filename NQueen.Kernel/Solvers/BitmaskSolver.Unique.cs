@@ -6,7 +6,7 @@ public partial class BitmaskSolver
     {
         if (UseCountOnlyUniqueMode) { SolveUniqueCountOnlyMode(); return; }
         int N = BoardSize;
-        int cap = _capEnabled ? _maxDisplayed : int.MaxValue;
+        int cap = _capEnabled ? _maxDisplayedCount : int.MaxValue;
         _solutions.Clear(); _rawSolutions = null; _eventsSuppressedAfterCap = false; _solutionCount = 0;
         var rawSample = new List<int[]>(); var packedSample = new List<(UInt128 packed, int boardSize)>(); int materialized = 0;
         if (parallel && N > 1)
