@@ -242,6 +242,9 @@ public class MainViewModelPositiveTests : IDisposable
         mainVm.ObservableSolutions.Count.Should().Be(expectedSolutionCount);
     }
 
+
+    // Todo: Add a test for SaveSimulationResultsCommand when file I/O can be mocked and
+    // use AssertSavedContentProperties.
     private static void AssertSavedContentProperties(
         string savedContent,
         int boardSize,

@@ -40,7 +40,7 @@ public partial class BitmaskSolver
         if (parallel && N >1)
         {
             ulong fundamentalCountFromEngine =0;
-            _parallelEngine.RunUniqueUnified(
+            BitmaskParallelEngine.RunUniqueUnified(
             BoardSize,
             EnableEvents,
             cap,
@@ -80,7 +80,7 @@ public partial class BitmaskSolver
             int counted =0;
             for (int root =0; root < N && System.Threading.Volatile.Read(ref capReachedFlag) ==0; root++)
             {
-                _searchEngine.Run(new BitmaskSearchEngine.Request(
+                BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
                 BoardSize,
                 RestrictFirstCol: true,
                 EnhancedSymmetry: true,

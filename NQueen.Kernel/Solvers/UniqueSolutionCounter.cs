@@ -15,7 +15,7 @@ internal static class UniqueSolutionCounter
         Parallel.For(0, boardSize, new ParallelOptions { MaxDegreeOfParallelism = parallelism }, col0 =>
         {
             var search = new BitmaskSearchEngine();
-            search.Run(new BitmaskSearchEngine.Request(
+            BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
                 boardSize,
                 RestrictFirstCol: true,
                 EnhancedSymmetry: true,

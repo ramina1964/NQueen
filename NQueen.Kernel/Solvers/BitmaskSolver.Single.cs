@@ -3,7 +3,7 @@ namespace NQueen.Kernel.Solvers;
 public partial class BitmaskSolver
 {
     private void SolveSingleMode() =>
-        _searchEngine.Run(new BitmaskSearchEngine.Request(
+        BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
             BoardSize,
             RestrictFirstCol: false,
             EnhancedSymmetry: false,

@@ -2,7 +2,7 @@ namespace NQueen.Kernel.Solvers.Engines;
 
 internal sealed partial class BitmaskParallelEngine
 {
-    public void RunAllCountOnly(AllCountOnlyRequest request)
+    public static void RunAllCountOnly(AllCountOnlyRequest request)
     {
         int N = request.BoardSize;
         int splitDepth = request.RootSplitDepth < 1

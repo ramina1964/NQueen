@@ -2,7 +2,7 @@ namespace NQueen.Kernel.Solvers.Engines;
 
 internal sealed partial class BitmaskParallelEngine
 {
-    public void RunUnique(UniqueRequest request)
+    public static void RunUnique(UniqueRequest request)
     {
         int N = request.BoardSize; request.ReportProgress(0.0);
         ulong fundamentalCount = 0;
@@ -115,7 +115,7 @@ internal sealed partial class BitmaskParallelEngine
     }
 
     // Unified unique solution search: materialize up to cap, then count only, with global early termination
-    public void RunUniqueUnified(
+    public static void RunUniqueUnified(
         int boardSize,
         bool enableEvents,
         int cap,

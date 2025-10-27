@@ -2,7 +2,7 @@ namespace NQueen.Kernel.Solvers.Engines;
 
 internal sealed partial class BitmaskParallelEngine
 {
-    public void RunUniqueCountOnly(UniqueCountOnlyRequest request)
+    public static void RunUniqueCountOnly(UniqueCountOnlyRequest request)
     {
         int N = request.BoardSize;
         request.ReportProgress(0.0);

@@ -16,7 +16,7 @@ internal sealed class BitmaskSearchEngine
         Func<int[], bool> OnSolution // Removed optional span-based callback (unused)
     );
 
-    public void Run(Request request) => ExecuteDepthFirst(request);
+    public static void Run(Request request) => ExecuteDepthFirst(request);
 
     // --- Private Implementation ---
     private static void ExecuteDepthFirst(Request request)

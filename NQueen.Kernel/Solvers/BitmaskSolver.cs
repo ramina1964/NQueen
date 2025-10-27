@@ -206,7 +206,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
             ulong count = 0;
             try
             {
-                _parallelEngine.RunAllCountOnly(new BitmaskParallelEngine.AllCountOnlyRequest(
+                BitmaskParallelEngine.RunAllCountOnly(new BitmaskParallelEngine.AllCountOnlyRequest(
                     BoardSize,
                     UseAdaptiveDepth ? -1 : ParallelRootSplitDepth,
                     c => count = c,
@@ -234,7 +234,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         {
             ulong count = 0;
             int lastPct = -1;
-            _searchEngine.Run(new BitmaskSearchEngine.Request(
+            BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
                 BoardSize,
                 RestrictFirstCol: false,
                 EnhancedSymmetry: false,
