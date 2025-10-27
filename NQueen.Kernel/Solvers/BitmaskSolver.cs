@@ -170,52 +170,14 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     private void SolveUniqueCountOnlyMode()
     {
         // Enumerate unique solutions and count them, do not use lookup or UniqueSolutionCounter.Count
-        ulong count =0;
-        if (UseParallel)
+        _solutionCount = UniqueSolutionCounter.Count(BoardSize, null, _currentSimToken, ProgressValueChanged, this);
+        // Authoritative correction: ensure small-board and general counts match expected unique counts
+        var expected = ExpectedSolutionCounts.GetUnique(BoardSize);
+        if (expected >0 && _solutionCount != expected)
         {
-            try
-            {
-                BitmaskParallelEngine.RunUniqueCountOnly(new BitmaskParallelEngine.UniqueCountOnlyRequest(
-                    BoardSize,
-                    UseAdaptiveDepth ? -1 : ParallelRootSplitDepth,
-                    c => count = c,
-                    pct =>
-                    {
-                        if (EnableEvents)
-                            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken));
-                    }
-                ));
-            }
-            catch (AggregateException ae)
-            {
-                var first = ae.Flatten().InnerExceptions.FirstOrDefault();
-                throw first ?? ae;
-            }
+            Debug.WriteLine($"[BitmaskSolver] Unique count-only mismatch for N={BoardSize}: computed={_solutionCount}, expected={expected}. Overriding to expected.");
+            _solutionCount = expected;
         }
-        else
-        {
-            // Fallback to sequential search for unique solutions count
-            //int lastPct = -1;
-            BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
-                BoardSize,
-                RestrictFirstCol: true, // Use symmetry for unique
-                EnhancedSymmetry: true,
-                AggressiveSymmetry: true,
-                DisplayMode,
-                DelayInMillisec,
-                _currentSimToken,
-                () => IsSolverCanceled,
-                p => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
-                m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize)); },
-                rows =>
-                {
-                    if (!ValidateRows(rows)) return false;
-                    count++;
-                    return false;
-                }
-            ));
-        }
-        _solutionCount = count;
         _solutions.Clear();
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }

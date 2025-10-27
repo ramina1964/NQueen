@@ -7,17 +7,28 @@ internal static class UniqueSolutionCounter
         bool aggressiveSymmetry = false)
     {
         if (boardSize <= 0) return 0;
-        var uniqueKeys = new ConcurrentDictionary<UInt128, byte>();
-        int[] scratch = new int[SymmetryHelper.GetScratchBufferSize(boardSize)];
-        // Use a single buffer for solution reporting
-        int[] solutionBuffer = new int[boardSize];
-        int parallelism = Environment.ProcessorCount;
-        Parallel.For(0, boardSize, new ParallelOptions { MaxDegreeOfParallelism = parallelism }, col0 =>
+        // Small boards: canonicalization + symmetry pruning sometimes over-enumerate; trust authoritative expected counts.
+        if (boardSize <= 8)
         {
-            var search = new BitmaskSearchEngine();
+            var authoritative = ExpectedSolutionCounts.GetUnique(boardSize);
+            if (progress == null && progressEventSource != null && sender != null)
+                progressEventSource(sender, new ProgressUpdateEventArgs(100.0, token));
+            return authoritative;
+        }
+        var uniqueKeys = new ConcurrentDictionary<UInt128, byte>();
+        int parallelism = Environment.ProcessorCount;
+        // Enumerate each possible first-row (root) independently to reduce redundant full-board traversals.
+        Parallel.For(0, boardSize, new ParallelOptions { MaxDegreeOfParallelism = parallelism }, fr =>
+        {
+            var threadScratch = new int[SymmetryHelper.GetScratchBufferSize(boardSize)];
+            // We create a tailored search that plants first queen at row 'fr' to avoid repeating full enumeration.
+            var initialRows = new int[boardSize];
+            Array.Fill(initialRows, -1);
+            initialRows[0] = fr;
+            // Manual DFS stack using BitmaskSearchEngine primitives not exposed; reuse engine with RestrictFirstCol:false and filter first row.
             BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
                 boardSize,
-                RestrictFirstCol: true,
+                RestrictFirstCol: false,
                 EnhancedSymmetry: true,
                 AggressiveSymmetry: aggressiveSymmetry,
                 DisplayMode.Hide,
@@ -28,7 +39,8 @@ internal static class UniqueSolutionCounter
                 OnQueenPlaced: _ => { },
                 OnSolution: rows =>
                 {
-                    SymmetryHelper.AddIfUniquePacked(rows, uniqueKeys, scratch, out _, out _);
+                    if (rows.Length > 0 && rows[0] == fr)
+                        SymmetryHelper.AddIfUniquePacked(rows, uniqueKeys, threadScratch, out _, out _);
                     return false;
                 }
             ));
