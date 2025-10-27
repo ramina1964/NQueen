@@ -18,14 +18,14 @@ internal sealed partial class BitmaskParallelEngine
             for (int fr = 0; fr < halfNonCenter; fr++)
             {
                 int root = fr;
-                tasks.Add(Task.Run(() => EnumerateRoot(root, recordMultiplicity: false)));
+                tasks.Add(Task.Run(() => EnumerateRoot(root)));
             }
             Task.WaitAll(tasks.ToArray());
             // fundamental from non-center portion unknown via symmetry; use expected counts later; still gather center separately for materialization
             if ((N & 1) == 1)
             {
                 // center root
-                EnumerateRoot(N / 2, recordMultiplicity: false);
+                EnumerateRoot(N / 2);
             }
             fundamentalCount = (ulong)globalUnique.Count; // will be expanded by solver for small boards
         }
@@ -35,7 +35,7 @@ internal sealed partial class BitmaskParallelEngine
             for (int fr = 0; fr < N; fr++)
             {
                 int root = fr;
-                tasks.Add(Task.Run(() => EnumerateRoot(root, recordMultiplicity: false)));
+                tasks.Add(Task.Run(() => EnumerateRoot(root)));
             }
             Task.WaitAll(tasks.ToArray());
             fundamentalCount = (ulong)globalUnique.Count;
@@ -43,7 +43,7 @@ internal sealed partial class BitmaskParallelEngine
         request.ReportProgress(100.0);
         request.OnCompletedUniqueCount(fundamentalCount);
 
-        void EnumerateRoot(int fr, bool recordMultiplicity)
+        void EnumerateRoot(int fr)
         {
             var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
             var rowsArr = new int[N];

@@ -7,9 +7,9 @@ internal sealed partial class BitmaskParallelEngine
         int BoardSize, int RootSplitDepth, bool EnableEvents, int MaterializeCap, Action<int[]> OnSolution,
         Action<ulong> OnCompleted, Action<double> ReportProgress);
 
-    // Extended: add OnCompletedUniqueCount for final fundamental unique total
+    // Simplified: removed unused RootSplitDepth (not referenced in RunUnique path)
     public readonly record struct UniqueRequest(
-        int BoardSize, bool EnableEvents, int RootSplitDepth, Func<bool> ShouldMaterialize,
+        int BoardSize, bool EnableEvents, Func<bool> ShouldMaterialize,
         Action<int[]> OnUniqueSolution, Action<ulong> OnCompletedUniqueCount, Action<double> ReportProgress);
 
     public readonly record struct AllCountOnlyRequest(

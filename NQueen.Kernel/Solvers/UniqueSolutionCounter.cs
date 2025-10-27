@@ -9,8 +9,7 @@ internal static class UniqueSolutionCounter
         var search = new BitmaskSearchEngine();
         var uniqueKeys = new HashSet<UInt128>();
         int[] scratch = new int[SymmetryHelper.GetScratchBufferSize(boardSize)];
-        ulong solutionsObserved = 0;
-        // progress: reuse root progress from engine (percentage of first-column placements examined)
+        // Enumerate and insert canonical keys
         search.Run(new BitmaskSearchEngine.Request(
             boardSize,
             RestrictFirstCol: false,
@@ -29,17 +28,14 @@ internal static class UniqueSolutionCounter
             OnQueenPlaced: _ => { },
             OnSolution: rows =>
             {
-                // rows is a full solution; canonicalize and add
                 var copy = (int[])rows.Clone();
-                if (SymmetryHelper.AddIfUniquePacked(copy, uniqueKeys, scratch, out _, out _))
-                {
-                    solutionsObserved++;
-                }
-                return false; // continue enumeration
+                SymmetryHelper.AddIfUniquePacked(copy, uniqueKeys, scratch, out _, out _);
+                return false;
             }
         ));
         if (progress == null && progressEventSource != null && sender != null)
             progressEventSource(sender, new ProgressUpdateEventArgs(100.0, token));
-        return (ulong)uniqueKeys.Count; // fundamental unique solutions
+
+        return (ulong)uniqueKeys.Count;
     }
 }

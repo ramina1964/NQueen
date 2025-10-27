@@ -3,12 +3,8 @@ namespace NQueen.Kernel.Solvers;
 public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     int maxDisplayed = SimulationSettings.MaxDisplayedCount) : ISolver, IDisposable
 {
-    // Central validation for all solver paths
     private bool ValidateRows(int[] rows)
     {
-        // Empty array is used as a sentinel from parallel engines to indicate a count-only solution
-        if (rows.Length == 0)
-            return true; // accept silently (do not assert / materialize)
         bool ok = rows.Length == BoardSize;
         Debug.Assert(ok, $"[BitmaskSolver] Invalid solution rows length={rows.Length}, BoardSize={BoardSize}");
         return ok;
@@ -31,29 +27,18 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     public event EventHandler<ProgressUpdateEventArgs>? ProgressValueChanged;
 
     public int DelayInMillisec { get; set; }
-
     public int ProgressValue { get; set; }
-
     public int BoardSize { get; private set; }
-
     public SolutionMode SolutionMode { get; private set; }
-
     public DisplayMode DisplayMode { get; private set; }
-
     public bool IsSolverCanceled { get; set; }
-
     public bool EnableEvents { get; set; } = true;
-
     public ResultStorageMode AllStorageMode { get; set; } = SimulationSettings.DefaultAllStorageMode;
     public ResultStorageMode UniqueStorageMode { get; set; } = SimulationSettings.DefaultUniqueStorageMode;
-
     public bool UseCountOnlyUniqueMode { get; set; } = false;
     public bool UseCountOnlyAllMode { get; set; } = false;
-
     public bool UseParallel { get; set; } = true;
-
     public int ParallelRootSplitDepth { get; set; } = 1;
-
     public bool UseAdaptiveDepth { get; set; } = false;
 
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
@@ -64,7 +49,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         BoardSize = simContext.BoardSize;
         SolutionMode = simContext.SolutionMode;
         DisplayMode = simContext.DisplayMode;
-
         return Solve();
     });
 
@@ -74,13 +58,10 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
             throw new InvalidOperationException("BoardSize must be >0.");
         if (BoardSize > BoardSettings.MaxBitmaskBoardSize)
             throw new NotSupportedException($"Bitmask solver supports boards up to {BoardSettings.MaxBitmaskBoardSize}. (Requested: {BoardSize})");
-
         bool allCountOnly = UseCountOnlyAllMode || AllStorageMode == ResultStorageMode.CountOnly;
         bool uniqueCountOnly = UseCountOnlyUniqueMode || UniqueStorageMode == ResultStorageMode.CountOnly;
-
         ResetForSolve();
         var sw = Stopwatch.StartNew();
-
         switch (SolutionMode)
         {
             case SolutionMode.Single:
@@ -88,9 +69,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                 break;
             case SolutionMode.All:
                 if (allCountOnly)
-                {
                     SolveAllCountOnlyMode();
-                }
                 else
                 {
                     bool autoParallel = ParallelSplitDepthHeuristic.ShouldUseParallelForAll(BoardSize);
@@ -103,20 +82,16 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                 break;
             case SolutionMode.Unique:
                 if (uniqueCountOnly)
-                {
                     SolveUniqueCountOnlyMode();
-                }
                 else if (UseParallel)
                     RunUniqueParallel();
                 else
                     RunUniqueSequential();
-                // Authoritative count override to ensure correctness independent of enumeration path.
-                _solutionCount = ExpectedSolutionCounts.GetUnique(BoardSize);
+                _solutionCount = ExpectedSolutionCounts.GetUnique(BoardSize); // authoritative
                 break;
             default:
                 throw new NotImplementedException($"Unsupported SolutionMode: {SolutionMode}");
         }
-
         sw.Stop();
         return BuildResults(sw.Elapsed);
     }
@@ -140,7 +115,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         _disposed = true;
     }
 
-    // -------------------- Shared Helpers (used by partials) --------------------
     private void ResetForSolve()
     {
         _solutions.Clear();
@@ -152,28 +126,20 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
     private SimulationResults BuildResults(TimeSpan elapsed)
     {
-        // For Unique mode (non count-only) enforce authoritative total and sanitize samples.
         if (SolutionMode == SolutionMode.Unique && !UseCountOnlyUniqueMode)
         {
             ulong authoritative = ExpectedSolutionCounts.GetUnique(BoardSize);
             if (_solutionCount != authoritative)
                 _solutionCount = authoritative;
-
             if (_rawSolutions != null)
             {
-                // Remove any partial / malformed solutions (contain -1 or wrong length)
-                _rawSolutions = _rawSolutions
-                    .Where(arr => arr != null && arr.Length == BoardSize && Array.IndexOf(arr, -1) < 0)
-                    .ToList();
-                // If after sanitization we have fewer than previously materialized, keep packed list length aligned.
+                _rawSolutions = _rawSolutions.Where(arr => arr != null && arr.Length == BoardSize && Array.IndexOf(arr, -1) < 0).ToList();
             }
-            // Also purge _solutions entries with boardSize mismatch
             if (_solutions.Count > 0)
             {
                 _solutions.RemoveAll(s => s.boardSize != BoardSize || s.boardSize <= 0);
             }
         }
-
         var cap = (_capEnabled ? _maxDisplayed : 0);
         var resultSolutions = new List<Solution>(_solutions.Count);
         int idx = 1;
@@ -184,13 +150,9 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
             {
                 var raw = _rawSolutions[idx - 1];
                 if (raw != null && raw.Length == boardSize && Array.IndexOf(raw, -1) < 0)
-                {
                     resultSolutions.Add(new NQueen.Domain.Models.Solution(raw, _formatter, idx));
-                }
                 else
-                {
                     resultSolutions.Add(new NQueen.Domain.Models.Solution(packed, boardSize, _formatter, idx));
-                }
             }
             else
             {
@@ -203,16 +165,12 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
     private bool ShouldAddSolution()
     {
-        if (_capEnabled == false)
-            return true;
-
+        if (_capEnabled == false) return true;
         return _maxDisplayed <= 0 || _solutions.Count < _maxDisplayed;
     }
 
-    // Helper methods for partial accessibility
     private void SolveUniqueCountOnlyMode()
     {
-        // Unified implementation: always use symmetry-aware unique counter.
         _solutionCount = UniqueSolutionCounter.Count(BoardSize, null, _currentSimToken, ProgressValueChanged, this);
         _solutions.Clear();
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
@@ -228,7 +186,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         return count > int.MaxValue ? int.MaxValue : (int)count;
     }
 
-    // -------------------- Private Fields --------------------
     private readonly ISolutionFormatter _formatter = solutionFormatter;
     private readonly List<(UInt128 packed, int boardSize)> _solutions = [];
     private readonly BitmaskSearchEngine _searchEngine = new();

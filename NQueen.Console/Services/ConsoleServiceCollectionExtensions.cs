@@ -11,9 +11,6 @@ public static class ConsoleServiceCollectionExtensions
         // Core solver + formatter (capped in console for readability; change enableCap as needed)
         services.AddBitmaskSolverServices(enableCap);
 
-        // Additional factories (example: board state factory)
-        services.AddTransient<Func<int, BitmaskBoardState>>(_ => size => BitmaskBoardState.Create(size));
-
         return services;
     }
 }

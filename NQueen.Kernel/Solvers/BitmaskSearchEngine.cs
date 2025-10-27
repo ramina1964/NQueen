@@ -13,8 +13,7 @@ internal sealed class BitmaskSearchEngine
         Func<bool> IsCanceled,
         Action<double> ReportProgress,
         Action<Memory<int>> OnQueenPlaced,
-        Func<int[], bool> OnSolution,
-        Func<ReadOnlySpan<int>, bool>? OnSolutionSpan = null // NEW: optional span-based callback
+        Func<int[], bool> OnSolution // Removed optional span-based callback (unused)
     );
 
     public void Run(Request request) => ExecuteDepthFirst(request);
@@ -87,13 +86,7 @@ internal sealed class BitmaskSearchEngine
                 }
                 if (valid)
                 {
-                    // Prefer span-based callback to avoid allocations
-                    if (request.OnSolutionSpan != null)
-                    {
-                        if (request.OnSolutionSpan(s.QueenRows.AsSpan()))
-                            break;
-                    }
-                    else if (request.OnSolution != null)
+                    if (request.OnSolution != null)
                     {
                         // Only clone if absolutely necessary
                         if (request.OnSolution(s.QueenRows))

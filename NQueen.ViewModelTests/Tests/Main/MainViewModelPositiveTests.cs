@@ -75,8 +75,11 @@ public class MainViewModelPositiveTests : IDisposable
     {
         // Arrange
         var mockFormatter = new Mock<ISolutionFormatter>().Object;
-        var mainVm = TestHelpers.CreateMainViewModel(
-            boardSize, solutionMode, displayMode, null, mockFormatter);
+        var mockSolver = TestHelpers.CreateMockSolver(
+            [new Solution(new int[] { 0, 4, 7, 5, 2, 6, 1, 3 }, mockFormatter, null)]
+        );
+        var simContext = new SimulationContext(boardSize, solutionMode, displayMode);
+        var mainVm = TestHelpers.CreateMainViewModelWithMock(mockSolver.Object, simContext);
 
         // Act
         await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
