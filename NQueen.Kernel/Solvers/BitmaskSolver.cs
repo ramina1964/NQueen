@@ -87,7 +87,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                     RunUniqueParallel();
                 else
                     RunUniqueSequential();
-                _solutionCount = ExpectedSolutionCounts.GetUnique(BoardSize); // authoritative
                 break;
             default:
                 throw new NotImplementedException($"Unsupported SolutionMode: {SolutionMode}");
@@ -128,9 +127,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     {
         if (SolutionMode == SolutionMode.Unique && !UseCountOnlyUniqueMode)
         {
-            ulong authoritative = ExpectedSolutionCounts.GetUnique(BoardSize);
-            if (_solutionCount != authoritative)
-                _solutionCount = authoritative;
             if (_rawSolutions != null)
             {
                 _rawSolutions = [.. _rawSolutions
@@ -173,7 +169,53 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
     private void SolveUniqueCountOnlyMode()
     {
-        _solutionCount = UniqueSolutionCounter.Count(BoardSize, null, _currentSimToken, ProgressValueChanged, this);
+        // Enumerate unique solutions and count them, do not use lookup or UniqueSolutionCounter.Count
+        ulong count =0;
+        if (UseParallel)
+        {
+            try
+            {
+                BitmaskParallelEngine.RunUniqueCountOnly(new BitmaskParallelEngine.UniqueCountOnlyRequest(
+                    BoardSize,
+                    UseAdaptiveDepth ? -1 : ParallelRootSplitDepth,
+                    c => count = c,
+                    pct =>
+                    {
+                        if (EnableEvents)
+                            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken));
+                    }
+                ));
+            }
+            catch (AggregateException ae)
+            {
+                var first = ae.Flatten().InnerExceptions.FirstOrDefault();
+                throw first ?? ae;
+            }
+        }
+        else
+        {
+            // Fallback to sequential search for unique solutions count
+            //int lastPct = -1;
+            BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
+                BoardSize,
+                RestrictFirstCol: true, // Use symmetry for unique
+                EnhancedSymmetry: true,
+                AggressiveSymmetry: true,
+                DisplayMode,
+                DelayInMillisec,
+                _currentSimToken,
+                () => IsSolverCanceled,
+                p => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
+                m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize)); },
+                rows =>
+                {
+                    if (!ValidateRows(rows)) return false;
+                    count++;
+                    return false;
+                }
+            ));
+        }
+        _solutionCount = count;
         _solutions.Clear();
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }

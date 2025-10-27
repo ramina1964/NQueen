@@ -14,13 +14,30 @@ public static class TestHelpers
         DisplayMode displayMode = DisplayMode.Hide,
         SimulationResults? simulationResults = null,
         ISolutionFormatter? solutionFormatter = null,
-        bool suppressUserDialogs = true)
+        bool suppressUserDialogs = true,
+        int? maxSolutionsInOutput = null)
     {
         var serviceProvider = CreateServiceProvider();
         solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>();
 
+        // If a cap is provided, create a BitmaskSolver with the cap, otherwise use the default from DI
+        ISolver solver;
+        if (maxSolutionsInOutput.HasValue)
+        {
+            solver = new NQueen.Kernel.Solvers.BitmaskSolver(
+                boardSize,
+                solutionMode,
+                displayMode,
+                solutionFormatter,
+                maxSolutionsInOutput.Value);
+        }
+        else
+        {
+            solver = serviceProvider.GetRequiredService<ISolver>();
+        }
+
         var vm = new MainViewModel(
-            serviceProvider.GetRequiredService<ISolver>(),
+            solver,
             serviceProvider.GetRequiredService<IDispatcher>(),
             serviceProvider.GetRequiredService<ISaveFileDialogService>(),
             solutionFormatter);
@@ -67,16 +84,21 @@ public static class TestHelpers
         SolutionMode solutionMode = SolutionMode.Single,
         DisplayMode displayMode = DisplayMode.Hide,
         ISolutionFormatter? solutionFormatter = null,
-        bool suppressUserDialogs = true)
+        bool suppressUserDialogs = true,
+        int? maxSolutionsInOutput = null)
     {
+        var boardSize = int.TryParse(boardSizeText, out var n) ? n : BoardSettings.DefaultBoardSize;
         var vm = CreateMainViewModel(
-            boardSize: BoardSettings.DefaultBoardSize,
+            boardSize: boardSize,
             solutionMode: solutionMode,
             displayMode: displayMode,
             solutionFormatter: solutionFormatter,
-            suppressUserDialogs: suppressUserDialogs);
+            suppressUserDialogs: suppressUserDialogs,
+            maxSolutionsInOutput: maxSolutionsInOutput);
 
         vm.BoardSizeText = boardSizeText;
+        vm.SelectedAllStorageMode = ResultStorageMode.MaterializeSample;
+        vm.SelectedUniqueStorageMode = ResultStorageMode.MaterializeSample;
         return vm;
     }
 

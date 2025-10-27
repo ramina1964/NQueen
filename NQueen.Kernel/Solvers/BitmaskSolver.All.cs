@@ -16,7 +16,7 @@ public partial class BitmaskSolver
         int materialized = 0;
         int capReachedFlag = 0;
         int lastPct = -1;
-        ulong expectedTotal = ExpectedSolutionCounts.GetAll(N);
+        ulong expectedTotal = 0; // Remove lookup usage
 
         void onSolution(int[] rows)
         {
@@ -42,19 +42,6 @@ public partial class BitmaskSolver
                     }
                 }
             }
-
-            if (EnableEvents && expectedTotal > 0)
-            {
-                int pctApprox =
-                    (int)Math.Min(100.0, (double)solutions.Count / expectedTotal * 100.0);
-
-                if (pctApprox != lastPct)
-                {
-                    lastPct = pctApprox;
-                    ProgressValueChanged?.Invoke(
-                        this, new ProgressUpdateEventArgs(pctApprox, _currentSimToken));
-                }
-            }
         }
 
         if (isParallel && N > 1)
@@ -67,12 +54,7 @@ public partial class BitmaskSolver
                 cap,
                 onSolution,
                 count => totalCountFromEngine = count,
-                pct =>
-                {
-                    if (EnableEvents && expectedTotal == 0)
-                        ProgressValueChanged?.Invoke(
-                            this, new ProgressUpdateEventArgs(pct, _currentSimToken));
-                },
+                pct => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken)); },
                 () => Volatile.Read(ref capReachedFlag) == 1
             );
 
@@ -94,6 +76,7 @@ public partial class BitmaskSolver
         {
             // Sequential version
             ulong count = 0;
+            bool capReached = false;
             BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
                 BoardSize,
                 RestrictFirstCol: false,
@@ -103,24 +86,17 @@ public partial class BitmaskSolver
                 DelayInMillisec,
                 _currentSimToken,
                 () => IsSolverCanceled || Volatile.Read(ref capReachedFlag) == 1,
-                p =>
-                {
-                    if (EnableEvents && expectedTotal == 0)
-                        ProgressValueChanged?.Invoke(
-                            this, new ProgressUpdateEventArgs(p, _currentSimToken));
-                },
-                m =>
-                {
-                    if (EnableEvents && !_eventsSuppressedAfterCap)
-                        QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize));
-                },
+                p => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
+                m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize)); },
                 rows =>
                 {
                     if (Volatile.Read(ref capReachedFlag) == 1)
+                    {
+                        capReached = true;
                         return true;
+                    }
 
-                    if (ValidateRows(rows) == false)
-                        return false;
+                    if (!ValidateRows(rows)) return false;
 
                     if (solutions.Count < cap)
                     {
@@ -130,21 +106,11 @@ public partial class BitmaskSolver
                         if (materialized >= cap && _capEnabled)
                         {
                             Volatile.Write(ref capReachedFlag, 1);
+                            capReached = true;
                             return true;
                         }
                     }
                     count++;
-
-                    if (EnableEvents && expectedTotal > 0)
-                    {
-                        int pct = (int)Math.Min(100.0, (double)count / expectedTotal * 100.0);
-                        if (pct != lastPct)
-                        {
-                            lastPct = pct;
-                            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken));
-                        }
-                    }
-
                     return false;
                 }
             ));
@@ -164,11 +130,7 @@ public partial class BitmaskSolver
                     () => IsSolverCanceled,
                     p => { },
                     m => { },
-                    rows =>
-                    {
-                        countOnly++;
-                        return false;
-                    }
+                    rows => { countOnly++; return false; }
                 ));
                 totalCount = countOnly;
             }
@@ -181,9 +143,8 @@ public partial class BitmaskSolver
         _solutions.Clear();
         _solutions.AddRange(solutions);
         _rawSolutions = rawSolutions;
-        if (EnableEvents && expectedTotal > 0)
-            ProgressValueChanged?.Invoke(this,
-                new ProgressUpdateEventArgs(100.0, _currentSimToken));
+        if (EnableEvents)
+            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 
     private void RunAllParallel(int splitDepth) => RunAllUnified(true, splitDepth);

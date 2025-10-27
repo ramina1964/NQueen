@@ -14,7 +14,7 @@ public class CommandManagerPositiveTests : IDisposable
     {
         // Arrange
         var mainVm = TestHelpers.CreateMainViewModelWithBoardSizeText(
-            boardSizeText, solutionMode, displayMode);
+            boardSizeText, solutionMode, displayMode, null, true, int.MaxValue);
 
         var tcs = new TaskCompletionSource<bool>();
         mainVm.SimulationCompleted += (s, e) => tcs.SetResult(true);
