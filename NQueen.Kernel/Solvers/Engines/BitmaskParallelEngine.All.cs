@@ -85,4 +85,93 @@ internal sealed partial class BitmaskParallelEngine
         request.OnCompleted(totalCount);
         request.ReportProgress(100.0);
     }
+
+    public void RunAllUnified(
+        int boardSize,
+        int splitDepth,
+        bool enableEvents,
+        int cap,
+        Action<int[]> onSolution,
+        Action<ulong> onCompleted,
+        Action<double> reportProgress,
+        Func<bool> capReached)
+    {
+        int N = boardSize;
+        if (splitDepth < 1) splitDepth = 1;
+        if (splitDepth > N) splitDepth = N;
+        reportProgress(0.0);
+        var tasks = new List<Task<ulong>>();
+        var rootStack = new Stack<RootFrame>();
+        rootStack.Push(new RootFrame(0, 0UL, 0UL, 0UL, new int[N]));
+        ulong mask = (N == 64)
+            ? ulong.MaxValue
+            : ((1UL << N) - 1UL);
+        var rootList = new List<RootFrame>(N * N);
+        while (rootStack.Count > 0)
+        {
+            var frame = rootStack.Pop();
+            if (frame.Col == splitDepth)
+            { rootList.Add(frame); continue; }
+            ulong avail = ~(frame.Cols | frame.D1 | frame.D2) & mask;
+            while (avail != 0)
+            {
+                ulong bit = avail & (ulong)-(long)avail; avail ^= bit; int row = BitOperations.TrailingZeroCount(bit);
+                var rowsCopy = (int[])frame.Rows.Clone();
+                rowsCopy[frame.Col] = row;
+                ulong cols = frame.Cols | bit; ulong d1 = (frame.D1 | bit) << 1; ulong d2 = (frame.D2 | bit) >> 1;
+                rootStack.Push(new RootFrame(frame.Col + 1, cols, d1, d2, rowsCopy));
+            }
+        }
+        int totalRoots = rootList.Count; int rootsCompleted = 0; int lastPercentReported = -1;
+        bool throttle = N >= SimulationSettings.LargeBoardProgressThrottleThreshold;
+        int bucketSize = SimulationSettings.ProgressThresholdPct; if (bucketSize < 1) bucketSize = 1;
+        int globalMaterialized = 0;
+        foreach (var root in rootList)
+        {
+            tasks.Add(Task.Run(() =>
+            {
+                var rowsArr = root.Rows; int startCol = root.Col;
+                for (int i = startCol; i < N; i++) if (rowsArr[i] == 0) rowsArr[i] = -1;
+                ulong cols = root.Cols; ulong d1 = root.D1; ulong d2 = root.D2;
+                ulong[] stackCols = new ulong[N]; ulong[] stackD1 = new ulong[N]; ulong[] stackD2 = new ulong[N]; ulong[] stackRemaining = new ulong[N];
+                int col = startCol; ulong remaining = ComputeAvail(); ulong localCount = 0;
+                while (true)
+                {
+                    if (capReached()) break;
+                    if (col == N)
+                    {
+                        localCount++;
+                        if (globalMaterialized < cap)
+                        {
+                            int mat = Interlocked.Increment(ref globalMaterialized);
+                            if (mat <= cap)
+                            {
+                                onSolution((int[])rowsArr.Clone());
+                            }
+                        }
+                        col--; if (col < startCol) break; Restore(col, out remaining); continue;
+                    }
+                    if (remaining == 0)
+                    {
+                        col--; if (col < startCol) break; Restore(col, out remaining); continue;
+                    }
+                    ulong bit = remaining & (ulong)-(long)remaining; remaining ^= bit; int row = BitOperations.TrailingZeroCount(bit);
+                    rowsArr[col] = row; stackCols[col] = cols; stackD1[col] = d1; stackD2[col] = d2; stackRemaining[col] = remaining;
+                    cols |= bit; d1 = (d1 | bit) << 1; d2 = (d2 | bit) >> 1; col++; if (col == N) continue; remaining = ComputeAvail();
+                }
+                if (enableEvents)
+                {
+                    int done = Interlocked.Increment(ref rootsCompleted);
+                    ReportRootProgress(done, totalRoots, throttle, bucketSize, ref lastPercentReported, reportProgress);
+                }
+                ulong ComputeAvail() => ~(cols | d1 | d2) & mask;
+                void Restore(int c, out ulong rem) { rem = stackRemaining[c]; cols = stackCols[c]; d1 = stackD1[c]; d2 = stackD2[c]; }
+                return localCount;
+            }));
+        }
+        Task.WaitAll(tasks.ToArray());
+        ulong totalCount = 0; foreach (var t in tasks) totalCount += t.Result;
+        onCompleted(totalCount);
+        reportProgress(100.0);
+    }
 }

@@ -197,4 +197,74 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     private readonly int _maxDisplayedCount = maxDisplayedCount;
     private volatile bool _eventsSuppressedAfterCap;
     private List<int[]>? _rawSolutions;
+
+    private void SolveAllCountOnlyMode()
+    {
+        ulong expectedTotal = ExpectedSolutionCounts.GetAll(BoardSize);
+        if (UseParallel)
+        {
+            ulong count = 0;
+            try
+            {
+                _parallelEngine.RunAllCountOnly(new BitmaskParallelEngine.AllCountOnlyRequest(
+                    BoardSize,
+                    UseAdaptiveDepth ? -1 : ParallelRootSplitDepth,
+                    c => count = c,
+                    pct =>
+                    {
+                        if (EnableEvents && expectedTotal == 0)
+                            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken));
+                    }
+                ));
+            }
+            catch (AggregateException ae)
+            {
+                var first = ae.Flatten().InnerExceptions.FirstOrDefault();
+                throw first ?? ae;
+            }
+            _solutionCount = count;
+            _solutions.Clear();
+            if (EnableEvents && expectedTotal > 0)
+            {
+                double pct = expectedTotal == 0 ? 100.0 : Math.Min(100.0, (double)count / expectedTotal * 100.0);
+                ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken));
+            }
+        }
+        else
+        {
+            ulong count = 0;
+            int lastPct = -1;
+            _searchEngine.Run(new BitmaskSearchEngine.Request(
+                BoardSize,
+                RestrictFirstCol: false,
+                EnhancedSymmetry: false,
+                AggressiveSymmetry: false,
+                DisplayMode,
+                DelayInMillisec,
+                _currentSimToken,
+                () => IsSolverCanceled,
+                p => { if (EnableEvents && expectedTotal == 0) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
+                m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize)); },
+                rows =>
+                {
+                    if (!ValidateRows(rows)) return false;
+                    count++;
+                    if (EnableEvents && expectedTotal > 0)
+                    {
+                        int pct = (int)Math.Min(100.0, (double)count / expectedTotal * 100.0);
+                        if (pct != lastPct)
+                        {
+                            lastPct = pct;
+                            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken));
+                        }
+                    }
+                    return false;
+                }
+            ));
+            _solutionCount = count;
+            _solutions.Clear();
+            if (EnableEvents && expectedTotal > 0 && lastPct < 100)
+                ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+        }
+    }
 }

@@ -2,159 +2,83 @@ namespace NQueen.Kernel.Solvers;
 
 public partial class BitmaskSolver
 {
-    private void RunAllParallel(int splitDepth)
+    private void RunAllUnified(bool parallel, int splitDepth)
     {
         int N = BoardSize;
-        ulong expectedTotal = ExpectedSolutionCounts.GetAll(N);
+        int cap = _capEnabled ? SimulationSettings.MaxDisplayedCount : int.MaxValue;
         var solutions = new List<(UInt128 packed, int boardSize)>();
         var rawSolutions = new List<int[]>();
-        int materializeLimit = _capEnabled ? SimulationSettings.MaxDisplayedCount : int.MaxValue;
         object lockObj = new();
-        ulong totalCount =0; // final count (set by completion callback)
+        ulong totalCount =0;
+        int materialized =0;
+        int capReachedFlag =0; //0 = not reached,1 = reached
         int lastPct = -1;
+        ulong expectedTotal = ExpectedSolutionCounts.GetAll(N);
 
-        try
+        Action<int[]> onSolution = rows =>
         {
-            _parallelEngine.RunAll(new BitmaskParallelEngine.AllRequest(
+            if (Volatile.Read(ref capReachedFlag) ==1) return;
+            if (!ValidateRows(rows)) return;
+            lock (lockObj)
+            {
+                if (Volatile.Read(ref capReachedFlag) ==1) return;
+                if (solutions.Count < cap)
+                {
+                    rawSolutions.Add(rows);
+                    solutions.Add((0, rows.Length));
+                    materialized++;
+                    if (materialized >= cap && _capEnabled)
+                    {
+                        Volatile.Write(ref capReachedFlag,1);
+                    }
+                }
+            }
+            if (EnableEvents && expectedTotal >0)
+            {
+                int pctApprox = (int)Math.Min(100.0, (double)solutions.Count / expectedTotal *100.0);
+                if (pctApprox != lastPct)
+                {
+                    lastPct = pctApprox;
+                    ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pctApprox, _currentSimToken));
+                }
+            }
+        };
+
+        if (parallel && N >1)
+        {
+            ulong totalCountFromEngine =0;
+            _parallelEngine.RunAllUnified(
                 BoardSize,
                 splitDepth,
                 EnableEvents,
-                materializeLimit,
-                rows =>
-                {
-                    if (!ValidateRows(rows)) return;
-                    lock (lockObj)
-                    {
-                        if (solutions.Count < materializeLimit)
-                        {
-                            rawSolutions.Add(rows);
-                            solutions.Add((0, rows.Length));
-                        }
-                    }
-                    if (EnableEvents && expectedTotal >0)
-                    {
-                        // We rely on completion for accurate count; here we approximate using materialized subset.
-                        int pctApprox = (int)Math.Min(100.0, (double)solutions.Count / expectedTotal *100.0);
-                        if (pctApprox != lastPct)
-                        {
-                            lastPct = pctApprox;
-                            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pctApprox, _currentSimToken));
-                        }
-                    }
-                },
-                completed =>
-                {
-                    totalCount = completed; // store final total
-                },
+                cap,
+                onSolution,
+                count => totalCountFromEngine = count,
                 pct =>
                 {
                     if (EnableEvents && expectedTotal ==0)
                         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken));
-                }
-            ));
-        }
-        catch (AggregateException ae)
-        {
-            // Flatten and rethrow first meaningful exception to avoid silent process termination.
-            var first = ae.Flatten().InnerExceptions.FirstOrDefault();
-            throw first ?? ae;
-        }
-        catch (Exception)
-        {
-            throw; // let caller handle (tests / UI)
-        }
-        _solutionCount = totalCount; // accurate total
-        _solutions.Clear();
-        _solutions.AddRange(solutions);
-        _rawSolutions = rawSolutions;
-        if (EnableEvents && expectedTotal >0)
-            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
-    }
-
-    private void RunAllSequential()
-    {
-        var solutions = new List<(UInt128 packed, int boardSize)>();
-        var rawSolutions = new List<int[]>();
-        ulong totalCount =0;
-        ulong expectedTotal = ExpectedSolutionCounts.GetAll(BoardSize);
-        int lastPct = -1;
-        int limit = _capEnabled ? SimulationSettings.MaxDisplayedCount : int.MaxValue;
-        _searchEngine.Run(new BitmaskSearchEngine.Request(
-            BoardSize,
-            RestrictFirstCol: false,
-            EnhancedSymmetry: false,
-            AggressiveSymmetry: false,
-            DisplayMode,
-            DelayInMillisec,
-            _currentSimToken,
-            () => IsSolverCanceled,
-            p => { if (EnableEvents && expectedTotal ==0) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
-            m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize)); },
-            rows =>
+                },
+                () => Volatile.Read(ref capReachedFlag) ==1
+            );
+            // After cap, run count-only for the rest if needed
+            if (materialized >= cap)
             {
-                if (!ValidateRows(rows)) return false;
-                totalCount++;
-                if (limit <=0 || solutions.Count < limit)
-                {
-                    rawSolutions.Add(rows);
-                    solutions.Add((0, rows.Length));
-                }
-                if (EnableEvents && expectedTotal >0)
-                {
-                    int pct = (int)Math.Min(100.0, (double)totalCount / expectedTotal *100.0);
-                    if (pct != lastPct)
-                    {
-                        lastPct = pct;
-                        ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken));
-                    }
-                }
-                return false;
-            }
-        ));
-        _solutionCount = totalCount;
-        _solutions.Clear();
-        _solutions.AddRange(solutions);
-        _rawSolutions = rawSolutions;
-        if (EnableEvents && expectedTotal >0 && lastPct <100)
-            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
-    }
-
-    private void SolveAllCountOnlyMode()
-    {
-        ulong expectedTotal = ExpectedSolutionCounts.GetAll(BoardSize);
-        if (UseParallel)
-        {
-            ulong count =0;
-            try
-            {
+                ulong countOnly =0;
                 _parallelEngine.RunAllCountOnly(new BitmaskParallelEngine.AllCountOnlyRequest(
                     BoardSize,
-                    UseAdaptiveDepth ? -1 : ParallelRootSplitDepth,
-                    c => count = c,
-                    pct =>
-                    {
-                        if (EnableEvents && expectedTotal ==0)
-                            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken));
-                    }
+                    splitDepth,
+                    c => countOnly = c,
+                    pct => { }
                 ));
+                totalCountFromEngine = countOnly;
             }
-            catch (AggregateException ae)
-            {
-                var first = ae.Flatten().InnerExceptions.FirstOrDefault();
-                throw first ?? ae;
-            }
-            _solutionCount = count;
-            _solutions.Clear();
-            if (EnableEvents && expectedTotal >0)
-            {
-                double pct = expectedTotal ==0 ?100.0 : Math.Min(100.0, (double)count / expectedTotal *100.0);
-                ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken));
-            }
+            totalCount = totalCountFromEngine;
         }
         else
         {
+            // Sequential version
             ulong count =0;
-            int lastPct = -1;
             _searchEngine.Run(new BitmaskSearchEngine.Request(
                 BoardSize,
                 RestrictFirstCol: false,
@@ -163,12 +87,24 @@ public partial class BitmaskSolver
                 DisplayMode,
                 DelayInMillisec,
                 _currentSimToken,
-                () => IsSolverCanceled,
+                () => IsSolverCanceled || Volatile.Read(ref capReachedFlag) ==1,
                 p => { if (EnableEvents && expectedTotal ==0) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
                 m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize)); },
                 rows =>
                 {
+                    if (Volatile.Read(ref capReachedFlag) ==1) return true;
                     if (!ValidateRows(rows)) return false;
+                    if (solutions.Count < cap)
+                    {
+                        rawSolutions.Add(rows);
+                        solutions.Add((0, rows.Length));
+                        materialized++;
+                        if (materialized >= cap && _capEnabled)
+                        {
+                            Volatile.Write(ref capReachedFlag,1);
+                            return true;
+                        }
+                    }
                     count++;
                     if (EnableEvents && expectedTotal >0)
                     {
@@ -182,10 +118,38 @@ public partial class BitmaskSolver
                     return false;
                 }
             ));
-            _solutionCount = count;
-            _solutions.Clear();
-            if (EnableEvents && expectedTotal >0 && lastPct <100)
-                ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+            // After cap, run count-only for the rest if needed
+            if (materialized >= cap)
+            {
+                ulong countOnly =0;
+                _searchEngine.Run(new BitmaskSearchEngine.Request(
+                    BoardSize,
+                    RestrictFirstCol: false,
+                    EnhancedSymmetry: false,
+                    AggressiveSymmetry: false,
+                    DisplayMode,
+                    DelayInMillisec,
+                    _currentSimToken,
+                    () => IsSolverCanceled,
+                    p => { },
+                    m => { },
+                    rows => { countOnly++; return false; }
+                ));
+                totalCount = countOnly;
+            }
+            else
+            {
+                totalCount = count;
+            }
         }
+        _solutionCount = totalCount;
+        _solutions.Clear();
+        _solutions.AddRange(solutions);
+        _rawSolutions = rawSolutions;
+        if (EnableEvents && expectedTotal >0)
+            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
+
+    private void RunAllParallel(int splitDepth) => RunAllUnified(true, splitDepth);
+    private void RunAllSequential() => RunAllUnified(false, ParallelRootSplitDepth);
 }
