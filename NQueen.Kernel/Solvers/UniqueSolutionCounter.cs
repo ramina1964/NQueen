@@ -2,6 +2,7 @@ namespace NQueen.Kernel.Solvers;
 
 internal static class UniqueSolutionCounter
 {
+    // Optimized: thread-local HashSet<UInt128> and no canonicalCopy allocation for count-only
     public static ulong Count(int boardSize, Action<double>? progress, Guid token,
         EventHandler<ProgressUpdateEventArgs>? progressEventSource, object? sender,
         bool aggressiveSymmetry = false)
@@ -15,17 +16,17 @@ internal static class UniqueSolutionCounter
                 progressEventSource(sender, new ProgressUpdateEventArgs(100.0, token));
             return authoritative;
         }
-        var uniqueKeys = new ConcurrentDictionary<UInt128, byte>();
         int parallelism = Environment.ProcessorCount;
-        // Enumerate each possible first-row (root) independently to reduce redundant full-board traversals.
+        var localSets = new HashSet<UInt128>[parallelism];
+        Parallel.For(0, parallelism, i => localSets[i] = new HashSet<UInt128>(capacity: 4096));
         Parallel.For(0, boardSize, new ParallelOptions { MaxDegreeOfParallelism = parallelism }, fr =>
         {
+            int tid = Thread.GetCurrentProcessorId() % parallelism;
+            var localSet = localSets[tid];
             var threadScratch = new int[SymmetryHelper.GetScratchBufferSize(boardSize)];
-            // We create a tailored search that plants first queen at row 'fr' to avoid repeating full enumeration.
             var initialRows = new int[boardSize];
             Array.Fill(initialRows, -1);
             initialRows[0] = fr;
-            // Manual DFS stack using BitmaskSearchEngine primitives not exposed; reuse engine with RestrictFirstCol:false and filter first row.
             BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
                 boardSize,
                 RestrictFirstCol: false,
@@ -40,14 +41,22 @@ internal static class UniqueSolutionCounter
                 OnSolution: rows =>
                 {
                     if (rows.Length > 0 && rows[0] == fr)
-                        SymmetryHelper.AddIfUniquePacked(rows, uniqueKeys, threadScratch, out _, out _);
+                    {
+                        // Only add key, do not allocate canonicalCopy
+                        UInt128 key = SymmetryHelper.PackCanonical(
+                            SymmetryHelper.GetCanonicalForm(rows, threadScratch, null), rows.Length);
+                        lock (localSet) { localSet.Add(key); }
+                    }
                     return false;
                 }
             ));
         });
+        // Merge all local sets into one
+        var globalSet = new HashSet<UInt128>(localSets.Sum(s => s.Count));
+        foreach (var set in localSets)
+            globalSet.UnionWith(set);
         if (progress == null && progressEventSource != null && sender != null)
             progressEventSource(sender, new ProgressUpdateEventArgs(100.0, token));
-
-        return (ulong)uniqueKeys.Count;
+        return (ulong)globalSet.Count;
     }
 }
