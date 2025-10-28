@@ -34,8 +34,8 @@ public class SolverParallelConsistencyTests(SolverBackEndFixture fixture)
             _solver.UseCountOnlyUniqueMode = false;
             if (_solver is BitmaskSolver bsConfig)
             {
-                bsConfig.AllStorageMode = ResultStorageMode.MaterializeSample;
-                bsConfig.UniqueStorageMode = ResultStorageMode.MaterializeSample;
+                bsConfig.AllStorageMode = ResultStorageMode.Materialize;
+                bsConfig.UniqueStorageMode = ResultStorageMode.Materialize;
                 bsConfig.UseParallel = true;
             }
             var ctx = new SimulationContext(n, mode, DisplayMode.Hide);

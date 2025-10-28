@@ -31,7 +31,7 @@
             </StackPanel>
             
             <!-- Row1: Root Split Depth -->
-            <Label Grid.Row="1" Grid.Column="0" Content="Root Split Depth (Auto)" Style="{StaticResource LabelStyle}" Margin="0,4,0,4" VerticalAlignment="Center" />
+            <Label Grid.Row="1" Grid.Column="0" Content="Root Split Depth" Style="{StaticResource LabelStyle}" Margin="0,4,0,4" VerticalAlignment="Center" />
             <TextBox Grid.Row="1" Grid.Column="1" Width="70" Text="{Binding ParallelRootSplitDepth}" IsEnabled="False" HorizontalAlignment="Right" Style="{StaticResource TextBoxNumericalStyle}" Margin="0,4,0,4" VerticalAlignment="Center" />
 
             <!-- Row2: Storage Mode -->

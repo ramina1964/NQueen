@@ -33,8 +33,8 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     public DisplayMode DisplayMode { get; private set; }
     public bool IsSolverCanceled { get; set; }
     public bool EnableEvents { get; set; } = true;
-    public ResultStorageMode AllStorageMode { get; set; } = ResultStorageMode.MaterializeSample;
-    public ResultStorageMode UniqueStorageMode { get; set; } = ResultStorageMode.MaterializeSample;
+    public ResultStorageMode AllStorageMode { get; set; } = ResultStorageMode.Materialize;
+    public ResultStorageMode UniqueStorageMode { get; set; } = ResultStorageMode.Materialize;
     public bool UseCountOnlyUniqueMode { get; set; } = false;
     public bool UseCountOnlyAllMode { get; set; } = false;
     public bool UseParallel { get; set; } = true;

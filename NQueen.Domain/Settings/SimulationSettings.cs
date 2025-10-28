@@ -14,10 +14,10 @@ public static class SimulationSettings
 
     // Storage strategies (changed to MaterializeSample to satisfy tests expecting sample solutions)
     public const ResultStorageMode DefaultAllStorageMode =
-        ResultStorageMode.MaterializeSample; // was CountOnly
+        ResultStorageMode.Materialize; // was CountOnly
 
     public const ResultStorageMode DefaultUniqueStorageMode =
-        ResultStorageMode.MaterializeSample; // was CountOnly
+        ResultStorageMode.Materialize; // was CountOnly
 
     // Threshold size where we reduce QueenPlaced event frequency.
     public const int QueenPlacedSamplingThresholdSize = 12;

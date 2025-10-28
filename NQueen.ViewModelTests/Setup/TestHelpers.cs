@@ -97,7 +97,7 @@ public static class TestHelpers
             maxSolutionsInOutput: maxSolutionsInOutput);
 
         vm.BoardSizeText = boardSizeText;
-        vm.SelectedStorageMode = ResultStorageMode.MaterializeSample; // unified property
+        vm.SelectedStorageMode = ResultStorageMode.Materialize; // unified property
         return vm;
     }
 
