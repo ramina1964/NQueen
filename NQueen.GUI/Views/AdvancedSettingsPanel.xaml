@@ -18,31 +18,28 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="150" />
+                <ColumnDefinition Width="130" />
             </Grid.ColumnDefinitions>
 
-            <!-- Use Parallel (auto-tuned, disabled for editing) -->
-            <Label Grid.Row="0" Grid.Column="0" Content="Use Parallel (Auto)" Style="{StaticResource LabelStyle}" Margin="2 4 6 4" />
-            <CheckBox Grid.Row="0" Grid.Column="1" IsChecked="{Binding UseParallel}" IsEnabled="False" HorizontalAlignment="Right" Margin="2 4" VerticalContentAlignment="Center" />
+            <!-- Row0: integrated checkbox + label (checkbox first) with adjusted left margins -->
+            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,4,0,4" VerticalAlignment="Center">
+                <Label Content="Use Parallel Processing" Style="{StaticResource LabelStyle}" VerticalAlignment="Center" Margin="0" />
+                <CheckBox IsChecked="{Binding UseParallel}" IsEnabled="False" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            </StackPanel>
+            
+            <!-- Row1: Root Split Depth -->
+            <Label Grid.Row="1" Grid.Column="0" Content="Root Split Depth (Auto)" Style="{StaticResource LabelStyle}" Margin="0,4,0,4" VerticalAlignment="Center" />
+            <TextBox Grid.Row="1" Grid.Column="1" Width="70" Text="{Binding ParallelRootSplitDepth}" IsEnabled="False" HorizontalAlignment="Right" Style="{StaticResource TextBoxNumericalStyle}" Margin="0,4,0,4" VerticalAlignment="Center" />
 
-            <!-- Root Split Depth (auto-tuned, disabled) -->
-            <Label Grid.Row="1" Grid.Column="0" Content="Root Split Depth (Auto)" Style="{StaticResource LabelStyle}" Margin="2 4 6 4" />
-            <TextBox Grid.Row="1" Grid.Column="1" Width="60" Text="{Binding ParallelRootSplitDepth}" IsEnabled="False" HorizontalAlignment="Right" Style="{StaticResource TextBoxNumericalStyle}" />
+            <!-- Row2: Storage Mode -->
+            <Label Grid.Row="2" Grid.Column="0" Content="Storage Mode" Style="{StaticResource LabelStyle}" Margin="0,4,0,4" VerticalAlignment="Center" />
+            <ComboBox Grid.Row="2" Grid.Column="1" Width="110" ItemsSource="{Binding EnumStorageModes}" SelectedItem="{Binding SelectedStorageMode}" HorizontalAlignment="Right" Style="{StaticResource ComboBoxStyle}" IsEnabled="{Binding IsInInputMode}" Margin="0,4,0,4" VerticalAlignment="Center" />
 
-            <!-- Unique Mode Storage -->
-            <Label Grid.Row="2" Grid.Column="0" Content="Unique Mode Storage" Style="{StaticResource LabelStyle}" Margin="2 4 6 4" />
-            <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding EnumStorageModes}" SelectedItem="{Binding SelectedUniqueStorageMode}" HorizontalAlignment="Stretch" Style="{StaticResource ComboBoxStyle}" IsEnabled="{Binding IsInInputMode}" />
-
-            <!-- All Mode Storage -->
-            <Label Grid.Row="3" Grid.Column="0" Content="All Mode Storage" Style="{StaticResource LabelStyle}" Margin="2 4 6 4" />
-            <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding EnumStorageModes}" SelectedItem="{Binding SelectedAllStorageMode}" HorizontalAlignment="Stretch" Style="{StaticResource ComboBoxStyle}" IsEnabled="{Binding IsInInputMode}" />
-
-            <!-- Info Note -->
-            <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Text="Parallel &amp; split depth auto-tuned by board size &amp; solution mode." FontSize="11" Foreground="Gray" TextWrapping="Wrap" Margin="2 8 2 2" />
+            <!-- Row3: Info Note -->
+            <TextBlock Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Text="Auto-tuned settings. Storage Mode applies to current solution mode." FontSize="11" Foreground="Gray" TextWrapping="Wrap" Margin="0,4,0,4" />
         </Grid>
     </GroupBox>
 </UserControl>

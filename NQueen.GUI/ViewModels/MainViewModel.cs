@@ -148,9 +148,11 @@ public sealed partial class MainViewModel :
         ProgressVisibility = Visibility.Hidden;
         ProgressLabelVisibility = Visibility.Hidden;
 
-        // GUI-specific: default to CountOnly to reduce initial memory usage; tests will override to materialize.
-        SelectedAllStorageMode = ResultStorageMode.CountOnly;
-        SelectedUniqueStorageMode = ResultStorageMode.CountOnly;
+        // Set default storage modes (GUI favors CountOnly for initial memory footprint)
+        _allStorageMode = ResultStorageMode.CountOnly;
+        _uniqueStorageMode = ResultStorageMode.CountOnly;
+        OnPropertyChanged(nameof(SelectedStorageMode));
+        ApplyStorageModesToSolver();
     }
 
     // --- Private Fields ---

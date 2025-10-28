@@ -166,8 +166,9 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
                 BoardSizeText = previousBoardSizeText;
         }
         AutoAdjustParallel();
-        // Update solution label to reflect new mode
         OnPropertyChanged(nameof(ResultLabel));
+        OnPropertyChanged(nameof(SelectedStorageMode));
+        ApplyStorageModesToSolver();
     }
 
     partial void OnDisplayModeChanged(DisplayMode value)
@@ -175,9 +176,6 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         ValidateProperty(nameof(BoardSizeText));
         AutoAdjustParallel();
     }
-
-    partial void OnSelectedAllStorageModeChanged(ResultStorageMode value) => AutoAdjustParallel();
-    partial void OnSelectedUniqueStorageModeChanged(ResultStorageMode value) => AutoAdjustParallel();
 
     private void ResetAndValidateSimulationState(string? boardSizeText = null, SolutionMode? solutionMode = null)
     {

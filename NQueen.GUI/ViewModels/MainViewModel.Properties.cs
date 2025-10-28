@@ -54,12 +54,50 @@ public sealed partial class MainViewModel : ObservableObject
     private IEnumerable<ResultStorageMode> _enumStorageModes =
         Enum.GetValues<ResultStorageMode>().Cast<ResultStorageMode>();
 
-    // Selected storage mode per solution category (UI bound)
-    [ObservableProperty]
-    private ResultStorageMode _selectedAllStorageMode = SimulationSettings.DefaultAllStorageMode;
+    // Replace dual selected storage modes with a single unified selection
+    private ResultStorageMode _allStorageMode = SimulationSettings.DefaultAllStorageMode;
+    private ResultStorageMode _uniqueStorageMode = SimulationSettings.DefaultUniqueStorageMode;
 
-    [ObservableProperty]
-    private ResultStorageMode _selectedUniqueStorageMode = SimulationSettings.DefaultUniqueStorageMode;
+    public ResultStorageMode SelectedStorageMode
+    {
+        get => SolutionMode switch
+        {
+            SolutionMode.All => _allStorageMode,
+            SolutionMode.Unique => _uniqueStorageMode,
+            SolutionMode.Single => _allStorageMode,
+            _ => _allStorageMode
+        };
+        set
+        {
+            var changed = false;
+            switch (SolutionMode)
+            {
+                case SolutionMode.All:
+                    if (_allStorageMode != value) { _allStorageMode = value; changed = true; }
+                    break;
+                case SolutionMode.Unique:
+                    if (_uniqueStorageMode != value) { _uniqueStorageMode = value; changed = true; }
+                    break;
+                case SolutionMode.Single:
+                    if (_allStorageMode != value) { _allStorageMode = value; changed = true; }
+                    break;
+            }
+            if (changed)
+            {
+                OnPropertyChanged();
+                ApplyStorageModesToSolver();
+            }
+        }
+    }
+
+    private void ApplyStorageModesToSolver()
+    {
+        if (_solver is NQueen.Kernel.Solvers.BitmaskSolver b)
+        {
+            b.AllStorageMode = _allStorageMode;
+            b.UniqueStorageMode = _uniqueStorageMode;
+        }
+    }
 
     [ObservableProperty]
     private bool _isVisualized;
