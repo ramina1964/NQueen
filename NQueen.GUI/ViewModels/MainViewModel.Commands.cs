@@ -37,8 +37,8 @@ public sealed partial class MainViewModel
         {
             bitmask.UseParallel = UseParallel;
             bitmask.ParallelRootSplitDepth = ParallelRootSplitDepth;
-            bitmask.AllStorageMode = SelectedAllStorageMode;
-            bitmask.UniqueStorageMode = SelectedUniqueStorageMode;
+            bitmask.AllStorageMode = SolutionMode == SolutionMode.All || SolutionMode == SolutionMode.Single ? SelectedStorageMode : bitmask.AllStorageMode;
+            bitmask.UniqueStorageMode = SolutionMode == SolutionMode.Unique ? SelectedStorageMode : bitmask.UniqueStorageMode;
         }
 
         _solver.IsSolverCanceled = false;
