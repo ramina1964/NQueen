@@ -102,7 +102,8 @@ public class SolverSolutionCountTests(SolverBackEndFixture fixture)
 
     [Theory]
     [MemberData(nameof(MaterializeCapBoards))]
-    public async Task GetSimResults_MaterializeMode_ProducesExpectedNumberOfSolutions(int n, SolutionMode mode)
+    public async Task GetSimResults_MaterializeMode_ProducesExpectedNumberOfSolutions(
+        int n, SolutionMode mode)
     {
         var formatter = new SolutionFormatter();
         var solver = new BitmaskSolver(n, mode, DisplayMode.Hide, formatter)

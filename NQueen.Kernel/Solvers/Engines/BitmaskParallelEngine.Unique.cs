@@ -131,7 +131,8 @@ internal sealed partial class BitmaskParallelEngine
         var tasks = new List<Task>();
         int materializedCount = 0;
         int rootsCompleted = 0;
-        int globalCapReached = 0; //0 = not reached,1 = reached
+        // Only use globalCapReached for materialization, not for search termination
+        int globalCapReached = 0;
         object capLock = new object();
 
         if (N <= 8)
@@ -181,13 +182,12 @@ internal sealed partial class BitmaskParallelEngine
             ulong remaining = ComputeAvail(col);
             while (true)
             {
-                if (System.Threading.Volatile.Read(ref globalCapReached) == 1) break;
                 if (col == N)
                 {
                     UInt128 key = SymmetryHelper.GetCanonicalKey(rowsArr, scratchBuf, out var canonicalSpan);
-                    if (System.Threading.Volatile.Read(ref globalCapReached) == 0)
+                    if (globalUnique.TryAdd(key, 0))
                     {
-                        if (globalUnique.TryAdd(key, 0))
+                        if (materializedCount < cap)
                         {
                             int newVal = Interlocked.Increment(ref materializedCount);
                             if (newVal <= cap)
@@ -195,17 +195,8 @@ internal sealed partial class BitmaskParallelEngine
                                 int[] canonicalRows = new int[N];
                                 canonicalSpan.CopyTo(canonicalRows);
                                 onUniqueSolution(canonicalRows);
-                                if (newVal == cap)
-                                {
-                                    System.Threading.Volatile.Write(ref globalCapReached, 1);
-                                    break;
-                                }
                             }
                         }
-                    }
-                    else
-                    {
-                        globalUnique.TryAdd(key, 0); // Only count
                     }
                     col--; if (col <= 0) break; Restore(col, out remaining); continue;
                 }

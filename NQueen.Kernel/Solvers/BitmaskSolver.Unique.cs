@@ -16,6 +16,7 @@ public partial class BitmaskSolver
         int capReachedFlag =0; //0 = not reached,1 = reached
         object lockObj = new object();
         var uniqueKeys = new HashSet<UInt128>();
+        ulong fundamentalCountFromEngine =0; // track for parallel path
 
         Action<int[]> onUniqueSolution = rows =>
         {
@@ -46,7 +47,6 @@ public partial class BitmaskSolver
 
         if (parallel && N >1)
         {
-            ulong fundamentalCountFromEngine =0;
             BitmaskParallelEngine.RunUniqueUnified(
             BoardSize,
             EnableEvents,
@@ -56,69 +56,13 @@ public partial class BitmaskSolver
             p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
             () => System.Threading.Volatile.Read(ref capReachedFlag) ==1
            );
-            // After cap, continue to enumerate and count unique solutions (no lookup)
-            if (materialized >= cap)
-            {
-                // Enumerate all unique solutions to count, but do not materialize more
-                var globalUnique = new HashSet<UInt128>();
-                var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
-                var rowsArr = new int[N];
-                for (int root =0; root < N; root++)
-                {
-                    Array.Fill(rowsArr, -1);
-                    rowsArr[0] = root;
-                    ulong bitFirst =1UL << root;
-                    ulong cols = bitFirst;
-                    ulong d1 = bitFirst <<1;
-                    ulong d2 = bitFirst >>1;
-                    ulong mask = (N ==64) ? ulong.MaxValue : ((1UL << N) -1UL);
-                    ulong[] stackCols = new ulong[N];
-                    ulong[] stackD1 = new ulong[N];
-                    ulong[] stackD2 = new ulong[N];
-                    ulong[] stackRemaining = new ulong[N];
-                    int col =1;
-                    ulong remaining = ~(cols | d1 | d2) & mask;
-                    while (true)
-                    {
-                        if (col == N)
-                        {
-                            UInt128 key = SymmetryHelper.GetCanonicalKey(rowsArr, scratchBuf, out _);
-                            globalUnique.Add(key);
-                            col--; if (col <=0) break;
-                            Restore(col, out remaining); continue;
-                        }
-                        if (remaining ==0)
-                        {
-                            col--; if (col <=0) break;
-                            Restore(col, out remaining); continue;
-                        }
-                        ulong bit = remaining & (ulong)-(long)remaining; remaining ^= bit;
-                        int row = BitOperations.TrailingZeroCount(bit);
-                        rowsArr[col] = row;
-                        stackCols[col] = cols; stackD1[col] = d1; stackD2[col] = d2; stackRemaining[col] = remaining;
-                        cols |= bit; d1 = (d1 | bit) <<1; d2 = (d2 | bit) >>1;
-                        col++;
-                        if (col == N) continue;
-                        remaining = ~(cols | d1 | d2) & mask;
-                    }
-                    void Restore(int c, out ulong rem)
-                    {
-                        rem = stackRemaining[c];
-                        cols = stackCols[c]; d1 = stackD1[c]; d2 = stackD2[c];
-                    }
-                }
-                _solutionCount = (ulong)globalUnique.Count;
-            }
-            else
-            {
-                _solutionCount = (ulong)packedSample.Count;
-            }
+            // Assign the authoritative fundamental count from parallel engine
+            _solutionCount = fundamentalCountFromEngine;
         }
         else
         {
             // Sequential version
             var scratch = new int[SymmetryHelper.GetScratchBufferSize(N)];
-            int counted =0;
             for (int root =0; root < N && System.Threading.Volatile.Read(ref capReachedFlag) ==0; root++)
             {
                 BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
@@ -139,9 +83,9 @@ public partial class BitmaskSolver
                     var copy = (int[])rows.Clone();
                     if (System.Threading.Volatile.Read(ref capReachedFlag) ==0)
                     {
-                        if (uniqueKeys.Count < cap)
+                        if (SymmetryHelper.AddIfUniquePacked(copy, uniqueKeys, scratch, out var key, out var canonicalCopy))
                         {
-                            if (SymmetryHelper.AddIfUniquePacked(copy, uniqueKeys, scratch, out var key, out var canonicalCopy))
+                            if (materialized < Math.Max(1, cap))
                             {
                                 rawSample.Add(canonicalCopy);
                                 var packed = canonicalCopy.Length <=25 ? key :0;
@@ -151,7 +95,7 @@ public partial class BitmaskSolver
                                 {
                                     _eventsSuppressedAfterCap = true;
                                     System.Threading.Volatile.Write(ref capReachedFlag,1);
-                                    return true;
+                                    return true; // stop current root enumeration (materialization only)
                                 }
                             }
                         }
@@ -160,62 +104,8 @@ public partial class BitmaskSolver
                 }
                ));
             }
-            // After cap, enumerate all unique solutions to count, but do not materialize more
-            if (materialized >= cap)
-            {
-                var globalUnique = new HashSet<UInt128>();
-                var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
-                var rowsArr = new int[N];
-                for (int root =0; root < N; root++)
-                {
-                    Array.Fill(rowsArr, -1);
-                    rowsArr[0] = root;
-                    ulong bitFirst =1UL << root;
-                    ulong cols = bitFirst;
-                    ulong d1 = bitFirst <<1;
-                    ulong d2 = bitFirst >>1;
-                    ulong mask = (N ==64) ? ulong.MaxValue : ((1UL << N) -1UL);
-                    ulong[] stackCols = new ulong[N];
-                    ulong[] stackD1 = new ulong[N];
-                    ulong[] stackD2 = new ulong[N];
-                    ulong[] stackRemaining = new ulong[N];
-                    int col =1;
-                    ulong remaining = ~(cols | d1 | d2) & mask;
-                    while (true)
-                    {
-                        if (col == N)
-                        {
-                            UInt128 key = SymmetryHelper.GetCanonicalKey(rowsArr, scratchBuf, out _);
-                            globalUnique.Add(key);
-                            col--; if (col <=0) break;
-                            Restore(col, out remaining); continue;
-                        }
-                        if (remaining ==0)
-                        {
-                            col--; if (col <=0) break;
-                            Restore(col, out remaining); continue;
-                        }
-                        ulong bit = remaining & (ulong)-(long)remaining; remaining ^= bit;
-                        int row = BitOperations.TrailingZeroCount(bit);
-                        rowsArr[col] = row;
-                        stackCols[col] = cols; stackD1[col] = d1; stackD2[col] = d2; stackRemaining[col] = remaining;
-                        cols |= bit; d1 = (d1 | bit) <<1; d2 = (d2 | bit) >>1;
-                        col++;
-                        if (col == N) continue;
-                        remaining = ~(cols | d1 | d2) & mask;
-                    }
-                    void Restore(int c, out ulong rem)
-                    {
-                        rem = stackRemaining[c];
-                        cols = stackCols[c]; d1 = stackD1[c]; d2 = stackD2[c];
-                    }
-                }
-                _solutionCount = (ulong)globalUnique.Count;
-            }
-            else
-            {
-                _solutionCount = (ulong)packedSample.Count;
-            }
+            // Assign the fundamental count from uniqueKeys (hash set holds canonical keys)
+            _solutionCount = (ulong)uniqueKeys.Count;
         }
         _rawSolutions = rawSample;
         _solutions.AddRange(packedSample);

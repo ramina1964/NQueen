@@ -137,7 +137,6 @@ internal sealed partial class BitmaskParallelEngine
                 int col = startCol; ulong remaining = ComputeAvail(); ulong localCount = 0;
                 while (true)
                 {
-                    if (capReached()) break;
                     if (col == N)
                     {
                         localCount++;

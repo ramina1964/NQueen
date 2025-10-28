@@ -14,23 +14,17 @@ public partial class BitmaskSolver
         object lockObj = new();
         ulong totalCount = 0;
         int materialized = 0;
+        // capReachedFlag is now only for materialization, not for search termination
         int capReachedFlag = 0;
-        int lastPct = -1;
-        ulong expectedTotal = 0; // Remove lookup usage
 
+        // Only stop materializing when cap is reached, but always count all solutions
         void onSolution(int[] rows)
         {
-            if (Volatile.Read(ref capReachedFlag) == 1)
-                return;
-
             if (ValidateRows(rows) == false)
                 return;
 
             lock (lockObj)
             {
-                if (Volatile.Read(ref capReachedFlag) == 1)
-                    return;
-
                 if (solutions.Count < cap)
                 {
                     rawSolutions.Add(rows);
@@ -38,7 +32,7 @@ public partial class BitmaskSolver
                     materialized++;
                     if (materialized >= cap && _capEnabled)
                     {
-                        Volatile.Write(ref capReachedFlag, 1);
+                        Volatile.Write(ref capReachedFlag, 1); // Only signals to stop materializing
                     }
                 }
             }
@@ -55,28 +49,16 @@ public partial class BitmaskSolver
                 onSolution,
                 count => totalCountFromEngine = count,
                 pct => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken)); },
-                () => Volatile.Read(ref capReachedFlag) == 1
+                // Only use capReachedFlag to stop materializing, not to terminate search
+                () => false
             );
 
-            // After cap, run count-only for the rest if needed
-            if (materialized >= cap)
-            {
-                ulong countOnly = 0;
-                BitmaskParallelEngine.RunAllCountOnly(new BitmaskParallelEngine.AllCountOnlyRequest(
-                    BoardSize,
-                    splitDepth,
-                    c => countOnly = c,
-                    pct => { }
-                ));
-                totalCountFromEngine = countOnly;
-            }
             totalCount = totalCountFromEngine;
         }
         else
         {
             // Sequential version
             ulong count = 0;
-            bool capReached = false;
             BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
                 BoardSize,
                 RestrictFirstCol: false,
@@ -85,19 +67,12 @@ public partial class BitmaskSolver
                 DisplayMode,
                 DelayInMillisec,
                 _currentSimToken,
-                () => IsSolverCanceled || Volatile.Read(ref capReachedFlag) == 1,
+                () => IsSolverCanceled, // Never terminate early due to cap
                 p => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
                 m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize)); },
                 rows =>
                 {
-                    if (Volatile.Read(ref capReachedFlag) == 1)
-                    {
-                        capReached = true;
-                        return true;
-                    }
-
                     if (!ValidateRows(rows)) return false;
-
                     if (solutions.Count < cap)
                     {
                         rawSolutions.Add(rows);
@@ -105,39 +80,15 @@ public partial class BitmaskSolver
                         materialized++;
                         if (materialized >= cap && _capEnabled)
                         {
-                            Volatile.Write(ref capReachedFlag, 1);
-                            capReached = true;
-                            return true;
+                            Volatile.Write(ref capReachedFlag, 1); // Only signals to stop materializing
                         }
                     }
                     count++;
-                    return false;
+                    return false; // Never terminate early due to cap
                 }
             ));
 
-            // After cap, run count-only for the rest if needed
-            if (materialized >= cap)
-            {
-                ulong countOnly = 0;
-                BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
-                    BoardSize,
-                    RestrictFirstCol: false,
-                    EnhancedSymmetry: false,
-                    AggressiveSymmetry: false,
-                    DisplayMode,
-                    DelayInMillisec,
-                    _currentSimToken,
-                    () => IsSolverCanceled,
-                    p => { },
-                    m => { },
-                    rows => { countOnly++; return false; }
-                ));
-                totalCount = countOnly;
-            }
-            else
-            {
-                totalCount = count;
-            }
+            totalCount = count;
         }
         _solutionCount = totalCount;
         _solutions.Clear();
