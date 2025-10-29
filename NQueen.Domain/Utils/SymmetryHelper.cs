@@ -204,5 +204,21 @@ public static partial class SymmetryHelper
         canonicalCopy = canonArr.Length <= 32 ? canonArr.ToArray() : Array.Empty<int>();
         return true;
     }
+
+    public static bool AddIfUniquePackedReuseBuffer(
+        int[] solution, HashSet<UInt128> uniqueKeys, int[] scratch, int[] canonicalBuffer,
+        out UInt128 key, out int[] canonicalCopy)
+    {
+        key = 0;
+        canonicalCopy = canonicalBuffer;
+        ArgumentNullException.ThrowIfNull(solution);
+        ArgumentNullException.ThrowIfNull(uniqueKeys);
+        // Use allocation-free canonicalization into canonicalBuffer
+        var canonArr = GetCanonicalForm(solution, scratch, canonicalBuffer);
+        key = PackCanonical(canonArr, canonArr.Length);
+        if (!uniqueKeys.Add(key)) return false;
+        canonicalCopy = canonArr;
+        return true;
+    }
 }
 

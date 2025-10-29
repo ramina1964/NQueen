@@ -140,13 +140,10 @@ internal sealed partial class BitmaskParallelEngine
                     if (col == N)
                     {
                         localCount++;
-                        if (globalMaterialized < cap)
+                        int mat = Interlocked.Increment(ref globalMaterialized);
+                        if (mat <= cap)
                         {
-                            int mat = Interlocked.Increment(ref globalMaterialized);
-                            if (mat <= cap)
-                            {
-                                onSolution((int[])rowsArr.Clone());
-                            }
+                            onSolution((int[])rowsArr.Clone());
                         }
                         col--; if (col < startCol) break; Restore(col, out remaining); continue;
                     }

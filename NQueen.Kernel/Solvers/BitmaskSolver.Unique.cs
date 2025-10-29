@@ -1,8 +1,41 @@
+using System.Linq;
 namespace NQueen.Kernel.Solvers;
 
 public partial class BitmaskSolver
 {
     private const int AggressiveSymmetryThreshold = 12;
+    // For parallel scratch reuse
+    [ThreadStatic]
+    private static int[]? _threadScratch;
+    [ThreadStatic]
+    private static int[]? _threadCanonicalBuffer;
+
+    // Helper for HashSet capacity estimation (powers of two above expected unique count)
+    private static int EstimateUniqueCapacity(int n)
+    {
+        // Lower bound: n=8?12, n=10?40, n=12?92, n=14?365, n=16?1477
+        // Use 2x known unique count for safety, or 1<<n for larger n
+        return n switch
+        {
+            8 => 32,
+            10 => 128,
+            12 => 256,
+            14 => 1024,
+            16 => 4096,
+            _ => 1 << (n > 20 ? 20 : n) // up to 1M for n>=20
+        };
+    }
+
+    private struct PackedSolution
+    {
+        public UInt128 Packed;
+        public int BoardSize;
+        public PackedSolution(UInt128 packed, int boardSize)
+        {
+            Packed = packed;
+            BoardSize = boardSize;
+        }
+    }
 
     // Shared unique solution search core
     private void RunUniqueUnified(bool parallel)
@@ -11,58 +44,78 @@ public partial class BitmaskSolver
         int cap = _capEnabled ? _maxDisplayedCount : int.MaxValue;
         _solutions.Clear(); _rawSolutions = null; _eventsSuppressedAfterCap = false; _solutionCount =0;
         var rawSample = new List<int[]>();
-        var packedSample = new List<(UInt128 packed, int boardSize)>();
+        var packedSample = new List<PackedSolution>();
         int materialized =0;
         int capReachedFlag =0; //0 = not reached,1 = reached
         object lockObj = new object();
-        var uniqueKeys = new HashSet<UInt128>();
         ulong fundamentalCountFromEngine =0; // track for parallel path
-
-        Action<int[]> onUniqueSolution = rows =>
-        {
-            if (System.Threading.Volatile.Read(ref capReachedFlag) ==1) return;
-            lock (lockObj)
-            {
-                if (System.Threading.Volatile.Read(ref capReachedFlag) ==1) return;
-                var scratch = new int[SymmetryHelper.GetScratchBufferSize(N)];
-                if (SymmetryHelper.AddIfUniquePacked(rows, uniqueKeys, scratch, out var key, out var canonicalCopy))
-                {
-                    // Always materialize at least one unique solution if any exist
-                    int minCap = Math.Max(1, cap);
-                    if (materialized < minCap)
-                    {
-                        rawSample.Add(canonicalCopy);
-                        var packed = canonicalCopy.Length <=25 ? key :0;
-                        packedSample.Add((packed, canonicalCopy.Length));
-                        materialized++;
-                        if (_capEnabled && materialized >= cap)
-                        {
-                            _eventsSuppressedAfterCap = true;
-                            System.Threading.Volatile.Write(ref capReachedFlag,1);
-                        }
-                    }
-                }
-            }
-        };
+        // Preallocate buffer for canonicalCopy
+        int[] canonicalBuffer = new int[N];
+        // Preallocate scratch for sequential, use thread-static for parallel
+        int[] sharedScratch = new int[SymmetryHelper.GetScratchBufferSize(N)];
+        HashSet<UInt128>? uniqueKeys = null;
 
         if (parallel && N >1)
         {
+            // Use thread-safe dictionary for uniqueness
+            var uniqueKeysParallel = new System.Collections.Concurrent.ConcurrentDictionary<UInt128, byte>();
+            // Thread-local lists for materialization (trackAllValues:true to allow .Values enumeration)
+            var threadLocalRaw = new System.Threading.ThreadLocal<List<int[]>>(() => new List<int[]>(), true);
+            var threadLocalPacked = new System.Threading.ThreadLocal<List<PackedSolution>>(() => new List<PackedSolution>(), true);
+            Action<int[]> onUniqueSolutionParallel = rows =>
+            {
+                if (System.Threading.Volatile.Read(ref capReachedFlag) ==1) return;
+                // Ensure per-thread buffers sized for current board
+                int requiredScratch = SymmetryHelper.GetScratchBufferSize(N);
+                int[] scratch = _threadScratch;
+                if (scratch == null || scratch.Length < requiredScratch) scratch = _threadScratch = new int[requiredScratch];
+                int[] canonical = _threadCanonicalBuffer;
+                if (canonical == null || canonical.Length != N) canonical = _threadCanonicalBuffer = new int[N];
+                // Fast path: attempt packed key directly (only matches if rows already canonical)
+                if (N <=25)
+                {
+                    UInt128 rawKey = SymmetryHelper.PackCanonical(rows, N);
+                    if (uniqueKeysParallel.ContainsKey(rawKey)) return;
+                }
+                // Canonicalize and get key
+                UInt128 key = SymmetryHelper.PackCanonical(SymmetryHelper.GetCanonicalForm(rows, scratch, canonical), N);
+                if (!uniqueKeysParallel.TryAdd(key,0)) return;
+                // Global atomic materialization cap
+                int matIdx = System.Threading.Interlocked.Increment(ref materialized);
+                if (matIdx <= Math.Max(1, cap))
+                {
+                    var storedCopy = new int[N];
+                    Array.Copy(canonical, storedCopy, canonical.Length); // canonical.Length == N
+                    threadLocalRaw.Value.Add(storedCopy);
+                    var packed = N <=25 ? key :0;
+                    threadLocalPacked.Value.Add(new PackedSolution(packed, N));
+                    if (_capEnabled && matIdx == cap)
+                    {
+                        _eventsSuppressedAfterCap = true;
+                        System.Threading.Volatile.Write(ref capReachedFlag,1);
+                    }
+                }
+            };
+
             BitmaskParallelEngine.RunUniqueUnified(
             BoardSize,
             EnableEvents,
             cap,
-            onUniqueSolution,
+            onUniqueSolutionParallel,
             count => fundamentalCountFromEngine = count,
             p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
             () => System.Threading.Volatile.Read(ref capReachedFlag) ==1
            );
-            // Assign the authoritative fundamental count from parallel engine
+            // Merge thread-local lists
+            foreach (var list in threadLocalRaw.Values) rawSample.AddRange(list);
+            foreach (var list in threadLocalPacked.Values) packedSample.AddRange(list);
             _solutionCount = fundamentalCountFromEngine;
         }
         else
         {
-            // Sequential version
-            var scratch = new int[SymmetryHelper.GetScratchBufferSize(N)];
+            uniqueKeys = new HashSet<UInt128>(EstimateUniqueCapacity(N));
+            uniqueKeys.EnsureCapacity(EstimateUniqueCapacity(N));
+            int[] scratch = sharedScratch;
             for (int root =0; root < N && System.Threading.Volatile.Read(ref capReachedFlag) ==0; root++)
             {
                 BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
@@ -80,16 +133,24 @@ public partial class BitmaskSolver
                 {
                     if (System.Threading.Volatile.Read(ref capReachedFlag) ==1) return true;
                     if (!ValidateRows(rows)) return false;
-                    var copy = (int[])rows.Clone();
+                    // Fast path: try packed key first (if N <=25)
+                    if (N <=25)
+                    {
+                        UInt128 fastKey = SymmetryHelper.PackCanonical(rows, N);
+                        if (uniqueKeys.Contains(fastKey))
+                            return false;
+                    }
                     if (System.Threading.Volatile.Read(ref capReachedFlag) ==0)
                     {
-                        if (SymmetryHelper.AddIfUniquePacked(copy, uniqueKeys, scratch, out var key, out var canonicalCopy))
+                        if (SymmetryHelper.AddIfUniquePackedReuseBuffer(rows, uniqueKeys, scratch, canonicalBuffer, out var key, out var canonicalCopy))
                         {
                             if (materialized < Math.Max(1, cap))
                             {
-                                rawSample.Add(canonicalCopy);
-                                var packed = canonicalCopy.Length <=25 ? key :0;
-                                packedSample.Add((packed, canonicalCopy.Length));
+                                var storedCopy = new int[N];
+                                Array.Copy(canonicalCopy, storedCopy, N);
+                                rawSample.Add(storedCopy);
+                                var packed = N <=25 ? key :0;
+                                packedSample.Add(new PackedSolution(packed, N));
                                 materialized++;
                                 if (materialized >= cap && _capEnabled)
                                 {
@@ -108,10 +169,80 @@ public partial class BitmaskSolver
             _solutionCount = (ulong)uniqueKeys.Count;
         }
         _rawSolutions = rawSample;
-        _solutions.AddRange(packedSample);
+        // Convert PackedSolution to tuple for _solutions
+        _solutions.AddRange(packedSample.Select(ps => (ps.Packed, ps.BoardSize)));
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 
     private void RunUniqueParallel() => RunUniqueUnified(parallel: true);
     private void RunUniqueSequential() => RunUniqueUnified(parallel: false);
+
+    // Static unified unique enumeration for both materialize and count-only
+    public static void RunUniqueUnifiedStatic(
+        int boardSize,
+        bool parallel,
+        int cap,
+        Action<int[]>? onMaterialized,
+        Action<ulong> onCounted,
+        Action<double> reportProgress,
+        Func<bool> capReached,
+        bool aggressiveSymmetry = false)
+    {
+        ulong uniqueCount =0;
+        if (parallel && boardSize >1)
+        {
+            ulong countFromEngine =0;
+            BitmaskParallelEngine.RunUniqueUnified(
+                boardSize,
+                enableEvents: false,
+                cap: cap,
+                onUniqueSolution: onMaterialized ?? (_ => { }),
+                onCompletedUniqueCount: c => countFromEngine = c,
+                reportProgress: reportProgress,
+                capReached: capReached
+            );
+            uniqueCount = countFromEngine;
+        }
+        else
+        {
+            var uniqueKeys = new HashSet<UInt128>(EstimateUniqueCapacity(boardSize));
+            uniqueKeys.EnsureCapacity(EstimateUniqueCapacity(boardSize));
+            int[] scratch = new int[SymmetryHelper.GetScratchBufferSize(boardSize)];
+            int materialized =0;
+            for (int root =0; root < boardSize && (cap <=0 || materialized < cap); root++)
+            {
+                BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
+                    boardSize,
+                    RestrictFirstCol: true,
+                    EnhancedSymmetry: true,
+                    AggressiveSymmetry: aggressiveSymmetry,
+                    DisplayMode.Hide,
+                    DelayInMillisec:0,
+                    SimulationToken: Guid.Empty,
+                    IsCanceled: () => false,
+                    ReportProgress: reportProgress,
+                    OnQueenPlaced: _ => { },
+                    OnSolution: rows =>
+                    {
+                        if (boardSize <=25)
+                        {
+                            UInt128 fastKey = SymmetryHelper.PackCanonical(rows, boardSize);
+                            if (uniqueKeys.Contains(fastKey))
+                                return false;
+                        }
+                        if (!uniqueKeys.Add(SymmetryHelper.PackCanonical(SymmetryHelper.GetCanonicalForm(rows, scratch, null), rows.Length)))
+                            return false;
+                        if (cap >0 && materialized < cap && onMaterialized != null)
+                        {
+                            onMaterialized((int[])rows.Clone());
+                            materialized++;
+                        }
+                        return false;
+                    }
+                ));
+            }
+            uniqueCount = (ulong)uniqueKeys.Count;
+        }
+        onCounted(uniqueCount);
+    }
 }

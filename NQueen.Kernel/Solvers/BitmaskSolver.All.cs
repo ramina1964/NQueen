@@ -11,35 +11,35 @@ public partial class BitmaskSolver
 
         var solutions = new List<(UInt128 packed, int boardSize)>();
         var rawSolutions = new List<int[]>();
-        object lockObj = new();
         ulong totalCount = 0;
         int materialized = 0;
-        // capReachedFlag is now only for materialization, not for search termination
         int capReachedFlag = 0;
-
-        // Only stop materializing when cap is reached, but always count all solutions
-        void onSolution(int[] rows)
-        {
-            if (ValidateRows(rows) == false)
-                return;
-
-            lock (lockObj)
-            {
-                if (solutions.Count < cap)
-                {
-                    rawSolutions.Add(rows);
-                    solutions.Add((0, rows.Length));
-                    materialized++;
-                    if (materialized >= cap && _capEnabled)
-                    {
-                        Volatile.Write(ref capReachedFlag, 1); // Only signals to stop materializing
-                    }
-                }
-            }
-        }
 
         if (isParallel && N > 1)
         {
+            // trackAllValues:true so .Values is valid
+            var threadLocalRaw = new System.Threading.ThreadLocal<List<int[]>>(() => new List<int[]>(), true);
+            var threadLocalPacked = new System.Threading.ThreadLocal<List<(UInt128, int)>>(() => new List<(UInt128, int)>(), true);
+            // Only stop materializing when cap is reached, but always count all solutions
+            void onSolution(int[] rows)
+            {
+                if (!ValidateRows(rows))
+                    return;
+                int matIdx = System.Threading.Interlocked.Increment(ref materialized);
+                if (matIdx <= cap)
+                {
+                    // clone rows to prevent later mutation issues
+                    var stored = new int[rows.Length];
+                    Array.Copy(rows, stored, rows.Length);
+                    threadLocalRaw.Value.Add(stored);
+                    threadLocalPacked.Value.Add((0, rows.Length));
+                    if (_capEnabled && matIdx == cap)
+                    {
+                        System.Threading.Volatile.Write(ref capReachedFlag, 1);
+                    }
+                }
+            }
+
             ulong totalCountFromEngine = 0;
             BitmaskParallelEngine.RunAllUnified(
                 BoardSize,
@@ -49,10 +49,12 @@ public partial class BitmaskSolver
                 onSolution,
                 count => totalCountFromEngine = count,
                 pct => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken)); },
-                // Only use capReachedFlag to stop materializing, not to terminate search
+                // Only use capReachedFlag to stop materialization, not to terminate search
                 () => false
             );
 
+            foreach (var list in threadLocalRaw.Values) rawSolutions.AddRange(list);
+            foreach (var list in threadLocalPacked.Values) solutions.AddRange(list);
             totalCount = totalCountFromEngine;
         }
         else
@@ -75,12 +77,14 @@ public partial class BitmaskSolver
                     if (!ValidateRows(rows)) return false;
                     if (solutions.Count < cap)
                     {
-                        rawSolutions.Add(rows);
+                        var stored = new int[rows.Length];
+                        Array.Copy(rows, stored, rows.Length);
+                        rawSolutions.Add(stored);
                         solutions.Add((0, rows.Length));
                         materialized++;
                         if (materialized >= cap && _capEnabled)
                         {
-                            Volatile.Write(ref capReachedFlag, 1); // Only signals to stop materializing
+                            System.Threading.Volatile.Write(ref capReachedFlag, 1); // Only signals to stop materializing
                         }
                     }
                     count++;

@@ -131,8 +131,6 @@ internal sealed partial class BitmaskParallelEngine
         var tasks = new List<Task>();
         int materializedCount = 0;
         int rootsCompleted = 0;
-        // Only use globalCapReached for materialization, not for search termination
-        int globalCapReached = 0;
         object capLock = new object();
 
         if (N <= 8)
@@ -187,15 +185,12 @@ internal sealed partial class BitmaskParallelEngine
                     UInt128 key = SymmetryHelper.GetCanonicalKey(rowsArr, scratchBuf, out var canonicalSpan);
                     if (globalUnique.TryAdd(key, 0))
                     {
-                        if (materializedCount < cap)
+                        int mat = Interlocked.Increment(ref materializedCount);
+                        if (mat <= cap)
                         {
-                            int newVal = Interlocked.Increment(ref materializedCount);
-                            if (newVal <= cap)
-                            {
-                                int[] canonicalRows = new int[N];
-                                canonicalSpan.CopyTo(canonicalRows);
-                                onUniqueSolution(canonicalRows);
-                            }
+                            int[] canonicalRows = new int[N];
+                            canonicalSpan.CopyTo(canonicalRows);
+                            onUniqueSolution(canonicalRows);
                         }
                     }
                     col--; if (col <= 0) break; Restore(col, out remaining); continue;
