@@ -14,24 +14,25 @@ public static class SimulationSettings
 
     // Storage strategies (changed to MaterializeSample to satisfy tests expecting sample solutions)
     public const ResultStorageMode DefaultAllStorageMode =
-        ResultStorageMode.Materialize; // was CountOnly
+        ResultStorageMode.Materialize;
 
     public const ResultStorageMode DefaultUniqueStorageMode =
-        ResultStorageMode.Materialize; // was CountOnly
+        ResultStorageMode.Materialize;
 
     // Threshold size where we reduce QueenPlaced event frequency.
     public const int QueenPlacedSamplingThresholdSize = 12;
 
     // Sample rate for large boards (>= threshold).
-    public const int QueenPlacedLargeBoardSampleRate = 1000;
+    public const int QueenPlacedLargeBoardSampleRate = 1_000;
 
     public static int ProgressThresholdPct { get; set; } = 5;
 
-    public const int ProgressIntervalInMilliSec = 5000;
+    // Heartbeat interval (minimum time between forced progress UI updates when solver is quiet)
+    public const int ProgressIntervalInMilliSec = 10_000;
 
     // Visualization is allowed only up to and including this board size.
     public const int MaxVisualizeBoardSize = 6;
 
-    // NEW: Threshold at/above which we throttle parallel progress updates for All modes.
+    // Threshold at/above which we throttle parallel progress updates for All modes.
     public const int LargeBoardProgressThrottleThreshold = 16;
 }
