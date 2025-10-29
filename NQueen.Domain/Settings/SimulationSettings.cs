@@ -27,7 +27,8 @@ public static class SimulationSettings
 
     public static int ProgressThresholdPct { get; set; } = 5;
 
-    public const int ProgressIntervalInMilliSec = 5000;
+    // Heartbeat interval (minimum time between forced progress UI updates when solver is quiet)
+    public const int ProgressIntervalInMilliSec = 10_000;
 
     // Visualization is allowed only up to and including this board size.
     public const int MaxVisualizeBoardSize = 6;
