@@ -1,33 +1,34 @@
 name: ci
 on:
-  pull_request:
   push:
-    branches: [ main ]
+    branches:
+      - main
+  pull_request:
 jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 10.0.x
-        include-prerelease: true
-    - name: Restore
-      run: dotnet restore
-    - name: Clean
-      run: dotnet clean
-    - name: Build
-      run: dotnet build -warnaserror
-    - name: Test with coverage
-      run: dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura,lcov /p:Exclude="[xunit.*]*" -m:1 -v minimal
-    - name: Install reportgenerator
-      run: dotnet tool install --global dotnet-reportgenerator-globaltool
-    - name: Generate HTML coverage report
-      run: reportgenerator -reports:"**/coverage.cobertura.xml" -targetdir:CoverageReport -reporttypes:Html
-    - name: Upload coverage artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage
-        path: CoverageReport
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          include-prerelease: true
+      - name: Restore
+        run: dotnet restore
+      - name: Clean
+        run: dotnet clean
+      - name: Build
+        run: dotnet build -warnaserror
+      - name: Test with coverage
+        run: dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura,lcov /p:Exclude="[xunit.*]*" -m:1 -v minimal
+      - name: Install reportgenerator
+        run: dotnet tool install --global dotnet-reportgenerator-globaltool
+      - name: Generate HTML coverage report
+        run: reportgenerator -reports:"**/coverage.cobertura.xml" -targetdir:CoverageReport -reporttypes:Html
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: CoverageReport
