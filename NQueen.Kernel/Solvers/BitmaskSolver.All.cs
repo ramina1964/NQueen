@@ -18,8 +18,9 @@ public partial class BitmaskSolver
         if (isParallel && N > 1)
         {
             // trackAllValues:true so .Values is valid
-            var threadLocalRaw = new System.Threading.ThreadLocal<List<int[]>>(() => new List<int[]>(), true);
-            var threadLocalPacked = new System.Threading.ThreadLocal<List<(UInt128, int)>>(() => new List<(UInt128, int)>(), true);
+            var threadLocalRaw = new ThreadLocal<List<int[]>>(() => [], true);
+            var threadLocalPacked = new ThreadLocal<List<(UInt128, int)>>(() => [], true);
+
             // Only stop materializing when cap is reached, but always count all solutions
             void onSolution(int[] rows)
             {
@@ -31,8 +32,13 @@ public partial class BitmaskSolver
                     // clone rows to prevent later mutation issues
                     var stored = new int[rows.Length];
                     Array.Copy(rows, stored, rows.Length);
-                    threadLocalRaw.Value.Add(stored);
-                    threadLocalPacked.Value.Add((0, rows.Length));
+                    var rawList = threadLocalRaw.Value;
+                    var packedList = threadLocalPacked.Value;
+                    if (rawList is not null && packedList is not null)
+                    {
+                        rawList.Add(stored);
+                        packedList.Add((0, rows.Length));
+                    }
                     if (_capEnabled && matIdx == cap)
                     {
                         System.Threading.Volatile.Write(ref capReachedFlag, 1);
