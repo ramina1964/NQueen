@@ -1,31 +1,25 @@
-using BenchmarkDotNet.Attributes;
-using NQueen.Kernel.Solvers;
-using NQueen.Domain.Models;
-using NQueen.Domain.Enums;
+namespace NQueen.Benchmarking;
 
-namespace NQueen.Benchmarking
+[MemoryDiagnoser]
+[CPUUsageDiagnoser]
+public class UniqueCountOnlyLightweightBenchmark
 {
-    [MemoryDiagnoser]
-    [CPUUsageDiagnoser]
-    public class UniqueCountOnlyLightweightBenchmark
+    [Params(14, 15, 16)]
+    public int BoardSize { get; set; }
+
+    private ISolutionFormatter _formatter = new DefaultSolutionFormatter();
+
+    [Benchmark(Baseline = true)]
+    public ulong CountOnly_Unique()
     {
-        [Params(14, 15, 16)]
-        public int BoardSize { get; set; }
-
-        private ISolutionFormatter _formatter = new DefaultSolutionFormatter();
-
-        [Benchmark(Baseline = true)]
-        public ulong CountOnly_Unique()
+        using var solver = new BitmaskSolver(BoardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter)
         {
-            using var solver = new BitmaskSolver(BoardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter)
-            {
-                UseCountOnlyUniqueMode = true,
-                EnableEvents = false
-            };
-            var results = solver.Solve();
-            if (results.SolutionsCount == 0)
-                throw new InvalidOperationException();
-            return results.SolutionsCount;
-        }
+            UseCountOnlyUniqueMode = true,
+            EnableEvents = false
+        };
+        var results = solver.Solve();
+        if (results.SolutionsCount == 0)
+            throw new InvalidOperationException();
+        return results.SolutionsCount;
     }
 }

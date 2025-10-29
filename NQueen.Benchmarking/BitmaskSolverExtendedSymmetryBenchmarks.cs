@@ -3,9 +3,6 @@ namespace NQueen.Benchmarking;
 [MemoryDiagnoser]
 public class BitmaskSolverExtendedSymmetryBenchmarks
 {
-    private readonly ISolutionFormatter _formatter = new DefaultSolutionFormatter();
-    private readonly BitmaskSolver _solver;
-
     public BitmaskSolverExtendedSymmetryBenchmarks()
     {
         // disable cap -> pass enableCap:false
@@ -20,4 +17,7 @@ public class BitmaskSolverExtendedSymmetryBenchmarks
 
     [Benchmark]
     public SimulationResults UniqueSolutions() => new BitmaskSolver(N, SolutionMode.Unique, DisplayMode.Hide, _formatter).Solve();
+
+    private readonly ISolutionFormatter _formatter = new DefaultSolutionFormatter();
+    private readonly BitmaskSolver _solver;
 }

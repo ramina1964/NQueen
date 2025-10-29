@@ -3,8 +3,8 @@ namespace NQueen.Benchmarking;
 // Targeted benchmark for Unique mode performance (materializing vs count-only)
 // Now runs for N=14 and N=16 for scaling comparison.
 // Example outside VS:
-//   dotnet run -c Release -p NQueen.Benchmarking -- --filter *UniqueHighBoardBenchmark.BitmaskUniqueCountOnly* --maxIterationCount 10
-//   dotnet run -c Release -p NQueen.Benchmarking -- --filter *UniqueHighBoardBenchmark* 
+//   dotnet run -c Release -- project NQueen.Benchmarking -- --filter *UniqueHighBoardBenchmark.BitmaskUniqueCountOnly* --maxIterationCount 10
+//   dotnet run -c Release -- project NQueen.Benchmarking -- --filter *UniqueHighBoardBenchmark* 
 // Use --join to get combined summary. Adjust max iteration counts if runs are lengthy.
 
 [MemoryDiagnoser]
