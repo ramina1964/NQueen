@@ -23,9 +23,10 @@ internal sealed class BitmaskSearchEngine
     {
         ValidateBoardSize(request.BoardSize);
         var state = CreateState(request);
-        state.Col = 0; // Ensure search always starts from the first column
+        state.Col =0; // Ensure search always starts from the first column
         request.ReportProgress(0.0);
-        state.Remaining = ComputeAvailable(ref state, request, 0);
+        // Use the new inlined ComputeAvailableInline
+        state.Remaining = ComputeAvailableInline(ref state, request,0, state.Mask, state.N);
         MainLoop(ref state, request);
         request.ReportProgress(100.0);
     }
@@ -68,15 +69,20 @@ internal sealed class BitmaskSearchEngine
 
     private static void MainLoop(ref SearchState s, in Request request)
     {
-        int[] solutionBuffer = new int[s.N];
+        // Hoist frequently used fields
+        int N = s.N;
+        ulong mask = s.Mask;
+        int[] solutionBuffer = null;
+        bool needsCopy = request.OnSolution != null;
+        if (needsCopy) solutionBuffer = new int[N];
         while (true)
         {
             if (request.IsCanceled()) break;
 
-            if (s.Col == s.N)
+            if (s.Col == N)
             {
                 bool valid = true;
-                for (int i =0; i < s.N; i++)
+                for (int i =0; i < N; i++)
                 {
                     if (s.QueenRows[i] <0)
                     {
@@ -84,27 +90,33 @@ internal sealed class BitmaskSearchEngine
                         break;
                     }
                 }
-                if (valid)
+                if (valid && request.OnSolution != null)
                 {
-                    if (request.OnSolution != null)
+                    // Only copy if callback might mutate or store the array
+                    if (needsCopy)
                     {
-                        // Copy only if the callback will mutate or store the array
-                        Array.Copy(s.QueenRows, solutionBuffer, s.N);
+                        Buffer.BlockCopy(s.QueenRows,0, solutionBuffer,0, N * sizeof(int));
                         if (request.OnSolution(solutionBuffer))
                             break;
                     }
+                    else
+                    {
+                        if (request.OnSolution(s.QueenRows))
+                            break;
+                    }
                 }
-                if (!Backtrack(ref s, out _)) break;
+                if (!BacktrackInline(ref s)) break;
                 continue;
             }
 
             if (s.Remaining ==0)
             {
-                if (!Backtrack(ref s, out _)) break;
+                if (!BacktrackInline(ref s)) break;
                 continue;
             }
 
-            ulong bit = ExtractLowestBit(s.Remaining);
+            // Inline ExtractLowestBit
+            ulong bit = s.Remaining & (ulong)-(long)s.Remaining;
             s.Remaining ^= bit;
             int row = BitOperations.TrailingZeroCount(bit);
             s.QueenRows[s.Col] = row;
@@ -115,25 +127,61 @@ internal sealed class BitmaskSearchEngine
             MaybeRaisePlacementEvent(ref s, request);
             PushState(ref s, bit);
             s.Col++;
-            if (s.Col == s.N) continue;
-            s.Remaining = ComputeAvailable(ref s, request, s.Col);
+            if (s.Col == N) continue;
+            s.Remaining = ComputeAvailableInline(ref s, request, s.Col, mask, N);
         }
     }
 
-    private static bool Backtrack(ref SearchState s, out ulong remaining)
+    // Inline Backtrack logic
+    private static bool BacktrackInline(ref SearchState s)
     {
         s.Col--;
-        if (s.Col < 0)
+        if (s.Col <0)
         {
-            remaining = 0;
+            s.Remaining =0;
             return false;
         }
         s.Cols = s.StackCols[s.Col];
         s.Diag1 = s.StackD1[s.Col];
         s.Diag2 = s.StackD2[s.Col];
-        remaining = s.StackRemaining[s.Col];
-        s.Remaining = remaining;
+        s.Remaining = s.StackRemaining[s.Col];
         return true;
+    }
+
+    // Combined/flattened ComputeAvailable
+    private static ulong ComputeAvailableInline(ref SearchState s, in Request request, int col, ulong mask, int N)
+    {
+        ulong avail = ~(s.Cols | s.Diag1 | s.Diag2) & mask;
+        if (N <=8) return avail;
+        int maxRow = N;
+        int splitDepth = s.RootTotal >0 ? s.RootTotal :1;
+        if (request.RestrictFirstCol && request.EnhancedSymmetry && col < splitDepth)
+        {
+            maxRow = (N +1) /2;
+            if ((N &1) ==1 && col ==0 && s.QueenRows[0] == N /2)
+                maxRow = N /2;
+        }
+        if (maxRow < N)
+            avail &= (1UL << maxRow) -1UL;
+        // Unified symmetry pruning
+        if ((request.EnhancedSymmetry || request.AggressiveSymmetry) && N >8)
+        {
+            avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(N, col, s.QueenRows, avail);
+            if (request.AggressiveSymmetry && col ==2 && s.QueenRows[1] >=0 && !((N &1) ==1 && s.QueenRows[0] == N /2))
+            {
+                int minRow = s.QueenRows[1];
+                if (minRow < N)
+                {
+                    ulong lowerMask = (1UL << minRow) -1UL;
+                    avail &= ~lowerMask;
+                }
+                else
+                {
+                    avail =0UL;
+                }
+            }
+        }
+        return avail;
     }
 
     private static void PushState(ref SearchState s, ulong bit)
@@ -167,52 +215,6 @@ internal sealed class BitmaskSearchEngine
         if (s.Delay > 0)
             Thread.Sleep(s.Delay);
     }
-
-    private static ulong ComputeAvailable(ref SearchState s, in Request request, int col)
-    {
-        ulong avail = ~(s.Cols | s.Diag1 | s.Diag2) & s.Mask;
-        int maxRow = s.N;
-        // Disable aggressive symmetry pruning for small N (N <= 8)
-        if (s.N > 8)
-        {
-            int splitDepth = s.RootTotal > 0 ? s.RootTotal : 1;
-            if (request.RestrictFirstCol && request.EnhancedSymmetry && col < splitDepth)
-            {
-                maxRow = (s.N + 1) / 2;
-                if ((s.N & 1) == 1 && col == 0 && s.QueenRows[0] == s.N / 2)
-                    maxRow = s.N / 2;
-            }
-        }
-        if (maxRow < s.N)
-            avail &= (1UL << maxRow) - 1UL;
-        // Apply advanced pruning (second column ordering) only when enhanced symmetry requested and board large enough.
-        if (request.EnhancedSymmetry && s.N > 8)
-            avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(s.N, col, s.QueenRows, avail);
-        if (request.AggressiveSymmetry && s.N > 8)
-        {
-            // Aggressive pruning: enforce monotonic increase for first three columns
-            if (col == 2 && s.QueenRows[1] >= 0)
-            {
-                int minRow = s.QueenRows[1];
-                // For odd boards, skip if first queen is centered
-                if (!((s.N & 1) == 1 && s.QueenRows[0] == s.N / 2))
-                {
-                    if (minRow < s.N)
-                    {
-                        ulong lowerMask = (1UL << minRow) - 1UL;
-                        avail &= ~lowerMask;
-                    }
-                    else
-                    {
-                        avail = 0UL;
-                    }
-                }
-            }
-        }
-        return avail;
-    }
-
-    private static ulong ExtractLowestBit(ulong v) => v & (ulong)-(long)v;
 
     // --- Private state container ---
     private sealed class SearchState
