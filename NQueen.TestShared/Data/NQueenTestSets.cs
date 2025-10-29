@@ -5,11 +5,22 @@ public static class NQueenTestSets
     public static TheoryData<string, SolutionMode, bool, string> LargeValueCases =>
         new()
         {
-            { "1000", SolutionMode.Single, false, nameof(ErrorMessages.SizeTooLargeForSingle) },
-            { "1000", SolutionMode.Unique, false, nameof(ErrorMessages.SizeTooLargeForUnique) },
-            { "1000", SolutionMode.All, false, nameof(ErrorMessages.SizeTooLargeForAll) },
-            { (BoardSettings.MaxSizeForUnique + 1).ToString(), SolutionMode.Unique, false, nameof(ErrorMessages.SizeTooLargeForUnique) },
-            { (BoardSettings.MaxSizeForAll + 1).ToString(), SolutionMode.All, false, nameof(ErrorMessages.SizeTooLargeForAll) }
+            {
+                "1000", SolutionMode.Single, false, nameof(ErrorMessages.SizeTooLargeForSingle)
+            },
+            {
+                "1000", SolutionMode.Unique, false, nameof(ErrorMessages.SizeTooLargeForUnique)
+            },
+            {
+                "1000", SolutionMode.All, false, nameof(ErrorMessages.SizeTooLargeForAll)
+            },
+            {
+                (BoardSettings.MaxSizeForUnique + 1).ToString(), SolutionMode.Unique, false,
+                nameof(ErrorMessages.SizeTooLargeForUnique)
+            },
+            {
+                (BoardSettings.MaxSizeForAll + 1).ToString(), SolutionMode.All, false,
+                nameof(ErrorMessages.SizeTooLargeForAll) }
         };
 
     public static TheoryData<int, SolutionMode> SmallValueCases =>
