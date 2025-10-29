@@ -1,7 +1,3 @@
-using FluentAssertions;
-using NQueen.Domain.Utils;
-using NQueen.UnitTests.Base;
-
 namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 [Collection("SolverBackend")]
