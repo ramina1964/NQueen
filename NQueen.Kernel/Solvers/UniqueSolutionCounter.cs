@@ -8,15 +8,7 @@ internal static class UniqueSolutionCounter
         bool aggressiveSymmetry = false)
     {
         if (boardSize <= 0) return 0;
-        // Small boards: canonicalization + symmetry pruning sometimes over-enumerate; trust authoritative expected counts.
-        if (boardSize <= 8)
-        {
-            var authoritative = ExpectedSolutionCounts.GetUnique(boardSize);
-            if (progress == null && progressEventSource != null && sender != null)
-                progressEventSource(sender, new ProgressUpdateEventArgs(100.0, token));
-            return authoritative;
-        }
-        // Use BitmaskSolver unified unique path in count-only mode
+        // Always compute by enumeration, never use authoritative lookup for solver/benchmark
         ulong uniqueCount = 0;
         BitmaskSolver.RunUniqueUnifiedStatic(
             boardSize,

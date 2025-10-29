@@ -171,13 +171,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     {
         // Enumerate unique solutions and count them, do not use lookup or UniqueSolutionCounter.Count
         _solutionCount = UniqueSolutionCounter.Count(BoardSize, null, _currentSimToken, ProgressValueChanged, this);
-        // Authoritative correction: ensure small-board and general counts match expected unique counts
-        var expected = ExpectedSolutionCounts.GetUnique(BoardSize);
-        if (expected >0 && _solutionCount != expected)
-        {
-            Debug.WriteLine($"[BitmaskSolver] Unique count-only mismatch for N={BoardSize}: computed={_solutionCount}, expected={expected}. Overriding to expected.");
-            _solutionCount = expected;
-        }
+        // Remove authoritative correction: always trust computed value
         _solutions.Clear();
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
@@ -206,7 +200,8 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
     private void SolveAllCountOnlyMode()
     {
-        ulong expectedTotal = ExpectedSolutionCounts.GetAll(BoardSize);
+        // Always compute by enumeration, never use authoritative lookup for solver/benchmark
+        ulong expectedTotal = ExpectedSolutionCounts.GetAll(BoardSize); // Only for progress estimation
         if (UseParallel)
         {
             ulong count = 0;
