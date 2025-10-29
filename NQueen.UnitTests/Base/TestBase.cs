@@ -1,6 +1,4 @@
-﻿using FluentAssertions;
-
-namespace NQueen.UnitTests.Base;
+﻿namespace NQueen.UnitTests.Base;
 
 public class TestBase(ISolverBackEnd sut)
 {
