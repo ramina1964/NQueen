@@ -126,7 +126,6 @@ internal sealed partial class BitmaskParallelEngine
     {
         int N = boardSize;
         reportProgress(0.0);
-        ulong fundamentalCount = 0;
         var globalUnique = new ConcurrentDictionary<UInt128, byte>();
         var tasks = new List<Task>();
         int materializedCount = 0;
@@ -146,7 +145,6 @@ internal sealed partial class BitmaskParallelEngine
             {
                 EnumerateRoot(N / 2);
             }
-            fundamentalCount = (ulong)globalUnique.Count;
         }
         else
         {
@@ -156,10 +154,10 @@ internal sealed partial class BitmaskParallelEngine
                 tasks.Add(Task.Run(() => EnumerateRoot(root)));
             }
             Task.WaitAll(tasks.ToArray());
-            fundamentalCount = (ulong)globalUnique.Count;
         }
         reportProgress(100.0);
-        onCompletedUniqueCount(fundamentalCount);
+        // Always report the count from the dictionary, not from materializedCount
+        onCompletedUniqueCount((ulong)globalUnique.Count);
 
         void EnumerateRoot(int fr)
         {

@@ -109,7 +109,16 @@ public partial class BitmaskSolver
             // Merge thread-local lists
             foreach (var list in threadLocalRaw.Values) rawSample.AddRange(list);
             foreach (var list in threadLocalPacked.Values) packedSample.AddRange(list);
-            _solutionCount = fundamentalCountFromEngine;
+            // Defensive: always set _solutionCount to the engine's count, even if no solutions were materialized
+            if (fundamentalCountFromEngine ==0 && cap ==0)
+            {
+                // If cap==0 (count-only), but engine returned0, try to get count from uniqueKeysParallel
+                _solutionCount = (ulong)uniqueKeysParallel.Count;
+            }
+            else
+            {
+                _solutionCount = fundamentalCountFromEngine;
+            }
         }
         else
         {
