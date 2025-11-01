@@ -60,12 +60,23 @@ internal sealed partial class BitmaskParallelEngine
             ulong[] stackRemaining = new ulong[N];
             int col = 1;
             ulong remaining = ComputeAvail(col);
+            bool rootIsCanonical = (fr < (N + 1) / 2); // Only first half roots are canonical
             while (true)
             {
                 if (col == N)
                 {
-                    UInt128 key = SymmetryHelper.GetCanonicalKey(rowsArr, scratchBuf, out var canonicalSpan);
-                    if (globalUnique.TryAdd(key, 0) && materializedCount < cap)
+                    UInt128 key;
+                    ReadOnlySpan<int> canonicalSpan;
+                    if (rootIsCanonical)
+                    {
+                        key = SymmetryHelper.PackCanonical(rowsArr, N);
+                        canonicalSpan = rowsArr;
+                    }
+                    else
+                    {
+                        key = SymmetryHelper.GetCanonicalKey(rowsArr, scratchBuf, out canonicalSpan);
+                    }
+                    if (globalUnique.TryAdd(key,0) && materializedCount < cap)
                     {
                         int newVal = Interlocked.Increment(ref materializedCount);
                         if (newVal <= cap)
@@ -75,17 +86,18 @@ internal sealed partial class BitmaskParallelEngine
                             request.OnUniqueSolution(canonicalRows);
                         }
                     }
-                    col--; if (col <= 0) break; Restore(col, out remaining); continue;
+                    col--; if (col <=0) break; Restore(col, out remaining); continue;
                 }
-                if (remaining == 0)
+                if (remaining ==0)
                 {
-                    col--; if (col <= 0) break; Restore(col, out remaining); continue;
+                    col--; if (col <=0) break; Restore(col, out remaining); continue;
                 }
+                // Removed aggressive monotonicity pruning for clarity and maintainability
                 ulong bit = remaining & (ulong)-(long)remaining; remaining ^= bit;
                 int row = BitOperations.TrailingZeroCount(bit);
                 rowsArr[col] = row;
                 stackCols[col] = cols; stackD1[col] = d1; stackD2[col] = d2; stackRemaining[col] = remaining;
-                cols |= bit; d1 = (d1 | bit) << 1; d2 = (d2 | bit) >> 1;
+                cols |= bit; d1 = (d1 | bit) <<1; d2 = (d2 | bit) >>1;
                 col++;
                 if (col == N) continue;
                 remaining = ComputeAvail(col);

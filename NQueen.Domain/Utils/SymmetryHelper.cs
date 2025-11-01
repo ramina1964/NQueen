@@ -98,6 +98,7 @@ public static partial class SymmetryHelper
     }
 
     // Legacy overload with scratch & optional resultBuffer expected by tests to read all8 transforms from scratch (contiguous blocks)
+    // OPTIMIZED: Early exit and minimal copying if identity is already minimal
     public static int[] GetCanonicalForm(int[] solution, int[] scratch, int[]? resultBuffer = null)
     {
         int n = solution.Length;
@@ -105,7 +106,7 @@ public static partial class SymmetryHelper
         int required = n * 8;
         if (scratch.Length < required) scratch = new int[required];
         // zero fill scratch
-        for (int i = 0; i < required; i++) scratch[i] = -1;
+        Array.Clear(scratch, 0, required);
         // block indices: b*n + i
         for (int c = 0; c < n; c++)
         {
@@ -128,25 +129,43 @@ public static partial class SymmetryHelper
             scratch[7 * n + (n - 1 - r)] = n - 1 - c;
         }
         int minIdx = 0;
+        bool identityIsMin = true;
         for (int t = 1; t < 8; t++)
         {
+            bool isLess = false, isGreater = false;
             for (int i = 0; i < n; i++)
             {
                 int a = scratch[t * n + i];
                 int b = scratch[minIdx * n + i];
-                if (a == b) continue;
-                if (a < b) minIdx = t;
-                break;
+                if (a < b) { isLess = true; break; }
+                if (a > b) { isGreater = true; break; }
+            }
+            if (isLess)
+            {
+                minIdx = t;
+                identityIsMin = false;
+            }
+            // Early exit: if identity is already minimal and no transform is less, skip copying
+            if (t == 7 && identityIsMin && minIdx == 0)
+            {
+                if (resultBuffer != null && resultBuffer.Length >= n)
+                {
+                    Buffer.BlockCopy(solution, 0, resultBuffer, 0, n * sizeof(int));
+                    return resultBuffer;
+                }
+                var res = new int[n];
+                Buffer.BlockCopy(solution, 0, res, 0, n * sizeof(int));
+                return res;
             }
         }
         if (resultBuffer != null && resultBuffer.Length >= n)
         {
-            for (int i = 0; i < n; i++) resultBuffer[i] = scratch[minIdx * n + i];
+            Buffer.BlockCopy(scratch, minIdx * n * sizeof(int), resultBuffer, 0, n * sizeof(int));
             return resultBuffer;
         }
-        var res = new int[n];
-        for (int i = 0; i < n; i++) res[i] = scratch[minIdx * n + i];
-        return res;
+        var result = new int[n];
+        Buffer.BlockCopy(scratch, minIdx * n * sizeof(int), result, 0, n * sizeof(int));
+        return result;
     }
 
     public static UInt128 GetCanonicalKey(
