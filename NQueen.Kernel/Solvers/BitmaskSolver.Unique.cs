@@ -48,135 +48,27 @@ public partial class BitmaskSolver
         int materialized =0;
         int capReachedFlag =0; //0 = not reached,1 = reached
         object lockObj = new object();
-        ulong fundamentalCountFromEngine =0; // track for parallel path
-        // Preallocate buffer for canonicalCopy
-        int[] canonicalBuffer = new int[N];
-        // Preallocate scratch for sequential, use thread-static for parallel
-        int[] sharedScratch = new int[SymmetryHelper.GetScratchBufferSize(N)];
-        HashSet<UInt128>? uniqueKeys = null;
 
-        if (parallel && N >1)
+        // Use CanonicalUniqueSearchEngine for unique solution enumeration
+        ulong uniqueCount = CanonicalUniqueSearchEngine.CountUnique(N, rows =>
         {
-            // Use thread-safe dictionary for uniqueness
-            var uniqueKeysParallel = new System.Collections.Concurrent.ConcurrentDictionary<UInt128, byte>();
-            // Thread-local lists for materialization (trackAllValues:true to allow .Values enumeration)
-            var threadLocalRaw = new System.Threading.ThreadLocal<List<int[]>>(() => new List<int[]>(), true);
-            var threadLocalPacked = new System.Threading.ThreadLocal<List<PackedSolution>>(() => new List<PackedSolution>(), true);
-            Action<int[]> onUniqueSolutionParallel = rows =>
+            if (System.Threading.Volatile.Read(ref capReachedFlag) ==1) return;
+            if (materialized < Math.Max(1, cap))
             {
-                if (System.Threading.Volatile.Read(ref capReachedFlag) ==1) return;
-                // Ensure per-thread buffers sized for current board
-                int requiredScratch = SymmetryHelper.GetScratchBufferSize(N);
-                int[] scratch = _threadScratch;
-                if (scratch == null || scratch.Length < requiredScratch) scratch = _threadScratch = new int[requiredScratch];
-                int[] canonical = _threadCanonicalBuffer;
-                if (canonical == null || canonical.Length != N) canonical = _threadCanonicalBuffer = new int[N];
-                // Fast path: attempt packed key directly (only matches if rows already canonical)
-                if (N <=25)
+                var storedCopy = new int[N];
+                Array.Copy(rows, storedCopy, N);
+                rawSample.Add(storedCopy);
+                var packed = N <=25 ? SymmetryHelper.PackCanonical(rows, N) :0;
+                packedSample.Add(new PackedSolution(packed, N));
+                materialized++;
+                if (materialized >= cap && _capEnabled)
                 {
-                    UInt128 rawKey = SymmetryHelper.PackCanonical(rows, N);
-                    if (uniqueKeysParallel.ContainsKey(rawKey)) return;
+                    _eventsSuppressedAfterCap = true;
+                    System.Threading.Volatile.Write(ref capReachedFlag,1);
                 }
-                // Canonicalize and get key
-                UInt128 key = SymmetryHelper.PackCanonical(SymmetryHelper.GetCanonicalForm(rows, scratch, canonical), N);
-                if (!uniqueKeysParallel.TryAdd(key,0)) return;
-                // Global atomic materialization cap
-                int matIdx = System.Threading.Interlocked.Increment(ref materialized);
-                if (matIdx <= Math.Max(1, cap))
-                {
-                    var storedCopy = new int[N];
-                    Array.Copy(canonical, storedCopy, canonical.Length); // canonical.Length == N
-                    threadLocalRaw.Value.Add(storedCopy);
-                    var packed = N <=25 ? key :0;
-                    threadLocalPacked.Value.Add(new PackedSolution(packed, N));
-                    if (_capEnabled && matIdx == cap)
-                    {
-                        _eventsSuppressedAfterCap = true;
-                        System.Threading.Volatile.Write(ref capReachedFlag,1);
-                    }
-                }
-            };
-
-            BitmaskParallelEngine.RunUniqueUnified(
-            BoardSize,
-            EnableEvents,
-            cap,
-            onUniqueSolutionParallel,
-            count => fundamentalCountFromEngine = count,
-            p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-            () => System.Threading.Volatile.Read(ref capReachedFlag) ==1
-           );
-            // Merge thread-local lists
-            foreach (var list in threadLocalRaw.Values) rawSample.AddRange(list);
-            foreach (var list in threadLocalPacked.Values) packedSample.AddRange(list);
-            // Defensive: always set _solutionCount to the engine's count, even if no solutions were materialized
-            if (fundamentalCountFromEngine ==0 && cap ==0)
-            {
-                // If cap==0 (count-only), but engine returned0, try to get count from uniqueKeysParallel
-                _solutionCount = (ulong)uniqueKeysParallel.Count;
             }
-            else
-            {
-                _solutionCount = fundamentalCountFromEngine;
-            }
-        }
-        else
-        {
-            uniqueKeys = new HashSet<UInt128>(EstimateUniqueCapacity(N));
-            uniqueKeys.EnsureCapacity(EstimateUniqueCapacity(N));
-            int[] scratch = sharedScratch;
-            for (int root =0; root < N && System.Threading.Volatile.Read(ref capReachedFlag) ==0; root++)
-            {
-                BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
-                BoardSize,
-                RestrictFirstCol: true,
-                EnhancedSymmetry: true,
-                AggressiveSymmetry: BoardSize >= AggressiveSymmetryThreshold,
-                DisplayMode,
-                DelayInMillisec,
-                _currentSimToken,
-                () => IsSolverCanceled || System.Threading.Volatile.Read(ref capReachedFlag) ==1,
-                p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-                m => { if (EnableEvents && DisplayMode == DisplayMode.Visualize && !_eventsSuppressedAfterCap) { var span = m.Span; var packedTmp = span.Length <=25 ? SymmetryHelper.PackCanonical(span, span.Length) :0; QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(packedTmp, BoardSize)); } },
-                rows =>
-                {
-                    if (System.Threading.Volatile.Read(ref capReachedFlag) ==1) return true;
-                    if (!ValidateRows(rows)) return false;
-                    // Fast path: try packed key first (if N <=25)
-                    if (N <=25)
-                    {
-                        UInt128 fastKey = SymmetryHelper.PackCanonical(rows, N);
-                        if (uniqueKeys.Contains(fastKey))
-                            return false;
-                    }
-                    if (System.Threading.Volatile.Read(ref capReachedFlag) ==0)
-                    {
-                        if (SymmetryHelper.AddIfUniquePackedReuseBuffer(rows, uniqueKeys, scratch, canonicalBuffer, out var key, out var canonicalCopy))
-                        {
-                            if (materialized < Math.Max(1, cap))
-                            {
-                                var storedCopy = new int[N];
-                                Array.Copy(canonicalCopy, storedCopy, N);
-                                rawSample.Add(storedCopy);
-                                var packed = N <=25 ? key :0;
-                                packedSample.Add(new PackedSolution(packed, N));
-                                materialized++;
-                                if (materialized >= cap && _capEnabled)
-                                {
-                                    _eventsSuppressedAfterCap = true;
-                                    System.Threading.Volatile.Write(ref capReachedFlag,1);
-                                    return true; // stop current root enumeration (materialization only)
-                                }
-                            }
-                        }
-                    }
-                    return false;
-                }
-               ));
-            }
-            // Assign the fundamental count from uniqueKeys (hash set holds canonical keys)
-            _solutionCount = (ulong)uniqueKeys.Count;
-        }
+        });
+        _solutionCount = uniqueCount;
         _rawSolutions = rawSample;
         // Convert PackedSolution to tuple for _solutions
         _solutions.AddRange(packedSample.Select(ps => (ps.Packed, ps.BoardSize)));
