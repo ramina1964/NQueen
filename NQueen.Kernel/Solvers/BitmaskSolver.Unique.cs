@@ -4,11 +4,6 @@ namespace NQueen.Kernel.Solvers;
 public partial class BitmaskSolver
 {
     private const int AggressiveSymmetryThreshold = 12;
-    // For parallel scratch reuse
-    [ThreadStatic]
-    private static int[]? _threadScratch;
-    [ThreadStatic]
-    private static int[]? _threadCanonicalBuffer;
 
     // Helper for HashSet capacity estimation (powers of two above expected unique count)
     private static int EstimateUniqueCapacity(int n)
