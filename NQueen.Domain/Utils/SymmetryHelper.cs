@@ -132,13 +132,13 @@ public static partial class SymmetryHelper
         bool identityIsMin = true;
         for (int t = 1; t < 8; t++)
         {
-            bool isLess = false, isGreater = false;
+            bool isLess = false;
             for (int i = 0; i < n; i++)
             {
                 int a = scratch[t * n + i];
                 int b = scratch[minIdx * n + i];
                 if (a < b) { isLess = true; break; }
-                if (a > b) { isGreater = true; break; }
+                if (a > b) break;
             }
             if (isLess)
             {
@@ -160,7 +160,7 @@ public static partial class SymmetryHelper
         }
         if (resultBuffer != null && resultBuffer.Length >= n)
         {
-            Buffer.BlockCopy(scratch, minIdx * n * sizeof(int), resultBuffer, 0, n * sizeof(int));
+            Buffer.BlockCopy(scratch, minIdx * n * sizeof(int), resultBuffer,0, n * sizeof(int));
             return resultBuffer;
         }
         var result = new int[n];
