@@ -120,42 +120,21 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         _solutionCount = 0;
         IsSolverCanceled = false;
         _eventsSuppressedAfterCap = false;
-        _rawSolutions = null;
     }
 
     private SimulationResults BuildResults(TimeSpan elapsed)
     {
-        if (SolutionMode == SolutionMode.Unique && !UseCountOnlyUniqueMode)
-        {
-            if (_rawSolutions != null)
-            {
-                _rawSolutions = [.. _rawSolutions
-                    .Where(arr => arr != null &&
-                    arr.Length == BoardSize && Array.IndexOf(arr, -1) < 0)];
-            }
-            if (_solutions.Count > 0)
-            {
-                _solutions.RemoveAll(s => s.boardSize != BoardSize || s.boardSize <= 0);
-            }
-        }
         var cap = (_capEnabled ? _maxDisplayedCount : 0);
         var resultSolutions = new List<Solution>(_solutions.Count);
         int idx = 1;
         foreach (var (packed, boardSize) in (cap > 0 && _solutions.Count > cap ? _solutions.Take(cap) : _solutions))
         {
             if (boardSize <= 0) continue;
-            if (_rawSolutions != null && _rawSolutions.Count >= idx)
+            if (boardSize > 25)
             {
-                var raw = _rawSolutions[idx - 1];
-                if (raw != null && raw.Length == boardSize && Array.IndexOf(raw, -1) < 0)
-                    resultSolutions.Add(new NQueen.Domain.Models.Solution(raw, _formatter, idx));
-                else
-                    resultSolutions.Add(new NQueen.Domain.Models.Solution(packed, boardSize, _formatter, idx));
+                throw new NotSupportedException($"Materialized solution output is only supported for board sizes up to 25. (Requested: {boardSize})");
             }
-            else
-            {
-                resultSolutions.Add(new Solution(packed, boardSize, _formatter, idx));
-            }
+            resultSolutions.Add(new Solution(packed, boardSize, _formatter, idx));
             idx++;
         }
         return new SimulationResults(resultSolutions, _solutionCount, Math.Round(elapsed.TotalSeconds, 1));
@@ -196,7 +175,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     private bool _disposed;
     private readonly int _maxDisplayedCount = maxDisplayedCount;
     private volatile bool _eventsSuppressedAfterCap;
-    private List<int[]>? _rawSolutions;
 
     private void SolveAllCountOnlyMode()
     {

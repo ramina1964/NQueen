@@ -1,5 +1,8 @@
 namespace NQueen.Kernel.Solvers;
 
+using NQueen.Kernel.Solvers.Engines;
+using NQueen.Domain.Settings;
+
 internal static class UniqueSolutionCounter
 {
     // Unified: use symmetry-pruned for large boards, canonical for small
@@ -8,26 +11,19 @@ internal static class UniqueSolutionCounter
         bool aggressiveSymmetry = false, int cap = 0, Action<int[]>? onMaterialized = null)
     {
         if (boardSize <= 0) return 0;
-        ulong uniqueCount = 0;
         if (boardSize >= SimulationSettings.LargeBoardSymmetryPruningThreshold)
         {
             // Use symmetry-pruned unique counter for large boards
-            uniqueCount = SymmetryPrunedUniqueCounter.Count(boardSize, cap, onMaterialized);
+            return SymmetryPrunedUniqueCounter.Count(boardSize, cap, onMaterialized);
         }
         else
         {
             // Use canonicalization-based for small boards
-            BitmaskSolver.RunUniqueUnifiedStatic(
-                boardSize,
-                parallel: true,
-                cap: cap,
-                onMaterialized: onMaterialized,
-                onCounted: c => uniqueCount = c,
-                reportProgress: p => { if (progress != null) progress(p); if (progressEventSource != null && sender != null) progressEventSource(sender, new ProgressUpdateEventArgs(p, token)); },
-                capReached: () => false,
-                aggressiveSymmetry: aggressiveSymmetry
-            );
+            ulong uniqueCount = 0;
+            CanonicalUniqueSearchEngine.CountUnique(boardSize, onMaterialized);
+            // If onMaterialized is not null, it will be called for each solution; otherwise, just count
+            uniqueCount = CanonicalUniqueSearchEngine.CountUnique(boardSize, null);
+            return uniqueCount;
         }
-        return uniqueCount;
     }
 }
