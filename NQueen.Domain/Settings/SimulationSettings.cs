@@ -35,4 +35,7 @@ public static class SimulationSettings
 
     // Threshold at/above which we throttle parallel progress updates for All modes.
     public const int LargeBoardProgressThrottleThreshold = 16;
+
+    // Threshold at/above which symmetry-pruned unique counting is used for Unique+CountOnly mode.
+    public const int LargeBoardSymmetryPruningThreshold = 15;
 }

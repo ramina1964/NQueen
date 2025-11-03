@@ -29,8 +29,6 @@ public partial class BitmaskSolver
                     }
                     else
                     {
-                        _rawSolutions ??= [];
-                        _rawSolutions.Add(rows);
                         _solutions.Add((0, rows.Length));
                     }
                     if (EnableEvents && !_eventsSuppressedAfterCap)

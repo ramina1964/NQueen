@@ -10,7 +10,6 @@ public partial class BitmaskSolver
             : int.MaxValue;
 
         var solutions = new List<(UInt128 packed, int boardSize)>();
-        var rawSolutions = new List<int[]>();
         ulong totalCount = 0;
         int materialized = 0;
         int capReachedFlag = 0;
@@ -18,7 +17,6 @@ public partial class BitmaskSolver
         if (isParallel && N > 1)
         {
             // trackAllValues:true so .Values is valid
-            var threadLocalRaw = new ThreadLocal<List<int[]>>(() => [], true);
             var threadLocalPacked = new ThreadLocal<List<(UInt128, int)>>(() => [], true);
 
             // Only stop materializing when cap is reached, but always count all solutions
@@ -32,11 +30,9 @@ public partial class BitmaskSolver
                     // clone rows to prevent later mutation issues
                     var stored = new int[rows.Length];
                     Array.Copy(rows, stored, rows.Length);
-                    var rawList = threadLocalRaw.Value;
                     var packedList = threadLocalPacked.Value;
-                    if (rawList is not null && packedList is not null)
+                    if (packedList is not null)
                     {
-                        rawList.Add(stored);
                         packedList.Add((0, rows.Length));
                     }
                     if (_capEnabled && matIdx == cap)
@@ -59,7 +55,6 @@ public partial class BitmaskSolver
                 () => false
             );
 
-            foreach (var list in threadLocalRaw.Values) rawSolutions.AddRange(list);
             foreach (var list in threadLocalPacked.Values) solutions.AddRange(list);
             totalCount = totalCountFromEngine;
         }
@@ -85,7 +80,6 @@ public partial class BitmaskSolver
                     {
                         var stored = new int[rows.Length];
                         Array.Copy(rows, stored, rows.Length);
-                        rawSolutions.Add(stored);
                         solutions.Add((0, rows.Length));
                         materialized++;
                         if (materialized >= cap && _capEnabled)
@@ -103,7 +97,6 @@ public partial class BitmaskSolver
         _solutionCount = totalCount;
         _solutions.Clear();
         _solutions.AddRange(solutions);
-        _rawSolutions = rawSolutions;
         if (EnableEvents)
             ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
