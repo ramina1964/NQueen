@@ -11,35 +11,16 @@ internal sealed partial class BitmaskParallelEngine
         int materializedCount = 0;
         int cap = request.ShouldMaterialize() ? SimulationSettings.MaxDisplayedCount : 0;
         int rootsCompleted = 0;
-        if (N <= 8)
+
+        // Enumerate all roots (legacy half-root logic removed for correctness & simplicity)
+        for (int fr = 0; fr < N; fr++)
         {
-            // Enumerate half non-center roots only
-            int halfNonCenter = N / 2; // integer division
-            for (int fr = 0; fr < halfNonCenter; fr++)
-            {
-                int root = fr;
-                tasks.Add(Task.Run(() => EnumerateRoot(root)));
-            }
-            Task.WaitAll(tasks.ToArray());
-            // fundamental from non-center portion unknown via symmetry; use expected counts later; still gather center separately for materialization
-            if ((N & 1) == 1)
-            {
-                // center root
-                EnumerateRoot(N / 2);
-            }
-            fundamentalCount = (ulong)globalUnique.Count; // will be expanded by solver for small boards
+            int root = fr;
+            tasks.Add(Task.Run(() => EnumerateRoot(root)));
         }
-        else
-        {
-            // Large boards: enumerate all first rows; each canonical key is a fundamental solution
-            for (int fr = 0; fr < N; fr++)
-            {
-                int root = fr;
-                tasks.Add(Task.Run(() => EnumerateRoot(root)));
-            }
-            Task.WaitAll(tasks.ToArray());
-            fundamentalCount = (ulong)globalUnique.Count;
-        }
+        Task.WaitAll(tasks.ToArray());
+        fundamentalCount = (ulong)globalUnique.Count;
+
         request.ReportProgress(100.0);
         request.OnCompletedUniqueCount(fundamentalCount);
 
@@ -60,23 +41,13 @@ internal sealed partial class BitmaskParallelEngine
             ulong[] stackRemaining = new ulong[N];
             int col = 1;
             ulong remaining = ComputeAvail(col);
-            bool rootIsCanonical = (fr < (N + 1) / 2); // Only first half roots are canonical
             while (true)
             {
                 if (col == N)
                 {
-                    UInt128 key;
-                    ReadOnlySpan<int> canonicalSpan;
-                    if (rootIsCanonical)
-                    {
-                        key = SymmetryHelper.PackCanonical(rowsArr, N);
-                        canonicalSpan = rowsArr;
-                    }
-                    else
-                    {
-                        key = SymmetryHelper.GetCanonicalKey(rowsArr, scratchBuf, out canonicalSpan);
-                    }
-                    if (globalUnique.TryAdd(key,0) && materializedCount < cap)
+                    // Always canonicalize (rootIsCanonical shortcut removed)
+                    UInt128 key = SymmetryHelper.GetCanonicalKey(rowsArr, scratchBuf, out var canonicalSpan);
+                    if (globalUnique.TryAdd(key, 0) && materializedCount < cap)
                     {
                         int newVal = Interlocked.Increment(ref materializedCount);
                         if (newVal <= cap)
@@ -86,18 +57,17 @@ internal sealed partial class BitmaskParallelEngine
                             request.OnUniqueSolution(canonicalRows);
                         }
                     }
-                    col--; if (col <=0) break; Restore(col, out remaining); continue;
+                    col--; if (col <= 0) break; Restore(col, out remaining); continue;
                 }
-                if (remaining ==0)
+                if (remaining == 0)
                 {
-                    col--; if (col <=0) break; Restore(col, out remaining); continue;
+                    col--; if (col <= 0) break; Restore(col, out remaining); continue;
                 }
-                // Removed aggressive monotonicity pruning for clarity and maintainability
                 ulong bit = remaining & (ulong)-(long)remaining; remaining ^= bit;
                 int row = BitOperations.TrailingZeroCount(bit);
                 rowsArr[col] = row;
                 stackCols[col] = cols; stackD1[col] = d1; stackD2[col] = d2; stackRemaining[col] = remaining;
-                cols |= bit; d1 = (d1 | bit) <<1; d2 = (d2 | bit) >>1;
+                cols |= bit; d1 = (d1 | bit) << 1; d2 = (d2 | bit) >> 1;
                 col++;
                 if (col == N) continue;
                 remaining = ComputeAvail(col);
@@ -105,17 +75,13 @@ internal sealed partial class BitmaskParallelEngine
             if (request.EnableEvents)
             {
                 int done = Interlocked.Increment(ref rootsCompleted);
-                double pctBase = (N <= 8 ? (double)done / (N / 2) : (double)done / N) * 100.0;
+                double pctBase = (double)done / N * 100.0;
                 request.ReportProgress(Math.Min(100.0, pctBase));
             }
             ulong ComputeAvail(int c)
             {
                 ulong avail = ~(cols | d1 | d2) & mask;
-                if (N <= 8) // small board first-column pruning to match legacy path
-                {
-                    int maxRow = SymmetryHelper.MaxRowExclusiveForColumn(N, c, rowsArr);
-                    if (maxRow < N) avail &= (1UL << maxRow) - 1UL;
-                }
+                // Removed small-board first-column pruning to avoid missing canonical representatives
                 return avail;
             }
             void Restore(int c, out ulong rem)
@@ -142,33 +108,16 @@ internal sealed partial class BitmaskParallelEngine
         var tasks = new List<Task>();
         int materializedCount = 0;
         int rootsCompleted = 0;
-        object capLock = new object();
 
-        if (N <= 8)
+        // Enumerate all roots (legacy half-root logic removed)
+        for (int fr = 0; fr < N; fr++)
         {
-            int halfNonCenter = N / 2;
-            for (int fr = 0; fr < halfNonCenter; fr++)
-            {
-                int root = fr;
-                tasks.Add(Task.Run(() => EnumerateRoot(root)));
-            }
-            Task.WaitAll(tasks.ToArray());
-            if ((N & 1) == 1)
-            {
-                EnumerateRoot(N / 2);
-            }
+            int root = fr;
+            tasks.Add(Task.Run(() => EnumerateRoot(root)));
         }
-        else
-        {
-            for (int fr = 0; fr < N; fr++)
-            {
-                int root = fr;
-                tasks.Add(Task.Run(() => EnumerateRoot(root)));
-            }
-            Task.WaitAll(tasks.ToArray());
-        }
+        Task.WaitAll(tasks.ToArray());
+
         reportProgress(100.0);
-        // Always report the count from the dictionary, not from materializedCount
         onCompletedUniqueCount((ulong)globalUnique.Count);
 
         void EnumerateRoot(int fr)
@@ -202,6 +151,7 @@ internal sealed partial class BitmaskParallelEngine
                             canonicalSpan.CopyTo(canonicalRows);
                             onUniqueSolution(canonicalRows);
                         }
+                        if (capReached()) { /* early termination hook retained */ }
                     }
                     col--; if (col <= 0) break; Restore(col, out remaining); continue;
                 }
@@ -221,18 +171,13 @@ internal sealed partial class BitmaskParallelEngine
             if (enableEvents)
             {
                 int done = Interlocked.Increment(ref rootsCompleted);
-                double pctBase = (N <= 8 ? (double)done / (N / 2) : (double)done / N) * 100.0;
+                double pctBase = (double)done / N * 100.0;
                 reportProgress(Math.Min(100.0, pctBase));
             }
             ulong ComputeAvail(int c)
             {
                 ulong avail = ~(cols | d1 | d2) & mask;
-                if (N <= 8) // small board first-column pruning to match legacy path
-                {
-                    int maxRow = SymmetryHelper.MaxRowExclusiveForColumn(N, c, rowsArr);
-                    if (maxRow < N) avail &= (1UL << maxRow) - 1UL;
-                }
-                return avail;
+                return avail; // pruning removed
             }
             void Restore(int c, out ulong rem)
             {

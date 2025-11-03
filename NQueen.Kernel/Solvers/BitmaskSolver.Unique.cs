@@ -37,33 +37,56 @@ public partial class BitmaskSolver
     {
         int N = BoardSize;
         int cap = _capEnabled ? _maxDisplayedCount : int.MaxValue;
-        _solutions.Clear(); _rawSolutions = null; _eventsSuppressedAfterCap = false; _solutionCount =0;
+        _solutions.Clear(); _rawSolutions = null; _eventsSuppressedAfterCap = false; _solutionCount = 0;
         var rawSample = new List<int[]>();
         var packedSample = new List<PackedSolution>();
-        int materialized =0;
-        int capReachedFlag =0; //0 = not reached,1 = reached
+        int materialized = 0;
+        int capReachedFlag = 0; //0 = not reached,1 = reached
         object lockObj = new object();
 
-        // Use CanonicalUniqueSearchEngine for unique solution enumeration
-        ulong uniqueCount = CanonicalUniqueSearchEngine.CountUnique(N, rows =>
+        // Use symmetry-pruned for large boards, canonical for small
+        if (N >= SimulationSettings.LargeBoardSymmetryPruningThreshold)
         {
-            if (System.Threading.Volatile.Read(ref capReachedFlag) ==1) return;
-            if (materialized < Math.Max(1, cap))
+            _solutionCount = UniqueSolutionCounter.Count(N, null, _currentSimToken, ProgressValueChanged, this, false, cap, rows =>
             {
-                var storedCopy = new int[N];
-                Array.Copy(rows, storedCopy, N);
-                rawSample.Add(storedCopy);
-                var packed = N <=25 ? SymmetryHelper.PackCanonical(rows, N) :0;
-                packedSample.Add(new PackedSolution(packed, N));
-                materialized++;
-                if (materialized >= cap && _capEnabled)
+                if (materialized < Math.Max(1, cap))
                 {
-                    _eventsSuppressedAfterCap = true;
-                    System.Threading.Volatile.Write(ref capReachedFlag,1);
+                    var storedCopy = new int[N];
+                    Array.Copy(rows, storedCopy, N);
+                    rawSample.Add(storedCopy);
+                    var packed = N <= 25 ? SymmetryHelper.PackCanonical(rows, N) : 0;
+                    packedSample.Add(new PackedSolution(packed, N));
+                    materialized++;
+                    if (materialized >= cap && _capEnabled)
+                    {
+                        _eventsSuppressedAfterCap = true;
+                        System.Threading.Volatile.Write(ref capReachedFlag, 1);
+                    }
                 }
-            }
-        });
-        _solutionCount = uniqueCount;
+            });
+        }
+        else
+        {
+            ulong uniqueCount = CanonicalUniqueSearchEngine.CountUnique(N, rows =>
+            {
+                if (System.Threading.Volatile.Read(ref capReachedFlag) == 1) return;
+                if (materialized < Math.Max(1, cap))
+                {
+                    var storedCopy = new int[N];
+                    Array.Copy(rows, storedCopy, N);
+                    rawSample.Add(storedCopy);
+                    var packed = N <= 25 ? SymmetryHelper.PackCanonical(rows, N) : 0;
+                    packedSample.Add(new PackedSolution(packed, N));
+                    materialized++;
+                    if (materialized >= cap && _capEnabled)
+                    {
+                        _eventsSuppressedAfterCap = true;
+                        System.Threading.Volatile.Write(ref capReachedFlag, 1);
+                    }
+                }
+            });
+            _solutionCount = uniqueCount;
+        }
         _rawSolutions = rawSample;
         // Convert PackedSolution to tuple for _solutions
         _solutions.AddRange(packedSample.Select(ps => (ps.Packed, ps.BoardSize)));
@@ -84,10 +107,10 @@ public partial class BitmaskSolver
         Func<bool> capReached,
         bool aggressiveSymmetry = false)
     {
-        ulong uniqueCount =0;
-        if (parallel && boardSize >1)
+        ulong uniqueCount = 0;
+        if (parallel && boardSize > 1)
         {
-            ulong countFromEngine =0;
+            ulong countFromEngine = 0;
             BitmaskParallelEngine.RunUniqueUnified(
                 boardSize,
                 enableEvents: false,
@@ -104,8 +127,8 @@ public partial class BitmaskSolver
             var uniqueKeys = new HashSet<UInt128>(EstimateUniqueCapacity(boardSize));
             uniqueKeys.EnsureCapacity(EstimateUniqueCapacity(boardSize));
             int[] scratch = new int[SymmetryHelper.GetScratchBufferSize(boardSize)];
-            int materialized =0;
-            for (int root =0; root < boardSize && (cap <=0 || materialized < cap); root++)
+            int materialized = 0;
+            for (int root = 0; root < boardSize && (cap <= 0 || materialized < cap); root++)
             {
                 BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
                     boardSize,
@@ -113,14 +136,14 @@ public partial class BitmaskSolver
                     EnhancedSymmetry: true,
                     AggressiveSymmetry: aggressiveSymmetry,
                     DisplayMode.Hide,
-                    DelayInMillisec:0,
+                    DelayInMillisec: 0,
                     SimulationToken: Guid.Empty,
                     IsCanceled: () => false,
                     ReportProgress: reportProgress,
                     OnQueenPlaced: _ => { },
                     OnSolution: rows =>
                     {
-                        if (boardSize <=25)
+                        if (boardSize <= 25)
                         {
                             UInt128 fastKey = SymmetryHelper.PackCanonical(rows, boardSize);
                             if (uniqueKeys.Contains(fastKey))
@@ -128,7 +151,7 @@ public partial class BitmaskSolver
                         }
                         if (!uniqueKeys.Add(SymmetryHelper.PackCanonical(SymmetryHelper.GetCanonicalForm(rows, scratch, null), rows.Length)))
                             return false;
-                        if (cap >0 && materialized < cap && onMaterialized != null)
+                        if (cap > 0 && materialized < cap && onMaterialized != null)
                         {
                             onMaterialized((int[])rows.Clone());
                             materialized++;
