@@ -19,7 +19,7 @@ public partial class BitmaskSolver
                 // Central invariant check (single place)
                 if (!ValidateRows(rows)) return false;
 
-                if (_solutions.Count == 0 && ShouldAddSolution())
+                if (_solutions.Count == 0 && _largeBoardRawSolutions.Count == 0 && ShouldAddSolution())
                 {
                     _solutionCount++;
                     if (rows.Length <= 25)
@@ -29,11 +29,14 @@ public partial class BitmaskSolver
                     }
                     else
                     {
-                        _solutions.Add((0, rows.Length));
+                        // Keep raw copy for large boards (cannot pack into UInt128)
+                        var copy = new int[rows.Length];
+                        Array.Copy(rows, copy, rows.Length);
+                        _largeBoardRawSolutions.Add(copy);
                     }
                     if (EnableEvents && !_eventsSuppressedAfterCap)
                         SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
-                    if (_capEnabled && _solutions.Count >= _maxDisplayedCount)
+                    if (_capEnabled && (_solutions.Count + _largeBoardRawSolutions.Count) >= _maxDisplayedCount)
                         _eventsSuppressedAfterCap = true;
                     return true; // Stop after first solution
                 }
