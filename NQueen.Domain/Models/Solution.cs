@@ -4,6 +4,7 @@ namespace NQueen.Domain.Models;
 public class Solution
 {
     private static int _globalSequence; // fallback sequence when id not provided
+    public static void ResetSequence() => Interlocked.Exchange(ref _globalSequence, 0);
 
     // Existing array-based constructor (kept for compatibility)
     public Solution(int[] queenPositions, ISolutionFormatter formatter, int? id = null)

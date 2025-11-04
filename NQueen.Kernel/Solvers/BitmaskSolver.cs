@@ -83,6 +83,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
             bool uniqueCountOnly = UseCountOnlyUniqueMode || UniqueStorageMode == ResultStorageMode.CountOnly;
 
             ResetForSolve();
+            Solution.ResetSequence(); // ensure numbering starts at 1 for each solve
             var sw = Stopwatch.StartNew();
             bool usedLookup = false;
 

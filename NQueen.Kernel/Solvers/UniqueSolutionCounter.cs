@@ -141,12 +141,13 @@ internal static class UniqueSolutionCounter
     {
         bool materialize = cap > 0 && onMaterialized != null;
         int cores = Environment.ProcessorCount;
-        int targetJobs = cores * 256; // increased granularity (was cores*128)
-        int maxDepth = 5; // allow one more level to create more partial states
+        int targetJobs = cores * 256;
+        int maxDepth = 5;
         int depth = 2;
         double branch = N * 0.55;
         while (depth < maxDepth && Math.Pow(branch, depth) < targetJobs) depth++;
 
+        // Optimization 2: store only prefix rows (compressed) instead of full N snapshot
         var partialStates = new List<PartialState>(targetJobs);
         int scratchSize = SymmetryHelper.GetScratchBufferSize(N);
         int maxPartialStates = targetJobs * 2;
@@ -166,9 +167,10 @@ internal static class UniqueSolutionCounter
             if (generationAborted) return;
             if (col == N || col == maxDepthLocal)
             {
-                var snap = new int[N];
-                Array.Copy(rows, snap, N);
-                partialStates.Add(new PartialState(snap, col, cols, d1, d2));
+                // copy only prefix of length col
+                var prefix = new int[col];
+                if (col > 0) Array.Copy(rows, prefix, col);
+                partialStates.Add(new PartialState(prefix, col, cols, d1, d2));
                 if (partialStates.Count >= maxPartialStates)
                     generationAborted = true;
                 return;
@@ -190,42 +192,90 @@ internal static class UniqueSolutionCounter
         if (totalJobs == 0) return 0UL;
 
         ulong minimalCount = 0;
+        // Optimization 4: dictionary only needed while we are still materializing (before cap reached)
         var globalUnique = materialize ? new ConcurrentDictionary<UInt128, byte>(cores * 2, totalJobs) : null;
         int materializedGlobal = 0;
         int processedJobs = 0;
         int lastPctReported = -1;
         var scratchPool = new ThreadLocal<int[]>(() => new int[scratchSize]);
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        long lastEmitMs = 0;
+        ulong estimatedTotal = ExpectedSolutionCounts.GetUnique(N);
+        const double leafWeight = 0.35;
+
+        void TryEmitProgress()
+        {
+            if (progressEventSource == null) return;
+            double jobBasePct = totalJobs == 0 ? 0 : (double)processedJobs / totalJobs;
+            double leafPct = 0;
+            if (estimatedTotal > 0)
+                leafPct = Math.Min(1.0, (double)minimalCount / estimatedTotal);
+            double blended = Math.Min(0.98, jobBasePct * (1.0 - leafWeight) + leafPct * leafWeight);
+            int pct = (int)Math.Max(lastPctReported, blended * 98.0);
+            if (pct > 98) pct = 98;
+            if (pct != lastPctReported)
+            {
+                lastPctReported = pct;
+                progressEventSource(sender!, new ProgressUpdateEventArgs(pct, token));
+                lastEmitMs = sw.ElapsedMilliseconds;
+            }
+            else if (sw.ElapsedMilliseconds - lastEmitMs >= SimulationSettings.ProgressIntervalInMilliSec && lastPctReported < 98)
+            {
+                lastPctReported++;
+                progressEventSource(sender!, new ProgressUpdateEventArgs(lastPctReported, token));
+                lastEmitMs = sw.ElapsedMilliseconds;
+            }
+        }
 
         Parallel.ForEach(partialStates, new ParallelOptions { MaxDegreeOfParallelism = cores }, state =>
         {
-            var rowsLocal = state.Rows;
+            // reconstruct full rows array from prefix
+            var rowsLocal = new int[N];
+            Array.Fill(rowsLocal, -1);
+            if (state.PrefixRows.Length > 0)
+                Array.Copy(state.PrefixRows, rowsLocal, state.PrefixRows.Length);
             var scratch = scratchPool.Value!;
             void DFS(int col, ulong cols, ulong d1, ulong d2)
             {
                 if (col == N)
                 {
-                    UInt128 key = SymmetryHelper.GetCanonicalKey(rowsLocal, scratch, out var canonicalSpan);
-                    bool isMinimal = true;
-                    for (int i = 0; i < N; i++)
+                    // If cap reached (materialization done), avoid key packing & dictionary insert
+                    if (materialize && materializedGlobal < cap)
                     {
-                        if (rowsLocal[i] != canonicalSpan[i]) { isMinimal = false; break; }
-                    }
-                    if (!isMinimal) return;
-
-                    if (materialize)
-                    {
-                        if (globalUnique!.TryAdd(key, 0) && materializedGlobal < cap && onMaterialized != null)
+                        UInt128 key = SymmetryHelper.GetCanonicalKey(rowsLocal, scratch, out var canonicalSpan);
+                        bool isMinimal = true;
+                        for (int i = 0; i < N; i++)
                         {
-                            int idx = Interlocked.Increment(ref materializedGlobal);
-                            if (idx <= cap)
+                            if (rowsLocal[i] != canonicalSpan[i]) { isMinimal = false; break; }
+                        }
+                        if (!isMinimal) return;
+                        if (globalUnique!.TryAdd(key, 0))
+                        {
+                            if (materializedGlobal < cap && onMaterialized != null)
                             {
-                                var copy = new int[N];
-                                canonicalSpan.CopyTo(copy);
-                                onMaterialized(copy);
+                                int idx = Interlocked.Increment(ref materializedGlobal);
+                                if (idx <= cap)
+                                {
+                                    var copy = new int[N];
+                                    canonicalSpan.CopyTo(copy);
+                                    onMaterialized(copy);
+                                }
                             }
                         }
                     }
+                    else
+                    {
+                        // Minimality test without dictionary & packing
+                        var canon = SymmetryHelper.GetCanonicalForm(rowsLocal, scratch, null);
+                        bool minimal = true;
+                        for (int i = 0; i < N; i++)
+                        {
+                            if (rowsLocal[i] != canon[i]) { minimal = false; break; }
+                        }
+                        if (!minimal) return;
+                    }
                     Interlocked.Increment(ref minimalCount);
+                    if ((minimalCount & 0xFFF) == 0) TryEmitProgress();
                     return;
                 }
                 ulong maskAll = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
@@ -241,20 +291,14 @@ internal static class UniqueSolutionCounter
                 }
             }
             DFS(state.Col, state.Cols, state.D1, state.D2);
-
-            int done = Interlocked.Increment(ref processedJobs);
-            int pct = (int)Math.Min(98.0, (double)done / totalJobs * 98.0); // use 98% span, reserve 2% for final aggregation
-            if (pct != lastPctReported)
-            {
-                int prev = Interlocked.Exchange(ref lastPctReported, pct);
-                if (pct != prev && progressEventSource != null)
-                    progressEventSource(sender!, new ProgressUpdateEventArgs(pct, token));
-            }
+            Interlocked.Increment(ref processedJobs);
+            if ((processedJobs & 0x3F) == 0) TryEmitProgress();
         });
 
+        // Final emit 100%
         progressEventSource?.Invoke(sender!, new ProgressUpdateEventArgs(100.0, token));
         return minimalCount;
     }
 
-    private readonly record struct PartialState(int[] Rows, int Col, ulong Cols, ulong D1, ulong D2);
+    private readonly record struct PartialState(int[] PrefixRows, int Col, ulong Cols, ulong D1, ulong D2);
 }
