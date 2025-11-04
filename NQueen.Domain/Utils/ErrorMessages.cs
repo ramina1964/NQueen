@@ -18,10 +18,10 @@ public static class ErrorMessages
         $"Board size for Single Solution must not exceed {BoardSettings.MaxSizeForSingle}.";
 
     public static string SizeTooLargeForUnique =>
-        $"Board size for Unique Solutions must not exceed 20.";
+        $"Board size for 'Unique Solutions' must not exceed {BoardSettings.MaxSizeForUnique}.";
 
     public static string SizeTooLargeForAll =>
-        $"Board size for All Solutions must not exceed 20.";
+        $"Board size for 'All Solutions' must not exceed {BoardSettings.MaxSizeForAll}.";
 
     // DisplayMode.Visualize limit message
     public static string VisualizeSizeTooLarge =>
