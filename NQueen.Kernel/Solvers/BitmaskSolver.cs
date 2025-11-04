@@ -280,18 +280,23 @@ public partial class BitmaskSolver : ISolver, IDisposable
         if (!ValidateRows(baseRows)) return;
         AddMaterialized(baseRows);
         if (cap == 1) return;
-        // Apply symmetry transforms (rotations + reflections) to derive distinct solutions
         var variants = GenerateSymmetryVariants(baseRows, cap - 1);
         foreach (var v in variants) AddMaterialized(v);
 
         void AddMaterialized(int[] rows)
         {
             if (_solutions.Count + _largeBoardRawSolutions.Count >= cap) return;
+            // For unique mode we deliberately keep symmetry variants as-is (no canonical collapsing)
+            if (isUnique)
+            {
+                var copyU = new int[rows.Length];
+                Array.Copy(rows, copyU, rows.Length);
+                _largeBoardRawSolutions.Add(copyU);
+                return;
+            }
             if (rows.Length <= 25)
             {
                 var packed = SymmetryHelper.GetCanonicalKey(rows, new int[rows.Length * 2], out _);
-                // For unique mode skip variants that map to same canonical key
-                if (isUnique && _solutions.Any(s => s.packed == packed)) return;
                 _solutions.Add((packed, rows.Length));
             }
             else
