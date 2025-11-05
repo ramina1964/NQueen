@@ -15,12 +15,16 @@ public static class SymmetryPrunedUniqueCounter
     {
         if (boardSize <= 0) return 0;
         int N = boardSize;
-        int maxRow = (N + 1) / 2;
-        var counts = new ulong[maxRow];
-        var mats = new int[maxRow];
+        bool isOdd = (N & 1) == 1;
+        int half = N / 2;            // number of rows strictly in first half (rows 0..half-1)
+        int centerRow = isOdd ? half : -1; // center row index when odd
+
+        var counts = new ulong[half];
+        var mats = new int[half];
         var materializedSolutions = new ConcurrentQueue<int[]>();
 
-        Parallel.For(0, maxRow, rootRow =>
+        // Enumerate strictly first half rows (mirror counted later by doubling)
+        Parallel.For(0, half, rootRow =>
         {
             ulong count = 0;
             int materialized = 0;
@@ -58,34 +62,34 @@ public static class SymmetryPrunedUniqueCounter
 
         ulong totalCount = 0;
         int totalMaterialized = 0;
-        for (int i = 0; i < maxRow; i++)
+        for (int i = 0; i < half; i++)
         {
             totalCount += counts[i];
             totalMaterialized += mats[i];
         }
+        // Mirror first-half results
         totalCount *= 2;
         totalMaterialized *= 2;
 
-        // For odd N, handle center row separately
-        if ((N & 1) == 1)
+        // Center row (only for odd N) – not mirrored
+        if (isOdd)
         {
-            int center = N / 2;
-            ulong count = 0;
-            int materialized = 0;
+            ulong centerCount = 0;
+            int centerMaterialized = 0;
             int[] rows = new int[N];
             Array.Fill(rows, -1);
-            rows[0] = center;
+            rows[0] = centerRow;
             void CenterDFS(int col, ulong cols, ulong d1, ulong d2)
             {
                 if (col == N)
                 {
-                    count++;
-                    if (materialized < cap && onMaterialized != null)
+                    centerCount++;
+                    if (centerMaterialized < cap && onMaterialized != null)
                     {
                         var copy = new int[N];
                         Array.Copy(rows, copy, N);
                         materializedSolutions.Enqueue(copy);
-                        materialized++;
+                        centerMaterialized++;
                     }
                     return;
                 }
@@ -99,12 +103,12 @@ public static class SymmetryPrunedUniqueCounter
                     rows[col] = -1;
                 }
             }
-            CenterDFS(1, 1UL << center, (1UL << center) << 1, (1UL << center) >> 1);
-            totalCount += count;
-            totalMaterialized += materialized;
+            CenterDFS(1, 1UL << centerRow, (1UL << centerRow) << 1, (1UL << centerRow) >> 1);
+            totalCount += centerCount;
+            totalMaterialized += centerMaterialized;
         }
 
-        // Emit up to cap materialized solutions
+        // Emit up to cap materialized solutions (duplicates from symmetry not expanded; consumer shows sample reps)
         if (onMaterialized != null && cap > 0)
         {
             int emitted = 0;

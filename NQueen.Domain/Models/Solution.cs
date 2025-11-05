@@ -1,7 +1,11 @@
-﻿namespace NQueen.Domain.Models;
+﻿using System.Threading;
+namespace NQueen.Domain.Models;
 
 public class Solution
 {
+    private static int _globalSequence; // fallback sequence when id not provided
+    public static void ResetSequence() => Interlocked.Exchange(ref _globalSequence, 0);
+
     // Existing array-based constructor (kept for compatibility)
     public Solution(int[] queenPositions, ISolutionFormatter formatter, int? id = null)
     {
@@ -10,8 +14,8 @@ public class Solution
         foreach (var v in queenPositions)
             if (v < 0)
                 throw new ArgumentException("Queen positions must contain non-negative values.", nameof(queenPositions));
-        Id = id;
-        Name = $"No. {id}";
+        Id = id ?? Interlocked.Increment(ref _globalSequence);
+        Name = $"Solution {Id}"; // updated naming
         _queenPositions = queenPositions; // materialized upfront
         BoardSize = queenPositions.Length;
         Positions = MapQueenArrayToPositions(_queenPositions);
@@ -23,20 +27,18 @@ public class Solution
     {
         if (boardSize <= 0 || boardSize > 25)
             throw new ArgumentOutOfRangeException(nameof(boardSize), "Packed storage supports board sizes 1..25.");
-        Id = id;
-        Name = $"No. {id}";
+        Id = id ?? Interlocked.Increment(ref _globalSequence);
+        Name = $"Solution {Id}"; // updated naming
         BoardSize = boardSize;
         _packed = packedRows;
         _formatter = formatter;
-        // Positions list will be created lazily after queen positions are materialized.
-        Positions = new LazyPositionListLazy(this);
+        Positions = new LazyPositionListLazy(this); // lazy until unpack
     }
 
     public int? Id { get; }
     public string Name { get; }
     public int BoardSize { get; }
 
-    // Lazy materialization of queen positions (for packed solutions)
     public int[] QueenPositions
     {
         get
@@ -45,7 +47,6 @@ public class Solution
             if (_packed.HasValue)
             {
                 _queenPositions = Unpack(_packed.Value, BoardSize);
-                // Replace Positions lazy proxy with real lazy list mapping
                 if (Positions is LazyPositionListLazy proxy)
                     proxy.Realize(_queenPositions);
                 return _queenPositions;
@@ -73,15 +74,11 @@ public class Solution
         return rows;
     }
 
-    // Packed storage fields
-    private readonly UInt128? _packed; // null when constructed from array
-    private int[]? _queenPositions;    // created lazily for packed or set immediately for array ctor
-
-    // --- Lazy formatting fields ---
+    private readonly UInt128? _packed;
+    private int[]? _queenPositions;
     private readonly ISolutionFormatter _formatter;
     private string? _details;
 
-    // Internal helper: proxy positions list until queen positions realized
     private sealed class LazyPositionListLazy : IReadOnlyList<Position>
     {
         private int[]? _rows;
@@ -93,7 +90,7 @@ public class Solution
             get
             {
                 var rows = _rows;
-                if (rows == null) rows = _owner.QueenPositions; // triggers realization
+                if (rows == null) rows = _owner.QueenPositions;
                 return new Position(index, rows[index]);
             }
         }
