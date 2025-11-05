@@ -141,7 +141,8 @@ public partial class BitmaskSolver : ISolver, IDisposable
             }
             else
             {
-                _solutionCount = CountAllExact();
+                // Use symmetry-pruned parallel counting for larger boards to improve performance
+                _solutionCount = BoardSize > 14 ? CountAllSymmetryParallel() : CountAllExact();
             }
             ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
             return;
@@ -614,5 +615,90 @@ public partial class BitmaskSolver : ISolver, IDisposable
         _solutionCount = totalCount;
         if (EnableEvents)
             ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+    }
+
+    private ulong CountAllSymmetryParallel()
+    {
+        int N = BoardSize;
+        if (N <= 14) return CountAllExact();
+        if (IsSolverCanceled) return 0UL;
+        int cores = Environment.ProcessorCount;
+        int targetJobs = cores * 256; // reduced granularity target
+        int depth = 2;
+        int maxDepth = 6; // limit depth
+        int half = N / 2; bool hasCenter = (N & 1) == 1;
+        var states = new List<(int col, int[] prefix, ulong cols, ulong d1, ulong d2, int factor)>(targetJobs * 2);
+        bool abort = false;
+        ulong fullMask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
+        void SeedRoot(int row, int factor)
+        {
+            int[] rows = new int[N]; Array.Fill(rows, -1); rows[0] = row; ulong bit = 1UL << row; Gen(1, bit, bit << 1, bit >> 1, rows, factor);
+        }
+        void Gen(int col, ulong cols, ulong d1, ulong d2, int[] rows, int factor)
+        {
+            if (abort) return;
+            if (col == N || col == depth || states.Count >= targetJobs) // stop early if enough jobs
+            {
+                int[] prefix = new int[col]; if (col > 0) Array.Copy(rows, prefix, col);
+                states.Add((col, prefix, cols, d1, d2, factor));
+                if (states.Count >= targetJobs * 4) abort = true; // safety cap
+                return;
+            }
+            ulong avail = ~(cols | d1 | d2) & fullMask;
+            while (avail != 0 && !abort && states.Count < targetJobs)
+            {
+                ulong bit = avail & (ulong)-(long)avail; avail ^= bit; int r = BitOperations.TrailingZeroCount(bit); rows[col] = r;
+                Gen(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1, rows, factor);
+                rows[col] = -1;
+            }
+        }
+        for (int r = 0; r < half && !abort && states.Count < targetJobs; r++) SeedRoot(r, 2);
+        if (hasCenter && !abort && states.Count < targetJobs) SeedRoot(half, 1);
+        // Adaptive deeper expansion only if still below target
+        while (states.Count < targetJobs && depth < maxDepth && !abort)
+        {
+            depth++;
+            var existing = states.ToArray(); states.Clear(); abort = false;
+            foreach (var st in existing)
+            {
+                if (st.col == N) { states.Add(st); continue; }
+                if (states.Count >= targetJobs) { states.Add(st); continue; }
+                int[] rows = new int[N]; Array.Fill(rows, -1); if (st.prefix.Length > 0) Array.Copy(st.prefix, rows, st.prefix.Length);
+                Gen(st.col, st.cols, st.d1, st.d2, rows, st.factor);
+                if (abort || states.Count >= targetJobs) break;
+            }
+            // If after expansion we exceeded targetJobs we keep the first targetJobs states to reduce overhead
+            if (states.Count > targetJobs) states = states.Take(targetJobs).ToList();
+        }
+        if (states.Count == 0) return 0UL;
+        ulong globalCount = 0UL; var pool = System.Buffers.ArrayPool<int>.Shared; const int flushThreshold = 4096; // lowered batch threshold
+        Parallel.ForEach(states, new ParallelOptions { MaxDegreeOfParallelism = cores }, st =>
+        {
+            if (IsSolverCanceled) return;
+            int[] rowsBuf = pool.Rent(N);
+            try
+            {
+                for (int i = 0; i < N; i++) rowsBuf[i] = -1; if (st.prefix.Length > 0) Array.Copy(st.prefix, rowsBuf, st.prefix.Length);
+                Span<(int col, ulong cols, ulong d1, ulong d2, ulong avail)> stack = stackalloc (int, ulong, ulong, ulong, ulong)[N + 1];
+                int sp = 0; ulong initialAvail = ~(st.cols | st.d1 | st.d2) & fullMask; stack[sp++] = (st.col, st.cols, st.d1, st.d2, initialAvail);
+                ulong localBatch = 0UL; void Flush(){ if(localBatch>0){ Interlocked.Add(ref globalCount, localBatch * (ulong)st.factor); localBatch=0; } }
+                while (sp > 0 && !IsSolverCanceled)
+                {
+                    var frame = stack[sp - 1]; int col = frame.col; ulong colsMask = frame.cols; ulong d1Mask = frame.d1; ulong d2Mask = frame.d2; ulong avail = frame.avail;
+                    if (avail == 0)
+                    { sp--; if (sp>0) rowsBuf[stack[sp].col] = -1; continue; }
+                    ulong bit = avail & (ulong)-(long)avail; avail ^= bit; stack[sp - 1] = (col, colsMask, d1Mask, d2Mask, avail);
+                    int row = BitOperations.TrailingZeroCount(bit); rowsBuf[col] = row;
+                    int nextCol = col + 1; ulong nCols = colsMask | bit; ulong nD1 = (d1Mask | bit) << 1; ulong nD2 = (d2Mask | bit) >> 1;
+                    if (nextCol == N)
+                    { localBatch++; if(localBatch>=flushThreshold) Flush(); rowsBuf[col] = -1; continue; }
+                    ulong nextAvail = ~(nCols | nD1 | nD2) & fullMask;
+                    stack[sp++] = (nextCol, nCols, nD1, nD2, nextAvail);
+                }
+                Flush();
+            }
+            finally { pool.Return(rowsBuf, clearArray:true); }
+        });
+        return globalCount;
     }
 }
