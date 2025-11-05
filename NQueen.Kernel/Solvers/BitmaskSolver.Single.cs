@@ -10,11 +10,11 @@ public partial class BitmaskSolver
             var rows = list[0];
             if (!ValidateRows(rows)) return; // sanity
             _solutionCount = 1;
-            if (_solutions.Count == 0 && _largeBoardRawSolutions.Count == 0 && ShouldAddSolution())
+            if (_solutions.Count == 0 && _largeBoardRawSolutions.Count == 0 && (!_capEnabled || _maxDisplayedCount > 0))
             {
                 if (rows.Length <= 25)
                 {
-                    var packed = SymmetryHelper.GetCanonicalKey(rows, new int[rows.Length * 2], out _);
+                    var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer ?? new int[rows.Length * 8], out _);
                     _solutions.Add((packed, rows.Length));
                 }
                 else
@@ -91,12 +91,12 @@ public partial class BitmaskSolver
             rows =>
             {
                 if (!ValidateRows(rows)) return false;
-                if (_solutions.Count == 0 && _largeBoardRawSolutions.Count == 0 && ShouldAddSolution())
+                if (_solutions.Count == 0 && _largeBoardRawSolutions.Count == 0 && (!_capEnabled || _maxDisplayedCount > 0))
                 {
                     _solutionCount++;
                     if (rows.Length <= 25)
                     {
-                        var packed = SymmetryHelper.GetCanonicalKey(rows, new int[rows.Length * 2], out _);
+                        var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer ?? new int[rows.Length * 8], out _);
                         _solutions.Add((packed, rows.Length));
                     }
                     else

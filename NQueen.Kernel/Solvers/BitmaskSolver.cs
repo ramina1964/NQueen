@@ -190,7 +190,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
             if (materialized >= cap) return; // safety
             if (rows.Length <= 25)
             {
-                var packed = SymmetryHelper.GetCanonicalKey(rows, new int[rows.Length * 2], out _);
+                var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
                 _solutions.Add((packed, rows.Length));
             }
             else
@@ -240,7 +240,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
                 {
                     if (!ValidateRows(rows)) return false;
                     UInt128 packed = 0;
-                    if (rows.Length <= 25) packed = SymmetryHelper.GetCanonicalKey(rows, new int[rows.Length * 2], out _);
+                    if (rows.Length <= 25) packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
                     if (seen.Add(packed))
                     {
                         AddSample(rows);
@@ -291,7 +291,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
         {
             if (rows.Length <= 25)
             {
-                var packed = SymmetryHelper.GetCanonicalKey(rows, new int[rows.Length * 2], out _);
+                var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
                 _solutions.Add((packed, rows.Length));
             }
             else
@@ -331,7 +331,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
             }
             if (rows.Length <= 25)
             {
-                var packed = SymmetryHelper.GetCanonicalKey(rows, new int[rows.Length * 2], out _);
+                var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
                 _solutions.Add((packed, rows.Length));
             }
             else
@@ -437,6 +437,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
         _solutionCount = 0;
         IsSolverCanceled = false;
         _eventsSuppressedAfterCap = false;
+        _scratchBuffer = (_scratchBuffer == null || _scratchBuffer.Length < BoardSize * 8) ? new int[BoardSize * 8] : _scratchBuffer;
     }
 
     private SimulationResults BuildResults(TimeSpan elapsed)
@@ -464,8 +465,6 @@ public partial class BitmaskSolver : ISolver, IDisposable
         _largeBoardRawSolutions.Clear(); // defensive
         return new SimulationResults(resultSolutions, _solutionCount, Math.Round(elapsed.TotalSeconds, 1));
     }
-
-    private bool ShouldAddSolution() => !_capEnabled || _maxDisplayedCount <= 0 || _solutions.Count < _maxDisplayedCount;
 
     public void Dispose()
     {
@@ -498,6 +497,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
     private bool _disposed;
     private const int _lookupThreshold = 20; // restored: use lookup starting at N >= 20
     private const int _largeBoardConstructiveThreshold = 20; // constructive sampling threshold
+    private int[]? _scratchBuffer; // reused canonicalization buffer
     private void EnumerateAllAdaptive(bool countOnly)
     {
         int cap = countOnly ? 0 : _maxDisplayedCount;
@@ -557,9 +557,8 @@ public partial class BitmaskSolver : ISolver, IDisposable
         int lastReported = -1;
         int progressSpan = 95;
 
-        Parallel.ForEach(partialStates, new ParallelOptions { MaxDegreeOfParallelism = cores }, state =>
+        void DFSWrapper(int startCol, int[] rows, ulong cols, ulong d1, ulong d2)
         {
-            var (startCol, rows, cols, d1, d2) = state;
             void DFS(int col, ulong lc, ulong ld1, ulong ld2)
             {
                 if (IsSolverCanceled) return;
@@ -573,7 +572,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
                         {
                             if (rows.Length <= 25)
                             {
-                                var packed = SymmetryHelper.GetCanonicalKey(rows, new int[rows.Length * 2], out _);
+                                var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
                                 lock (_solutions) _solutions.Add((packed, rows.Length));
                             }
                             else
@@ -602,15 +601,39 @@ public partial class BitmaskSolver : ISolver, IDisposable
                 }
             }
             DFS(startCol, cols, d1, d2);
-            int done = Interlocked.Increment(ref processedJobs);
-            int pct = (int)Math.Min(progressSpan, (double)done / totalJobs * progressSpan);
-            if (pct != lastReported)
+        }
+
+        if (UseParallel)
+        {
+            Parallel.ForEach(partialStates, new ParallelOptions { MaxDegreeOfParallelism = cores }, state =>
             {
-                int prev = Interlocked.Exchange(ref lastReported, pct);
-                if (pct != prev && EnableEvents)
-                    ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken));
+                var (startCol, rows, cols, d1, d2) = state;
+                DFSWrapper(startCol, rows, cols, d1, d2);
+            });
+        }
+        else
+        {
+            foreach (var state in partialStates)
+            {
+                var (startCol, rows, cols, d1, d2) = state;
+                DFSWrapper(startCol, rows, cols, d1, d2);
             }
-        });
+        }
+
+        int totalProcessedJobs = processedJobs;
+        if (totalProcessedJobs == 0) { _solutionCount = 0; return; }
+
+        int lastReportedProgress = lastReported;
+        if (lastReportedProgress == -1) lastReportedProgress = 0;
+        int progressStep = Math.Max(1, 100 / Math.Min(100, totalProcessedJobs));
+
+        for (int i = 0; i < totalProcessedJobs; i++)
+        {
+            int progress = Math.Min(100, (i + 1) * progressStep);
+            if (EnableEvents && lastReportedProgress != progress)
+                ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(progress, _currentSimToken));
+            lastReportedProgress = progress;
+        }
 
         _solutionCount = totalCount;
         if (EnableEvents)
@@ -672,7 +695,16 @@ public partial class BitmaskSolver : ISolver, IDisposable
         }
         if (states.Count == 0) return 0UL;
         ulong globalCount = 0UL; var pool = System.Buffers.ArrayPool<int>.Shared; const int flushThreshold = 4096; // lowered batch threshold
-        Parallel.ForEach(states, new ParallelOptions { MaxDegreeOfParallelism = cores }, st =>
+        if (UseParallel)
+        {
+            Parallel.ForEach(states, new ParallelOptions { MaxDegreeOfParallelism = cores }, st => ProcessState(st));
+        }
+        else
+        {
+            foreach (var st in states) ProcessState(st);
+        }
+        // replace inline lambda body with ProcessState local function
+        void ProcessState((int col, int[] prefix, ulong cols, ulong d1, ulong d2, int factor) st)
         {
             if (IsSolverCanceled) return;
             int[] rowsBuf = pool.Rent(N);
@@ -698,7 +730,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
                 Flush();
             }
             finally { pool.Return(rowsBuf, clearArray:true); }
-        });
+        }
         return globalCount;
     }
 }
