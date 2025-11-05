@@ -553,10 +553,6 @@ public partial class BitmaskSolver : ISolver, IDisposable
         int totalJobs = partialStates.Count;
         if (totalJobs == 0) { _solutionCount = 0; return; }
 
-        int processedJobs = 0;
-        int lastReported = -1;
-        int progressSpan = 95;
-
         void DFSWrapper(int startCol, int[] rows, ulong cols, ulong d1, ulong d2)
         {
             void DFS(int col, ulong lc, ulong ld1, ulong ld2)
@@ -620,21 +616,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
             }
         }
 
-        int totalProcessedJobs = processedJobs;
-        if (totalProcessedJobs == 0) { _solutionCount = 0; return; }
-
-        int lastReportedProgress = lastReported;
-        if (lastReportedProgress == -1) lastReportedProgress = 0;
-        int progressStep = Math.Max(1, 100 / Math.Min(100, totalProcessedJobs));
-
-        for (int i = 0; i < totalProcessedJobs; i++)
-        {
-            int progress = Math.Min(100, (i + 1) * progressStep);
-            if (EnableEvents && lastReportedProgress != progress)
-                ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(progress, _currentSimToken));
-            lastReportedProgress = progress;
-        }
-
+        // Remove processedJobs based early-return; just set solution count after enumeration.
         _solutionCount = totalCount;
         if (EnableEvents)
             ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
