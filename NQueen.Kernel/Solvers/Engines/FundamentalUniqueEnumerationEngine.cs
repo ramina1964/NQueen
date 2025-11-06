@@ -13,7 +13,7 @@ namespace NQueen.Kernel.Solvers.Engines
     /// canonical first-row restriction + minimality filter to count each fundamental solution once.
     /// Materializes up to a provided cap, then counts only.
     /// </summary>
-    internal static class FundamentalUniqueEnumerationEngine
+    public static class FundamentalUniqueEnumerationEngine
     {
         public static ulong Enumerate(int boardSize, int materializeCap, Action<int[]>? onCanonicalSolution)
         {
@@ -48,13 +48,7 @@ namespace NQueen.Kernel.Solvers.Engines
                 {
                     if (col == N)
                     {
-                        var canon = SymmetryHelper.GetCanonicalForm(queenRows, scratch, null);
-                        bool isCanonical = true;
-                        for (int i = 0; i < N; i++)
-                        {
-                            if (queenRows[i] != canon[i]) { isCanonical = false; break; }
-                        }
-                        if (isCanonical)
+                        if (SymmetryHelper.IsIdentityCanonical(queenRows, scratch))
                         {
                             Interlocked.Increment(ref Unsafe.As<ulong, long>(ref globalCount));
                             int currentMat = materialized; // fast path check

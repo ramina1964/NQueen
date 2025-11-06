@@ -239,5 +239,43 @@ public static partial class SymmetryHelper
         canonicalCopy = canonArr;
         return true;
     }
+
+    /// <summary>
+    /// Fast check whether the identity arrangement (solution) is already the lexicographically minimal
+    /// representative under the 8 dihedral symmetries. Uses scratch (length n*8) but does NOT allocate
+    /// a canonical array. Returns true if identity is minimal; false otherwise.
+    /// </summary>
+    public static bool IsIdentityCanonical(int[] solution, int[] scratch)
+    {
+        int n = solution.Length;
+        if (n == 0) return true;
+        int required = n * 8;
+        if (scratch.Length < required) scratch = new int[required];
+        // Populate transforms into scratch (same layout as GetCanonicalForm legacy overload).
+        for (int c = 0; c < n; c++)
+        {
+            int r = solution[c];
+            scratch[0 * n + c] = r;                    // identity
+            scratch[1 * n + r] = n - 1 - c;            // rotate90
+            scratch[2 * n + (n - 1 - c)] = n - 1 - r;  // rotate180
+            scratch[3 * n + (n - 1 - r)] = c;          // rotate270
+            scratch[4 * n + (n - 1 - c)] = r;          // reflect vertical
+            scratch[5 * n + c] = n - 1 - r;            // reflect horizontal
+            scratch[6 * n + r] = c;                    // reflect main diagonal
+            scratch[7 * n + (n - 1 - r)] = n - 1 - c;  // reflect anti-diagonal
+        }
+        // Compare each transform against identity; if any is lexicographically smaller, identity is not canonical.
+        for (int t = 1; t < 8; t++)
+        {
+            for (int i = 0; i < n; i++)
+            {
+                int a = scratch[t * n + i]; // transform value
+                int b = scratch[0 * n + i]; // identity value
+                if (a < b) return false; // found smaller transform
+                if (a > b) break; // transform greater; stop comparing this transform
+            }
+        }
+        return true;
+    }
 }
 

@@ -17,17 +17,14 @@ namespace NQueen.Kernel.Solvers.Engines
             if (boardSize <= 0) return 0;
             int N = boardSize;
             ulong fullMask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
-            // Reusable buffers
             int[] queenRows = new int[N];
-            int[] scratch = new int[N * 8]; // per SymmetryHelper contract
-            // Iterative DFS stacks
+            int[] scratch = new int[N * 8];
             ulong[] stackCols = new ulong[N];
             ulong[] stackD1 = new ulong[N];
             ulong[] stackD2 = new ulong[N];
             ulong[] stackAvail = new ulong[N];
             ulong count = 0;
-
-            int firstRowLimitExclusive = (N + 1) / 2; // include center when odd
+            int firstRowLimitExclusive = (N + 1) / 2;
 
             for (int fr = 0; fr < firstRowLimitExclusive; fr++)
             {
@@ -44,13 +41,8 @@ namespace NQueen.Kernel.Solvers.Engines
                 {
                     if (col == N)
                     {
-                        var canon = SymmetryHelper.GetCanonicalForm(queenRows, scratch, null);
-                        bool isCanonical = true;
-                        for (int i = 0; i < N; i++)
-                        {
-                            if (queenRows[i] != canon[i]) { isCanonical = false; break; }
-                        }
-                        if (isCanonical)
+                        // Use allocation-free identity canonical test instead of building full canonical form
+                        if (SymmetryHelper.IsIdentityCanonical(queenRows, scratch))
                         {
                             count++;
                             if (onSolution != null)
@@ -88,7 +80,6 @@ namespace NQueen.Kernel.Solvers.Engines
                     avail = ~(cols | d1 | d2) & fullMask;
                 }
             }
-
             return count;
         }
 
