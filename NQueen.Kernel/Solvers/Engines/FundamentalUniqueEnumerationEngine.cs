@@ -8,9 +8,9 @@ namespace NQueen.Kernel.Solvers.Engines
 {
     /// <summary>
     /// Parallel fundamental (unique) N-Queen enumerator.
-    /// Enumerates only canonical first-column roots (row &lt;= center) and performs
-    /// a canonical minimality test at leaves. Does not store global keys; relies on
-    /// canonical first-row restriction + minimality filter to count each fundamental solution once.
+    /// Enumerates only first-column roots (row &lt;= center) and performs
+    /// a full canonical minimality test at leaves. Does not store global keys; relies on
+    /// first-row restriction + canonical minimality to count each fundamental solution once.
     /// Materializes up to a provided cap, then counts only.
     /// </summary>
     public static class FundamentalUniqueEnumerationEngine
@@ -26,16 +26,16 @@ namespace NQueen.Kernel.Solvers.Engines
 
             Parallel.For(0, firstRowLimitExclusive, fr =>
             {
-                // Thread-local buffers
+                // Allocate fresh buffers (stability over pooling until correctness restored)
                 int[] queenRows = new int[N];
-                Array.Fill(queenRows, -1);
                 int[] scratch = new int[N * 8];
-                ulong fullMask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
                 ulong[] stackCols = new ulong[N];
                 ulong[] stackD1 = new ulong[N];
                 ulong[] stackD2 = new ulong[N];
                 ulong[] stackAvail = new ulong[N];
+                for (int i = 0; i < N; i++) queenRows[i] = -1;
 
+                ulong fullMask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
                 ulong bitFirst = 1UL << fr;
                 ulong cols = bitFirst;
                 ulong d1 = bitFirst << 1;
@@ -48,10 +48,16 @@ namespace NQueen.Kernel.Solvers.Engines
                 {
                     if (col == N)
                     {
-                        if (SymmetryHelper.IsIdentityCanonical(queenRows, scratch))
+                        var canon = SymmetryHelper.GetCanonicalForm(queenRows, scratch, null);
+                        bool isCanonical = true;
+                        for (int i = 0; i < N; i++)
+                        {
+                            if (queenRows[i] != canon[i]) { isCanonical = false; break; }
+                        }
+                        if (isCanonical)
                         {
                             Interlocked.Increment(ref Unsafe.As<ulong, long>(ref globalCount));
-                            int currentMat = materialized; // fast path check
+                            int currentMat = materialized;
                             if (currentMat < cap && onCanonicalSolution != null)
                             {
                                 int newVal = Interlocked.Increment(ref materialized);
@@ -91,7 +97,6 @@ namespace NQueen.Kernel.Solvers.Engines
                     avail = ~(cols | d1 | d2) & fullMask;
                 }
             });
-
             return globalCount;
         }
 
