@@ -5,11 +5,8 @@ public partial class BitmaskSolver
 {
     private const int AggressiveSymmetryThreshold = 12;
 
-    // Helper for HashSet capacity estimation (powers of two above expected unique count)
     private static int EstimateUniqueCapacity(int n)
     {
-        // Lower bound: n=8?12, n=10?40, n=12?92, n=14?365, n=16?1477
-        // Use 2x known unique count for safety, or 1<<n for larger n
         return n switch
         {
             8 => 32,
@@ -17,7 +14,7 @@ public partial class BitmaskSolver
             12 => 256,
             14 => 1024,
             16 => 4096,
-            _ => 1 << (n > 20 ? 20 : n) // up to 1M for n>=20
+            _ => 1 << (n > 20 ? 20 : n)
         };
     }
 
@@ -32,40 +29,38 @@ public partial class BitmaskSolver
         }
     }
 
-    // Shared unique solution search core
+    // Shared unique solution search core (materialize then count) using new fundamental enumeration engine
     private void RunUniqueUnified(bool parallel)
     {
         int N = BoardSize;
         int cap = _capEnabled ? _maxDisplayedCount : int.MaxValue;
-        _solutions.Clear(); _rawSolutions = null; _eventsSuppressedAfterCap = false; _solutionCount =0;
+        _solutions.Clear(); _rawSolutions = null; _eventsSuppressedAfterCap = false; _solutionCount = 0;
         var rawSample = new List<int[]>();
         var packedSample = new List<PackedSolution>();
-        int materialized =0;
-        int capReachedFlag =0; //0 = not reached,1 = reached
-        object lockObj = new object();
+        int materialized = 0;
+        int capReachedFlag = 0;
 
-        // Use CanonicalUniqueSearchEngine for unique solution enumeration
-        ulong uniqueCount = CanonicalUniqueSearchEngine.CountUnique(N, rows =>
+        // Use parallel fundamental enumerator regardless of 'parallel' flag for performance; could fallback if N small
+        ulong uniqueCount = Engines.FundamentalUniqueEnumerationEngine.Enumerate(N, cap, rows =>
         {
-            if (System.Threading.Volatile.Read(ref capReachedFlag) ==1) return;
-            if (materialized < Math.Max(1, cap))
+            if (System.Threading.Volatile.Read(ref capReachedFlag) == 1) return;
+            if (materialized < cap)
             {
                 var storedCopy = new int[N];
                 Array.Copy(rows, storedCopy, N);
                 rawSample.Add(storedCopy);
-                var packed = N <=25 ? SymmetryHelper.PackCanonical(rows, N) :0;
+                var packed = N <= 25 ? SymmetryHelper.PackCanonical(rows, N) : 0;
                 packedSample.Add(new PackedSolution(packed, N));
                 materialized++;
                 if (materialized >= cap && _capEnabled)
                 {
                     _eventsSuppressedAfterCap = true;
-                    System.Threading.Volatile.Write(ref capReachedFlag,1);
+                    System.Threading.Volatile.Write(ref capReachedFlag, 1);
                 }
             }
         });
         _solutionCount = uniqueCount;
         _rawSolutions = rawSample;
-        // Convert PackedSolution to tuple for _solutions
         _solutions.AddRange(packedSample.Select(ps => (ps.Packed, ps.BoardSize)));
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
@@ -73,7 +68,6 @@ public partial class BitmaskSolver
     private void RunUniqueParallel() => RunUniqueUnified(parallel: true);
     private void RunUniqueSequential() => RunUniqueUnified(parallel: false);
 
-    // Static unified unique enumeration for both materialize and count-only
     public static void RunUniqueUnifiedStatic(
         int boardSize,
         bool parallel,
@@ -84,60 +78,30 @@ public partial class BitmaskSolver
         Func<bool> capReached,
         bool aggressiveSymmetry = false)
     {
-        ulong uniqueCount =0;
-        if (parallel && boardSize >1)
+        // New path: use fundamental enumeration without global HashSet when parallel
+        ulong uniqueCount = 0;
+        if (parallel && boardSize > 1)
         {
-            ulong countFromEngine =0;
-            BitmaskParallelEngine.RunUniqueUnified(
-                boardSize,
-                enableEvents: false,
-                cap: cap,
-                onUniqueSolution: onMaterialized ?? (_ => { }),
-                onCompletedUniqueCount: c => countFromEngine = c,
-                reportProgress: reportProgress,
-                capReached: capReached
-            );
+            ulong countFromEngine = Engines.FundamentalUniqueEnumerationEngine.Enumerate(boardSize, cap, rows =>
+            {
+                if (onMaterialized != null && (cap <= 0 || capReached() == false))
+                {
+                    onMaterialized(rows);
+                }
+            });
             uniqueCount = countFromEngine;
+            reportProgress(100.0);
         }
         else
         {
-            var uniqueKeys = new HashSet<UInt128>(EstimateUniqueCapacity(boardSize));
-            uniqueKeys.EnsureCapacity(EstimateUniqueCapacity(boardSize));
-            int[] scratch = new int[SymmetryHelper.GetScratchBufferSize(boardSize)];
-            int materialized =0;
-            for (int root =0; root < boardSize && (cap <=0 || materialized < cap); root++)
+            // Fallback sequential: reuse same engine (Parallel.For will just run fr loops sequentially for small N)
+            ulong countFromEngine = Engines.FundamentalUniqueEnumerationEngine.Enumerate(boardSize, cap, rows =>
             {
-                BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
-                    boardSize,
-                    RestrictFirstCol: true,
-                    EnhancedSymmetry: true,
-                    AggressiveSymmetry: aggressiveSymmetry,
-                    DisplayMode.Hide,
-                    DelayInMillisec:0,
-                    SimulationToken: Guid.Empty,
-                    IsCanceled: () => false,
-                    ReportProgress: reportProgress,
-                    OnQueenPlaced: _ => { },
-                    OnSolution: rows =>
-                    {
-                        if (boardSize <=25)
-                        {
-                            UInt128 fastKey = SymmetryHelper.PackCanonical(rows, boardSize);
-                            if (uniqueKeys.Contains(fastKey))
-                                return false;
-                        }
-                        if (!uniqueKeys.Add(SymmetryHelper.PackCanonical(SymmetryHelper.GetCanonicalForm(rows, scratch, null), rows.Length)))
-                            return false;
-                        if (cap >0 && materialized < cap && onMaterialized != null)
-                        {
-                            onMaterialized((int[])rows.Clone());
-                            materialized++;
-                        }
-                        return false;
-                    }
-                ));
-            }
-            uniqueCount = (ulong)uniqueKeys.Count;
+                if (onMaterialized != null && (cap <= 0 || capReached() == false))
+                    onMaterialized(rows);
+            });
+            uniqueCount = countFromEngine;
+            reportProgress(100.0);
         }
         onCounted(uniqueCount);
     }

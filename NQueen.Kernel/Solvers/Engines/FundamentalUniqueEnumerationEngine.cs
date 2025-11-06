@@ -1,37 +1,41 @@
 using System;
 using System.Numerics;
+using System.Threading;
+using System.Threading.Tasks;
 using NQueen.Domain.Utils;
 
 namespace NQueen.Kernel.Solvers.Engines
 {
     /// <summary>
-    /// Counts fundamental (unique) N-Queen solutions under the 8 board symmetries.
-    /// Enumerates only canonical first-column roots (rows &lt;= center) then performs
-    /// an allocation-free iterative bitboard DFS. A solution is counted iff its row array
-    /// is the lexicographically minimal representative among all 8 transforms.
+    /// Parallel fundamental (unique) N-Queen enumerator.
+    /// Enumerates only canonical first-column roots (row &lt;= center) and performs
+    /// a canonical minimality test at leaves. Does not store global keys; relies on
+    /// canonical first-row restriction + minimality filter to count each fundamental solution once.
+    /// Materializes up to a provided cap, then counts only.
     /// </summary>
-    public static class CanonicalUniqueSearchEngine
+    internal static class FundamentalUniqueEnumerationEngine
     {
-        public static ulong CountUnique(int boardSize, Action<int[]>? onSolution = null)
+        public static ulong Enumerate(int boardSize, int materializeCap, Action<int[]>? onCanonicalSolution)
         {
-            if (boardSize <= 0) return 0;
+            if (boardSize <= 0) return 0UL;
             int N = boardSize;
-            ulong fullMask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
-            // Reusable buffers
-            int[] queenRows = new int[N];
-            int[] scratch = new int[N * 8]; // per SymmetryHelper contract
-            // Iterative DFS stacks
-            ulong[] stackCols = new ulong[N];
-            ulong[] stackD1 = new ulong[N];
-            ulong[] stackD2 = new ulong[N];
-            ulong[] stackAvail = new ulong[N];
-            ulong count = 0;
-
             int firstRowLimitExclusive = (N + 1) / 2; // include center when odd
+            ulong globalCount = 0;
+            int cap = materializeCap <= 0 ? int.MaxValue : materializeCap;
+            int materialized = 0;
 
-            for (int fr = 0; fr < firstRowLimitExclusive; fr++)
+            Parallel.For(0, firstRowLimitExclusive, fr =>
             {
+                // Thread-local buffers
+                int[] queenRows = new int[N];
                 Array.Fill(queenRows, -1);
+                int[] scratch = new int[N * 8];
+                ulong fullMask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
+                ulong[] stackCols = new ulong[N];
+                ulong[] stackD1 = new ulong[N];
+                ulong[] stackD2 = new ulong[N];
+                ulong[] stackAvail = new ulong[N];
+
                 ulong bitFirst = 1UL << fr;
                 ulong cols = bitFirst;
                 ulong d1 = bitFirst << 1;
@@ -52,12 +56,17 @@ namespace NQueen.Kernel.Solvers.Engines
                         }
                         if (isCanonical)
                         {
-                            count++;
-                            if (onSolution != null)
+                            Interlocked.Increment(ref Unsafe.As<ulong, long>(ref globalCount));
+                            int currentMat = materialized; // fast path check
+                            if (currentMat < cap && onCanonicalSolution != null)
                             {
-                                var copy = new int[N];
-                                Buffer.BlockCopy(queenRows, 0, copy, 0, N * sizeof(int));
-                                onSolution(copy);
+                                int newVal = Interlocked.Increment(ref materialized);
+                                if (newVal <= cap)
+                                {
+                                    var copy = new int[N];
+                                    Buffer.BlockCopy(queenRows, 0, copy, 0, N * sizeof(int));
+                                    onCanonicalSolution(copy);
+                                }
                             }
                         }
                         col--;
@@ -87,9 +96,9 @@ namespace NQueen.Kernel.Solvers.Engines
                     if (col == N) continue;
                     avail = ~(cols | d1 | d2) & fullMask;
                 }
-            }
+            });
 
-            return count;
+            return globalCount;
         }
 
         private static void Restore(int c, out ulong avail, ref ulong cols, ref ulong d1, ref ulong d2,
@@ -103,4 +112,3 @@ namespace NQueen.Kernel.Solvers.Engines
         }
     }
 }
-
