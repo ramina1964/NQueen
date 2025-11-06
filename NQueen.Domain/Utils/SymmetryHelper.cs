@@ -84,6 +84,7 @@ public static partial class SymmetryHelper
         return result;
     }
 
+    // Canonical form with scratch; if resultBuffer provided and large enough, fill it; otherwise allocate.
     public static int[] GetCanonicalForm(int[] solution, int[] scratch, int[]? resultBuffer = null)
     {
         ArgumentNullException.ThrowIfNull(solution);
@@ -142,7 +143,8 @@ public static partial class SymmetryHelper
         return key;
     }
 
-    public static UInt128 PackCanonical(ReadOnlySpan<int> rows, int n) => PackRows(rows.Slice(0, n));
+    public static UInt128 PackCanonical(ReadOnlySpan<int> rows, int n) =>
+        PackRows(rows[..n]);
 
     public static IReadOnlyList<int[]> GetAllTransforms(int[] solution)
     {
