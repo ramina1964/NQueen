@@ -72,7 +72,7 @@ internal sealed class BitmaskSearchEngine
         // Hoist frequently used fields
         int N = s.N;
         ulong mask = s.Mask;
-        int[] solutionBuffer = null;
+        int[] solutionBuffer = null!;
         bool needsCopy = request.OnSolution != null;
         if (needsCopy) solutionBuffer = new int[N];
         while (true)
