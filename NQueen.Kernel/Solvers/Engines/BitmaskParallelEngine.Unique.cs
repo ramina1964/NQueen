@@ -1,67 +1,101 @@
 namespace NQueen.Kernel.Solvers.Engines;
 
+using System.Buffers;
+using System.Collections.Concurrent;
+using System.Numerics;
+using System.Threading;
+using System.Threading.Tasks;
+
 internal sealed partial class BitmaskParallelEngine
 {
+    internal static class UniqueInstrumentation
+    {
+        public const bool Enabled = false;
+        private static long _nodeVisits; private static long _leaves; private static long _prefixPruned;
+        public static void Reset() { _nodeVisits = 0; _leaves = 0; _prefixPruned = 0; }
+        public static void VisitNode() { if (Enabled) Interlocked.Increment(ref _nodeVisits); }
+        public static void VisitLeaf() { if (Enabled) Interlocked.Increment(ref _leaves); }
+        public static void PrefixPrune() { if (Enabled) Interlocked.Increment(ref _prefixPruned); }
+        public static (long nodes, long leaves, long pruned) Snapshot() => (Interlocked.Read(ref _nodeVisits), Interlocked.Read(ref _leaves), Interlocked.Read(ref _prefixPruned));
+    }
+
+    private const int DepthSplitThresholdN = 16;
+    private const int DepthSplitLevel = 2;
+    private const int PrefixPruneStartDepth = 4;
+    private const int PrefixPruneThresholdN = 18;
+    private const bool EnableSecondColumnPrune = true;
+    private const bool EnablePrefixPrune = true;
+    private const bool ThrottleProgressLargeBoards = true;
+
     public static void RunUnique(UniqueRequest request)
     {
         int N = request.BoardSize; request.ReportProgress(0.0);
-        ulong fundamentalCount = 0;
+        if (N <= 0) { request.OnCompletedUniqueCount(0); return; }
         var globalUnique = new ConcurrentDictionary<UInt128, byte>();
-        var tasks = new List<Task>();
         int materializedCount = 0;
         int cap = request.ShouldMaterialize() ? SimulationSettings.MaxDisplayedCount : 0;
-        int rootsCompleted = 0;
 
-        // Enumerate all roots (legacy half-root logic removed for correctness & simplicity)
-        for (int fr = 0; fr < N; fr++)
-        {
-            int root = fr;
-            tasks.Add(Task.Run(() => EnumerateRoot(root)));
-        }
-        Task.WaitAll(tasks.ToArray());
-        fundamentalCount = (ulong)globalUnique.Count;
+        ulong mask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
+        ulong[] rowBits = new ulong[N];
+        for (int r = 0; r < N; r++) rowBits[r] = 1UL << r;
+
+        var partialStates = new List<PartialState>();
+        int splitDepth = (N >= DepthSplitThresholdN && DepthSplitLevel > 0) ? DepthSplitLevel : 1;
+        GeneratePartialStates(N, splitDepth, mask, partialStates);
+
+        int totalTasks = partialStates.Count;
+        int progressCounter = 0;
+        int progressBucketReported = -1;
+        int progressBucketSize = (ThrottleProgressLargeBoards && N >= DepthSplitThresholdN) ? 2 : 1;
+
+        Parallel.ForEach(partialStates, ps => EnumerateFromPartial(ps));
 
         request.ReportProgress(100.0);
-        request.OnCompletedUniqueCount(fundamentalCount);
+        request.OnCompletedUniqueCount((ulong)globalUnique.Count);
 
-        void EnumerateRoot(int fr)
+        void EnumerateFromPartial(PartialState ps)
         {
-            var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
-            var rowsArr = new int[N];
-            Array.Fill(rowsArr, -1);
-            rowsArr[0] = fr;
-            ulong bitFirst = 1UL << fr;
-            ulong cols = bitFirst;
-            ulong d1 = bitFirst << 1;
-            ulong d2 = bitFirst >> 1;
-            ulong mask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
+            int[] rowsArr = (int[])ps.Rows.Clone();
+            int col = ps.Depth;
+            ulong cols = ps.Cols;
+            ulong d1 = ps.D1;
+            ulong d2 = ps.D2;
+            ulong remaining = ~(cols | d1 | d2) & mask;
+            if (EnableSecondColumnPrune && col == 1)
+            {
+                int firstRow = rowsArr[0];
+                if (!((N & 1) == 1 && firstRow == N / 2))
+                {
+                    ulong lowerMask = (1UL << (firstRow + 1)) - 1UL;
+                    remaining &= ~lowerMask;
+                }
+            }
             ulong[] stackCols = new ulong[N];
             ulong[] stackD1 = new ulong[N];
             ulong[] stackD2 = new ulong[N];
             ulong[] stackRemaining = new ulong[N];
-            int col = 1;
-            ulong remaining = ComputeAvail(col);
+            int[] scratch = ArrayPool<int>.Shared.Rent(N * 8);
             while (true)
             {
+                UniqueInstrumentation.VisitNode();
                 if (col == N)
                 {
-                    // Always canonicalize (rootIsCanonical shortcut removed)
-                    UInt128 key = SymmetryHelper.GetCanonicalKey(rowsArr, scratchBuf, out var canonicalSpan);
+                    UniqueInstrumentation.VisitLeaf();
+                    UInt128 key = SymmetryHelper.GetCanonicalKey(rowsArr, scratch, out var canonicalSpan);
                     if (globalUnique.TryAdd(key, 0) && materializedCount < cap)
                     {
                         int newVal = Interlocked.Increment(ref materializedCount);
                         if (newVal <= cap)
                         {
-                            int[] canonicalRows = new int[N];
-                            canonicalSpan.CopyTo(canonicalRows);
+                            int[] canonicalRows = new int[N]; canonicalSpan.CopyTo(canonicalRows);
                             request.OnUniqueSolution(canonicalRows);
                         }
                     }
-                    col--; if (col <= 0) break; Restore(col, out remaining); continue;
+                    col--; if (col < ps.Depth) break; Restore(col, out remaining); continue;
                 }
                 if (remaining == 0)
                 {
-                    col--; if (col <= 0) break; Restore(col, out remaining); continue;
+                    col--; if (col < ps.Depth) break; Restore(col, out remaining); continue;
                 }
                 ulong bit = remaining & (ulong)-(long)remaining; remaining ^= bit;
                 int row = BitOperations.TrailingZeroCount(bit);
@@ -70,120 +104,133 @@ internal sealed partial class BitmaskParallelEngine
                 cols |= bit; d1 = (d1 | bit) << 1; d2 = (d2 | bit) >> 1;
                 col++;
                 if (col == N) continue;
-                remaining = ComputeAvail(col);
+                remaining = ~(cols | d1 | d2) & mask;
+                if (EnableSecondColumnPrune && col == 1)
+                {
+                    int firstRow = rowsArr[0];
+                    if (!((N & 1) == 1 && firstRow == N / 2))
+                    {
+                        ulong lowerMask = (1UL << (firstRow + 1)) - 1UL;
+                        remaining &= ~lowerMask;
+                    }
+                }
+                if (EnablePrefixPrune && N >= PrefixPruneThresholdN && col >= PrefixPruneStartDepth)
+                {
+                    if (!IdentityPrefixMinimal(rowsArr, col, scratch, N))
+                    {
+                        UniqueInstrumentation.PrefixPrune();
+                        col--; Restore(col, out remaining); continue;
+                    }
+                }
             }
+            ArrayPool<int>.Shared.Return(scratch, clearArray: UniqueInstrumentation.Enabled);
+            int done = Interlocked.Increment(ref progressCounter);
             if (request.EnableEvents)
             {
-                int done = Interlocked.Increment(ref rootsCompleted);
-                double pctBase = (double)done / N * 100.0;
-                request.ReportProgress(Math.Min(100.0, pctBase));
-            }
-            ulong ComputeAvail(int c)
-            {
-                ulong avail = ~(cols | d1 | d2) & mask;
-                // Removed small-board first-column pruning to avoid missing canonical representatives
-                return avail;
-            }
-            void Restore(int c, out ulong rem)
-            {
-                rem = stackRemaining[c];
-                cols = stackCols[c]; d1 = stackD1[c]; d2 = stackD2[c];
-            }
-        }
-    }
-
-    // Unified unique solution search: materialize up to cap, then count only, with global early termination
-    public static void RunUniqueUnified(
-        int boardSize,
-        bool enableEvents,
-        int cap,
-        Action<int[]> onUniqueSolution,
-        Action<ulong> onCompletedUniqueCount,
-        Action<double> reportProgress,
-        Func<bool> capReached)
-    {
-        int N = boardSize;
-        reportProgress(0.0);
-        var globalUnique = new ConcurrentDictionary<UInt128, byte>();
-        var tasks = new List<Task>();
-        int materializedCount = 0;
-        int rootsCompleted = 0;
-
-        // Enumerate all roots (legacy half-root logic removed)
-        for (int fr = 0; fr < N; fr++)
-        {
-            int root = fr;
-            tasks.Add(Task.Run(() => EnumerateRoot(root)));
-        }
-        Task.WaitAll(tasks.ToArray());
-
-        reportProgress(100.0);
-        onCompletedUniqueCount((ulong)globalUnique.Count);
-
-        void EnumerateRoot(int fr)
-        {
-            var scratchBuf = new int[SymmetryHelper.GetScratchBufferSize(N)];
-            var rowsArr = new int[N];
-            Array.Fill(rowsArr, -1);
-            rowsArr[0] = fr;
-            ulong bitFirst = 1UL << fr;
-            ulong cols = bitFirst;
-            ulong d1 = bitFirst << 1;
-            ulong d2 = bitFirst >> 1;
-            ulong mask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
-            ulong[] stackCols = new ulong[N];
-            ulong[] stackD1 = new ulong[N];
-            ulong[] stackD2 = new ulong[N];
-            ulong[] stackRemaining = new ulong[N];
-            int col = 1;
-            ulong remaining = ComputeAvail(col);
-            while (true)
-            {
-                if (col == N)
+                double pct = (double)done / totalTasks * 100.0;
+                if (progressBucketSize == 1)
                 {
-                    UInt128 key = SymmetryHelper.GetCanonicalKey(rowsArr, scratchBuf, out var canonicalSpan);
-                    if (globalUnique.TryAdd(key, 0))
+                    request.ReportProgress(pct >= 100.0 ? 100.0 : pct);
+                }
+                else
+                {
+                    int bucket = (int)pct / progressBucketSize * progressBucketSize;
+                    int observed;
+                    while (bucket > (observed = Volatile.Read(ref progressBucketReported)))
                     {
-                        int mat = Interlocked.Increment(ref materializedCount);
-                        if (mat <= cap)
+                        if (Interlocked.CompareExchange(ref progressBucketReported, bucket, observed) == observed)
                         {
-                            int[] canonicalRows = new int[N];
-                            canonicalSpan.CopyTo(canonicalRows);
-                            onUniqueSolution(canonicalRows);
+                            request.ReportProgress(bucket);
+                            break;
                         }
-                        if (capReached()) { /* early termination hook retained */ }
                     }
-                    col--; if (col <= 0) break; Restore(col, out remaining); continue;
                 }
-                if (remaining == 0)
-                {
-                    col--; if (col <= 0) break; Restore(col, out remaining); continue;
-                }
-                ulong bit = remaining & (ulong)-(long)remaining; remaining ^= bit;
-                int row = BitOperations.TrailingZeroCount(bit);
-                rowsArr[col] = row;
-                stackCols[col] = cols; stackD1[col] = d1; stackD2[col] = d2; stackRemaining[col] = remaining;
-                cols |= bit; d1 = (d1 | bit) << 1; d2 = (d2 | bit) >> 1;
-                col++;
-                if (col == N) continue;
-                remaining = ComputeAvail(col);
-            }
-            if (enableEvents)
-            {
-                int done = Interlocked.Increment(ref rootsCompleted);
-                double pctBase = (double)done / N * 100.0;
-                reportProgress(Math.Min(100.0, pctBase));
-            }
-            ulong ComputeAvail(int c)
-            {
-                ulong avail = ~(cols | d1 | d2) & mask;
-                return avail; // pruning removed
             }
             void Restore(int c, out ulong rem)
             {
-                rem = stackRemaining[c];
-                cols = stackCols[c]; d1 = stackD1[c]; d2 = stackD2[c];
+                rem = stackRemaining[c]; cols = stackCols[c]; d1 = stackD1[c]; d2 = stackD2[c];
             }
         }
     }
+
+    public static void RunUniqueUnified(
+        int boardSize, bool enableEvents, int cap,
+        Action<int[]> onUniqueSolution, Action<ulong> onCompletedUniqueCount,
+        Action<double> reportProgress, Func<bool> capReached)
+    {
+        var req = new UniqueRequest(boardSize, enableEvents, () => cap > 0, onUniqueSolution, onCompletedUniqueCount, reportProgress);
+        RunUnique(req);
+    }
+
+    private static void GeneratePartialStates(int N, int splitDepth, ulong mask, List<PartialState> dest)
+    {
+        int[] rows = new int[N]; System.Array.Fill(rows, -1);
+        ulong cols = 0UL; ulong d1 = 0UL; ulong d2 = 0UL; int depth = 0;
+        ulong[] stackCols = new ulong[N]; ulong[] stackD1 = new ulong[N]; ulong[] stackD2 = new ulong[N]; ulong[] stackAvail = new ulong[N];
+        ulong avail = mask; // all rows available initially
+        while (true)
+        {
+            if (depth == splitDepth)
+            {
+                var prefix = new int[N]; Array.Copy(rows, prefix, N);
+                dest.Add(new PartialState(prefix, depth, cols, d1, d2));
+                depth--; if (depth < 0) break; Restore(depth); continue;
+            }
+            if (avail == 0UL)
+            {
+                depth--; if (depth < 0) break; Restore(depth); continue;
+            }
+            ulong bit = avail & (ulong)-(long)avail; avail ^= bit; int row = BitOperations.TrailingZeroCount(bit);
+            rows[depth] = row; stackCols[depth] = cols; stackD1[depth] = d1; stackD2[depth] = d2; stackAvail[depth] = avail;
+            cols |= bit; d1 = (d1 | bit) << 1; d2 = (d2 | bit) >> 1; depth++;
+            if (depth == splitDepth) { avail = 0UL; continue; }
+            avail = ~(cols | d1 | d2) & mask;
+            if (EnableSecondColumnPrune && depth == 1)
+            {
+                int firstRow = rows[0];
+                if (!((N & 1) == 1 && firstRow == N / 2))
+                {
+                    ulong lowerMask = (1UL << (firstRow + 1)) - 1UL; avail &= ~lowerMask;
+                }
+            }
+        }
+        void Restore(int c)
+        {
+            avail = stackAvail[c]; cols = stackCols[c]; d1 = stackD1[c]; d2 = stackD2[c]; rows[c] = -1;
+        }
+    }
+
+    private static bool IdentityPrefixMinimal(int[] rows, int depth, int[] scratch, int N)
+    {
+        for (int t = 0; t < 8; t++)
+        {
+            int baseOffset = t * N;
+            for (int i = 0; i < depth; i++) scratch[baseOffset + i] = int.MaxValue;
+        }
+        for (int c = 0; c < depth; c++)
+        {
+            int r = rows[c]; if (r < 0) continue;
+            scratch[0 * N + c] = r;
+            scratch[1 * N + r] = N - 1 - c;
+            scratch[2 * N + (N - 1 - c)] = N - 1 - r;
+            scratch[3 * N + (N - 1 - r)] = c;
+            scratch[4 * N + (N - 1 - c)] = r;
+            scratch[5 * N + c] = N - 1 - r;
+            scratch[6 * N + r] = c;
+            scratch[7 * N + (N - 1 - r)] = N - 1 - c;
+        }
+        for (int t = 1; t < 8; t++)
+        {
+            for (int i = 0; i < depth; i++)
+            {
+                int a = scratch[t * N + i]; int b = scratch[0 * N + i];
+                if (a == int.MaxValue || b == int.MaxValue) continue;
+                if (a < b) return false;
+                if (a > b) break;
+            }
+        }
+        return true;
+    }
+
+    private readonly record struct PartialState(int[] Rows, int Depth, ulong Cols, ulong D1, ulong D2);
 }
