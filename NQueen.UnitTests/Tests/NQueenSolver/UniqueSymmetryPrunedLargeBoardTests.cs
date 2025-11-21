@@ -1,9 +1,3 @@
-using FluentAssertions;
-using NQueen.Kernel.Solvers;
-using NQueen.Domain.Enums;
-using NQueen.Domain.Models;
-using Xunit;
-
 namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 public class UniqueSymmetryPrunedLargeBoardTests
