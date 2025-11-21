@@ -46,6 +46,9 @@ public static class SimulationSettings
     public const int RootBranchThreshold = 4; // branch factor threshold guiding adaptive root expansion
     public const int WeightLookaheadDepth = 3; // depth of lookahead when estimating root weights
 
+    // Start size for intermediate large-board verification tests (gap between slow and high board suites)
+    public const int LargeBoardIntermediateStartSize = 15;
+
     public static int CalculateSplitDepth(int boardSize) =>
         Math.Max(1, boardSize / Environment.ProcessorCount);
 }

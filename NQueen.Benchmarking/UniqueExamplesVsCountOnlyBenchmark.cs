@@ -11,18 +11,22 @@ public class UniqueExamplesVsCountOnlyBenchmark
     [Benchmark]
     public SimulationResults MaterializeExamples()
     {
-        var context = new SimulationContext(BoardSize, SolutionMode.Unique, DisplayMode.Hide);
-        var solver = new UniqueExamplesOrCountSolver(_formatter, exampleCap: SimulationSettings.MaxDisplayedCount);
-        var (examples, _) = solver.Solve(context);
-        return examples;
+        var solver = new BitmaskSolver(BoardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter, SimulationSettings.MaxDisplayedCount)
+        {
+            UseCountOnlyUniqueMode = false,
+            EnableEvents = false
+        };
+        return solver.Solve();
     }
 
     [Benchmark]
     public SimulationResults CountOnly()
     {
-        var context = new SimulationContext(BoardSize, SolutionMode.Unique, DisplayMode.Hide);
-        var solver = new UniqueExamplesOrCountSolver(_formatter, exampleCap: 0);
-        var (_, countOnly) = solver.Solve(context, countOnly: true);
-        return countOnly;
+        var solver = new BitmaskSolver(BoardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter, 0)
+        {
+            UseCountOnlyUniqueMode = true,
+            EnableEvents = false
+        };
+        return solver.Solve();
     }
 }

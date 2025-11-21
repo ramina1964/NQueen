@@ -1,5 +1,3 @@
-using System.IO; // for file output
-
 namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 [Collection("SolverBackend")]
@@ -71,7 +69,9 @@ public class HighBoardCountsTests
     [Trait("Category","Perf")]
     public async Task UniqueMode_OptimizedEnumeration_N19()
     {
-        if (Environment.GetEnvironmentVariable("PERF_N19") != "1") return; // gated
+        if (Environment.GetEnvironmentVariable("PERF_N19") != "1")
+            return;
+
         // Warmup small unique boards to JIT & prime caches (fast)
         foreach (var s in new[] { 12, 13 })
         {
@@ -80,6 +80,7 @@ public class HighBoardCountsTests
             var warmRes = await _solver.GetSimResultsAsync(warmCtx);
             warmRes.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetUnique(s));
         }
+        
         // N=19 enumeration (symmetry-pruned path; threshold=20 so no lookup)
         _solver.UseCountOnlyUniqueMode = true; _solver.UseCountOnlyAllMode = false;
         var ctx = new SimulationContext(19, SolutionMode.Unique, DisplayMode.Hide);

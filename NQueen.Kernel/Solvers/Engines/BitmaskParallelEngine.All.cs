@@ -1,10 +1,5 @@
 namespace NQueen.Kernel.Solvers.Engines;
 
-using System.Collections.Concurrent;
-using System.Numerics;
-using System.Threading.Tasks;
-using NQueen.Domain.Settings;
-
 internal sealed partial class BitmaskParallelEngine
 {
     public static void RunAll(AllRequest request)
@@ -21,7 +16,9 @@ internal sealed partial class BitmaskParallelEngine
         int minRootsTarget = logicalCores * SimulationSettings.AdaptiveRootMultiplier;
         int branchThresholdConst = SimulationSettings.RootBranchThreshold;
         var rootStack = new Stack<RootFrame>();
-        rootStack.Push(new RootFrame(0, 0UL, 0UL, 0UL, new int[N]));
+        // Initialize with all -1 to avoid treating row 0 as uninitialized.
+        int[] init = new int[N]; Array.Fill(init, -1);
+        rootStack.Push(new RootFrame(0, 0UL, 0UL, 0UL, init));
         var rootList = new List<RootFrame>(minRootsTarget);
         while (rootStack.Count > 0)
         {
@@ -35,6 +32,7 @@ internal sealed partial class BitmaskParallelEngine
             while (avail != 0)
             {
                 ulong bit = avail & (ulong)-(long)avail; avail ^= bit; int row = BitOperations.TrailingZeroCount(bit);
+                // Clone and preserve prior assignments
                 var rowsCopy = (int[])frame.Rows.Clone(); rowsCopy[frame.Col] = row;
                 ulong cols = frame.Cols | bit; ulong d1 = (frame.D1 | bit) << 1; ulong d2 = (frame.D2 | bit) >> 1; int nextDepth = frame.Col + 1;
                 if (nextDepth >= splitDepth)
@@ -76,8 +74,8 @@ internal sealed partial class BitmaskParallelEngine
                 ulong localTotal = 0;
                 while (workStack.TryPop(out var root))
                 {
-                    var rowsArr = root.Rows; int startCol = root.Col;
-                    for (int i = startCol; i < N; i++) if (rowsArr[i] == 0) rowsArr[i] = -1;
+                    var rowsArr = (int[])root.Rows.Clone(); // work on copy to avoid cross-thread mutation
+                    int startCol = root.Col;
                     ulong cols = root.Cols; ulong d1 = root.D1; ulong d2 = root.D2;
                     ulong[] stackCols = new ulong[N]; ulong[] stackD1 = new ulong[N]; ulong[] stackD2 = new ulong[N]; ulong[] stackRemaining = new ulong[N];
                     int col = startCol; ulong remaining = ~(cols | d1 | d2) & mask;
@@ -138,7 +136,8 @@ internal sealed partial class BitmaskParallelEngine
         int minRootsTarget = logicalCores * SimulationSettings.AdaptiveRootMultiplier;
         int branchThresholdConst = SimulationSettings.RootBranchThreshold;
         var rootStack = new Stack<RootFrame>();
-        rootStack.Push(new RootFrame(0, 0UL, 0UL, 0UL, new int[N]));
+        int[] init = new int[N]; Array.Fill(init, -1);
+        rootStack.Push(new RootFrame(0, 0UL, 0UL, 0UL, init));
         var rootList = new List<RootFrame>(minRootsTarget);
         while (rootStack.Count > 0)
         {
@@ -192,8 +191,8 @@ internal sealed partial class BitmaskParallelEngine
                 ulong localTotal = 0;
                 while (workStack.TryPop(out var root))
                 {
-                    var rowsArr = root.Rows; int startCol = root.Col;
-                    for (int i = startCol; i < N; i++) if (rowsArr[i] == 0) rowsArr[i] = -1;
+                    var rowsArr = (int[])root.Rows.Clone();
+                    int startCol = root.Col;
                     ulong cols = root.Cols; ulong d1 = root.D1; ulong d2 = root.D2;
                     ulong[] stackCols = new ulong[N]; ulong[] stackD1 = new ulong[N]; ulong[] stackD2 = new ulong[N]; ulong[] stackRemaining = new ulong[N];
                     int col = startCol; ulong remaining = ~(cols | d1 | d2) & mask;
