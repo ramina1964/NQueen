@@ -13,4 +13,8 @@
     <ProjectReference Include="..\NQueen.Shared\NQueen.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+
 </Project>

@@ -495,7 +495,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
     private readonly int _maxDisplayedCount;
     private volatile bool _eventsSuppressedAfterCap;
     private bool _disposed;
-    private const int _lookupThreshold = 20; // restored: use lookup starting at N >= 20
+    private const int _lookupThreshold = 20; // lookup only for N >= 20 (N=19 will use symmetry-pruned enumeration path)
     private const int _largeBoardConstructiveThreshold = 20; // constructive sampling threshold
     private int[]? _scratchBuffer; // reused canonicalization buffer
     private void EnumerateAllAdaptive(bool countOnly)

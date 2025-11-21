@@ -38,4 +38,14 @@ public static class SimulationSettings
 
     // Threshold at/above which symmetry-pruned unique counting is used for Unique+CountOnly mode.
     public const int LargeBoardSymmetryPruningThreshold = 15;
+
+    // New constant for dynamic root split limit
+    public const int DynamicRootSplitLimitN = 19;
+
+    public const int AdaptiveRootMultiplier = 8; // heuristic multiplier for root frame target versus logical cores
+    public const int RootBranchThreshold = 4; // branch factor threshold guiding adaptive root expansion
+    public const int WeightLookaheadDepth = 3; // depth of lookahead when estimating root weights
+
+    public static int CalculateSplitDepth(int boardSize) =>
+        Math.Max(1, boardSize / Environment.ProcessorCount);
 }
