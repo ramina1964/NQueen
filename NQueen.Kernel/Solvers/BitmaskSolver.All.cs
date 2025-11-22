@@ -73,6 +73,7 @@ public partial class BitmaskSolver
                 RestrictFirstCol: false,
                 EnhancedSymmetry: false,
                 AggressiveSymmetry: false,
+                CountOnly: false,
                 DisplayMode,
                 DelayInMillisec,
                 _currentSimToken,

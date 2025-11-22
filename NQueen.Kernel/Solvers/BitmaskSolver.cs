@@ -156,23 +156,167 @@ public partial class BitmaskSolver : ISolver, IDisposable
 
     private ulong CountAllExact()
     {
-        // Disable incremental canonicalization for All mode enumeration
+        bool applyHalfBoard = UseCountOnlyAllMode; // only for count-only All mode
         SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
-        ulong count = 0UL;
+        ulong countNonCenter = 0UL;
+        ulong countCenter = 0UL;
+        bool isOdd = (BoardSize & 1) == 1;
+        int centerRow = BoardSize / 2;
         BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
             BoardSize,
-            RestrictFirstCol: false,
+            RestrictFirstCol: applyHalfBoard,
             EnhancedSymmetry: false,
             AggressiveSymmetry: false,
+            CountOnly: true,
             DisplayMode,
             DelayInMillisec,
             _currentSimToken,
             () => IsSolverCanceled,
             p => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
             m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize)); },
-            rows => { if (!ValidateRows(rows)) return false; count++; return false; }
+            rows =>
+            {
+                if (!ValidateRows(rows)) return false;
+                int r0 = rows[0];
+                if (applyHalfBoard && isOdd && r0 == centerRow) countCenter++; else countNonCenter++;
+                return false;
+            }
         ));
-        return count;
+        // Combine counts (double non-center roots) if half-board applied
+        ulong total = applyHalfBoard ? (countNonCenter * 2UL + countCenter) : (countNonCenter + countCenter);
+        return total;
+    }
+
+    // --- All-mode adaptive enumeration (modified to disable incremental canonicalization locally) ---
+    // REPLACED original EnumerateAllAdaptive implementation with half-board aware version
+    private void EnumerateAllAdaptive(bool countOnly)
+    {
+        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
+        int N = BoardSize;
+        bool halfBoard = countOnly && UseCountOnlyAllMode;
+        bool isOdd = (N & 1) == 1; int centerRow = N / 2;
+        if (N <= 18)
+        {
+            int capSmall = countOnly ? 0 : _maxDisplayedCount;
+            ulong countNonCenter = 0; ulong countCenter = 0; int materializedSmall = 0;
+            BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
+                N,
+                RestrictFirstCol: halfBoard,
+                EnhancedSymmetry: false,
+                AggressiveSymmetry: false,
+                CountOnly: countOnly,
+                DisplayMode,
+                DelayInMillisec,
+                _currentSimToken,
+                () => IsSolverCanceled,
+                p => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
+                m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, N)); },
+                rows =>
+                {
+                    if (!ValidateRows(rows)) return false;
+                    int r0 = rows[0];
+                    if (halfBoard && isOdd && r0 == centerRow) countCenter++; else countNonCenter++;
+                    if (capSmall > 0 && materializedSmall < capSmall)
+                    {
+                        _solutions.Add((0, rows.Length));
+                        materializedSmall++;
+                        if (materializedSmall >= capSmall && _capEnabled)
+                            _eventsSuppressedAfterCap = true;
+                    }
+                    return false;
+                }
+            ));
+            _solutionCount = halfBoard ? (countNonCenter * 2UL + countCenter) : (countNonCenter + countCenter);
+            if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+            return;
+        }
+        int cap = countOnly ? 0 : _maxDisplayedCount;
+        ulong totalNonCenter = 0; ulong totalCenter = 0; int materialized = 0;
+        int cores = Environment.ProcessorCount;
+        int targetJobs = cores * 128;
+        int maxDepth = 4;
+        int depth = 2;
+        double branchEstimate = Math.Max(2.0, N * 0.55);
+        while (depth < maxDepth && Math.Pow(branchEstimate, depth) < targetJobs) depth++;
+        var partialStates = new List<(int col, int[] rows, ulong cols, ulong d1, ulong d2)>();
+        bool abortGen = false;
+        int maxStates = targetJobs * 2;
+        ulong fullMask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
+        int firstRowLimit = halfBoard ? (N + 1) / 2 : N;
+        for (int rootRow = 0; rootRow < firstRowLimit && !abortGen; rootRow++)
+        {
+            int[] rows = new int[N]; Array.Fill(rows, -1); rows[0] = rootRow;
+            ulong bit = 1UL << rootRow;
+            Gen(1, bit, bit << 1, bit >> 1, rows);
+        }
+        void Gen(int col, ulong cols, ulong d1, ulong d2, int[] rows)
+        {
+            if (abortGen) return;
+            if (col == N || col == depth)
+            {
+                var snap = new int[N]; Array.Copy(rows, snap, N);
+                partialStates.Add((col, snap, cols, d1, d2));
+                if (partialStates.Count >= maxStates) abortGen = true;
+                return;
+            }
+            ulong avail = ~(cols | d1 | d2) & fullMask;
+            while (avail != 0 && !abortGen)
+            {
+                ulong bitLocal = avail & (ulong)-(long)avail; avail ^= bitLocal; int row = BitOperations.TrailingZeroCount(bitLocal);
+                rows[col] = row;
+                Gen(col + 1, cols | bitLocal, (d1 | bitLocal) << 1, (d2 | bitLocal) >> 1, rows);
+                rows[col] = -1;
+            }
+        }
+        int totalJobs = partialStates.Count; if (totalJobs == 0) { _solutionCount = 0; return; }
+        void DFSWrapper(int startCol, int[] rows, ulong cols, ulong d1, ulong d2)
+        {
+            void DFS(int col, ulong lc, ulong ld1, ulong ld2)
+            {
+                if (IsSolverCanceled) return;
+                if (col == N)
+                {
+                    int r0 = rows[0];
+                    if (halfBoard && isOdd && r0 == centerRow) Interlocked.Increment(ref totalCenter); else Interlocked.Increment(ref totalNonCenter);
+                    if (cap > 0 && materialized < cap)
+                    {
+                        int current = Interlocked.Increment(ref materialized);
+                        if (current <= cap)
+                        {
+                            _solutions.Add((0, rows.Length));
+                            if (EnableEvents && !_eventsSuppressedAfterCap)
+                                SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
+                            if (current == cap) _eventsSuppressedAfterCap = true;
+                        }
+                    }
+                    return;
+                }
+                ulong avail = ~(lc | ld1 | ld2) & fullMask;
+                while (avail != 0 && !IsSolverCanceled)
+                {
+                    ulong bitLocal = avail & (ulong)-(long)avail; avail ^= bitLocal; int row = BitOperations.TrailingZeroCount(bitLocal);
+                    rows[col] = row;
+                    DFS(col + 1, lc | bitLocal, (ld1 | bitLocal) << 1, (ld2 | bitLocal) >> 1);
+                    rows[col] = -1;
+                }
+            }
+            DFS(startCol, cols, d1, d2);
+        }
+        if (UseParallel)
+        {
+            Parallel.ForEach(partialStates, new ParallelOptions { MaxDegreeOfParallelism = cores }, state =>
+            {
+                var (startCol, rows, cols, d1, d2) = state;
+                DFSWrapper(startCol, rows, cols, d1, d2);
+            });
+        }
+        else
+        {
+            foreach (var state in partialStates) { var (startCol, rows, cols, d1, d2) = state; DFSWrapper(startCol, rows, cols, d1, d2); }
+        }
+        ulong combined = halfBoard ? (totalNonCenter * 2UL + totalCenter) : (totalNonCenter + totalCenter);
+        _solutionCount = combined;
+        if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 
     private void EnumerateUniqueMaterializeAdaptive()
@@ -228,6 +372,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
                 RestrictFirstCol: false,
                 EnhancedSymmetry: false,
                 AggressiveSymmetry: false,
+                CountOnly: false,
                 DisplayMode,
                 DelayInMillisec,
                 _currentSimToken,
@@ -260,6 +405,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
                 RestrictFirstCol: false,
                 EnhancedSymmetry: false,
                 AggressiveSymmetry: false,
+                CountOnly: false,
                 DisplayMode,
                 DelayInMillisec,
                 _currentSimToken,
@@ -446,144 +592,6 @@ public partial class BitmaskSolver : ISolver, IDisposable
     }
 
     // --- All-mode adaptive enumeration (modified to disable incremental canonicalization locally) ---
-    private void EnumerateAllAdaptive(bool countOnly)
-    {
-        // Disable incremental canonicalization for All mode enumeration
-        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
-        int N = BoardSize;
-        if (N <= 18)
-        {
-            int capSmall = countOnly ? 0 : _maxDisplayedCount;
-            ulong countSmall = 0;
-            int materializedSmall = 0;
-            BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
-                N,
-                RestrictFirstCol: false,
-                EnhancedSymmetry: false,
-                AggressiveSymmetry: false,
-                DisplayMode,
-                DelayInMillisec,
-                _currentSimToken,
-                () => IsSolverCanceled,
-                p => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
-                m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, N)); },
-                rows =>
-                {
-                    if (!ValidateRows(rows)) return false;
-                    countSmall++;
-                    if (capSmall > 0 && materializedSmall < capSmall)
-                    {
-                        _solutions.Add((0, rows.Length));
-                        materializedSmall++;
-                        if (materializedSmall >= capSmall && _capEnabled)
-                            _eventsSuppressedAfterCap = true;
-                    }
-                    return false;
-                }
-            ));
-            _solutionCount = countSmall;
-            if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
-            return;
-        }
-        int cap = countOnly ? 0 : _maxDisplayedCount;
-        ulong totalCount = 0;
-        int materialized = 0;
-        int cores = Environment.ProcessorCount;
-        int targetJobs = cores * 128;
-        int maxDepth = 4;
-        int depth = 2;
-        double branchEstimate = Math.Max(2.0, N * 0.55);
-        while (depth < maxDepth && Math.Pow(branchEstimate, depth) < targetJobs) depth++;
-        var partialStates = new List<(int col, int[] rows, ulong cols, ulong d1, ulong d2)>();
-        bool abortGen = false;
-        int maxStates = targetJobs * 2;
-        ulong fullMask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
-        for (int rootRow = 0; rootRow < N && !abortGen; rootRow++)
-        {
-            int[] rows = new int[N];
-            Array.Fill(rows, -1);
-            rows[0] = rootRow;
-            ulong bit = 1UL << rootRow;
-            Gen(1, bit, bit << 1, bit >> 1, rows);
-        }
-        void Gen(int col, ulong cols, ulong d1, ulong d2, int[] rows)
-        {
-            if (abortGen) return;
-            if (col == N || col == depth)
-            {
-                var snap = new int[N];
-                Array.Copy(rows, snap, N);
-                partialStates.Add((col, snap, cols, d1, d2));
-                if (partialStates.Count >= maxStates) abortGen = true;
-                return;
-            }
-            ulong avail = ~(cols | d1 | d2) & fullMask;
-            while (avail != 0 && !abortGen)
-            {
-                ulong bitLocal = avail & (ulong)-(long)avail;
-                avail ^= bitLocal;
-                int row = BitOperations.TrailingZeroCount(bitLocal);
-                rows[col] = row;
-                Gen(col + 1, cols | bitLocal, (d1 | bitLocal) << 1, (d2 | bitLocal) >> 1, rows);
-                rows[col] = -1;
-            }
-        }
-        int totalJobs = partialStates.Count;
-        if (totalJobs == 0) { _solutionCount = 0; return; }
-        void DFSWrapper(int startCol, int[] rows, ulong cols, ulong d1, ulong d2)
-        {
-            void DFS(int col, ulong lc, ulong ld1, ulong ld2)
-            {
-                if (IsSolverCanceled) return;
-                if (col == N)
-                {
-                    Interlocked.Increment(ref totalCount);
-                    if (cap > 0 && materialized < cap)
-                    {
-                        int current = Interlocked.Increment(ref materialized);
-                        if (current <= cap)
-                        {
-                            _solutions.Add((0, rows.Length));
-                            if (EnableEvents && !_eventsSuppressedAfterCap)
-                                SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
-                            if (current == cap) _eventsSuppressedAfterCap = true;
-                        }
-                    }
-                    return;
-                }
-                ulong avail = ~(lc | ld1 | ld2) & fullMask;
-                while (avail != 0 && !IsSolverCanceled)
-                {
-                    ulong bitLocal = avail & (ulong)-(long)avail;
-                    avail ^= bitLocal;
-                    int row = BitOperations.TrailingZeroCount(bitLocal);
-                    rows[col] = row;
-                    DFS(col + 1, lc | bitLocal, (ld1 | bitLocal) << 1, (ld2 | bitLocal) >> 1);
-                    rows[col] = -1;
-                }
-            }
-            DFS(startCol, cols, d1, d2);
-        }
-        if (UseParallel)
-        {
-            Parallel.ForEach(partialStates, new ParallelOptions { MaxDegreeOfParallelism = cores }, state =>
-            {
-                var (startCol, rows, cols, d1, d2) = state;
-                DFSWrapper(startCol, rows, cols, d1, d2);
-            });
-        }
-        else
-        {
-            foreach (var state in partialStates)
-            {
-                var (startCol, rows, cols, d1, d2) = state;
-                DFSWrapper(startCol, rows, cols, d1, d2);
-            }
-        }
-        _solutionCount = totalCount;
-        if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
-    }
-
     private void MitmEnumerateAll(bool countOnly)
     {
         // Disable incremental canonicalization for All mode MITM enumeration

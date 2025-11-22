@@ -8,6 +8,7 @@ internal sealed class BitmaskSearchEngine
         bool RestrictFirstCol,
         bool EnhancedSymmetry,
         bool AggressiveSymmetry,
+        bool CountOnly, // new: enables fast path (no solution cloning, no placement events)
         DisplayMode DisplayMode,
         int DelayInMillisec,
         Guid SimulationToken,
@@ -63,7 +64,7 @@ internal sealed class BitmaskSearchEngine
         var queenRows = new int[N];
         Array.Fill(queenRows, -1);
         int maxRow0 = request.RestrictFirstCol ? (N + 1) / 2 : N;
-        bool visualize = request.DisplayMode == DisplayMode.Visualize;
+        bool visualize = !request.CountOnly && request.DisplayMode == DisplayMode.Visualize; // suppress visualization in count-only
         int sampleRate = N >= SimulationSettings.QueenPlacedSamplingThresholdSize ? SimulationSettings.QueenPlacedLargeBoardSampleRate : 1;
         return new SearchState
         {
@@ -89,17 +90,18 @@ internal sealed class BitmaskSearchEngine
         // Use Span to potentially reduce bounds checks (optimization 3)
         Span<int> queenRows = s.QueenRows;
         int[]? solutionBuffer = null;
-        bool needsCopy = request.OnSolution != null;
+        bool needsCopy = request.OnSolution != null && !request.CountOnly;
         if (needsCopy) solutionBuffer = new int[N];
         bool prefixEnabled = SearchOptimizations.PrefixMinimalityPruningEnabled;
         bool reflectionEnabled = SearchOptimizations.ReflectionPrefixPruningEnabled;
-        bool incrementalEnabled = SearchOptimizations.IncrementalCanonicalizationEnabled;
+        bool incrementalEnabled = SearchOptimizations.IncrementalCanonicalizationEnabled && !request.CountOnly; // skip incremental scratch for pure counting
         int pruneDepthGate = int.MaxValue;
         if (prefixEnabled || reflectionEnabled)
         {
-            // Reverted gating: N>=20 depth>=1, N>=16 depth>=2, below 16 disabled.
+            // Adaptive gating: enable earlier for larger boards, delay for borderline sizes to reduce overhead.
             if (N >= 20) pruneDepthGate = 1;
             else if (N >= 16) pruneDepthGate = 2;
+            else if (N >= 15) pruneDepthGate = 3; // newly added gate for N=15
         }
         int[]? incScratch = null;
         if (incrementalEnabled && N > 0)
@@ -107,6 +109,9 @@ internal sealed class BitmaskSearchEngine
             incScratch = s.IncrementalScratch ??= new int[N * 8];
             Array.Fill(incScratch, -1);
         }
+        ulong localCols = s.Cols; // local composites for incremental attacked mask update
+        ulong localD1 = s.Diag1;
+        ulong localD2 = s.Diag2;
         while (true)
         {
             if (request.IsCanceled()) break;
@@ -116,22 +121,27 @@ internal sealed class BitmaskSearchEngine
                 {
                     if (needsCopy)
                     {
-                        for (int i = 0; i < N; i++) solutionBuffer![i] = queenRows[i];
+                        queenRows.Slice(0, N).CopyTo(solutionBuffer!);
                         if (request.OnSolution(solutionBuffer!)) break;
                     }
-                    else if (request.OnSolution(s.QueenRows)) break; // fallback
+                    else
+                    {
+                        if (request.OnSolution(s.QueenRows)) break;
+                    }
                 }
                 if (!BacktrackInline(ref s)) break;
+                localCols = s.Cols; localD1 = s.Diag1; localD2 = s.Diag2;
                 continue;
             }
             if (s.Remaining == 0)
             {
                 if (!BacktrackInline(ref s)) break;
+                localCols = s.Cols; localD1 = s.Diag1; localD2 = s.Diag2;
                 continue;
             }
             ulong remainingLocal = s.Remaining;
             ulong bit = remainingLocal & (ulong)-(long)remainingLocal;
-            remainingLocal &= (remainingLocal - 1);
+            remainingLocal &= remainingLocal - 1;
             s.Remaining = remainingLocal;
             int row = BitOperations.TrailingZeroCount(bit);
             queenRows[s.Col] = row;
@@ -147,12 +157,15 @@ internal sealed class BitmaskSearchEngine
                 incScratch[5 * N + col] = N - 1 - row;
             }
             if (s.Col == 0) ReportRootProgress(ref s, request);
-            MaybeRaisePlacementEvent(ref s, request);
+            if (!request.CountOnly) MaybeRaisePlacementEvent(ref s, request);
             PushState(ref s, bit);
+            localCols |= bit;
+            localD1 = (localD1 | bit) << 1;
+            localD2 = (localD2 | bit) >> 1;
             s.Col++;
             if (s.Col == N) continue;
             // Cache attacked composite (optimization 2 repeat)
-            ulong attacked = s.Cols | s.Diag1 | s.Diag2;
+            ulong attacked = localCols | localD1 | localD2;
             ulong avail = (~attacked) & s.Mask;
             // Raise symmetry pruning threshold (optimization 4 repeat)
             if (N >= 14)
