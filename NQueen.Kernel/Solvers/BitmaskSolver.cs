@@ -156,7 +156,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
 
     private ulong CountAllExact()
     {
-        bool applyHalfBoard = UseCountOnlyAllMode; // only for count-only All mode
+        bool applyHalfBoard = UseCountOnlyAllMode && BoardSize >= 15; // restrict half-board to N>=15
         SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
         ulong countNonCenter = 0UL;
         ulong countCenter = 0UL;
@@ -193,7 +193,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
     {
         SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
         int N = BoardSize;
-        bool halfBoard = countOnly && UseCountOnlyAllMode;
+        bool halfBoard = countOnly && UseCountOnlyAllMode && N >= 15; // only apply for N>=15
         bool isOdd = (N & 1) == 1; int centerRow = N / 2;
         if (N <= 18)
         {

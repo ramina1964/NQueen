@@ -30,23 +30,17 @@ internal sealed class BitmaskSearchEngine
         // Compute initial attacked composite once (optimization 2)
         ulong attacked0 = state.Cols | state.Diag1 | state.Diag2;
         state.Remaining = (~attacked0) & state.Mask;
-        // Raise symmetry pruning threshold (optimization 4)
-        if (state.N >= 14)
+        // Apply half-board restriction immediately if requested (independent of symmetry flags)
+        if (request.RestrictFirstCol)
         {
-            int maxRow = state.N;
-            int splitDepth = state.RootTotal > 0 ? state.RootTotal : 1;
-            if (request.RestrictFirstCol && request.EnhancedSymmetry && 0 < splitDepth)
-            {
-                maxRow = (state.N + 1) / 2;
-                if ((state.N & 1) == 1 && state.QueenRows[0] == state.N / 2)
-                    maxRow = state.N / 2;
-            }
+            int maxRow = (state.N + 1) / 2; // include center for odd N
             if (maxRow < state.N)
                 state.Remaining &= (1UL << maxRow) - 1UL;
-            if ((request.EnhancedSymmetry || request.AggressiveSymmetry) && state.N >= 14)
-            {
-                state.Remaining = SymmetryHelper.ApplyAdvancedSymmetryPruning(state.N, 0, state.QueenRows, state.Remaining);
-            }
+        }
+        // Optional advanced symmetry pruning
+        if ((request.EnhancedSymmetry || request.AggressiveSymmetry) && state.N >= 14)
+        {
+            state.Remaining = SymmetryHelper.ApplyAdvancedSymmetryPruning(state.N, 0, state.QueenRows, state.Remaining);
         }
         MainLoop(ref state, request);
         request.ReportProgress(100.0);
@@ -167,31 +161,20 @@ internal sealed class BitmaskSearchEngine
             // Cache attacked composite (optimization 2 repeat)
             ulong attacked = localCols | localD1 | localD2;
             ulong avail = (~attacked) & s.Mask;
-            // Raise symmetry pruning threshold (optimization 4 repeat)
-            if (N >= 14)
+            // REMOVE: erroneous second-column restriction. Half-board applies only to initial root (handled before loop).
+            // Advanced symmetry pruning (independent of half-board restriction)
+            if ((request.EnhancedSymmetry || request.AggressiveSymmetry) && N >= 14)
             {
-                int maxRow = N;
-                int splitDepth = s.RootTotal > 0 ? s.RootTotal : 1;
-                if (request.RestrictFirstCol && request.EnhancedSymmetry && s.Col < splitDepth)
+                avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(N, s.Col, s.QueenRows, avail);
+                if (request.AggressiveSymmetry && s.Col == 2 && queenRows[1] >= 0 && !((N & 1) == 1 && queenRows[0] == N / 2))
                 {
-                    maxRow = (N + 1) / 2;
-                    if ((N & 1) == 1 && s.Col == 0 && queenRows[0] == N / 2)
-                        maxRow = N / 2;
-                }
-                if (maxRow < N) avail &= (1UL << maxRow) - 1UL;
-                if ((request.EnhancedSymmetry || request.AggressiveSymmetry) && N >= 14)
-                {
-                    avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(N, s.Col, s.QueenRows, avail);
-                    if (request.AggressiveSymmetry && s.Col == 2 && queenRows[1] >= 0 && !((N & 1) == 1 && queenRows[0] == N / 2))
+                    int minRow = queenRows[1];
+                    if (minRow < N)
                     {
-                        int minRow = queenRows[1];
-                        if (minRow < N)
-                        {
-                            ulong lowerMask = (1UL << minRow) - 1UL;
-                            avail &= ~lowerMask;
-                        }
-                        else avail = 0UL;
+                        ulong lowerMask = (1UL << minRow) - 1UL;
+                        avail &= ~lowerMask;
                     }
+                    else avail = 0UL;
                 }
             }
             s.Remaining = avail;
