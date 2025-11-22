@@ -15,6 +15,12 @@ public partial class BitmaskSolver
         int materialized = 0;
         int capReachedFlag = 0;
 
+        // Configure global pruning for unique mode (incremental canonicalization disabled here)
+        Engines.SearchOptimizations.Configure(
+            prefixMinimality: EnablePrefixMinimalityPruning,
+            reflectionPruning: EnablePartialReflectionPruning,
+            incrementalCanonicalization: EnableIncrementalCanonicalization);
+
         if (N >= SimulationSettings.LargeBoardSymmetryPruningThreshold)
         {
             // Large boards: symmetry-pruned enumeration (parallel in engine) counting canonical minimal representatives.

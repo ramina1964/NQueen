@@ -9,6 +9,12 @@ public partial class BitmaskSolver
             ? SimulationSettings.MaxDisplayedCount
             : int.MaxValue;
 
+        // Configure pruning flags (incremental canonicalization disabled for All mode count/materialize)
+        Engines.SearchOptimizations.Configure(
+            prefixMinimality: EnablePrefixMinimalityPruning,
+            reflectionPruning: EnablePartialReflectionPruning,
+            incrementalCanonicalization: false);
+
         var solutions = new List<(UInt128 packed, int boardSize)>();
         ulong totalCount = 0;
         int materialized = 0;

@@ -18,13 +18,19 @@ public static class SymmetryPrunedUniqueCounter
         if (boardSize <= 0) return 0UL;
         int N = boardSize;
         ulong maskAll = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
-
         var totalCount = 0UL;
         var materializedQueue = (onMaterialized != null && cap > 0) ? new ConcurrentQueue<int[]>() : null;
 
+        // Pruning gate (reuse heuristic from BitmaskSearchEngine)
+        int pruneDepthGate = int.MaxValue;
+        if (SearchOptimizations.PrefixMinimalityPruningEnabled || SearchOptimizations.ReflectionPrefixPruningEnabled)
+        {
+            if (N >= 20) pruneDepthGate = 1;
+            else if (N >= 16) pruneDepthGate = 2;
+        }
+
         Parallel.For(0, N, rootRow =>
         {
-            // Per-task state
             int[] rows = new int[N];
             Array.Fill(rows, -1);
             rows[0] = rootRow;
@@ -36,13 +42,9 @@ public static class SymmetryPrunedUniqueCounter
             {
                 if (col == N)
                 {
-                    // Canonical minimality test
                     var canon = SymmetryHelper.GetCanonicalForm(rows, scratch, null);
                     bool minimal = true;
-                    for (int i = 0; i < N; i++)
-                    {
-                        if (rows[i] != canon[i]) { minimal = false; break; }
-                    }
+                    for (int i = 0; i < N; i++) { if (rows[i] != canon[i]) { minimal = false; break; } }
                     if (minimal)
                     {
                         localCount++;
@@ -63,6 +65,9 @@ public static class SymmetryPrunedUniqueCounter
                     avail ^= bit;
                     int r = System.Numerics.BitOperations.TrailingZeroCount(bit);
                     rows[col] = r;
+                    // Early prefix pruning (reflection + minimality) only after gate depth
+                    if (col >= pruneDepthGate && ShouldPrunePrefixFast(rows, col, N))
+                    { rows[col] = -1; continue; }
                     DFS(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1);
                     rows[col] = -1;
                 }
@@ -82,7 +87,33 @@ public static class SymmetryPrunedUniqueCounter
                 emitted++;
             }
         }
-
         return totalCount;
+    }
+
+    private static bool ShouldPrunePrefixFast(int[] rows, int depth, int N)
+    {
+        bool reflectionEnabled = SearchOptimizations.ReflectionPrefixPruningEnabled;
+        bool minimalityEnabled = SearchOptimizations.PrefixMinimalityPruningEnabled;
+        if (!reflectionEnabled && !minimalityEnabled) return false;
+        if (reflectionEnabled)
+        {
+            for (int i = 0; i <= depth; i++)
+            {
+                int r = rows[i]; if (r < 0) return false; // incomplete prefix
+                int reflected = N - 1 - r;
+                if (r > reflected) return true; // lexicographically greater than horizontal reflection
+                if (r < reflected) break; // strictly smaller, keep
+            }
+        }
+        if (!minimalityEnabled) return false;
+        for (int i = 0; i <= depth; i++)
+        {
+            int a = rows[i]; if (a < 0) return false;
+            int b = rows[depth - i]; if (b < 0) return false;
+            int transformed = N - 1 - b; // 180 rotation composed with horizontal reflection of reversed prefix
+            if (a > transformed) return true;
+            if (a < transformed) break;
+        }
+        return false;
     }
 }
