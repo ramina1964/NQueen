@@ -18,6 +18,9 @@ namespace NQueen.Kernel.Solvers.Engines
             int N = boardSize;
             ulong fullMask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
             int[] queenRows = new int[N];
+            Array.Fill(queenRows, -1);
+            // scratch buffer for canonicalization (needs N*8 per SymmetryHelper contract)
+            // scratch buffer for canonicalization (needs N*8 per SymmetryHelper contract)
             int[] scratch = new int[N * 8];
             ulong[] stackCols = new ulong[N];
             ulong[] stackD1 = new ulong[N];
@@ -27,7 +30,6 @@ namespace NQueen.Kernel.Solvers.Engines
             int firstRowLimitExclusive = (N + 1) / 2;
 
             for (int fr = 0; fr < firstRowLimitExclusive; fr++)
-            {
                 Array.Fill(queenRows, -1);
                 ulong bitFirst = 1UL << fr;
                 ulong cols = bitFirst;
@@ -67,7 +69,7 @@ namespace NQueen.Kernel.Solvers.Engines
                     ulong bit = avail & (ulong)-(long)avail;
                     avail ^= bit;
                     int row = BitOperations.TrailingZeroCount(bit);
-                    queenRows[col] = row;
+                    if ((avail & bit) == 0) continue;
                     stackCols[col] = cols;
                     stackD1[col] = d1;
                     stackD2[col] = d2;
@@ -82,6 +84,7 @@ namespace NQueen.Kernel.Solvers.Engines
             }
             return count;
         }
+            }
 
         private static void Restore(int c, out ulong avail, ref ulong cols, ref ulong d1, ref ulong d2,
             int[] queenRows, ulong[] stackAvail, ulong[] stackCols, ulong[] stackD1, ulong[] stackD2)
@@ -91,6 +94,35 @@ namespace NQueen.Kernel.Solvers.Engines
             d1 = stackD1[c];
             d2 = stackD2[c];
             queenRows[c] = -1;
+        }
+
+        private static bool ShouldPrunePrefixFast(int[] rows, int depth, int N)
+        {
+            if (!SearchOptimizations.ReflectionPrefixPruningEnabled && !SearchOptimizations.PrefixMinimalityPruningEnabled)
+                return false;
+
+            // Reflection pruning: compare prefix with its horizontal reflection
+            if (SearchOptimizations.ReflectionPrefixPruningEnabled)
+            {
+                for (int i = 0; i <= depth; i++)
+                {
+                    int r = rows[i]; if (r < 0) return false; // incomplete prefix, cannot decide
+                    int reflected = N - 1 - r;
+                    if (r > reflected) return true; // prefix lexicographically greater than reflection
+                    if (r < reflected) break; // strictly less, keep branch
+                }
+            }
+            if (!SearchOptimizations.PrefixMinimalityPruningEnabled) return false;
+            // Rotate180 heuristic minimality: compare prefix rows[i] vs transformed of reversed prefix
+            for (int i = 0; i <= depth; i++)
+            {
+                int a = rows[i]; if (a < 0) return false;
+                int b = rows[depth - i]; if (b < 0) return false;
+                int transformed = N - 1 - b;
+                if (a > transformed) return true;
+                if (a < transformed) break;
+            }
+            return false;
         }
     }
 }
