@@ -27,17 +27,14 @@ internal sealed class BitmaskSearchEngine
         var state = CreateState(request);
         state.Col = 0;
         request.ReportProgress(0.0);
-        // Compute initial attacked composite once (optimization 2)
         ulong attacked0 = state.Cols | state.Diag1 | state.Diag2;
         state.Remaining = (~attacked0) & state.Mask;
-        // Apply half-board restriction immediately if requested (independent of symmetry flags)
         if (request.RestrictFirstCol)
         {
             int maxRow = (state.N + 1) / 2; // include center for odd N
             if (maxRow < state.N)
                 state.Remaining &= (1UL << maxRow) - 1UL;
         }
-        // Optional advanced symmetry pruning
         if ((request.EnhancedSymmetry || request.AggressiveSymmetry) && state.N >= 14)
         {
             state.Remaining = SymmetryHelper.ApplyAdvancedSymmetryPruning(state.N, 0, state.QueenRows, state.Remaining);
@@ -58,7 +55,7 @@ internal sealed class BitmaskSearchEngine
         var queenRows = new int[N];
         Array.Fill(queenRows, -1);
         int maxRow0 = request.RestrictFirstCol ? (N + 1) / 2 : N;
-        bool visualize = !request.CountOnly && request.DisplayMode == DisplayMode.Visualize; // suppress visualization in count-only
+        bool visualize = !request.CountOnly && request.DisplayMode == DisplayMode.Visualize;
         int sampleRate = N >= SimulationSettings.QueenPlacedSamplingThresholdSize ? SimulationSettings.QueenPlacedLargeBoardSampleRate : 1;
         return new SearchState
         {
@@ -81,20 +78,19 @@ internal sealed class BitmaskSearchEngine
     private static void MainLoop(ref SearchState s, in Request request)
     {
         int N = s.N;
-        ulong mask = s.Mask;
-        int[] solutionBuffer = null!;
-        bool needsCopy = request.OnSolution != null;
+        Span<int> queenRows = s.QueenRows; // local span for fast indexing
+        int[]? solutionBuffer = null;
+        bool needsCopy = request.OnSolution != null && !request.CountOnly;
         if (needsCopy) solutionBuffer = new int[N];
         bool prefixEnabled = SearchOptimizations.PrefixMinimalityPruningEnabled;
         bool reflectionEnabled = SearchOptimizations.ReflectionPrefixPruningEnabled;
-        bool incrementalEnabled = SearchOptimizations.IncrementalCanonicalizationEnabled && !request.CountOnly; // skip incremental scratch for pure counting
+        bool incrementalEnabled = SearchOptimizations.IncrementalCanonicalizationEnabled && !request.CountOnly;
         int pruneDepthGate = int.MaxValue;
         if (prefixEnabled || reflectionEnabled)
         {
-            // Adaptive gating: enable earlier for larger boards, delay for borderline sizes to reduce overhead.
             if (N >= 20) pruneDepthGate = 1;
             else if (N >= 16) pruneDepthGate = 2;
-            else if (N >= 15) pruneDepthGate = 3; // newly added gate for N=15
+            else if (N >= 15) pruneDepthGate = 3;
         }
         int[]? incScratch = null;
         if (incrementalEnabled && N > 0)
@@ -102,7 +98,7 @@ internal sealed class BitmaskSearchEngine
             incScratch = s.IncrementalScratch ??= new int[N * 8];
             Array.Fill(incScratch, -1);
         }
-        ulong localCols = s.Cols; // local composites for incremental attacked mask update
+        ulong localCols = s.Cols;
         ulong localD1 = s.Diag1;
         ulong localD2 = s.Diag2;
         while (true)
@@ -157,11 +153,8 @@ internal sealed class BitmaskSearchEngine
             localD2 = (localD2 | bit) >> 1;
             s.Col++;
             if (s.Col == N) continue;
-            // Cache attacked composite (optimization 2 repeat)
             ulong attacked = localCols | localD1 | localD2;
             ulong avail = (~attacked) & s.Mask;
-            // REMOVE: erroneous second-column restriction. Half-board applies only to initial root (handled before loop).
-            // Advanced symmetry pruning (independent of half-board restriction)
             if ((request.EnhancedSymmetry || request.AggressiveSymmetry) && N >= 14)
             {
                 avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(N, s.Col, s.QueenRows, avail);
@@ -189,17 +182,16 @@ internal sealed class BitmaskSearchEngine
             {
                 int r = rows[i]; if (r < 0) return false;
                 int reflected = N - 1 - r;
-                if (r > reflected) return true; // prefix lexicographically greater than reflection
-                if (r < reflected) break; // reflection smaller so keep branch
+                if (r > reflected) return true;
+                if (r < reflected) break;
             }
         }
         if (!minimalityEnabled) return false;
-        // Minimality check (prefix vs transformed reverse)
         for (int i = 0; i <= depth; i++)
         {
             int a = rows[i]; if (a < 0) return false;
             int b = rows[depth - i]; if (b < 0) return false;
-            int transformed = N - 1 - b; // horizontal reflection of reversed prefix position
+            int transformed = N - 1 - b;
             if (a > transformed) return true;
             if (a < transformed) break;
         }

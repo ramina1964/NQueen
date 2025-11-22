@@ -20,7 +20,7 @@ namespace NQueen.Kernel.Solvers.Engines
             if (boardSize <= 0) return 0UL;
             int N = boardSize;
             int firstRowLimitExclusive = (N + 1) / 2; // even: N/2 roots, odd: (N+1)/2 including center
-            ulong globalCount = 0;
+            long globalCount = 0; // use long for Interlocked operations
             int cap = materializeCap <= 0 ? int.MaxValue : materializeCap;
             int materialized = 0;
 
@@ -49,13 +49,13 @@ namespace NQueen.Kernel.Solvers.Engines
                     {
                         if (SymmetryHelper.IsIdentityCanonical(queenRows, scratch))
                         {
-                            Interlocked.Increment(ref Unsafe.As<ulong, long>(ref globalCount));
+                            Interlocked.Increment(ref globalCount);
                             if (materialized < cap && onCanonicalSolution != null)
                             {
                                 var copy = new int[N];
                                 Buffer.BlockCopy(queenRows, 0, copy, 0, N * sizeof(int));
                                 onCanonicalSolution(copy);
-                                materialized++;
+                                Interlocked.Increment(ref materialized);
                             }
                         }
                         col--;
@@ -86,7 +86,7 @@ namespace NQueen.Kernel.Solvers.Engines
                     avail = ~(cols | d1 | d2) & fullMask;
                 }
             });
-            return globalCount;
+            return (ulong)globalCount;
         }
 
         private static void Restore(int c, out ulong avail, ref ulong cols, ref ulong d1, ref ulong d2,

@@ -7,13 +7,14 @@
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
     d:DesignWidth="260"
-    d:DesignHeight="220"
+    d:DesignHeight="260"
     mc:Ignorable="d">
 
     <!-- Uses shared styles (TextBoxNumericalStyle, ComboBoxStyle, LabelStyle) for consistency -->
     <GroupBox Header="Performance &amp; Parallel Settings" Margin="0" Padding="0" Background="Bisque" BorderBrush="Black" BorderThickness="1">
         <Grid Margin="6">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -38,8 +39,14 @@
             <Label Grid.Row="2" Grid.Column="0" Content="Solution Storage Mode" Style="{StaticResource LabelStyle}" Margin="0,4,0,4" VerticalAlignment="Center" />
             <ComboBox Grid.Row="2" Grid.Column="1" Width="100" ItemsSource="{Binding EnumStorageModes}" SelectedItem="{Binding SelectedStorageMode}" HorizontalAlignment="Right" Style="{StaticResource ComboBoxStyle}" IsEnabled="{Binding IsInInputMode}" Margin="0,4,0,4" VerticalAlignment="Center" />
 
-            <!-- Row3: Info Note -->
-            <TextBlock Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Text="Auto-tuned settings. Storage Mode applies to current solution mode." FontSize="11" Foreground="Gray" TextWrapping="Wrap" Margin="0,4,0,4" />
+            <!-- Row3: Half-board restriction toggle (All mode only) -->
+            <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,4,0,4" VerticalAlignment="Center">
+                <Label Content="Enable Half-Board (All mode)" Style="{StaticResource LabelStyle}" VerticalAlignment="Center" Margin="0" />
+                <CheckBox IsChecked="{Binding EnableHalfBoardRestriction}" VerticalAlignment="Center" Margin="6,0,0,0" />
+            </StackPanel>
+
+            <!-- Row4: Info Note -->
+            <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Text="Auto-tuned settings. Storage Mode applies to current solution mode." FontSize="11" Foreground="Gray" TextWrapping="Wrap" Margin="0,4,0,4" />
         </Grid>
     </GroupBox>
 </UserControl>

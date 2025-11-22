@@ -47,6 +47,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
     public bool EnableIncrementalCanonicalization { get; set; } = false; // Opt #3 (driver flag)
     public bool EnablePartialReflectionPruning { get; set; } = false; // Opt #14
     public bool EnableMitmAllSplit { get; set; } = false; // Opt #4
+    public bool EnableHalfBoardRestriction { get; set; } = false; // new flag (applies to All mode; materialize + count-only)
 
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
 
@@ -156,7 +157,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
 
     private ulong CountAllExact()
     {
-        bool applyHalfBoard = UseCountOnlyAllMode && BoardSize >= 15; // restrict half-board to N>=15
+        bool applyHalfBoard = BoardSize >= 15 && (UseCountOnlyAllMode || EnableHalfBoardRestriction);
         SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
         ulong countNonCenter = 0UL;
         ulong countCenter = 0UL;
@@ -193,7 +194,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
     {
         SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
         int N = BoardSize;
-        bool halfBoard = countOnly && UseCountOnlyAllMode && N >= 15; // only apply for N>=15
+        bool halfBoard = N >= 15 && ((countOnly && UseCountOnlyAllMode) || (!countOnly && EnableHalfBoardRestriction));
         bool isOdd = (N & 1) == 1; int centerRow = N / 2;
         if (N <= 18)
         {
@@ -216,7 +217,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
                     if (!ValidateRows(rows)) return false;
                     int r0 = rows[0];
                     if (halfBoard && isOdd && r0 == centerRow) countCenter++; else countNonCenter++;
-                    if (capSmall > 0 && materializedSmall < capSmall)
+                    if (!countOnly && capSmall > 0 && materializedSmall < capSmall)
                     {
                         _solutions.Add((0, rows.Length));
                         materializedSmall++;
@@ -278,7 +279,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
                 {
                     int r0 = rows[0];
                     if (halfBoard && isOdd && r0 == centerRow) Interlocked.Increment(ref totalCenter); else Interlocked.Increment(ref totalNonCenter);
-                    if (cap > 0 && materialized < cap)
+                    if (!countOnly && cap > 0 && materialized < cap)
                     {
                         int current = Interlocked.Increment(ref materialized);
                         if (current <= cap)

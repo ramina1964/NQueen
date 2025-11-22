@@ -232,4 +232,18 @@ public sealed partial class MainViewModel : ObservableObject
         bs.ParallelRootSplitDepth = depth;
         ParallelRootSplitDepth = depth;
     }
+
+    private bool _enableHalfBoardRestriction; // UI toggle
+    public bool EnableHalfBoardRestriction
+    {
+        get => _enableHalfBoardRestriction;
+        set
+        {
+            if (_enableHalfBoardRestriction == value) return;
+            _enableHalfBoardRestriction = value;
+            OnPropertyChanged();
+            if (_solver is NQueen.Kernel.Solvers.BitmaskSolver b)
+                b.EnableHalfBoardRestriction = value;
+        }
+    }
 }
