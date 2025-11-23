@@ -6,7 +6,7 @@ public class UniqueExamplesVsCountOnlyBenchmark
     [Params(12, 13, 14, 15, 16)]
     public int BoardSize;
 
-    private ISolutionFormatter _formatter = new DefaultSolutionFormatter();
+    private static readonly ISolutionFormatter _formatter = new DefaultSolutionFormatter();
 
     [Benchmark]
     public SimulationResults MaterializeExamples()

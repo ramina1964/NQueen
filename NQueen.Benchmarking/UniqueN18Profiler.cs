@@ -1,10 +1,3 @@
-using System;
-using System.Diagnostics;
-using NQueen.Domain.Enums;
-using NQueen.Domain.Models;
-using NQueen.Kernel.Solvers;
-using NQueen.Domain.Settings;
-
 namespace NQueen.Benchmarking;
 
 // Simple manual profiler for N=18 and N=19 Unique mode producing elapsed time & GC stats.

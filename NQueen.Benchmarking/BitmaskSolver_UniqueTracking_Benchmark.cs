@@ -9,9 +9,12 @@ public class BitmaskSolver_UniqueTracking_Benchmark
     [Benchmark]
     public SimulationResults SolveUnique()
     {
-        var solver = new BitmaskSolver(BoardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter);
-        solver.EnableEvents = false;
-        solver.UseCountOnlyUniqueMode = false; // Materializing approach
+        var solver = new BitmaskSolver(
+            BoardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter)
+        {
+            EnableEvents = false,
+            UseCountOnlyUniqueMode = false // Materializing approach
+        };
         return solver.Solve();
     }
 }

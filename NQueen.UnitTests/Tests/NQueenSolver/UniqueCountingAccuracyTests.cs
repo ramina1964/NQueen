@@ -6,10 +6,10 @@ public class UniqueCountingAccuracyTests(SolverBackEndFixture fixture)
 {
     private readonly ISolverBackEnd _solver = fixture.Sut;
 
-    public static TheoryData<int> Boards => new()
-     {
+    public static TheoryData<int> Boards =>
+     [
         4, 5, 6, 7, 8, 9, 10, 11
-     };
+     ];
 
     [Theory]
     [MemberData(nameof(Boards))]

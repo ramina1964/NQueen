@@ -2,7 +2,7 @@ namespace NQueen.UnitTests.Tests.SymmetryPruning;
 
 public class MemoryIntArrayComparerTests
 {
-    private static readonly MemoryIntArrayComparer Comparer = MemoryIntArrayComparer.Instance;
+    private static readonly MemoryIntArrayComparer _comparer = MemoryIntArrayComparer.Instance;
 
     [Theory]
     [MemberData(nameof(ExpectedSolutions.MemoryComparerEqualityCases), MemberType = typeof(ExpectedSolutions))]
@@ -11,7 +11,7 @@ public class MemoryIntArrayComparerTests
         var memoryA = new Memory<int>(first);
         var memoryB = new Memory<int>(second);
 
-        var areEqual = Comparer.Equals(memoryA, memoryB);
+        var areEqual = _comparer.Equals(memoryA, memoryB);
 
         areEqual.Should().Be(expected, $"comparing {string.Join(',', first)} and {string.Join(',', second)} should be {expected}");
     }
@@ -52,7 +52,7 @@ public class MemoryIntArrayComparerTests
     private static List<int[]> GetSymmetricalSolutions(int[] solution)
     {
         var transforms = SymmetryHelper.GetAllTransforms(solution);
-        return transforms.Select(t => t.ToArray()).ToList();
+        return [.. transforms.Select(t => t.ToArray())];
     }
 
     private static List<int[]> GetSymmetricalSolutions(Memory<int> solution) => GetSymmetricalSolutions(solution.ToArray());

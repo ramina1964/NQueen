@@ -1,10 +1,3 @@
-using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Order;
-using NQueen.Domain.Enums;
-using NQueen.Domain.Models;
-using NQueen.Kernel.Solvers;
-using NQueen.Domain.Settings;
-
 namespace NQueen.Benchmarking;
 
 // Benchmark focused on N = 18 Unique mode, comparing Materialize vs CountOnly paths.

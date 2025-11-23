@@ -16,12 +16,10 @@ public class SymmetryHelperCanonicalFormBenchmark
     }
 
     [Benchmark]
-    public int[] CanonicalFormWithScratchAndBuffer()
-    {
-        return SymmetryHelper.GetCanonicalForm(_solution, _scratch, _resultBuffer);
-    }
+    public int[] CanonicalFormWithScratchAndBuffer() =>
+        SymmetryHelper.GetCanonicalForm(_solution, _scratch, _resultBuffer);
 
-    private int[] _solution = Array.Empty<int>();
+    private int[] _solution = [];
     private int[] _scratch = [];
-    private int[] _resultBuffer = Array.Empty<int>();
+    private int[] _resultBuffer = [];
 }

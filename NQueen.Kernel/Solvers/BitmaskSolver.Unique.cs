@@ -5,12 +5,12 @@ public partial class BitmaskSolver
     // Consolidated Unique mode executor: handles both large-board symmetry-pruned and small-board canonical enumeration.
     private void ExecuteUniqueModeUnified()
     {
-        int N = BoardSize;
+        int boardSize = BoardSize;
         int cap = _capEnabled ? _maxDisplayedCount : int.MaxValue;
         _solutions.Clear();
         _eventsSuppressedAfterCap = false;
         _solutionCount = 0;
-        var packedSample = new List<(UInt128 Packed, int BoardSize)>();
+        List<(UInt128 packed, int boardSize)> packedSample = [];
         int materialized = 0;
         int capReachedFlag = 0;
 
@@ -19,13 +19,13 @@ public partial class BitmaskSolver
             reflectionPruning: EnablePartialReflectionPruning,
             incrementalCanonicalization: EnableIncrementalCanonicalization);
 
-        if (N >= SimulationSettings.LargeBoardSymmetryPruningThreshold)
+        if (boardSize >= SimulationSettings.LargeBoardSymmetryPruningThreshold)
         {
-            _solutionCount = Engines.SymmetryPrunedUniqueCounter.Count(N, cap, rows =>
+            _solutionCount = Engines.SymmetryPrunedUniqueCounter.Count(boardSize, cap, rows =>
             {
                 if (materialized < Math.Max(1, cap))
                 {
-                    packedSample.Add((0, N));
+                    packedSample.Add((0, boardSize));
                     materialized++;
                     if (materialized >= cap && _capEnabled)
                     {
@@ -37,13 +37,13 @@ public partial class BitmaskSolver
         }
         else
         {
-            ulong uniqueCount = Engines.CanonicalUniqueSearchEngine.CountUnique(N, rows =>
+            ulong uniqueCount = Engines.CanonicalUniqueSearchEngine.CountUnique(boardSize, rows =>
             {
                 if (System.Threading.Volatile.Read(ref capReachedFlag) == 1) return;
                 if (materialized < Math.Max(1, cap))
                 {
-                    var packed = N <= 25 ? SymmetryHelper.PackCanonical(rows, N) : 0;
-                    packedSample.Add((packed, N));
+                    var packed = boardSize <= 25 ? SymmetryHelper.PackCanonical(rows, boardSize) : 0;
+                    packedSample.Add((packed, boardSize));
                     materialized++;
                     if (materialized >= cap && _capEnabled)
                     {

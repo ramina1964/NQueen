@@ -1,18 +1,20 @@
 namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 [Collection("SolverBackend")]
-public class HighBoardCountsTests
+public class HighBoardCountsTests(SolverBackEndFixture fixture)
 {
-    private readonly ISolverBackEnd _solver;
-    public HighBoardCountsTests(SolverBackEndFixture fixture) => _solver = fixture.Sut;
+    private readonly ISolverBackEnd _solver = fixture.Sut;
 
-    private static readonly bool FullCoverage = Environment.GetEnvironmentVariable("FULL_HIGHBOARD_COVERAGE") == "true";
-    private static readonly int[] FullBoardSet = { 20, 21, 22, 23, 24, 25, 26, 27, 28, 29 };
-    private static readonly int[] ReducedBoardSet = { 20, 25, 29 };
-    public static TheoryData<int> HighBoards => new(FullCoverage ? FullBoardSet : ReducedBoardSet);
+    private static readonly bool _fullCoverage =
+        Environment.GetEnvironmentVariable("FULL_HIGHBOARD_COVERAGE") == "true";
+
+    private static readonly int[] _fullBoardSet = [20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
+    private static readonly int[] _reducedBoardSet = [20, 25, 29];
+    public static TheoryData<int> HighBoards =>
+        [.. _fullCoverage ? _fullBoardSet : _reducedBoardSet];
 
     // Single board for materialization sampling
-    private const int SampleBoard = 20;
+    private const int _sampleBoard = 20;
 
     // Unified test: count-only (All & Unique) plus Single-mode verification
     [Theory]
@@ -48,17 +50,17 @@ public class HighBoardCountsTests
     {
         // All mode sample
         _solver.UseCountOnlyAllMode = false; _solver.UseCountOnlyUniqueMode = false;
-        var allCtx = new SimulationContext(SampleBoard, SolutionMode.All, DisplayMode.Hide);
+        var allCtx = new SimulationContext(_sampleBoard, SolutionMode.All, DisplayMode.Hide);
         var allRes = await _solver.GetSimResultsAsync(allCtx);
-        allRes.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetAll(SampleBoard));
+        allRes.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetAll(_sampleBoard));
         allRes.Solutions.Count.Should().BeGreaterThan(0);
         (allRes.Solutions.Count <= SimulationSettings.MaxDisplayedCount).Should().BeTrue();
 
         // Unique mode sample
         _solver.UseCountOnlyAllMode = false; _solver.UseCountOnlyUniqueMode = false;
-        var uniqCtx = new SimulationContext(SampleBoard, SolutionMode.Unique, DisplayMode.Hide);
+        var uniqCtx = new SimulationContext(_sampleBoard, SolutionMode.Unique, DisplayMode.Hide);
         var uniqRes = await _solver.GetSimResultsAsync(uniqCtx);
-        uniqRes.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetUnique(SampleBoard));
+        uniqRes.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetUnique(_sampleBoard));
         uniqRes.Solutions.Count.Should().BeGreaterThan(0);
         (uniqRes.Solutions.Count <= SimulationSettings.MaxDisplayedCount).Should().BeTrue();
     }
@@ -91,8 +93,8 @@ public class HighBoardCountsTests
         res.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetUnique(19));
         string fileName = "Unique_OptimizedEnumeration_N19.txt";
         string path = Path.Combine(Environment.CurrentDirectory, fileName);
-        File.WriteAllLines(path, new[]
-        {
+        File.WriteAllLines(path,
+        [
             "OPTIMIZED SYMMETRY-PRUNED ENUMERATION N=19",
             "Env: PERF_N19=1",
             "LookupThreshold: 20 (enumeration used)",
@@ -102,7 +104,7 @@ public class HighBoardCountsTests
             $"StopwatchElapsedSeconds: {sw.Elapsed.TotalSeconds:F3}",
             "MaterializedSolutions: 0 (count-only)",
             "Path: UniqueSolutionCounter.Count + symmetry pruning"
-        });
+        ]);
     }
 
     // Heavy full enumeration test (disabled unless explicitly enabled)
@@ -117,8 +119,8 @@ public class HighBoardCountsTests
         sw.Stop();
         string fileName = "Unique_FullEnumeration_N19.txt";
         string path = Path.Combine(Environment.CurrentDirectory, fileName);
-        File.WriteAllLines(path, new[]
-        {
+        File.WriteAllLines(path,
+        [
             "FULL UNIQUE ENUMERATION N=19",
             "Env: RUN_UNIQUE19_ENUM=1",
             $"ExpectedLookupCount: {ExpectedSolutionCounts.GetUnique(19)}",
@@ -126,7 +128,7 @@ public class HighBoardCountsTests
             $"ElapsedSeconds: {sw.Elapsed.TotalSeconds:F2}",
             $"ElapsedHHMMSS: {sw.Elapsed:hh\\:mm\\:ss}",
             "Note: This test performs exhaustive canonical minimality enumeration and can take a very long time."
-        });
+        ]);
         count.Should().Be(ExpectedSolutionCounts.GetUnique(19));
     }
 }

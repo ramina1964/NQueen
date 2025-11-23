@@ -1,9 +1,3 @@
-using BenchmarkDotNet.Attributes;
-using NQueen.Kernel.Solvers;
-using NQueen.Domain.Enums; // adjust if actual enums namespace differs
-using NQueen.Domain.Models; // for ISolutionFormatter / DefaultSolutionFormatter
-using Microsoft.VSDiagnostics;
-
 namespace NQueen.Benchmarking;
 
 [CPUUsageDiagnoser]

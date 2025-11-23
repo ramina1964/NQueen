@@ -2,10 +2,10 @@ namespace NQueen.Kernel.Solvers;
 
 public partial class BitmaskSolver
 {
-    // New unified executor for All mode (materialize + count). Consolidates prior inline logic.
+    // Unified executor for All mode (materialize + count).
     private void ExecuteAllModeUnified(bool parallel, int splitDepth)
     {
-        int N = BoardSize;
+        int boardSize = BoardSize;
         int cap = _capEnabled ? SimulationSettings.MaxDisplayedCount : int.MaxValue;
 
         Engines.SearchOptimizations.Configure(
@@ -13,18 +13,18 @@ public partial class BitmaskSolver
             reflectionPruning: EnablePartialReflectionPruning,
             incrementalCanonicalization: false);
 
-        var solutions = new List<(UInt128 packed, int boardSize)>();
+        List<(UInt128 packed, int boardSize)> solutions = [];
         ulong totalCount = 0;
         int materialized = 0;
 
-        if (parallel && N > 1)
+        if (parallel && boardSize > 1)
         {
-            // Use existing parallel engine unified path.
+            // Parallel path via engine unified API.
             var threadLocalPacked = new ThreadLocal<List<(UInt128, int)>>(() => [], trackAllValues: true);
-            void onSolution(int[] rows)
+            void OnSolution(int[] rows)
             {
                 if (!ValidateRows(rows)) return;
-                int idx = System.Threading.Interlocked.Increment(ref materialized);
+                int idx = Interlocked.Increment(ref materialized);
                 if (idx <= cap)
                 {
                     threadLocalPacked.Value!.Add((0, rows.Length));
@@ -32,11 +32,11 @@ public partial class BitmaskSolver
             }
             ulong counted = 0;
             BitmaskParallelEngine.RunAllUnified(
-                BoardSize,
+                boardSize,
                 splitDepth,
                 EnableEvents,
                 cap,
-                onSolution,
+                OnSolution,
                 c => counted = c,
                 pct => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken)); },
                 () => false);
@@ -48,7 +48,7 @@ public partial class BitmaskSolver
             // Sequential fallback using search engine.
             ulong counted = 0;
             BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
-                BoardSize,
+                boardSize,
                 RestrictFirstCol: false,
                 EnhancedSymmetry: false,
                 AggressiveSymmetry: false,
@@ -58,7 +58,7 @@ public partial class BitmaskSolver
                 _currentSimToken,
                 () => IsSolverCanceled,
                 p => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
-                m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize)); },
+                m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, boardSize)); },
                 rows =>
                 {
                     if (!ValidateRows(rows)) return false;
