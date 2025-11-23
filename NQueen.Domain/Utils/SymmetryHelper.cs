@@ -84,7 +84,7 @@ public static partial class SymmetryHelper
         return result;
     }
 
-    // Canonical form with scratch; if resultBuffer provided and large enough, fill it; otherwise allocate.
+    // Optimized: removed Array.Clear on scratch (all slots are deterministically overwritten below).
     public static int[] GetCanonicalForm(int[] solution, int[] scratch, int[]? resultBuffer = null)
     {
         ArgumentNullException.ThrowIfNull(solution);
@@ -93,7 +93,6 @@ public static partial class SymmetryHelper
         if (n == 0) return Array.Empty<int>();
         int required = n * 8;
         if (scratch.Length < required) scratch = new int[required];
-        Array.Clear(scratch, 0, required);
         for (int c = 0; c < n; c++)
         {
             int r = solution[c];
@@ -204,6 +203,7 @@ public static partial class SymmetryHelper
         if (n == 0) return true;
         int required = n * 8;
         if (scratch.Length < required) scratch = new int[required];
+        // Removed clearing: following loop overwrites all slots in each block.
         for (int c = 0; c < n; c++)
         {
             int r = solution[c];
