@@ -3,6 +3,22 @@ namespace NQueen.Kernel.Solvers;
 
 internal sealed class BitmaskSearchEngine
 {
+    // De Bruijn sequence based trailing zero count lookup for 64-bit power-of-two values.
+    private const ulong DeBruijn64 = 0x03f79d71b4cb0a89UL;
+    // Mapping table: index = (bit * DeBruijn64) >> 58 gives position of set bit (0..63).
+    private static readonly byte[] DeBruijnIndex64 = new byte[64]
+    {
+        0, 1, 2, 7, 3, 13, 8, 19,
+        4, 25, 14, 28, 9, 34, 20, 40,
+        5, 17, 26, 38, 15, 46, 29, 48,
+        10, 31, 35, 54, 21, 50, 41, 57,
+        63, 6, 12, 18, 24, 27, 33, 39,
+        16, 37, 45, 47, 30, 53, 49, 52,
+        32, 44, 36, 51, 42, 62, 11, 23,
+        55, 59, 22, 43, 61, 60, 58, 56
+    };
+    private static int FastTzcnt(ulong bit) => DeBruijnIndex64[(bit * DeBruijn64) >> 58];
+
     public readonly record struct Request(
         int BoardSize,
         bool RestrictFirstCol,
@@ -93,6 +109,9 @@ internal sealed class BitmaskSearchEngine
         bool prefixEnabled = SearchOptimizations.PrefixMinimalityPruningEnabled;
         bool reflectionEnabled = SearchOptimizations.ReflectionPrefixPruningEnabled;
         bool incrementalEnabled = SearchOptimizations.IncrementalCanonicalizationEnabled && !request.CountOnly;
+        // Hoisted symmetry flags
+        bool symmetryActive = (request.EnhancedSymmetry || request.AggressiveSymmetry) && N >= 14;
+        bool aggressiveActive = request.AggressiveSymmetry && symmetryActive;
         int pruneDepthGate = int.MaxValue;
         if (prefixEnabled || reflectionEnabled)
         {
@@ -106,13 +125,16 @@ internal sealed class BitmaskSearchEngine
             incScratch = s.IncrementalScratch ??= new int[N * 8];
             Array.Fill(incScratch, -1);
         }
-        ulong localCols = s.Cols;
-        ulong localD1 = s.Diag1;
-        ulong localD2 = s.Diag2;
+        // Local copies of search state to minimize field accesses
+        int col = s.Col;
+        ulong cols = s.Cols;
+        ulong d1 = s.Diag1;
+        ulong d2 = s.Diag2;
+        ulong remaining = s.Remaining;
         while (true)
         {
             if (request.IsCanceled()) break;
-            if (s.Col == N)
+            if (col == N)
             {
                 if (request.OnSolution != null)
                 {
@@ -123,50 +145,63 @@ internal sealed class BitmaskSearchEngine
                     }
                     else
                     {
-                        if (request.OnSolution(s.QueenRows)) break;
+                        if (request.OnSolution(s.QueenRows)) break; // using original array reference
                     }
                 }
-                if (!BacktrackInline(ref s)) break;
-                localCols = s.Cols; localD1 = s.Diag1; localD2 = s.Diag2;
+                // backtrack
+                col--;
+                if (col < 0) break;
+                cols = s.StackCols[col];
+                d1   = s.StackD1[col];
+                d2   = s.StackD2[col];
+                remaining = s.StackRemaining[col];
+                queenRows[col] = -1;
                 continue;
             }
-            if (s.Remaining == 0)
+            if (remaining == 0)
             {
-                if (!BacktrackInline(ref s)) break;
-                localCols = s.Cols; localD1 = s.Diag1; localD2 = s.Diag2;
+                col--;
+                if (col < 0) break;
+                cols = s.StackCols[col];
+                d1   = s.StackD1[col];
+                d2   = s.StackD2[col];
+                remaining = s.StackRemaining[col];
+                queenRows[col] = -1;
                 continue;
             }
-            ulong remainingLocal = s.Remaining;
-            ulong bit = remainingLocal & (ulong)-(long)remainingLocal;
-            remainingLocal &= remainingLocal - 1;
-            s.Remaining = remainingLocal;
-            int row = BitOperations.TrailingZeroCount(bit);
-            queenRows[s.Col] = row;
-            if (s.Col >= pruneDepthGate && ShouldPrunePrefixFast(s.QueenRows, s.Col, N, reflectionEnabled, prefixEnabled))
+            // Extract next bit
+            ulong bit = remaining & (ulong)-(long)remaining;
+            remaining &= remaining - 1; // clear lowest bit
+            int row = FastTzcnt(bit);
+            queenRows[col] = row;
+            if (col >= pruneDepthGate && ShouldPrunePrefixFast(s.QueenRows, col, N, reflectionEnabled, prefixEnabled))
             {
-                queenRows[s.Col] = -1;
+                queenRows[col] = -1;
                 continue;
             }
             if (incrementalEnabled && incScratch != null)
             {
-                int col = s.Col;
                 incScratch[0 * N + col] = row;
                 incScratch[5 * N + col] = N - 1 - row;
             }
-            if (s.Col == 0) ReportRootProgress(ref s, request);
+            if (col == 0) ReportRootProgress(ref s, request);
             if (!request.CountOnly) MaybeRaisePlacementEvent(ref s, request);
-            PushState(ref s, bit);
-            localCols |= bit;
-            localD1 = (localD1 | bit) << 1;
-            localD2 = (localD2 | bit) >> 1;
-            s.Col++;
-            if (s.Col == N) continue;
-            ulong attacked = localCols | localD1 | localD2;
-            ulong avail = (~attacked) & s.Mask;
-            if ((request.EnhancedSymmetry || request.AggressiveSymmetry) && N >= 14)
+            // Push state
+            s.StackCols[col] = cols;
+            s.StackD1[col] = d1;
+            s.StackD2[col] = d2;
+            s.StackRemaining[col] = remaining;
+            cols |= bit;
+            d1 = (d1 | bit) << 1;
+            d2 = (d2 | bit) >> 1;
+            col++;
+            if (col == N) continue;
+            ulong attacked = cols | d1 | d2;
+            remaining = (~attacked) & s.Mask;
+            if (symmetryActive)
             {
-                avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(N, s.Col, s.QueenRows, avail);
-                if (request.AggressiveSymmetry && s.Col == 2 && queenRows[1] >= 0 && !((N & 1) == 1 && queenRows[0] == N / 2))
+                ulong avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(N, col, s.QueenRows, remaining);
+                if (aggressiveActive && col == 2 && queenRows[1] >= 0 && !((N & 1) == 1 && queenRows[0] == N / 2))
                 {
                     int minRow = queenRows[1];
                     if (minRow < N)
@@ -176,9 +211,15 @@ internal sealed class BitmaskSearchEngine
                     }
                     else avail = 0UL;
                 }
+                remaining = avail;
             }
-            s.Remaining = avail;
         }
+        // Persist local state back
+        s.Col = col;
+        s.Cols = cols;
+        s.Diag1 = d1;
+        s.Diag2 = d2;
+        s.Remaining = remaining;
     }
 
     // Count-only specialized loop
@@ -231,7 +272,7 @@ internal sealed class BitmaskSearchEngine
             ulong bit = rem & (ulong)-(long)rem; // lowest set bit
             rem &= rem - 1; // clear bit
             s.Remaining = rem;
-            int row = BitOperations.TrailingZeroCount(bit);
+            int row = FastTzcnt(bit);
             rows[col] = row;
             if (col >= pruneDepthGate && ShouldPrunePrefixFast(rows, col, N, reflectionEnabled, prefixEnabled))
             {
