@@ -3,20 +3,46 @@ namespace NQueen.Kernel.Solvers;
 
 internal sealed class BitmaskSearchEngine
 {
-    // De Bruijn sequence based trailing zero count lookup for 64-bit power-of-two values.
-    private const ulong DeBruijn64 = 0x03f79d71b4cb0a89UL;
-    // Mapping table: index = (bit * DeBruijn64) >> 58 gives position of set bit (0..63).
-    private static readonly byte[] DeBruijnIndex64 = new byte[64]
+    // Correct De Bruijn sequence implementation for 64-bit trailing zero count.
+    // We build the index table at runtime to avoid hard-coded permutation errors.
+    private const ulong DeBruijn64 = 0x03F79D71B4CB0A89UL;
+    private static readonly byte[] DeBruijnIndex64 = InitDeBruijn();
+#if DEBUG
+    private static readonly bool _deBruijnVerified = VerifyDeBruijn();
+#endif
+    private static byte[] InitDeBruijn()
     {
-        0, 1, 2, 7, 3, 13, 8, 19,
-        4, 25, 14, 28, 9, 34, 20, 40,
-        5, 17, 26, 38, 15, 46, 29, 48,
-        10, 31, 35, 54, 21, 50, 41, 57,
-        63, 6, 12, 18, 24, 27, 33, 39,
-        16, 37, 45, 47, 30, 53, 49, 52,
-        32, 44, 36, 51, 42, 62, 11, 23,
-        55, 59, 22, 43, 61, 60, 58, 56
-    };
+        var tbl = new byte[64];
+        for (int i = 0; i < 64; i++)
+        {
+            ulong bit = 1UL << i;
+            int idx = (int)((bit * DeBruijn64) >> 58);
+            tbl[idx] = (byte)i;
+        }
+        return tbl;
+    }
+#if DEBUG
+    private static bool VerifyDeBruijn()
+    {
+        // Ensure all slots filled uniquely.
+        var seen = new bool[64];
+        for (int i = 0; i < 64; i++)
+        {
+            int v = DeBruijnIndex64[i];
+            if (v < 0 || v > 63) throw new Exception("Invalid DeBruijn index value.");
+            if (seen[v]) throw new Exception("Duplicate DeBruijn mapping detected.");
+            seen[v] = true;
+        }
+        for (int i = 0; i < 64; i++)
+        {
+            ulong bit = 1UL << i;
+            int fast = DeBruijnIndex64[(bit * DeBruijn64) >> 58];
+            int intrinsic = System.Numerics.BitOperations.TrailingZeroCount(bit);
+            if (fast != intrinsic) throw new Exception("DeBruijn mapping mismatch.");
+        }
+        return true;
+    }
+#endif
     private static int FastTzcnt(ulong bit) => DeBruijnIndex64[(bit * DeBruijn64) >> 58];
 
     public readonly record struct Request(
