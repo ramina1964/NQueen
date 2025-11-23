@@ -1,9 +1,3 @@
-using System.Linq;
-using FluentAssertions;
-using NQueen.Domain.Utils;
-using NQueen.UnitTests.Base;
-using NQueen.UnitTests.Fixtures;
-
 namespace NQueen.UnitTests.Tests.SymmetryPruning;
 
 [Collection("SolverBackend")]
