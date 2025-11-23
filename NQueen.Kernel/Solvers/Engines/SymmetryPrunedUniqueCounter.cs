@@ -29,30 +29,36 @@ public static class SymmetryPrunedUniqueCounter
             else if (N >= 16) pruneDepthGate = 2;
         }
 
-        Parallel.For(0, N, rootRow =>
+        // Partition first-column roots to reduce scheduling overhead & allow buffer reuse per worker.
+        Parallel.ForEach(System.Collections.Concurrent.Partitioner.Create(0, N), range =>
         {
+            int start = range.Item1;
+            int end = range.Item2;
+            // Reuse buffers per worker.
             int[] rows = new int[N];
             Array.Fill(rows, -1);
-            rows[0] = rootRow;
             int[] scratch = new int[N * 8];
-            int localMaterialized = 0;
+            int localMaterialized = 0; // per worker (queue trimmed later)
             ulong localCount = 0UL;
+            // Optionally accumulate locally then enqueue in batch to reduce contention.
+            System.Collections.Generic.List<int[]>? localMaterializedList = (materializedQueue != null) ? new System.Collections.Generic.List<int[]>(cap > 0 ? Math.Min(cap, 128) : 0) : null;
 
             void DFS(int col, ulong cols, ulong d1, ulong d2)
             {
                 if (col == N)
                 {
+                    // Canonical minimality test.
                     var canon = SymmetryHelper.GetCanonicalForm(rows, scratch, null);
                     bool minimal = true;
                     for (int i = 0; i < N; i++) { if (rows[i] != canon[i]) { minimal = false; break; } }
                     if (minimal)
                     {
                         localCount++;
-                        if (materializedQueue != null && localMaterialized < cap && onMaterialized != null)
+                        if (localMaterializedList != null && localMaterialized < cap && onMaterialized != null)
                         {
                             var copy = new int[N];
                             Array.Copy(rows, copy, N);
-                            materializedQueue.Enqueue(copy);
+                            localMaterializedList.Add(copy);
                             localMaterialized++;
                         }
                     }
@@ -73,9 +79,20 @@ public static class SymmetryPrunedUniqueCounter
                 }
             }
 
-            ulong bit0 = 1UL << rootRow;
-            DFS(1, bit0, bit0 << 1, bit0 >> 1);
+            for (int rootRow = start; rootRow < end; rootRow++)
+            {
+                rows[0] = rootRow; // only index 0 needs update; deeper indices reset by DFS unwinding
+                ulong bit0 = 1UL << rootRow;
+                DFS(1, bit0, bit0 << 1, bit0 >> 1);
+                // leave rows[0] set; will overwrite next iteration
+            }
+
             System.Threading.Interlocked.Add(ref totalCount, localCount);
+            if (localMaterializedList != null)
+            {
+                foreach (var sol in localMaterializedList)
+                    materializedQueue!.Enqueue(sol);
+            }
         });
 
         if (materializedQueue != null && onMaterialized != null)
