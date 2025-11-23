@@ -5,6 +5,7 @@ using NQueen.Domain.Models; // for ISolutionFormatter / DefaultSolutionFormatter
 using Microsoft.VSDiagnostics;
 
 namespace NQueen.Benchmarking;
+
 [CPUUsageDiagnoser]
 public class AllModePrefixPruningBenchmark
 {

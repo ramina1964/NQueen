@@ -36,6 +36,6 @@ public class BoardSizeValidator : AbstractValidator<string>
                 BoardSettings.MaxSizeForUnique, ErrorMessages.SizeTooLargeForUnique),
 
             SolutionMode.All => (BoardSettings.MaxSizeForAll, ErrorMessages.SizeTooLargeForAll),
-                _ => throw new ArgumentOutOfRangeException(nameof(solutionMode))
+            _ => throw new ArgumentOutOfRangeException(nameof(solutionMode))
         };
 }

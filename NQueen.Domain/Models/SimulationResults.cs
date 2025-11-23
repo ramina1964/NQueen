@@ -6,7 +6,7 @@ public class SimulationResults
     public SimulationResults(IEnumerable<Solution> solutions,
         ulong totalSolutions, double ElapsedTimeInSec)
         : this(solutions, totalSolutions, ElapsedTimeInSec, inferred: false)
-    {}
+    { }
 
     // Legacy constructor (kept): total inferred from the (possibly truncated) solutions list.
     public SimulationResults(IEnumerable<Solution> solutions, double ElapsedTimeInSec)
@@ -14,7 +14,7 @@ public class SimulationResults
                solutions is ICollection<Solution> collection ? (ulong)collection.Count : (ulong)solutions.Count(),
                ElapsedTimeInSec,
                inferred: true)
-    {}
+    { }
 
     public IReadOnlyList<Solution> Solutions { get; }
 

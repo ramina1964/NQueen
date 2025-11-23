@@ -7,7 +7,7 @@ public partial class MainWindow : Window, IDisposable
         InitializeComponent();
         _serviceProvider = serviceProvider
             ?? throw new ArgumentNullException(nameof(serviceProvider));
-        
+
         DataContext = mainViewModel
             ?? throw new ArgumentNullException(nameof(mainViewModel));
 

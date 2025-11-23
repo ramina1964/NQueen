@@ -48,9 +48,9 @@ public class SolverParallelConsistencyTests(SolverBackEndFixture fixture)
             };
 
             // Known minor undercount for Unique N=12 with current advanced pruning heuristics (missing4).
-            if (mode == SolutionMode.Unique && n ==12)
+            if (mode == SolutionMode.Unique && n == 12)
             {
-                parallelResults.SolutionsCount.Should().BeOneOf(new[] { expected, expected -4UL });
+                parallelResults.SolutionsCount.Should().BeOneOf(new[] { expected, expected - 4UL });
             }
             else
             {

@@ -90,7 +90,7 @@ public class SolverEventOverheadBenchmarks
                     if (_solutionsOc == null) return;
                     int nextId = _solutionsOc.Count + 1;
                     if (cap > 0 && _solutionsOc.Count >= cap) return;
-                    
+
                     // Defer formatting: pass null formatter,
                     // generate Details only for first solution
                     var sol = new Solution(e.Solution.ToArray(), _formatter, nextId);

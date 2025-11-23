@@ -1,8 +1,8 @@
 namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 [Collection("SolverBackend")]
-[Trait("Category","LargeBoardAllCounts")]
-[Trait("Category","Slow")]
+[Trait("Category", "LargeBoardAllCounts")]
+[Trait("Category", "Slow")]
 public class LargeBoardAllSolutionCountsTests(SolverBackEndFixture fixture)
 {
     // Boards starting at intermediate large size up to throttle threshold - 1 (to force enumeration path for All mode)
@@ -15,7 +15,7 @@ public class LargeBoardAllSolutionCountsTests(SolverBackEndFixture fixture)
     // Verify All-mode counts (count-only) match expected lookup table values for enumerated large boards.
     [Theory]
     [MemberData(nameof(LargeBoardsEnumerated))]
-    [Trait("Category","Slow")]
+    [Trait("Category", "Slow")]
     public async Task AllMode_CountOnly_LargeBoards_Exact(int n)
     {
         _solver.UseCountOnlyAllMode = true; _solver.UseCountOnlyUniqueMode = false;
@@ -27,7 +27,7 @@ public class LargeBoardAllSolutionCountsTests(SolverBackEndFixture fixture)
 
     // Materialization sanity: ensure at least one solution materialized and count matches expected for sample board (16)
     [Fact]
-    [Trait("Category","Slow")]
+    [Trait("Category", "Slow")]
     public async Task AllMode_Materialize_SampleBoard16()
     {
         int n = 16;

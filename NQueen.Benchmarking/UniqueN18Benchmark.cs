@@ -14,7 +14,7 @@ namespace NQueen.Benchmarking;
 [MemoryDiagnoser]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
-[HideColumns("Error","StdDev")]
+[HideColumns("Error", "StdDev")]
 public class UniqueN18Benchmark
 {
     private const int BoardSize = 18;
@@ -33,7 +33,7 @@ public class UniqueN18Benchmark
         return results.SolutionsCount;
     }
 
-    [Benchmark(Description = "Unique Materialize N=18 (Cap = MaxDisplayedCount)")] 
+    [Benchmark(Description = "Unique Materialize N=18 (Cap = MaxDisplayedCount)")]
     public (int materialized, ulong total) UniqueMaterialize()
     {
         using var solver = new BitmaskSolver(BoardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter)

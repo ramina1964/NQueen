@@ -7,8 +7,8 @@ public class HighBoardCountsTests
     public HighBoardCountsTests(SolverBackEndFixture fixture) => _solver = fixture.Sut;
 
     private static readonly bool FullCoverage = Environment.GetEnvironmentVariable("FULL_HIGHBOARD_COVERAGE") == "true";
-    private static readonly int[] FullBoardSet = { 20,21,22,23,24,25,26,27,28,29 };
-    private static readonly int[] ReducedBoardSet = { 20,25,29 };
+    private static readonly int[] FullBoardSet = { 20, 21, 22, 23, 24, 25, 26, 27, 28, 29 };
+    private static readonly int[] ReducedBoardSet = { 20, 25, 29 };
     public static TheoryData<int> HighBoards => new(FullCoverage ? FullBoardSet : ReducedBoardSet);
 
     // Single board for materialization sampling
@@ -17,7 +17,7 @@ public class HighBoardCountsTests
     // Unified test: count-only (All & Unique) plus Single-mode verification
     [Theory]
     [MemberData(nameof(HighBoards))]
-    [Trait("Category","HighBoard")]
+    [Trait("Category", "HighBoard")]
     public async Task CountOnly_AllUnique_AndSingle(int n)
     {
         // All count-only
@@ -43,7 +43,7 @@ public class HighBoardCountsTests
 
     // Combined materialization sampling for both All and Unique (only sample board)
     [Fact]
-    [Trait("Category","HighBoard")]
+    [Trait("Category", "HighBoard")]
     public async Task MaterializeSamples_AllAndUnique_SampleBoard()
     {
         // All mode sample
@@ -65,8 +65,8 @@ public class HighBoardCountsTests
 
     // Performance N=19 test only when explicitly requested (lookup shortcut, no enumeration)
     [Fact]
-    [Trait("Category","HighBoard")]
-    [Trait("Category","Perf")]
+    [Trait("Category", "HighBoard")]
+    [Trait("Category", "Perf")]
     public async Task UniqueMode_OptimizedEnumeration_N19()
     {
         if (Environment.GetEnvironmentVariable("PERF_N19") != "1")
@@ -80,7 +80,7 @@ public class HighBoardCountsTests
             var warmRes = await _solver.GetSimResultsAsync(warmCtx);
             warmRes.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetUnique(s));
         }
-        
+
         // N=19 enumeration (symmetry-pruned path; threshold=20 so no lookup)
         _solver.UseCountOnlyUniqueMode = true; _solver.UseCountOnlyAllMode = false;
         var ctx = new SimulationContext(19, SolutionMode.Unique, DisplayMode.Hide);
@@ -107,8 +107,8 @@ public class HighBoardCountsTests
 
     // Heavy full enumeration test (disabled unless explicitly enabled)
     [Fact]
-    [Trait("Category","HighBoard")]
-    [Trait("Category","Heavy")]
+    [Trait("Category", "HighBoard")]
+    [Trait("Category", "Heavy")]
     public void UniqueMode_FullEnumeration_N19()
     {
         if (Environment.GetEnvironmentVariable("RUN_UNIQUE19_ENUM") != "1") return; // heavy gating

@@ -7,7 +7,7 @@ namespace NQueen.UnitTests.Tests.NQueenSolver.Slow;
 /// Uses solver backend count-only flags to suppress solution storage for performance.
 /// </summary>
 [Collection("SolverBackend")]
-[Trait("Category","Slow")]
+[Trait("Category", "Slow")]
 public class SolverSolutionCountSlowTests(SolverBackEndFixture fixture)
 {
     // Single mode larger boards (enumeration still feasible but separated from fast suite)

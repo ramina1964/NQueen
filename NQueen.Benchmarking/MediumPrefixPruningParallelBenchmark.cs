@@ -5,6 +5,7 @@ using NQueen.Domain.Models;
 using Microsoft.VSDiagnostics;
 
 namespace NQueen.Benchmarking;
+
 [CPUUsageDiagnoser]
 public class MediumPrefixPruningParallelBenchmark
 {

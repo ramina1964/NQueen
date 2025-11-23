@@ -2,23 +2,15 @@ namespace NQueen.Kernel.Solvers.Engines;
 
 internal sealed partial class BitmaskParallelEngine
 {
-    // Adjusted order so first three parameters align with usage in BitmaskSolver: (BoardSize, RootSplitDepth, EnableEvents,...)
+    // Primary request for full All mode enumeration (materialize + count)
     public readonly record struct AllRequest(
         int BoardSize, int RootSplitDepth, bool EnableEvents, int MaterializeCap, Action<int[]> OnSolution,
         Action<ulong> OnCompleted, Action<double> ReportProgress);
 
-    // Simplified: removed unused RootSplitDepth (not referenced in RunUnique path)
+    // Unique mode request (materialize sample canonical solutions optionally)
     public readonly record struct UniqueRequest(
         int BoardSize, bool EnableEvents, Func<bool> ShouldMaterialize,
         Action<int[]> OnUniqueSolution, Action<ulong> OnCompletedUniqueCount, Action<double> ReportProgress);
-
-    public readonly record struct AllCountOnlyRequest(
-        int BoardSize, int RootSplitDepth, Action<ulong> OnCount,
-        Action<double> ReportProgress);
-
-    public readonly record struct UniqueCountOnlyRequest(
-        int BoardSize, int RootSplitDepth, Action<ulong> OnCount,
-        Action<double> ReportProgress);
 
     private static void ReportRootProgress(
         int done, int total, bool throttle, int bucketSize, ref int lastPercentReported,

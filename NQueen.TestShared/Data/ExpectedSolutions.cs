@@ -8,14 +8,14 @@ public static class ExpectedSolutions
 {
     // Counts (redirect to Domain authoritative sources)
     public static ulong GetAllCount(int n) => ExpectedSolutionCounts.GetAll(n);
-    
+
     public static ulong GetUniqueCount(int n) => ExpectedSolutionCounts.GetUnique(n);
 
     // Solution boards (redirect)
     public static IReadOnlyDictionary<int, List<int[]>> Single => ExpectedSolutionData.SingleSolutions;
-    
+
     public static IReadOnlyDictionary<int, List<int[]>> Unique => ExpectedSolutionData.UniqueSolutions;
-    
+
     public static IReadOnlyDictionary<int, List<int[]>> All => ExpectedSolutionData.AllSolutions;
 
     // Packed solution boards for fast comparison

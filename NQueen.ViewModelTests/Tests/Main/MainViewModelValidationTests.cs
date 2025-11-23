@@ -138,7 +138,7 @@ public class MainViewModelValidationTests
         errors.Should().BeEmpty();
         mainVm.HasErrors.Should().BeFalse();
     }
-    
+
     [Theory]
     [MemberData(nameof(ChessboardUpdatesWhenSwitchingToValidModeData))]
     public void Chessboard_Updates_WhenSwitchingToValidMode(string boardSizeText,
@@ -219,13 +219,13 @@ public class MainViewModelValidationTests
 
     public static IEnumerable<object[]> RespectSolutionModeLimitsData()
     {
-        int invalidSize = Math.Max(BoardSettings.MaxSizeForUnique, BoardSettings.MaxSizeForAll) +1; // exceeds both
+        int invalidSize = Math.Max(BoardSettings.MaxSizeForUnique, BoardSettings.MaxSizeForAll) + 1; // exceeds both
         yield return new object[] { invalidSize.ToString(), invalidSize.ToString(), SolutionMode.Unique, SolutionMode.All };
     }
 
     public static IEnumerable<object[]> ChessboardUpdatesWhenSwitchingToValidModeData()
     {
-        int invalidForUniqueAll = Math.Max(BoardSettings.MaxSizeForUnique, BoardSettings.MaxSizeForAll) +1; // valid for Single
+        int invalidForUniqueAll = Math.Max(BoardSettings.MaxSizeForUnique, BoardSettings.MaxSizeForAll) + 1; // valid for Single
         // Ensure invalidForUniqueAll still within Single mode limit
         if (invalidForUniqueAll > BoardSettings.MaxSizeForSingle)
         {
@@ -248,7 +248,7 @@ public class MainViewModelValidationTests
     public static IEnumerable<object[]> ChessboardDoesNotUpdateWhenSwitchingToInvalidModeData()
     {
         // Size valid for Single but invalid for Unique/All
-        int invalidForUniqueAll = Math.Max(BoardSettings.MaxSizeForUnique, BoardSettings.MaxSizeForAll) +1;
+        int invalidForUniqueAll = Math.Max(BoardSettings.MaxSizeForUnique, BoardSettings.MaxSizeForAll) + 1;
         if (invalidForUniqueAll > BoardSettings.MaxSizeForSingle)
         {
             // If new limits somehow surpass Single (unlikely), adjust to still test invalidation scenario

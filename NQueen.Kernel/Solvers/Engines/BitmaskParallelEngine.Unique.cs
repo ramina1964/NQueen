@@ -273,14 +273,14 @@ internal sealed partial class BitmaskParallelEngine
             {
                 avail = 0UL; continue;
             }
-            
+
             avail = ~(cols | d1 | d2) & mask;
             if (EnableSecondColumnPrune && depth == 1)
             {
                 int firstRow = rows[0];
                 if (((N & 1) == 1 && firstRow == N / 2) == false)
                 {
-                    ulong lowerMask = (1UL << (firstRow + 1)) - 1UL; 
+                    ulong lowerMask = (1UL << (firstRow + 1)) - 1UL;
                     avail &= ~lowerMask;
                 }
             }
@@ -288,7 +288,7 @@ internal sealed partial class BitmaskParallelEngine
         void Restore(int c)
         {
             avail = stackAvail[c];
-            cols = stackCols[c]; 
+            cols = stackCols[c];
             d1 = stackD1[c];
             d2 = stackD2[c]; rows[c] = -1;
         }
@@ -322,11 +322,11 @@ internal sealed partial class BitmaskParallelEngine
         {
             for (int i = 0; i < depth; i++)
             {
-                int a = scratch[t * N + i]; 
+                int a = scratch[t * N + i];
                 int b = scratch[0 * N + i];
-                if (a == int.MaxValue || b == int.MaxValue) 
+                if (a == int.MaxValue || b == int.MaxValue)
                     continue;
-                
+
                 if (a < b) return false;
                 if (a > b) break;
             }

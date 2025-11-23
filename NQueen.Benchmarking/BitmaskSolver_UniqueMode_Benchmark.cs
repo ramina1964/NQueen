@@ -16,4 +16,4 @@ public class BitmaskSolver_UniqueMode_Benchmark
         solver.UseCountOnlyUniqueMode = false; // Materializing approach
         return solver.Solve();
     }
-} 
+}

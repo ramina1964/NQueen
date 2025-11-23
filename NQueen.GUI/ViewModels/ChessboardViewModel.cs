@@ -29,7 +29,7 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
             {
                 var square = Squares.First(sq =>
                     sq.Position.ColumnIndex == columnIndex && sq.Position.RowIndex == rowIndex);
-                
+
                 square.ImagePath = QueenImagePath;
             }
             catch (InvalidOperationException ex)

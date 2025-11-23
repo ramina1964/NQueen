@@ -22,8 +22,8 @@ public sealed partial class MainViewModel
     {
         _progressFinalized = false;
         _hasProgressTick = false; // defined in Events partial
-        _progressPercent =0;
-        ProgressValue =0.0;
+        _progressPercent = 0;
+        ProgressValue = 0.0;
         ProgressLabel = "0%";
         ProgressVisibility = Visibility.Visible;
         ProgressLabelVisibility = Visibility.Visible;
@@ -37,11 +37,11 @@ public sealed partial class MainViewModel
     {
         if (_solver.IsSolverCanceled || _progressFinalized) return;
 
-        rawPercent = Math.Clamp(rawPercent,0,100);
+        rawPercent = Math.Clamp(rawPercent, 0, 100);
 
         // Reserve100 for finalization only
-        if (rawPercent >=100)
-            rawPercent =99;
+        if (rawPercent >= 100)
+            rawPercent = 99;
 
         // Monotonic guarantee
         if (rawPercent < _progressPercent)
@@ -56,12 +56,12 @@ public sealed partial class MainViewModel
         }
 
         _progressPercent = rawPercent;
-        ProgressValue = _progressPercent /100.0;
+        ProgressValue = _progressPercent / 100.0;
         ProgressLabel = $"{_progressPercent}%";
         ProgressVisibility = Visibility.Visible;
         ProgressLabelVisibility = Visibility.Visible;
 
-        if (_progressPercent is >0 and <100)
+        if (_progressPercent is > 0 and < 100)
             _hasProgressTick = true;
 
         _lastProgressUpdateUtc = DateTime.UtcNow;
@@ -72,15 +72,15 @@ public sealed partial class MainViewModel
     private void ForceEarlyProgressIfNeeded()
     {
         if (_hasProgressTick || IsSingleRunning || _progressFinalized) return;
-        if (_progressPercent <1) SetProgressPercent(1);
+        if (_progressPercent < 1) SetProgressPercent(1);
     }
 
     private void FinalizeProgressIfApplicable()
     {
         if (_progressFinalized) return;
         _progressFinalized = true;
-        _progressPercent =100;
-        ProgressValue =1.0;
+        _progressPercent = 100;
+        ProgressValue = 1.0;
         ProgressLabel = "100%";
         StopProgressHeartbeat();
         OnPropertyChanged(nameof(ProgressPercent));
@@ -136,10 +136,10 @@ public sealed partial class MainViewModel
             _lastProgressUpdateUtc = DateTime.UtcNow;
             return;
         }
-        if (_progressPercent <95)
+        if (_progressPercent < 95)
         {
             _progressPercent++;
-            ProgressValue = _progressPercent /100.0;
+            ProgressValue = _progressPercent / 100.0;
             ProgressLabel = $"{_progressPercent}%";
             ProgressVisibility = Visibility.Visible;
             ProgressLabelVisibility = Visibility.Visible;

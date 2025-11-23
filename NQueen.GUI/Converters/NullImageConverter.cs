@@ -7,7 +7,7 @@ public class NullImageConverter : IValueConverter
         // Treat null or empty string as unset
         if (value is null || (value is string str && string.IsNullOrWhiteSpace(str)))
             return DependencyProperty.UnsetValue;
-        
+
         return value;
     }
 

@@ -1,10 +1,9 @@
-using System.Linq;
 namespace NQueen.Kernel.Solvers;
 
 public partial class BitmaskSolver
 {
-    // Unique solution search: large boards use symmetry-pruned parallel counter; small boards use full canonical minimal enumeration.
-    private void RunUniqueUnified(bool parallel)
+    // Consolidated Unique mode executor: handles both large-board symmetry-pruned and small-board canonical enumeration.
+    private void ExecuteUniqueModeUnified()
     {
         int N = BoardSize;
         int cap = _capEnabled ? _maxDisplayedCount : int.MaxValue;
@@ -15,7 +14,6 @@ public partial class BitmaskSolver
         int materialized = 0;
         int capReachedFlag = 0;
 
-        // Configure global pruning for unique mode (incremental canonicalization disabled here)
         Engines.SearchOptimizations.Configure(
             prefixMinimality: EnablePrefixMinimalityPruning,
             reflectionPruning: EnablePartialReflectionPruning,
@@ -23,12 +21,10 @@ public partial class BitmaskSolver
 
         if (N >= SimulationSettings.LargeBoardSymmetryPruningThreshold)
         {
-            // Large boards: symmetry-pruned enumeration (parallel in engine) counting canonical minimal representatives.
             _solutionCount = Engines.SymmetryPrunedUniqueCounter.Count(N, cap, rows =>
             {
                 if (materialized < Math.Max(1, cap))
                 {
-                    // For large boards we skip packing to keep memory minimal.
                     packedSample.Add((0, N));
                     materialized++;
                     if (materialized >= cap && _capEnabled)
@@ -41,7 +37,6 @@ public partial class BitmaskSolver
         }
         else
         {
-            // Small boards: exhaustive enumeration with canonical minimality test; materialize up to cap packed canonical representatives.
             ulong uniqueCount = Engines.CanonicalUniqueSearchEngine.CountUnique(N, rows =>
             {
                 if (System.Threading.Volatile.Read(ref capReachedFlag) == 1) return;
@@ -63,7 +58,4 @@ public partial class BitmaskSolver
         _solutions.AddRange(packedSample);
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
-
-    private void RunUniqueParallel() => RunUniqueUnified(parallel: true);
-    private void RunUniqueSequential() => RunUniqueUnified(parallel: false);
 }
