@@ -39,7 +39,14 @@ internal sealed class BitmaskSearchEngine
         {
             state.Remaining = SymmetryHelper.ApplyAdvancedSymmetryPruning(state.N, 0, state.QueenRows, state.Remaining);
         }
-        MainLoop(ref state, request);
+        if (request.CountOnly)
+        {
+            MainLoopCountOnly(ref state, request);
+        }
+        else
+        {
+            MainLoop(ref state, request);
+        }
         request.ReportProgress(100.0);
     }
 
@@ -75,6 +82,7 @@ internal sealed class BitmaskSearchEngine
         };
     }
 
+    // Existing full-feature loop retained for materialization paths
     private static void MainLoop(ref SearchState s, in Request request)
     {
         int N = s.N;
@@ -171,6 +179,104 @@ internal sealed class BitmaskSearchEngine
             }
             s.Remaining = avail;
         }
+    }
+
+    // Count-only specialized loop
+    private static void MainLoopCountOnly(ref SearchState s, in Request request)
+    {
+        int N = s.N;
+        int pruneDepthGate = int.MaxValue;
+        bool prefixEnabled = SearchOptimizations.PrefixMinimalityPruningEnabled;
+        bool reflectionEnabled = SearchOptimizations.ReflectionPrefixPruningEnabled;
+        if (prefixEnabled || reflectionEnabled)
+        {
+            if (N >= 20) pruneDepthGate = 1;
+            else if (N >= 16) pruneDepthGate = 2;
+            else if (N >= 15) pruneDepthGate = 3;
+        }
+        // Locals for speed
+        int col = s.Col;
+        ulong cols = s.Cols;
+        ulong d1 = s.Diag1;
+        ulong d2 = s.Diag2;
+        int[] rows = s.QueenRows;
+        while (true)
+        {
+            if (request.IsCanceled()) break;
+            if (col == N)
+            {
+                if (request.OnSolution != null && request.OnSolution(rows)) break;
+                // backtrack
+                col--;
+                if (col < 0) break;
+                cols = s.StackCols[col];
+                d1 = s.StackD1[col];
+                d2 = s.StackD2[col];
+                s.Remaining = s.StackRemaining[col];
+                rows[col] = -1;
+                continue;
+            }
+            if (s.Remaining == 0)
+            {
+                col--;
+                if (col < 0) break;
+                cols = s.StackCols[col];
+                d1 = s.StackD1[col];
+                d2 = s.StackD2[col];
+                s.Remaining = s.StackRemaining[col];
+                rows[col] = -1;
+                continue;
+            }
+            ulong rem = s.Remaining;
+            ulong bit = rem & (ulong)-(long)rem; // lowest set bit
+            rem &= rem - 1; // clear bit
+            s.Remaining = rem;
+            int row = BitOperations.TrailingZeroCount(bit);
+            rows[col] = row;
+            if (col >= pruneDepthGate && ShouldPrunePrefixFast(rows, col, N, reflectionEnabled, prefixEnabled))
+            {
+                rows[col] = -1;
+                continue;
+            }
+            if (col == 0)
+            {
+                s.RootPlacements++;
+                double pct = (double)s.RootPlacements / s.RootTotal * 100.0;
+                request.ReportProgress(pct);
+            }
+            // push
+            s.StackCols[col] = cols;
+            s.StackD1[col] = d1;
+            s.StackD2[col] = d2;
+            s.StackRemaining[col] = rem;
+            cols |= bit;
+            d1 = (d1 | bit) << 1;
+            d2 = (d2 | bit) >> 1;
+            col++;
+            if (col == N) continue;
+            ulong attacked = cols | d1 | d2;
+            s.Remaining = (~attacked) & s.Mask;
+            if ((request.EnhancedSymmetry || request.AggressiveSymmetry) && N >= 14)
+            {
+                ulong avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(N, col, rows, s.Remaining);
+                if (request.AggressiveSymmetry && col == 2 && rows[1] >= 0 && !((N & 1) == 1 && rows[0] == N / 2))
+                {
+                    int minRow = rows[1];
+                    if (minRow < N)
+                    {
+                        ulong lowerMask = (1UL << minRow) - 1UL;
+                        avail &= ~lowerMask;
+                    }
+                    else avail = 0UL;
+                }
+                s.Remaining = avail;
+            }
+        }
+        // Persist final state back
+        s.Col = col;
+        s.Cols = cols;
+        s.Diag1 = d1;
+        s.Diag2 = d2;
     }
 
     private static bool ShouldPrunePrefixFast(int[] rows, int depth, int N, bool reflectionEnabled, bool minimalityEnabled)
