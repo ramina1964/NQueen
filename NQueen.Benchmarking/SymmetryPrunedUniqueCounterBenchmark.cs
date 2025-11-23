@@ -1,6 +1,5 @@
 namespace NQueen.Benchmarking;
 
-[MemoryDiagnoser]
 public class SymmetryPrunedUniqueCounterBenchmark
 {
     [Params(15, 16, 17, 18, 20)]

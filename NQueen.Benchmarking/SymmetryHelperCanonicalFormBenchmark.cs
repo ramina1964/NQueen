@@ -1,6 +1,5 @@
 namespace NQueen.Benchmarking;
 
-[MemoryDiagnoser]
 public class SymmetryHelperCanonicalFormBenchmark
 {
     [Params(8, 12, 16, 20)]

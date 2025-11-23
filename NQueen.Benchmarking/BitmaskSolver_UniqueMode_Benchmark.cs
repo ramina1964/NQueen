@@ -1,6 +1,5 @@
 namespace NQueen.Benchmarking;
 
-[MemoryDiagnoser]
 public class BitmaskSolver_UniqueMode_Benchmark
 {
     private readonly ISolutionFormatter _formatter = new SolutionFormatter();

@@ -1,6 +1,5 @@
 namespace NQueen.Benchmarking;
 
-[MemoryDiagnoser]
 public class SymmetryCanonicalFormBenchmark
 {
     [Params(8, 10, 12, 14, 16)]
@@ -30,8 +29,6 @@ public class SymmetryCanonicalFormBenchmark
     }
 }
 
-[MemoryDiagnoser]
-[CPUUsageDiagnoser]
 public class SymmetryAddIfUniqueBenchmark
 {
     [Params(8, 10, 12, 14, 16)]

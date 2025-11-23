@@ -1,7 +1,5 @@
 ﻿global using BenchmarkDotNet.Attributes;
-global using BenchmarkDotNet.Jobs;
-global using BenchmarkDotNet.Order;
-global using Microsoft.VSDiagnostics;
+// Removed BenchmarkDotNet.Jobs and Order as part of minimal config
 global using NQueen.Domain.Enums;
 global using NQueen.Domain.Formatters;
 global using NQueen.Domain.Interfaces;

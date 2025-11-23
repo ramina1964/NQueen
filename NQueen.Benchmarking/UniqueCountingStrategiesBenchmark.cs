@@ -1,6 +1,5 @@
 namespace NQueen.Benchmarking;
 
-[MemoryDiagnoser]
 public class UniqueCountingStrategiesBenchmark
 {
     [Params(12, 13, 14, 15, 16)]

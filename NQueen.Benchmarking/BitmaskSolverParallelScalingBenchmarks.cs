@@ -1,10 +1,5 @@
 namespace NQueen.Benchmarking;
 
-// Measures impact of new parallel tunables (UseParallel + ParallelRootSplitDepth)
-// Focuses on SolutionMode.All (root splitting currently applies only there).
-// Returns total solutions count to keep work from being optimized away.
-[MemoryDiagnoser]
-[ThreadingDiagnoser]
 public class BitmaskSolverParallelScalingBenchmarks
 {
     // Keep sizes moderate; higher sizes (>=18) may make runs very long with depth >1.

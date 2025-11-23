@@ -6,11 +6,6 @@ namespace NQueen.Benchmarking;
 //  - All mode: sequential vs parallel, materialize vs count-only, optional prefix/reflection pruning & half-board restriction
 // Params chosen to cover scaling inflection points without excessive duplication.
 
-[MemoryDiagnoser]
-[CPUUsageDiagnoser]
-[Orderer(SummaryOrderPolicy.FastestToSlowest)]
-[RankColumn]
-[HideColumns("Error","StdDev")]
 public class UniqueModeVariantsBenchmark
 {
     // Representative sizes: 12 (small canonical), 14 (mid), 16 (larger), 18 (upper mid)
@@ -45,11 +40,6 @@ public class UniqueModeVariantsBenchmark
     }
 }
 
-[MemoryDiagnoser]
-[CPUUsageDiagnoser]
-[Orderer(SummaryOrderPolicy.FastestToSlowest)]
-[RankColumn]
-[HideColumns("Error","StdDev")]
 public class AllModeVariantsBenchmark
 {
     // Sizes: 12 (smaller), 14 (mid), 16 (above symmetry throttle threshold)

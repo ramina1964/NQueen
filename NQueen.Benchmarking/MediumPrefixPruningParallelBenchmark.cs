@@ -1,6 +1,5 @@
 namespace NQueen.Benchmarking;
 
-[CPUUsageDiagnoser]
 public class MediumPrefixPruningParallelBenchmark
 {
     [Params(10, 11, 12, 13)]

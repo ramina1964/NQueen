@@ -1,6 +1,5 @@
 namespace NQueen.Benchmarking;
 
-[MemoryDiagnoser]
 public class BitmaskSolverParallelizationBaselineBenchmark
 {
     [Params(10, 12, 14)]

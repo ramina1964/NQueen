@@ -1,6 +1,5 @@
 namespace NQueen.Benchmarking;
 
-[MemoryDiagnoser]
 public class AllMaterializeSampleBenchmark
 {
     [Params(12)]

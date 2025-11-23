@@ -1,6 +1,5 @@
 namespace NQueen.Benchmarking;
 
-[MemoryDiagnoser]
 public class BitmaskSolverUniqueBenchmarks
 {
     [GlobalSetup]

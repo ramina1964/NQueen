@@ -1,14 +1,5 @@
 namespace NQueen.Benchmarking;
 
-// Comprehensive benchmark to help pinpoint GUI vs core solver overhead.
-// Dimensions measured:
-//  - BoardSize: typical interactive sizes
-//  - SolutionMode: All / Unique / Single
-//  - DisplayMode: Hide vs Visualize (event & incremental painting cost)
-//  - AttachEventHandlers: simulate WPF subscriptions (QueenPlaced / SolutionFound / Progress)
-// Use results to compare with ConsoleApp baselines (which effectively run Hide + no handlers).
-
-[MemoryDiagnoser]
 public class BitmaskSolverExtendedFullBenchmarks
 {
     // Keep sizes moderate so the cartesian space remains tractable.

@@ -1,6 +1,5 @@
 namespace NQueen.Benchmarking;
 
-[CPUUsageDiagnoser]
 public class BitmaskSolver_UniqueTracking_Benchmark
 {
     private readonly ISolutionFormatter _formatter = new SolutionFormatter();

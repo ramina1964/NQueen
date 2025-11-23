@@ -1,6 +1,5 @@
 namespace NQueen.Benchmarking;
 
-[CPUUsageDiagnoser]
 public class SolutionStorageBenchmark
 {
     // Choose moderate sizes to keep runtime acceptable yet produce many solutions.
@@ -15,10 +14,11 @@ public class SolutionStorageBenchmark
     public SimulationResults EnumerateSolutions()
     {
         // Disable cap to force storage of all solutions (worst-case allocations baseline).
-        var solver = new BitmaskSolver(BoardSize, Mode, DisplayMode.Hide, _formatter, maxSolutionsInOutput: int.MaxValue);
-        // Explicitly disable capping flag.
-        solver.UseCountOnlyAllMode = false;
-        solver.UseCountOnlyUniqueMode = false;
+        var solver = new BitmaskSolver(BoardSize, Mode, DisplayMode.Hide, _formatter, maxSolutionsInOutput: int.MaxValue)
+        {
+            UseCountOnlyAllMode = false,
+            UseCountOnlyUniqueMode = false
+        };
         // NOTE: BitmaskSolver ctor with maxSolutionsInOutput:int.MaxValue combined with enableCap=true means no effective cap.
         // Solve and return results (BenchmarkDotNet will measure allocations for SimulationResults + internal arrays).
         return solver.Solve();

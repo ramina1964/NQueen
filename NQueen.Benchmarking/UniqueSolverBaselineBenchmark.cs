@@ -1,6 +1,5 @@
 namespace NQueen.Benchmarking;
 
-[CPUUsageDiagnoser]
 public class UniqueSolverBaselineBenchmark
 {
     [Params(12, 14, 16)]

@@ -1,8 +1,5 @@
 namespace NQueen.Benchmarking;
 
-// Benchmarks for packed-key (UInt128) uniqueness operations.
-[MemoryDiagnoser]
-[CPUUsageDiagnoser]
 public class SymmetryAddIfUniquePackedBenchmark
 {
     [Params(8, 10, 12, 14, 16)]

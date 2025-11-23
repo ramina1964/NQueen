@@ -1,7 +1,5 @@
 namespace NQueen.Benchmarking;
 
-[MemoryDiagnoser]
-[CPUUsageDiagnoser]
 public class UniqueCountOnlyLightweightBenchmark
 {
     [Params(14, 15, 16)]

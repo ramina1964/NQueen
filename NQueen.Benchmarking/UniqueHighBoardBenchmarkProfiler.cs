@@ -1,15 +1,5 @@
 namespace NQueen.Benchmarking;
 
-[MemoryDiagnoser]
-[Orderer(SummaryOrderPolicy.FastestToSlowest)]
-[RankColumn]
-[HideColumns("Error", "StdDev")]
-// Consolidated high-board unique-mode profiler:
-// Dimensions:
-//  - BoardSize: large boards to stress core search
-//  - CountOnly: toggle BitmaskSolver.UseCountOnlyUniqueMode (pure counting vs materializing sample solutions)
-//  - WithEvents: include/exclude event handler overhead
-// Returns: total unique solutions count (uniform return type for both modes)
 public class UniqueHighBoardBenchmarkProfiler
 {
     // Only benchmark N=14, 16, 18 to avoid excessive profiler runtime

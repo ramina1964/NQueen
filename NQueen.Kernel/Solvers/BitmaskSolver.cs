@@ -261,59 +261,140 @@ public partial class BitmaskSolver : ISolver, IDisposable
                 return;
             }
             ulong avail = ~(cols | d1 | d2) & fullMask;
-            while (avail != 0 && !abortGen)
+            for (ulong a = avail; a != 0 && !abortGen; a &= (a - 1))
             {
-                ulong bitLocal = avail & (ulong)-(long)avail; avail ^= bitLocal; int row = BitOperations.TrailingZeroCount(bitLocal);
+                ulong bitLocal = a & (ulong)-(long)a;
+                int row = BitOperations.TrailingZeroCount(bitLocal);
                 rows[col] = row;
-                Gen(col + 1, cols | bitLocal, (d1 | bitLocal) << 1, (d2 | bitLocal) >> 1, rows);
+                ulong nextCols = cols | bitLocal;
+                ulong nextD1 = (d1 | bitLocal) << 1;
+                ulong nextD2 = (d2 | bitLocal) >> 1;
+                Gen(col + 1, nextCols, nextD1, nextD2, rows);
                 rows[col] = -1;
             }
         }
         int totalJobs = partialStates.Count; if (totalJobs == 0) { _solutionCount = 0; return; }
-        void DFSWrapper(int startCol, int[] rows, ulong cols, ulong d1, ulong d2)
-        {
-            void DFS(int col, ulong lc, ulong ld1, ulong ld2)
-            {
-                if (IsSolverCanceled) return;
-                if (col == N)
-                {
-                    int r0 = rows[0];
-                    if (halfBoard && isOdd && r0 == centerRow) Interlocked.Increment(ref totalCenter); else Interlocked.Increment(ref totalNonCenter);
-                    if (!countOnly && cap > 0 && materialized < cap)
-                    {
-                        int current = Interlocked.Increment(ref materialized);
-                        if (current <= cap)
-                        {
-                            _solutions.Add((0, rows.Length));
-                            if (EnableEvents && !_eventsSuppressedAfterCap)
-                                SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
-                            if (current == cap) _eventsSuppressedAfterCap = true;
-                        }
-                    }
-                    return;
-                }
-                ulong avail = ~(lc | ld1 | ld2) & fullMask;
-                while (avail != 0 && !IsSolverCanceled)
-                {
-                    ulong bitLocal = avail & (ulong)-(long)avail; avail ^= bitLocal; int row = BitOperations.TrailingZeroCount(bitLocal);
-                    rows[col] = row;
-                    DFS(col + 1, lc | bitLocal, (ld1 | bitLocal) << 1, (ld2 | bitLocal) >> 1);
-                    rows[col] = -1;
-                }
-            }
-            DFS(startCol, cols, d1, d2);
-        }
+        object mergeLock = new();
         if (UseParallel)
         {
             Parallel.ForEach(partialStates, new ParallelOptions { MaxDegreeOfParallelism = cores }, state =>
             {
                 var (startCol, rows, cols, d1, d2) = state;
-                DFSWrapper(startCol, rows, cols, d1, d2);
+                ulong localNonCenter = 0; ulong localCenter = 0;
+                void DFSCountOnly(int col, ulong lc, ulong ld1, ulong ld2)
+                {
+                    if (IsSolverCanceled) return;
+                    if (col == N)
+                    {
+                        int r0 = rows[0];
+                        if (halfBoard && isOdd && r0 == centerRow) localCenter++; else localNonCenter++;
+                        return;
+                    }
+                    ulong avail = ~(lc | ld1 | ld2) & fullMask;
+                    for (ulong a = avail; a != 0 && !abortGen; a &= (a - 1))
+                    {
+                        ulong bitLocal = a & (ulong)-(long)a;
+                        ulong nextCols = lc | bitLocal;
+                        ulong nextD1 = (ld1 | bitLocal) << 1;
+                        ulong nextD2 = (ld2 | bitLocal) >> 1;
+                        DFSCountOnly(col + 1, nextCols, nextD1, nextD2);
+                    }
+                }
+                void DFSMaterialize(int col, ulong lc, ulong ld1, ulong ld2)
+                {
+                    if (IsSolverCanceled) return;
+                    if (col == N)
+                    {
+                        int r0 = rows[0];
+                        if (halfBoard && isOdd && r0 == centerRow) localCenter++; else localNonCenter++;
+                        if (cap > 0 && materialized < cap)
+                        {
+                            int current = Interlocked.Increment(ref materialized);
+                            if (current <= cap)
+                            {
+                                _solutions.Add((0, rows.Length));
+                                if (EnableEvents && !_eventsSuppressedAfterCap)
+                                    SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
+                                if (current == cap) _eventsSuppressedAfterCap = true;
+                            }
+                        }
+                        return;
+                    }
+                    // Early exit when cap reached to minimize needless traversal
+                    if (!countOnly && cap > 0 && materialized >= cap) return;
+                    ulong avail = ~(lc | ld1 | ld2) & fullMask;
+                    for (ulong a = avail; a != 0 && !IsSolverCanceled; a &= (a - 1))
+                    {
+                        ulong bitLocal = a & (ulong)-(long)a;
+                        int row = BitOperations.TrailingZeroCount(bitLocal);
+                        rows[col] = row;
+                        ulong nextCols = lc | bitLocal;
+                        ulong nextD1 = (ld1 | bitLocal) << 1;
+                        ulong nextD2 = (ld2 | bitLocal) >> 1;
+                        DFSMaterialize(col + 1, nextCols, nextD1, nextD2);
+                        rows[col] = -1;
+                        if (!countOnly && cap > 0 && materialized >= cap) break; // break loop once cap reached
+                    }
+                }
+                if (countOnly) DFSCountOnly(startCol, cols, d1, d2); else DFSMaterialize(startCol, cols, d1, d2);
+                lock (mergeLock)
+                {
+                    totalNonCenter += localNonCenter;
+                    totalCenter += localCenter;
+                }
             });
         }
         else
         {
-            foreach (var state in partialStates) { var (startCol, rows, cols, d1, d2) = state; DFSWrapper(startCol, rows, cols, d1, d2); }
+            foreach (var state in partialStates)
+            {
+                var (startCol, rows, cols, d1, d2) = state;
+                ulong localNonCenter = 0; ulong localCenter = 0;
+                void DFSSeq(int col, ulong lc, ulong ld1, ulong ld2)
+                {
+                    if (IsSolverCanceled) return;
+                    if (col == N)
+                    {
+                        int r0 = rows[0];
+                        if (halfBoard && isOdd && r0 == centerRow) localCenter++; else localNonCenter++;
+                        if (!countOnly && cap > 0 && materialized < cap)
+                        {
+                            materialized++;
+                            _solutions.Add((0, rows.Length));
+                            if (EnableEvents && !_eventsSuppressedAfterCap)
+                                SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
+                            if (materialized == cap) _eventsSuppressedAfterCap = true;
+                        }
+                        return;
+                    }
+                    if (!countOnly && cap > 0 && materialized >= cap) return;
+                    ulong avail = ~(lc | ld1 | ld2) & fullMask;
+                    for (ulong a = avail; a != 0 && !IsSolverCanceled; a &= (a - 1))
+                    {
+                        ulong bitLocal = a & (ulong)-(long)a;
+                        if (!countOnly)
+                        {
+                            int row = BitOperations.TrailingZeroCount(bitLocal);
+                            rows[col] = row;
+                            ulong nextCols = lc | bitLocal;
+                            ulong nextD1 = (ld1 | bitLocal) << 1;
+                            ulong nextD2 = (ld2 | bitLocal) >> 1;
+                            DFSSeq(col + 1, nextCols, nextD1, nextD2);
+                            rows[col] = -1;
+                            if (cap > 0 && materialized >= cap) break;
+                        }
+                        else
+                        {
+                            ulong nextCols = lc | bitLocal;
+                            ulong nextD1 = (ld1 | bitLocal) << 1;
+                            ulong nextD2 = (ld2 | bitLocal) >> 1;
+                            DFSSeq(col + 1, nextCols, nextD1, nextD2);
+                        }
+                    }
+                }
+                DFSSeq(startCol, cols, d1, d2);
+                totalNonCenter += localNonCenter; totalCenter += localCenter;
+            }
         }
         ulong combined = halfBoard ? (totalNonCenter * 2UL + totalCenter) : (totalNonCenter + totalCenter);
         _solutionCount = combined;
@@ -390,7 +471,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
                         AddSample(rows);
                         if (seen.Count >= cap)
                         {
-                            _eventsSuppressedAfterCap = true;
+                            _eventsSuppressedAfterCap = true; // fixed typo
                             return true;
                         }
                     }

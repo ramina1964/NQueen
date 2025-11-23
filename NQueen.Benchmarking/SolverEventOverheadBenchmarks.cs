@@ -1,17 +1,5 @@
 namespace NQueen.Benchmarking;
 
-// Goal: Isolate incremental overhead layers that the GUI adds compared to the Console app.
-// Layers modelled:
-//  1) Baseline: pure solver (no handlers) -> comparable to Console scenario.
-//  2) SimpleHandlers: attach lightweight counters to events (already close to existing benchmark AttachEventHandlers=true)
-//  3) GuiLikeHandlers: approximate MainViewModel work:
-//        - Build partial queen placement depth (like OnQueenPlaced)
-//        - Create Solution objects and add to an ObservableCollection with cap check
-//        - Perform small dispatcher-like delegate invocation (direct call here)
-// This is a synthetic approximation (no real WPF / dispatcher marshalling) but captures
-// allocation + per?event logic cost to quantify relative overhead.
-
-[MemoryDiagnoser]
 public class SolverEventOverheadBenchmarks
 {
     [Params(8, 10)]
