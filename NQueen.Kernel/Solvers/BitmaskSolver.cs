@@ -157,7 +157,8 @@ public partial class BitmaskSolver : ISolver, IDisposable
 
     private ulong CountAllExact()
     {
-        bool applyHalfBoard = BoardSize >= 15 && (UseCountOnlyAllMode || EnableHalfBoardRestriction);
+        // Automatic half-board for All mode: apply when N>=15 and N is odd
+        bool applyHalfBoard = BoardSize >= 15 && ((BoardSize & 1) == 1);
         SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
         ulong countNonCenter = 0UL;
         ulong countCenter = 0UL;
@@ -194,7 +195,8 @@ public partial class BitmaskSolver : ISolver, IDisposable
     {
         SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
         int N = BoardSize;
-        bool halfBoard = N >= 15 && ((countOnly && UseCountOnlyAllMode) || (!countOnly && EnableHalfBoardRestriction));
+        // Automatic half-board for All mode: apply when N>=15 and N is odd
+        bool halfBoard = N >= 15 && ((N & 1) == 1);
         bool isOdd = (N & 1) == 1; int centerRow = N / 2;
         if (N <= 18)
         {
@@ -240,11 +242,9 @@ public partial class BitmaskSolver : ISolver, IDisposable
         double branchEstimate = Math.Max(2.0, N * 0.55);
         while (depth < maxDepth && Math.Pow(branchEstimate, depth) < targetJobs) depth++;
         var partialStates = new List<(int col, int[] rows, ulong cols, ulong d1, ulong d2)>();
-        bool abortGen = false;
-        int maxStates = targetJobs * 2;
         ulong fullMask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
         int firstRowLimit = halfBoard ? (N + 1) / 2 : N;
-        for (int rootRow = 0; rootRow < firstRowLimit && !abortGen; rootRow++)
+        for (int rootRow = 0; rootRow < firstRowLimit; rootRow++)
         {
             int[] rows = new int[N]; Array.Fill(rows, -1); rows[0] = rootRow;
             ulong bit = 1UL << rootRow;
@@ -252,16 +252,14 @@ public partial class BitmaskSolver : ISolver, IDisposable
         }
         void Gen(int col, ulong cols, ulong d1, ulong d2, int[] rows)
         {
-            if (abortGen) return;
             if (col == N || col == depth)
             {
                 var snap = new int[N]; Array.Copy(rows, snap, N);
                 partialStates.Add((col, snap, cols, d1, d2));
-                if (partialStates.Count >= maxStates) abortGen = true;
                 return;
             }
             ulong avail = ~(cols | d1 | d2) & fullMask;
-            for (ulong a = avail; a != 0 && !abortGen; a &= (a - 1))
+            for (ulong a = avail; a != 0; a &= (a - 1))
             {
                 ulong bitLocal = a & (ulong)-(long)a;
                 int row = BitOperations.TrailingZeroCount(bitLocal);
@@ -291,7 +289,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
                         return;
                     }
                     ulong avail = ~(lc | ld1 | ld2) & fullMask;
-                    for (ulong a = avail; a != 0 && !abortGen; a &= (a - 1))
+                    for (ulong a = avail; a != 0; a &= (a - 1))
                     {
                         ulong bitLocal = a & (ulong)-(long)a;
                         ulong nextCols = lc | bitLocal;
@@ -320,7 +318,6 @@ public partial class BitmaskSolver : ISolver, IDisposable
                         }
                         return;
                     }
-                    // Early exit when cap reached to minimize needless traversal
                     if (!countOnly && cap > 0 && materialized >= cap) return;
                     ulong avail = ~(lc | ld1 | ld2) & fullMask;
                     for (ulong a = avail; a != 0 && !IsSolverCanceled; a &= (a - 1))
@@ -333,7 +330,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
                         ulong nextD2 = (ld2 | bitLocal) >> 1;
                         DFSMaterialize(col + 1, nextCols, nextD1, nextD2);
                         rows[col] = -1;
-                        if (!countOnly && cap > 0 && materialized >= cap) break; // break loop once cap reached
+                        if (!countOnly && cap > 0 && materialized >= cap) break;
                     }
                 }
                 if (countOnly) DFSCountOnly(startCol, cols, d1, d2); else DFSMaterialize(startCol, cols, d1, d2);
@@ -796,7 +793,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
     private readonly int _maxDisplayedCount;
     private volatile bool _eventsSuppressedAfterCap;
     private bool _disposed;
-    private const int _lookupThreshold = 20;
+    private const int _lookupThreshold = 20; // restored to original threshold
     private const int _largeBoardConstructiveThreshold = 20;
     private int[]? _scratchBuffer;
 }

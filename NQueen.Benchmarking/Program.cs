@@ -1,29 +1,28 @@
+using System;
 using System.Diagnostics;
+using NQueen.Kernel.Solvers;
 using NQueen.Domain.Enums;
 using NQueen.Domain.Formatters;
-using NQueen.Kernel.Solvers;
-
-namespace NQueen.Benchmarking;
 
 internal class Program
 {
     static void Main(string[] args)
     {
-        // Manual timing harness replacing BenchmarkDotNet due to diagnostics agent issues.
-        int boardSize = 16;
+        int n = 18; // Fast run for All count-only
         var formatter = new DefaultSolutionFormatter();
-        var solver = new BitmaskSolver(boardSize, SolutionMode.Unique, DisplayMode.Hide, formatter)
+        using var solverCount = new BitmaskSolver(n, SolutionMode.All, DisplayMode.Hide, formatter)
         {
             EnableEvents = false,
-            UseCountOnlyUniqueMode = true
+            UseCountOnlyAllMode = true,
+            EnablePrefixMinimalityPruning = false,
+            EnablePartialReflectionPruning = false
         };
-        // Warmup
-        solver.Solve();
+        solverCount.Solve(); // warmup
         var sw = Stopwatch.StartNew();
-        var results = solver.Solve();
+        var res = solverCount.Solve();
         sw.Stop();
-        Console.WriteLine($"Unique Count-Only Packed Benchmark (manual) N={boardSize}");
-        Console.WriteLine($"SolutionsCount: {results.SolutionsCount}");
+        Console.WriteLine($"All Mode Count-Only N={n}");
+        Console.WriteLine($"SolutionsCount: {res.SolutionsCount}");
         Console.WriteLine($"ElapsedMs: {sw.Elapsed.TotalMilliseconds:F2}");
     }
 }
