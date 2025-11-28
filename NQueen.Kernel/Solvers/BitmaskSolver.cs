@@ -22,6 +22,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
         BoardSize = boardSize;
         SolutionMode = solutionMode;
         DisplayMode = displayMode;
+        _capEnabled = true;
     }
 
     // ---------------- Public properties / events ----------------
@@ -157,40 +158,125 @@ public partial class BitmaskSolver : ISolver, IDisposable
 
     private ulong CountAllExact()
     {
-        // Automatic half-board for All mode: apply when N>=15 and N is odd
         bool applyHalfBoard = BoardSize >= 15 && ((BoardSize & 1) == 1);
         SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
-        ulong countNonCenter = 0UL;
-        ulong countCenter = 0UL;
-        bool isOdd = (BoardSize & 1) == 1;
-        int centerRow = BoardSize / 2;
-        BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
-            BoardSize,
-            RestrictFirstCol: applyHalfBoard,
-            EnhancedSymmetry: false,
-            AggressiveSymmetry: false,
-            CountOnly: true,
-            DisplayMode,
-            DelayInMillisec,
-            _currentSimToken,
-            () => IsSolverCanceled,
-            p => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
-            m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize)); },
-            rows =>
+        int N = BoardSize;
+        bool isOdd = (N & 1) == 1;
+        int centerRow = N / 2;
+        int firstRowLimit = applyHalfBoard ? (N + 1) / 2 : N;
+        // Balanced parallel enumeration: expand to depth 2 then distribute subtrees.
+        int expansionDepth = 2; // good trade-off for N<=18
+        ulong maskFull = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
+        var partials = new List<(int col, int[] rows, ulong cols, ulong d1, ulong d2)>(firstRowLimit * 16);
+        for (int rootRow = 0; rootRow < firstRowLimit; rootRow++)
+        {
+            int[] rows = new int[N]; Array.Fill(rows, -1); rows[0] = rootRow;
+            ulong bitFirst = 1UL << rootRow;
+            Expand(1, bitFirst, bitFirst << 1, bitFirst >> 1, rows);
+        }
+        void Expand(int col, ulong cols, ulong d1, ulong d2, int[] rows)
+        {
+            if (col == N || col == expansionDepth)
             {
-                if (!ValidateRows(rows)) return false;
-                int r0 = rows[0];
-                if (applyHalfBoard && isOdd && r0 == centerRow) countCenter++; else countNonCenter++;
-                return false;
+                var snapshot = new int[N]; Array.Copy(rows, snapshot, N);
+                partials.Add((col, snapshot, cols, d1, d2));
+                return;
             }
-        ));
-        // Combine counts (double non-center roots) if half-board applied
-        ulong total = applyHalfBoard ? (countNonCenter * 2UL + countCenter) : (countNonCenter + countCenter);
+            ulong avail = ~(cols | d1 | d2) & maskFull;
+            while (avail != 0)
+            {
+                ulong bit = avail & (ulong)-(long)avail; avail ^= bit;
+                int r = BitOperations.TrailingZeroCount(bit);
+                rows[col] = r;
+                Expand(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1, rows);
+                rows[col] = -1;
+            }
+        }
+        if (partials.Count == 0) return 0UL;
+        int cores = Environment.ProcessorCount;
+        ulong totalNonCenter = 0UL; ulong totalCenter = 0UL;
+        object sync = new();
+        Parallel.ForEach(partials, new ParallelOptions { MaxDegreeOfParallelism = cores }, part =>
+        {
+            var (startCol, rows, cols, d1, d2) = part;
+            ulong localNonCenter = 0UL; ulong localCenter = 0UL;
+            // local stacks
+            ulong[] stackCols = new ulong[N];
+            ulong[] stackD1 = new ulong[N];
+            ulong[] stackD2 = new ulong[N];
+            ulong[] stackAvail = new ulong[N];
+            bool reflectionEqual = true; bool minimalityEqual = true;
+            int pruneGate = int.MaxValue;
+            if (EnablePrefixMinimalityPruning || EnablePartialReflectionPruning)
+            {
+                if (N >= 20) pruneGate = 1; else if (N >= 16) pruneGate = 2; else if (N >= 15) pruneGate = 3;
+            }
+            int col = startCol;
+            ulong avail = ~(cols | d1 | d2) & maskFull;
+            while (true)
+            {
+                if (IsSolverCanceled) break;
+                if (col == N)
+                {
+                    int r0 = rows[0];
+                    if (applyHalfBoard && isOdd && r0 == centerRow) localCenter++; else localNonCenter++;
+                    col--;
+                    if (col < startCol) break;
+                    avail = stackAvail[col]; cols = stackCols[col]; d1 = stackD1[col]; d2 = stackD2[col]; rows[col] = -1;
+                    continue;
+                }
+                if (avail == 0UL)
+                {
+                    col--;
+                    if (col < startCol) break;
+                    avail = stackAvail[col]; cols = stackCols[col]; d1 = stackD1[col]; d2 = stackD2[col]; rows[col] = -1;
+                    continue;
+                }
+                ulong bit = avail & (ulong)-(long)avail; avail ^= bit;
+                int r = BitOperations.TrailingZeroCount(bit);
+                rows[col] = r;
+                if (col >= pruneGate && (EnablePrefixMinimalityPruning || EnablePartialReflectionPruning))
+                {
+                    if (ShouldPruneIncremental(rows, col, N, EnablePartialReflectionPruning, EnablePrefixMinimalityPruning, ref reflectionEqual, ref minimalityEqual))
+                    {
+                        rows[col] = -1; continue;
+                    }
+                }
+                stackCols[col] = cols; stackD1[col] = d1; stackD2[col] = d2; stackAvail[col] = avail;
+                cols |= bit; d1 = (d1 | bit) << 1; d2 = (d2 | bit) >> 1;
+                col++; if (col == N) continue;
+                avail = ~(cols | d1 | d2) & maskFull;
+            }
+            if (localNonCenter > 0 || localCenter > 0)
+            {
+                lock (sync) { totalNonCenter += localNonCenter; totalCenter += localCenter; }
+            }
+        });
+        ulong total = applyHalfBoard ? (totalNonCenter * 2UL + totalCenter) : (totalNonCenter + totalCenter);
         return total;
     }
 
-    // --- All-mode adaptive enumeration (modified to disable incremental canonicalization locally) ---
-    // REPLACED original EnumerateAllAdaptive implementation with half-board aware version
+    // Incremental pruning helper for CountAllExact path
+    private static bool ShouldPruneIncremental(int[] rows, int depth, int N, bool reflectionEnabled, bool minimalityEnabled, ref bool reflectionEqual, ref bool minimalityEqual)
+    {
+        if (reflectionEnabled && reflectionEqual)
+        {
+            int r = rows[depth]; if (r < 0) return false;
+            int reflected = N - 1 - r;
+            if (r > reflected) return true;
+            if (r < reflected) reflectionEqual = false;
+        }
+        if (minimalityEnabled && minimalityEqual)
+        {
+            int first = rows[0]; if (first < 0) return false;
+            int newRow = rows[depth]; if (newRow < 0) return false;
+            int transformed = N - 1 - newRow;
+            if (first > transformed) return true;
+            if (first < transformed) minimalityEqual = false;
+        }
+        return false;
+    }
+
     private void EnumerateAllAdaptive(bool countOnly)
     {
         SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
