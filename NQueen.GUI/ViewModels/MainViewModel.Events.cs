@@ -165,12 +165,10 @@ public sealed partial class MainViewModel
         if (_solver?.IsSolverCanceled == true || !IsSimulating)
             return;
 
-        // Increment total solutions regardless of whether solution is materialized (empty array signals count-only increment).
+        // Increment internal total regardless of materialization (used only at completion for summary)
         _actualTotalSolutions++;
-        // Live update of total found solutions (not truncated list count)
-        _uiDispatcher.Invoke(() => NoOfSolutions = $"{_actualTotalSolutions,0:N0}");
+        // Removed live UI updates of NoOfSolutions to prevent interim cap value display.
 
-        // Guard: skip invalid / empty solutions (count-only increment already recorded)
         if (e.Solution.Length == 0)
         {
             return;

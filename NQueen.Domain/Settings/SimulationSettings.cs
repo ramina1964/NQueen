@@ -12,6 +12,11 @@ public static class SimulationSettings
     public const bool DefaultUseParallel = true;
     public const int DefaultParallelRootSplitDepth = 1;
 
+    // Threshold to auto-enable parallel execution for All mode (count-only path)
+    public const int ParallelAllAutoEnableThresholdN = 15;
+    // Threshold to auto-enable parallel execution for All mode (materialize path)
+    public const int ParallelAllMaterializeAutoEnableThresholdN = 14;
+
     // Storage strategies (changed to MaterializeSample to satisfy tests expecting sample solutions)
     public const ResultStorageMode DefaultAllStorageMode =
         ResultStorageMode.Materialize;
