@@ -10,31 +10,21 @@
     d:DesignHeight="180"
     mc:Ignorable="d">
 
-    <!-- Simplified settings: expose only storage mode and half-board restriction -->
     <GroupBox Header="Solver Settings" Margin="0" Padding="0" Background="Bisque" BorderBrush="Black" BorderThickness="1">
         <Grid Margin="6">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" /> <!-- Storage Mode -->
-                <RowDefinition Height="Auto" /> <!-- Half-board restriction -->
-                <RowDefinition Height="Auto" /> <!-- Info note -->
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="130" />
             </Grid.ColumnDefinitions>
 
-            <!-- Storage Mode (applies to current solution mode) -->
             <Label Grid.Row="0" Grid.Column="0" Content="Solution Storage Mode" Style="{StaticResource LabelStyle}" Margin="0,4,0,4" VerticalAlignment="Center" />
             <ComboBox Grid.Row="0" Grid.Column="1" Width="100" ItemsSource="{Binding EnumStorageModes}" SelectedItem="{Binding SelectedStorageMode}" HorizontalAlignment="Right" Style="{StaticResource ComboBoxStyle}" IsEnabled="{Binding IsInInputMode}" Margin="0,4,0,4" VerticalAlignment="Center" />
 
-            <!-- Half-board restriction (All mode only) -->
-            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,4,0,4" VerticalAlignment="Center">
-                <Label Content="Enable Half-Board (All mode)" Style="{StaticResource LabelStyle}" VerticalAlignment="Center" Margin="0" />
-                <CheckBox IsChecked="{Binding EnableHalfBoardRestriction}" VerticalAlignment="Center" Margin="6,0,0,0" />
-            </StackPanel>
-
-            <!-- Info Note -->
-            <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Text="Parallel depth &amp; split auto-tuned. Adjust storage mode or half-board only." FontSize="11" Foreground="Gray" TextWrapping="Wrap" Margin="0,4,0,4" />
+            <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Text="Parallel auto-tuned; Half-board auto-enabled." FontSize="11" Foreground="Gray" TextWrapping="Wrap" Margin="0,2,0,0" />
         </Grid>
     </GroupBox>
 </UserControl>

@@ -231,19 +231,28 @@ public sealed partial class MainViewModel : ObservableObject
         if (depth > n) depth = n < 1 ? 1 : n;
         bs.ParallelRootSplitDepth = depth;
         ParallelRootSplitDepth = depth;
+
+        // Auto-enable half-board restriction internally when applicable
+        bs.EnableHalfBoardRestriction = ComputeHalfBoardRestriction();
+        OnPropertyChanged(nameof(EnableHalfBoardRestriction));
     }
 
-    private bool _enableHalfBoardRestriction; // UI toggle
+    private bool ComputeHalfBoardRestriction()
+    {
+        if (!ParsingUtils.TryParseInt(BoardSizeText, out var n)) return false;
+        return SolutionMode == SolutionMode.All && DisplayMode != DisplayMode.Visualize && n >= 15;
+    }
+
     public bool EnableHalfBoardRestriction
     {
-        get => _enableHalfBoardRestriction;
+        get => ComputeHalfBoardRestriction();
         set
         {
-            if (_enableHalfBoardRestriction == value) return;
-            _enableHalfBoardRestriction = value;
-            OnPropertyChanged();
+            // Ignore user toggles; this is auto-managed.
+            var auto = ComputeHalfBoardRestriction();
             if (_solver is NQueen.Kernel.Solvers.BitmaskSolver b)
-                b.EnableHalfBoardRestriction = value;
+                b.EnableHalfBoardRestriction = auto;
+            OnPropertyChanged();
         }
     }
 }

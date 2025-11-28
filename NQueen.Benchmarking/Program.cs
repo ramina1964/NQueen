@@ -4,6 +4,8 @@ using NQueen.Kernel.Solvers;
 using NQueen.Domain.Enums;
 using NQueen.Domain.Formatters;
 
+namespace NQueen.Benchmarking;
+
 internal class Program
 {
     static void Main(string[] args)
