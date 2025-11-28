@@ -1,11 +1,8 @@
-namespace NQueen.Kernel.Solvers.Engines;
-
 using System.Buffers;
 using System.Collections.Concurrent;
-using System.Numerics;
 using System.Threading;
-using System.Threading.Tasks;
-using NQueen.Domain.Settings;
+
+namespace NQueen.Kernel.Solvers.Engines;
 
 internal sealed partial class BitmaskParallelEngine
 {
@@ -70,6 +67,7 @@ internal sealed partial class BitmaskParallelEngine
         var globalUnique = new ConcurrentDictionary<UInt128, byte>();
         int materializedCount = 0;
         int cap = request.ShouldMaterialize() ? SimulationSettings.MaxDisplayedCount : 0;
+        ulong expectedTotal = N <= 29 ? ExpectedSolutionCounts.GetUniqueFast(N) : 0UL;
 
         ulong mask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
         ulong[] rowBits = new ulong[N];
@@ -88,16 +86,41 @@ internal sealed partial class BitmaskParallelEngine
         int totalTasks = partialStates.Count;
         int progressCounter = 0;
         int progressBucketReported = -1;
-        int progressBucketSize = (ThrottleProgressLargeBoards && N >= DepthSplitThresholdN)
-            ? 2
-            : 1;
+        // Use 1% bucket for smoother progress on large unique runs
+        int progressBucketSize = 1;
+        var lastHeartbeat = System.Diagnostics.Stopwatch.StartNew();
+        const int heartbeatMs = 1500;
 
         // Use ParallelOptions to increase parallelism
         var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
-        Parallel.ForEach(partialStates, parallelOptions, ps => EnumerateFromPartial(ps));
 
-        request.ReportProgress(100.0);
+        Parallel.ForEach(partialStates, parallelOptions, ps =>
+        {
+            EnumerateFromPartial(ps);
+            int done = Interlocked.Increment(ref progressCounter);
+            if (request.EnableEvents && expectedTotal == 0)
+            {
+                double pct = (double)done / totalTasks * 100.0;
+                int bucket = (int)pct / progressBucketSize * progressBucketSize;
+                int observed;
+                while (bucket > (observed = Volatile.Read(ref progressBucketReported)))
+                {
+                    if (Interlocked.CompareExchange(ref progressBucketReported, bucket, observed) == observed)
+                    {
+                        request.ReportProgress(bucket);
+                        break;
+                    }
+                }
+                if (lastHeartbeat.ElapsedMilliseconds >= heartbeatMs)
+                {
+                    request.ReportProgress(Math.Min(99.0, pct));
+                    lastHeartbeat.Restart();
+                }
+            }
+        });
+
         request.OnCompletedUniqueCount((ulong)globalUnique.Count);
+        request.ReportProgress(100.0);
 
         void EnumerateFromPartial(PartialState ps)
         {
@@ -129,13 +152,37 @@ internal sealed partial class BitmaskParallelEngine
                 {
                     UniqueInstrumentation.VisitLeaf();
                     UInt128 key = SymmetryHelper.GetCanonicalKey(rowsArr, scratch, out var canonicalSpan);
-                    if (globalUnique.TryAdd(key, 0) && materializedCount < cap)
+                    if (globalUnique.TryAdd(key, 0))
                     {
-                        int newVal = Interlocked.Increment(ref materializedCount);
-                        if (newVal <= cap)
+                        if (materializedCount < cap)
                         {
-                            int[] canonicalRows = new int[N]; canonicalSpan.CopyTo(canonicalRows);
-                            request.OnUniqueSolution(canonicalRows);
+                            int newVal = Interlocked.Increment(ref materializedCount);
+                            if (newVal <= cap)
+                            {
+                                int[] canonicalRows = new int[N]; canonicalSpan.CopyTo(canonicalRows);
+                                request.OnUniqueSolution(canonicalRows);
+                            }
+                        }
+                        if (request.EnableEvents && expectedTotal > 0)
+                        {
+                            ulong uniqueSoFar = (ulong)globalUnique.Count;
+                            double pctSol = (double)uniqueSoFar / expectedTotal * 100.0;
+                            if (pctSol > 99.0) pctSol = 99.0;
+                            if (pctSol >= progressBucketReported + progressBucketSize || lastHeartbeat.ElapsedMilliseconds >= heartbeatMs)
+                            {
+                                int bucket = (int)pctSol;
+                                int observed = Volatile.Read(ref progressBucketReported);
+                                if (bucket > observed && Interlocked.CompareExchange(ref progressBucketReported, bucket, observed) == observed)
+                                {
+                                    request.ReportProgress(bucket);
+                                    lastHeartbeat.Restart();
+                                }
+                                else if (lastHeartbeat.ElapsedMilliseconds >= heartbeatMs)
+                                {
+                                    request.ReportProgress(Math.Min(99.0, pctSol));
+                                    lastHeartbeat.Restart();
+                                }
+                            }
                         }
                     }
                     col--;
@@ -184,28 +231,6 @@ internal sealed partial class BitmaskParallelEngine
                 }
             }
             ArrayPool<int>.Shared.Return(scratch, clearArray: UniqueInstrumentation.Enabled);
-            int done = Interlocked.Increment(ref progressCounter);
-            if (request.EnableEvents)
-            {
-                double pct = (double)done / totalTasks * 100.0;
-                if (progressBucketSize == 1)
-                {
-                    request.ReportProgress(pct >= 100.0 ? 100.0 : pct);
-                }
-                else
-                {
-                    int bucket = (int)pct / progressBucketSize * progressBucketSize;
-                    int observed;
-                    while (bucket > (observed = Volatile.Read(ref progressBucketReported)))
-                    {
-                        if (Interlocked.CompareExchange(ref progressBucketReported, bucket, observed) == observed)
-                        {
-                            request.ReportProgress(bucket);
-                            break;
-                        }
-                    }
-                }
-            }
             void Restore(int c, out ulong rem)
             {
                 rem = stackRemaining[c]; cols = stackCols[c]; d1 = stackD1[c]; d2 = stackD2[c];
