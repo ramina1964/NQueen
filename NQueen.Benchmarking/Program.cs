@@ -1,15 +1,17 @@
-using System;
-using System.Diagnostics;
-using NQueen.Kernel.Solvers;
-using NQueen.Domain.Enums;
-using NQueen.Domain.Formatters;
-
 namespace NQueen.Benchmarking;
 
 internal class Program
 {
     static void Main(string[] args)
     {
+        // Skip custom run when invoked by BenchmarkDotNet (it passes '--' and filter args),
+        // or when BENCHMARK_MODE=1 is set.
+        var benchMode = Environment.GetEnvironmentVariable("BENCHMARK_MODE");
+        if ((benchMode == "1") || (args != null && args.Any(a => a.StartsWith("--"))))
+        {
+            return; // let BenchmarkDotNet handle execution
+        }
+
         int n = 19; // High-N run for All count-only
         var formatter = new DefaultSolutionFormatter();
         using var solverCount = new BitmaskSolver(n, SolutionMode.All, DisplayMode.Hide, formatter)

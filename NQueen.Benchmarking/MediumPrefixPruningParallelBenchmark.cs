@@ -2,7 +2,7 @@ namespace NQueen.Benchmarking;
 
 public class MediumPrefixPruningParallelBenchmark
 {
-    [Params(10, 11, 12, 13)]
+    [Params(10, 11, 12, 13, 14)]
     public int BoardSize { get; set; }
 
     [Params(0, 2, 4)]

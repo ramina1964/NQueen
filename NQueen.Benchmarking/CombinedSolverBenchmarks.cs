@@ -1,6 +1,5 @@
 namespace NQueen.Benchmarking;
 
-// Consolidated benchmark suite for Unique mode variants.
 public class UniqueModeVariantsBenchmark
 {
     // Representative sizes across scaling points
