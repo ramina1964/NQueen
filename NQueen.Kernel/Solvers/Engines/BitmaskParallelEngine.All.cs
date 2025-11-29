@@ -5,7 +5,7 @@ internal sealed partial class BitmaskParallelEngine
     public static void RunAll(AllRequest request)
     {
         int N = request.BoardSize;
-        ulong expectedTotal = N <= 29 ? ExpectedSolutionCounts.GetAllFast(N) : 0UL; // fallback 0 => root-based progress
+        ulong expectedTotal = N <= 29 ? ExpectedSolutionCounts.GetAllFast(N) : 0UL;
         int splitDepth = request.RootSplitDepth < 1 ? 1 : request.RootSplitDepth;
         if (splitDepth > N) splitDepth = N;
         if (request.RootSplitDepth == -1)
@@ -140,6 +140,10 @@ internal sealed partial class BitmaskParallelEngine
         Action<double> reportProgress,
         Func<bool> capReached)
     {
+        // Disable visualization events for parallel path if visualize mode expected.
+        // The caller now routes visualization to sequential engine; ensure no queen placement mutation side-effects here.
+        enableEvents = false;
+
         int N = boardSize;
         ulong expectedTotal = N <= 29 ? ExpectedSolutionCounts.GetAllFast(N) : 0UL;
         if (splitDepth < 1) splitDepth = 1;

@@ -166,15 +166,53 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
                 BoardSizeText = previousBoardSizeText;
         }
         AutoAdjustParallel();
+
+        // Ensure materialize modes enforced when visualizing regardless of previous mode's settings
+        if (IsVisualized)
+        {
+            _allStorageMode = ResultStorageMode.Materialize;
+            _uniqueStorageMode = ResultStorageMode.Materialize;
+        }
         OnPropertyChanged(nameof(ResultLabel));
         OnPropertyChanged(nameof(SelectedStorageMode));
         ApplyStorageModesToSolver();
+        OnPropertyChanged(nameof(CanChangeStorageMode));
     }
 
     partial void OnDisplayModeChanged(DisplayMode value)
     {
         ValidateProperty(nameof(BoardSizeText));
         AutoAdjustParallel();
+
+        bool visualize = value == DisplayMode.Visualize;
+        IsVisualized = visualize;
+
+        // Force materialize storage when visualizing so solutions are available
+        if (visualize)
+        {
+            _allStorageMode = ResultStorageMode.Materialize;
+            _uniqueStorageMode = ResultStorageMode.Materialize;
+        }
+        else
+        {
+            _allStorageMode = SimulationSettings.DefaultAllStorageMode;
+            _uniqueStorageMode = SimulationSettings.DefaultUniqueStorageMode;
+        }
+        OnPropertyChanged(nameof(SelectedStorageMode));
+        OnPropertyChanged(nameof(CanChangeStorageMode));
+        ApplyStorageModesToSolver();
+
+        // Enable solver events when visualizing and apply delay
+        if (_solver is NQueen.Kernel.Solvers.BitmaskSolver b)
+        {
+            b.EnableEvents = visualize;
+            if (visualize)
+            {
+                b.DelayInMillisec = DelayInMilliseconds > 0 ? DelayInMilliseconds : SimulationSettings.DefaultDelayInMilliseconds;
+                // Avoid parallel visualization for smoother UI
+                b.UseParallel = false;
+            }
+        }
     }
 
     private void ResetAndValidateSimulationState(string? boardSizeText = null, SolutionMode? solutionMode = null)

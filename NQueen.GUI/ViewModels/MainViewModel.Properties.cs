@@ -60,15 +60,20 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ResultStorageMode SelectedStorageMode
     {
-        get => SolutionMode switch
+        get
         {
-            SolutionMode.All => _allStorageMode,
-            SolutionMode.Unique => _uniqueStorageMode,
-            SolutionMode.Single => _allStorageMode,
-            _ => _allStorageMode
-        };
+            if (IsVisualized) return ResultStorageMode.Materialize; // enforce materialize during visualization for all modes
+            return SolutionMode switch
+            {
+                SolutionMode.All => _allStorageMode,
+                SolutionMode.Unique => _uniqueStorageMode,
+                SolutionMode.Single => _allStorageMode,
+                _ => _allStorageMode
+            };
+        }
         set
         {
+            if (IsVisualized) return; // read-only when visualizing
             var changed = false;
             switch (SolutionMode)
             {
@@ -104,12 +109,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private int _delayInMilliseconds;
-
-    partial void OnDelayInMillisecondsChanged(int value)
-    {
-        if (_solver != null)
-            _solver.DelayInMillisec = value;
-    }
 
     [ObservableProperty]
     private SimulationResults _simulationResults = new([], 0.0);
@@ -155,8 +154,11 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isInInputMode;
 
-    partial void OnIsInInputModeChanged(bool value) =>
+    partial void OnIsInInputModeChanged(bool value)
+    {
         RefreshCommandStates();
+        OnPropertyChanged(nameof(CanChangeStorageMode));
+    }
 
     [ObservableProperty]
     private bool _isSingleRunning;
@@ -255,4 +257,8 @@ public sealed partial class MainViewModel : ObservableObject
             OnPropertyChanged();
         }
     }
+
+    // Remove duplicate implementation to fix CS0757; handled in another partial.
+
+    public bool CanChangeStorageMode => !IsVisualized && IsInInputMode;
 }

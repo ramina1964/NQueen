@@ -1,6 +1,4 @@
 using System.Buffers;
-using System.Collections.Concurrent;
-using System.Threading;
 
 namespace NQueen.Kernel.Solvers.Engines;
 

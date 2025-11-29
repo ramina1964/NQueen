@@ -2,7 +2,8 @@ namespace NQueen.Kernel.Solvers;
 
 public partial class BitmaskSolver : ISolver, IDisposable
 {
-    private readonly object _sync = new(); // synchronization root
+    // Removed regression flag; always use real packed rows.
+    private readonly object _sync = new();
 
     public BitmaskSolver(ISolutionFormatter solutionFormatter,
         int maxDisplayedCount = SimulationSettings.MaxDisplayedCount)
@@ -306,7 +307,17 @@ public partial class BitmaskSolver : ISolver, IDisposable
                     if (halfBoard && isOdd && r0 == centerRow) countCenter++; else countNonCenter++;
                     if (!countOnly && capSmall > 0 && materializedSmall < capSmall)
                     {
-                        _solutions.Add((0, rows.Length));
+                        if (rows.Length <= 25)
+                        {
+                            UInt128 packed = SymmetryHelper.PackRows(rows);
+                            _solutions.Add((packed, rows.Length));
+                        }
+                        else
+                        {
+                            var copy = new int[rows.Length];
+                            Array.Copy(rows, copy, rows.Length);
+                            _largeBoardRawSolutions.Add(copy);
+                        }
                         materializedSmall++;
                         if (materializedSmall >= capSmall && _capEnabled)
                             _eventsSuppressedAfterCap = true;
@@ -407,7 +418,17 @@ public partial class BitmaskSolver : ISolver, IDisposable
                                         {
                                             lock (mergeLock)
                                             {
-                                                _solutions.Add((0, rows.Length));
+                                                if (rows.Length <= 25)
+                                                {
+                                                    UInt128 packed = SymmetryHelper.PackRows(rows);
+                                                    _solutions.Add((packed, rows.Length));
+                                                }
+                                                else
+                                                {
+                                                    var copy = new int[rows.Length];
+                                                    Array.Copy(rows, copy, rows.Length);
+                                                    _largeBoardRawSolutions.Add(copy);
+                                                }
                                                 if (EnableEvents && !_eventsSuppressedAfterCap)
                                                     SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
                                                 if (current == cap) _eventsSuppressedAfterCap = true;
@@ -471,7 +492,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
             if (materialized >= cap) return;
             if (rows.Length <= 25)
             {
-                var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
+                UInt128 packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
                 _solutions.Add((packed, rows.Length));
             }
             else
@@ -731,7 +752,6 @@ public partial class BitmaskSolver : ISolver, IDisposable
     // --- All-mode adaptive enumeration (modified to disable incremental canonicalization locally) ---
     private void MitmEnumerateAll(bool countOnly)
     {
-        // Disable incremental canonicalization for All mode MITM enumeration
         SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
         int N = BoardSize;
         int splitDepth = Math.Min(3, N / 2);
@@ -758,8 +778,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
         }
         var seed = new int[N]; Array.Fill(seed, -1);
         Gen(0, 0UL, 0UL, 0UL, seed);
-        ulong total = 0; int materialized = 0;
-        object sync = new();
+        ulong total = 0; int materialized = 0; object sync = new();
         Parallel.ForEach(partials, part =>
         {
             var (col, rows, cols, d1, d2) = part;
@@ -774,7 +793,20 @@ public partial class BitmaskSolver : ISolver, IDisposable
                         int current = Interlocked.Increment(ref materialized);
                         if (current <= cap)
                         {
-                            lock (sync) { _solutions.Add((0, N)); }
+                            lock (sync)
+                            {
+                                if (rows.Length <= 25)
+                                {
+                                    UInt128 packed = SymmetryHelper.PackRows(rows);
+                                    _solutions.Add((packed, N));
+                                }
+                                else
+                                {
+                                    var copy = new int[rows.Length];
+                                    Array.Copy(rows, copy, rows.Length);
+                                    _largeBoardRawSolutions.Add(copy);
+                                }
+                            }
                         }
                     }
                     return;
@@ -851,7 +883,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
     private readonly int _maxDisplayedCount;
     private volatile bool _eventsSuppressedAfterCap;
     private bool _disposed;
-    private const int _lookupThreshold = 20; // restored to original threshold
+    private const int _lookupThreshold = 20;
     private const int _largeBoardConstructiveThreshold = 20;
     private int[]? _scratchBuffer;
 }

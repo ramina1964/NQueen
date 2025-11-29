@@ -28,23 +28,42 @@ public sealed partial class MainViewModel
 
     private void VisualizationTimer_Tick(object? sender, EventArgs e)
     {
-        if (DisplayMode != DisplayMode.Visualize ||
-            !IsSimulating ||
-            _pendingPrefixRows == null ||
-            _pendingDepth < 0 ||
-            ChessboardVm == null)
+        if (DisplayMode != DisplayMode.Visualize || !IsSimulating || ChessboardVm == null)
+        {
+            StopVisualizationTimer();
+            return;
+        }
+        if (_pendingPrefixRows == null || _pendingDepth < 0)
         {
             StopVisualizationTimer();
             return;
         }
 
-        if (_displayedPrefixRows != null &&
-            _displayedDepth == _pendingDepth &&
-            RowsEqual(_displayedPrefixRows, _pendingPrefixRows, _pendingDepth))
-            return;
+        // Backtracking: pending depth less than currently displayed -> clear then rebuild
+        if (_displayedDepth > _pendingDepth)
+        {
+            ChessboardVm.ClearImages();
+            _displayedDepth = 0;
+        }
 
-        RenderPrefix(_pendingPrefixRows, _pendingDepth);
+        // Incremental reveal: show one additional queen per tick until full pending depth reached
+        if (_displayedDepth < _pendingDepth)
+        {
+            int nextDepth = _displayedDepth + 1;
+            RenderPrefix(_pendingPrefixRows, nextDepth);
+            _displayedPrefixRows = _pendingPrefixRows;
+            _displayedDepth = nextDepth;
+        }
+        else
+        {
+            // Already fully displayed; keep latest snapshot if rows differ (rare)
+            if (_displayedPrefixRows == null || !RowsEqual(_displayedPrefixRows, _pendingPrefixRows, _pendingDepth))
+            {
+                RenderPrefix(_pendingPrefixRows, _pendingDepth);
+            }
+        }
 
+        // Adjust interval to current slider value
         if (_visualizeTimer != null)
             _visualizeTimer.Interval = TimeSpan.FromMilliseconds(Math.Max(1, DelayInMilliseconds));
     }
@@ -141,6 +160,27 @@ public sealed partial class MainViewModel
                     var first = _batchedSolutions[0];
                     if (!ReferenceEquals(SelectedSolution, first))
                         SelectedSolution = first;
+                    RenderSelectedSolution();
+                }
+            });
+        }
+        else if (DisplayMode == DisplayMode.Visualize && anyMaterialized)
+        {
+            // For visualize mode ensure final board shows the full first solution (not last incremental prefix)
+            _uiDispatcher.Invoke(() =>
+            {
+                if (ObservableSolutions.Count == 0)
+                {
+                    ObservableSolutions.Clear();
+                    foreach (var sol in _batchedSolutions)
+                    {
+                        ObservableSolutions.Add(sol);
+                        if (ObservableSolutions.Count >= SimulationSettings.MaxDisplayedCount) break;
+                    }
+                }
+                if (ObservableSolutions.Count > 0)
+                {
+                    SelectedSolution = ObservableSolutions[0];
                     RenderSelectedSolution();
                 }
             });
@@ -351,5 +391,40 @@ public sealed partial class MainViewModel
         {
             ChessboardVm.CreateSquares(boardSize);
         }
+    }
+
+    partial void OnDelayInMillisecondsChanged(int value)
+    {
+        // Update solver delay
+        if (_solver is NQueen.Kernel.Solvers.BitmaskSolver b)
+            b.DelayInMillisec = value;
+
+        // If visualization timer is active, update interval immediately
+        if (_visualizeTimer != null)
+        {
+            var millis = Math.Max(1, value);
+            _visualizeTimer.Interval = TimeSpan.FromMilliseconds(millis);
+            if (_visualizeTimer.IsEnabled)
+            {
+                // Restart to apply new interval promptly
+                _visualizeTimer.Stop();
+                _visualizeTimer.Start();
+            }
+        }
+    }
+
+    partial void OnIsVisualizedChanged(bool value)
+    {
+        if (value)
+        {
+            if (DelayInMilliseconds < 25)
+                DelayInMilliseconds = Math.Max(25, SimulationSettings.DefaultDelayInMilliseconds);
+            // Enforce storage modes visually
+            _allStorageMode = ResultStorageMode.Materialize;
+            _uniqueStorageMode = ResultStorageMode.Materialize;
+            OnPropertyChanged(nameof(SelectedStorageMode));
+            ApplyStorageModesToSolver();
+        }
+        OnPropertyChanged(nameof(CanChangeStorageMode));
     }
 }

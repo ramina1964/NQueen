@@ -44,6 +44,7 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <Grid.ColumnDefinitions>
@@ -133,6 +134,16 @@
                     Minimum="10"
                     Style="{StaticResource SliderStyle}"
                     Value="{Binding DelayInMilliseconds, Mode=TwoWay}" />
+
+                <!--  Delay value text  -->
+                <TextBlock
+                    Grid.Row="4"
+                    Grid.Column="1"
+                    Margin="0,0,5,2"
+                    HorizontalAlignment="Right"
+                    Foreground="DarkSlateGray"
+                    FontSize="11"
+                    Text="{Binding DelayInMilliseconds}" />
             </Grid>
         </GroupBox>
     </StackPanel>

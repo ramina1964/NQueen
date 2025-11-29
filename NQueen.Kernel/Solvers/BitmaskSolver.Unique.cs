@@ -58,4 +58,57 @@ public partial class BitmaskSolver
         _solutions.AddRange(packedSample);
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
+
+    private void EnumerateUniqueVisualizeAdaptive()
+    {
+        // Visualization path: enumerate unique solutions while emitting QueenPlaced events with delay.
+        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, EnableIncrementalCanonicalization);
+        int N = BoardSize;
+        int cap = _maxDisplayedCount;
+        int materialized = 0;
+        var seen = new HashSet<UInt128>();
+        BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
+            N,
+            RestrictFirstCol: false,
+            EnhancedSymmetry: false,
+            AggressiveSymmetry: false,
+            CountOnly: false,
+            DisplayMode,
+            DelayInMillisec,
+            _currentSimToken,
+            () => IsSolverCanceled,
+            p => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
+            m => { if (EnableEvents) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, N)); },
+            rows =>
+            {
+                if (!ValidateRows(rows)) return false;
+                // Canonical packing for uniqueness detection
+                UInt128 packed = 0;
+                if (rows.Length <= 25) packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
+                if (!seen.Add(packed)) return false; // skip duplicate canonical forms
+                if (materialized < cap)
+                {
+                    if (rows.Length <= 25)
+                        _solutions.Add((packed, rows.Length));
+                    else
+                    {
+                        var copy = new int[rows.Length];
+                        Array.Copy(rows, copy, rows.Length);
+                        _largeBoardRawSolutions.Add(copy);
+                    }
+                    materialized++;
+                    if (EnableEvents && !_eventsSuppressedAfterCap)
+                        SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
+                    if (materialized >= cap)
+                    {
+                        _eventsSuppressedAfterCap = true; // stops SolutionFound, but QueenPlaced continues
+                        return true; // stop enumeration early (cap reached)
+                    }
+                }
+                return false;
+            }
+        ));
+        _solutionCount = (ulong)seen.Count; // number of unique canonical solutions enumerated (sampled up to cap)
+        ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+    }
 }
