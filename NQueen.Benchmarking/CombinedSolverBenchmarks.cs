@@ -1,20 +1,15 @@
 namespace NQueen.Benchmarking;
 
-// Consolidated benchmark suite replacing multiple prior specialized benchmark classes.
-// Focus areas:
-//  - Unique mode: materialize (sample) vs count-only across representative board sizes
-//  - All mode: sequential vs parallel, materialize vs count-only, optional prefix/reflection pruning & half-board restriction
-// Params chosen to cover scaling inflection points without excessive duplication.
-
+// Consolidated benchmark suite for Unique mode variants.
 public class UniqueModeVariantsBenchmark
 {
-    // Representative sizes: 12 (small canonical), 14 (mid), 16 (larger), 18 (upper mid)
+    // Representative sizes across scaling points
     [Params(12, 14, 16, 18)]
     public int BoardSize { get; set; }
 
     private readonly ISolutionFormatter _formatter = new DefaultSolutionFormatter();
 
-    [Benchmark(Baseline = true, Description = "Unique Count-Only")]
+    [Benchmark(Baseline = true, Description = "Unique Count-Only (parallel)")]
     public ulong Unique_CountOnly()
     {
         using var solver = new BitmaskSolver(BoardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter)
@@ -26,7 +21,7 @@ public class UniqueModeVariantsBenchmark
         return solver.Solve().SolutionsCount;
     }
 
-    [Benchmark(Description = "Unique Materialize (capped)")]
+    [Benchmark(Description = "Unique Materialize (sample, capped)")]
     public (int materialized, ulong total) Unique_Materialize()
     {
         using var solver = new BitmaskSolver(BoardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter)
@@ -40,21 +35,19 @@ public class UniqueModeVariantsBenchmark
     }
 }
 
+// Consolidated benchmark suite for All mode variants.
 public class AllModeVariantsBenchmark
 {
-    // Sizes: 12 (smaller), 14 (mid), 16 (above symmetry throttle threshold)
     [Params(12, 14, 16)]
     public int BoardSize { get; set; }
 
-    // Parallel root split search depth (0 => auto / minimal)
-    [Params(0, 2, 4)]
+    // SplitDepth -1 can be reserved for heuristic later; keep explicit small depths.
+    [Params(1, 2, 3)]
     public int SplitDepth { get; set; }
 
-    // Toggle prefix+reflection pruning pair (covers pruning effectiveness)
     [Params(false, true)]
     public bool EnablePrefixReflection { get; set; }
 
-    // Half-board restriction only meaningful for larger boards (logic inside method clamps)
     [Params(false, true)]
     public bool EnableHalfBoardRestriction { get; set; }
 
@@ -75,7 +68,7 @@ public class AllModeVariantsBenchmark
         return solver.Solve().SolutionsCount;
     }
 
-    [Benchmark(Description = "All Sequential Materialize (capped)")]
+    [Benchmark(Description = "All Sequential Materialize (capped)")] 
     public (int materialized, ulong total) All_Sequential_Materialize()
     {
         using var solver = new BitmaskSolver(BoardSize, SolutionMode.All, DisplayMode.Hide, _formatter)
