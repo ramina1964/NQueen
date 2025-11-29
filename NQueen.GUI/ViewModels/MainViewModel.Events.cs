@@ -295,14 +295,20 @@ public sealed partial class MainViewModel
         if (DisplayMode == DisplayMode.Hide || ChessboardVm == null)
             return;
 
-        if (!ParsingUtils.TryParseInt(BoardSizeText, out var boardSize))
-            return;
+        // Use solver-provided board size to avoid UI text parsing pitfalls
+        var boardSize = e.BoardSize;
+        if (boardSize <= 0)
+        {
+            // Fallback to UI text if event did not carry size
+            if (!ParsingUtils.TryParseInt(BoardSizeText, out boardSize))
+                return;
+        }
 
         var span = e.Solution.Span;
         var max = Math.Min(boardSize, span.Length);
         int validDepth = ComputeValidDepth(span, max);
 
-        // Build snapshot OUTSIDE dispatcher to avoid capturing ref struct span in lambda
+        // Immediate path if delay <= 0
         if (DelayInMilliseconds <= 0)
         {
             if (validDepth == 0)
@@ -316,6 +322,7 @@ public sealed partial class MainViewModel
                 return;
             }
 
+            // Build snapshot OUTSIDE dispatcher to avoid capturing ref struct span in lambda
             int[] snapshotRows = new int[validDepth];
             for (int i = 0; i < validDepth; i++)
                 snapshotRows[i] = span[i];
@@ -333,19 +340,41 @@ public sealed partial class MainViewModel
             return;
         }
 
-        // Throttled path
-        int[] throttledSnapshot = new int[validDepth];
-        for (int i = 0; i < validDepth; i++)
-            throttledSnapshot[i] = span[i];
+        // Throttled (timer-driven) path
+        // Build snapshot OUTSIDE dispatcher to avoid capturing ref struct span in lambda
+        int[] throttledSnapshot = validDepth == 0 ? Array.Empty<int>() : new int[validDepth];
+        if (validDepth > 0)
+        {
+            for (int i = 0; i < validDepth; i++)
+                throttledSnapshot[i] = span[i];
+        }
 
         _uiDispatcher.Invoke(() =>
         {
             EnsureVisualizationTimer();
+
+            if (validDepth == 0)
+            {
+                // Clear board and pause timer until a non-empty prefix arrives
+                ChessboardVm.ClearImages();
+                _pendingPrefixRows = null;
+                _pendingDepth = 0;
+                _displayedPrefixRows = null;
+                _displayedDepth = 0;
+                if (_visualizeTimer != null && _visualizeTimer.IsEnabled)
+                    _visualizeTimer.Stop();
+                return;
+            }
+
             _pendingPrefixRows = throttledSnapshot;
             _pendingDepth = validDepth;
 
-            if (_visualizeTimer != null && !_visualizeTimer.IsEnabled)
-                _visualizeTimer.Start();
+            if (_visualizeTimer != null)
+            {
+                _visualizeTimer.Interval = TimeSpan.FromMilliseconds(Math.Max(1, DelayInMilliseconds));
+                if (!_visualizeTimer.IsEnabled)
+                    _visualizeTimer.Start();
+            }
         });
     }
 

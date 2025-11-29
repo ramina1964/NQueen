@@ -149,7 +149,11 @@ public partial class BitmaskSolver : ISolver, IDisposable
         // Materialization path: adaptive enumeration per mode
         if (isUnique)
         {
-            EnumerateUniqueMaterializeAdaptive();
+            // When visualizing, use the visualize-aware unique enumeration which raises QueenPlaced
+            if (DisplayMode == DisplayMode.Visualize)
+                EnumerateUniqueVisualizeAdaptive();
+            else
+                EnumerateUniqueMaterializeAdaptive();
         }
         else
         {
