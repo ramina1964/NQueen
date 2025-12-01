@@ -8,7 +8,7 @@ public partial class BitmaskSolver
         int boardSize = BoardSize;
         int cap = _capEnabled ? SimulationSettings.MaxDisplayedCount : int.MaxValue;
 
-        Engines.SearchOptimizations.Configure(
+        SearchOptimizations.Configure(
             prefixMinimality: EnablePrefixMinimalityPruning,
             reflectionPruning: EnablePartialReflectionPruning,
             incrementalCanonicalization: false);
@@ -108,7 +108,10 @@ public partial class BitmaskSolver
             ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 
-    private void RunAllUnified(bool isParallel, int splitDepth) => ExecuteAllModeUnified(isParallel, splitDepth);
+    private void RunAllUnified(bool isParallel, int splitDepth) => ExecuteAllModeUnified(
+        isParallel, splitDepth);
+    
     private void RunAllParallel(int splitDepth) => ExecuteAllModeUnified(true, splitDepth);
+    
     private void RunAllSequential() => ExecuteAllModeUnified(false, ParallelRootSplitDepth);
 }
