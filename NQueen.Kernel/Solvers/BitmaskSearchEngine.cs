@@ -1,5 +1,3 @@
-using System;
-using System.Runtime.CompilerServices;
 namespace NQueen.Kernel.Solvers;
 
 internal sealed class BitmaskSearchEngine

@@ -2,23 +2,39 @@
 
 public sealed partial class MainViewModel
 {
-    // Batching / state fields (unchanged for solution list logic)
-    private readonly List<Solution> _batchedSolutions = [];
-    private int _actualTotalSolutions;
-    private bool _hasProgressTick;
-
-    // Visualization pacing (REFACTORED)
+    // --- Missing private fields (added) ---
     private DispatcherTimer? _visualizeTimer;
     private int[]? _pendingPrefixRows;
     private int _pendingDepth;
     private int[]? _displayedPrefixRows;
     private int _displayedDepth;
+    private readonly List<Solution> _batchedSolutions = [];
+    private int _actualTotalSolutions;
+    private bool _hasProgressTick;
 
+    // --- Event subscriptions ---
+    private void SubscribeToSimulationEvents()
+    {
+        UnsubscribeFromSimulationEvents();
+        if (_solver == null) return;
+        _hasProgressTick = false;
+        _solver.QueenPlaced += OnQueenPlacedEvent;
+        _solver.SolutionFound += OnSolutionFoundEvent;
+        _solver.ProgressValueChanged += OnProgressValueChangedEvent;
+    }
+
+    private void UnsubscribeFromSimulationEvents()
+    {
+        if (_solver == null) return;
+        _solver.QueenPlaced -= OnQueenPlacedEvent;
+        _solver.SolutionFound -= OnSolutionFoundEvent;
+        _solver.ProgressValueChanged -= OnProgressValueChangedEvent;
+    }
+
+    // --- Visualization timer helpers ---
     private void EnsureVisualizationTimer()
     {
-        if (_visualizeTimer != null)
-            return;
-
+        if (_visualizeTimer != null) return;
         _visualizeTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(Math.Max(1, DelayInMilliseconds))
@@ -33,20 +49,18 @@ public sealed partial class MainViewModel
             StopVisualizationTimer();
             return;
         }
-        if (_pendingPrefixRows == null || _pendingDepth < 0)
+        if (_pendingPrefixRows == null || _pendingDepth <= 0)
         {
             StopVisualizationTimer();
             return;
         }
 
-        // Backtracking: pending depth less than currently displayed -> clear then rebuild
         if (_displayedDepth > _pendingDepth)
         {
             ChessboardVm.ClearImages();
             _displayedDepth = 0;
         }
 
-        // Incremental reveal: show one additional queen per tick until full pending depth reached
         if (_displayedDepth < _pendingDepth)
         {
             int nextDepth = _displayedDepth + 1;
@@ -54,16 +68,12 @@ public sealed partial class MainViewModel
             _displayedPrefixRows = _pendingPrefixRows;
             _displayedDepth = nextDepth;
         }
-        else
+        else if (_displayedPrefixRows == null ||
+                 !RowsEqual(_displayedPrefixRows, _pendingPrefixRows, _pendingDepth))
         {
-            // Already fully displayed; keep latest snapshot if rows differ (rare)
-            if (_displayedPrefixRows == null || !RowsEqual(_displayedPrefixRows, _pendingPrefixRows, _pendingDepth))
-            {
-                RenderPrefix(_pendingPrefixRows, _pendingDepth);
-            }
+            RenderPrefix(_pendingPrefixRows, _pendingDepth);
         }
 
-        // Adjust interval to current slider value
         if (_visualizeTimer != null)
             _visualizeTimer.Interval = TimeSpan.FromMilliseconds(Math.Max(1, DelayInMilliseconds));
     }
@@ -76,11 +86,9 @@ public sealed partial class MainViewModel
         return true;
     }
 
-    private void RenderPrefix(int[] prefixRows, int depth)
+    private void RenderPrefix(int[] rows, int depth)
     {
-        if (ChessboardVm == null)
-            return;
-
+        if (ChessboardVm == null) return;
         if (depth <= 0)
         {
             ChessboardVm.ClearImages();
@@ -89,16 +97,16 @@ public sealed partial class MainViewModel
             return;
         }
 
-        List<Position> positions = new(depth);
+        var positions = new List<Position>(depth);
         for (int c = 0; c < depth; c++)
         {
-            var row = prefixRows[c];
-            if (row < 0) break;
-            positions.Add(new Position(c, row));
+            int r = rows[c];
+            if (r < 0) break;
+            positions.Add(new Position(c, r));
         }
 
         ChessboardVm.PlaceQueens(positions);
-        _displayedPrefixRows = prefixRows;
+        _displayedPrefixRows = rows;
         _displayedDepth = depth;
     }
 
@@ -116,124 +124,87 @@ public sealed partial class MainViewModel
         _displayedDepth = 0;
     }
 
-    private void SubscribeToSimulationEvents()
+    // --- QueenPlaced event (uses helpers above) ---
+    private void OnQueenPlacedEvent(object? sender, QueenPlacedEventArgs e)
     {
-        Debug.WriteLine($"[MainViewModel] Subscribing to solver: {_solver?.GetHashCode()}");
-        UnsubscribeFromSimulationEvents();
+        MaybeForceEarlyProgress();
 
-        if (_solver == null)
+        if (ChessboardVm == null || DisplayMode == DisplayMode.Hide) return;
+        EnsureBoardSized();
+
+        var span = e.Solution.Span;
+        int boardSize = e.BoardSize > 0
+            ? e.BoardSize
+            : (ParsingUtils.TryParseInt(BoardSizeText, out var parsed) ? parsed : span.Length);
+
+        int max = Math.Min(boardSize, span.Length);
+        int validDepth = ComputeValidDepth(span, max);
+
+        if (validDepth <= 0)
+        {
+            _uiDispatcher.Invoke(() =>
+            {
+                ChessboardVm.ClearImages();
+                _displayedDepth = 0;
+                _displayedPrefixRows = null;
+            });
             return;
+        }
 
-        _hasProgressTick = false;
-        _solver.QueenPlaced += OnQueenPlacedEvent;
-        _solver.SolutionFound += OnSolutionFoundEvent;
-        _solver.ProgressValueChanged += OnProgressValueChangedEvent;
-    }
+        bool useTimer = DelayInMilliseconds > 0;
 
-    private void UnsubscribeFromSimulationEvents()
-    {
-        if (_solver == null)
+        if (!useTimer)
+        {
+            int[] snapshot = new int[validDepth];
+            for (int i = 0; i < validDepth; i++)
+                snapshot[i] = span[i];
+
+            var positions = new List<Position>(validDepth);
+            for (int c = 0; c < validDepth; c++)
+                positions.Add(new Position(c, snapshot[c]));
+
+            _uiDispatcher.Invoke(() =>
+            {
+                ChessboardVm.PlaceQueens(positions);
+                _displayedDepth = validDepth;
+                _displayedPrefixRows = snapshot;
+            });
             return;
+        }
 
-        _solver.QueenPlaced -= OnQueenPlacedEvent;
-        _solver.SolutionFound -= OnSolutionFoundEvent;
-        _solver.ProgressValueChanged -= OnProgressValueChangedEvent;
+        int[] throttled = new int[validDepth];
+        for (int i = 0; i < validDepth; i++)
+            throttled[i] = span[i];
+
+        _uiDispatcher.Invoke(() =>
+        {
+            EnsureVisualizationTimer();
+            _pendingPrefixRows = throttled;
+            _pendingDepth = validDepth;
+            if (_visualizeTimer != null && !_visualizeTimer.IsEnabled)
+                _visualizeTimer.Start();
+        });
     }
 
-    private void OnSimulationCompleted()
-    {
-        SimulationCompleted?.Invoke(this, EventArgs.Empty);
-
-        bool hideMode = DisplayMode == DisplayMode.Hide;
-        bool anyMaterialized = _batchedSolutions.Count > 0;
-
-        if (hideMode && anyMaterialized)
-        {
-            _uiDispatcher.Invoke(() =>
-            {
-                ObservableSolutions.Clear();
-                foreach (var sol in _batchedSolutions)
-                    ObservableSolutions.Add(sol);
-
-                if (_batchedSolutions.Count > 0)
-                {
-                    var first = _batchedSolutions[0];
-                    if (!ReferenceEquals(SelectedSolution, first))
-                        SelectedSolution = first;
-                    RenderSelectedSolution();
-                }
-            });
-        }
-        else if (DisplayMode == DisplayMode.Visualize && anyMaterialized)
-        {
-            // For visualize mode ensure final board shows the full first solution (not last incremental prefix)
-            _uiDispatcher.Invoke(() =>
-            {
-                if (ObservableSolutions.Count == 0)
-                {
-                    ObservableSolutions.Clear();
-                    foreach (var sol in _batchedSolutions)
-                    {
-                        ObservableSolutions.Add(sol);
-                        if (ObservableSolutions.Count >= SimulationSettings.MaxDisplayedCount) break;
-                    }
-                }
-                if (ObservableSolutions.Count > 0)
-                {
-                    SelectedSolution = ObservableSolutions[0];
-                    RenderSelectedSolution();
-                }
-            });
-        }
-
-        // Unconditional total solutions update (covers count-only modes with 0 materialized solutions)
-        if (SimulationResults != null)
-        {
-            _uiDispatcher.Invoke(() =>
-            {
-                NoOfSolutions = $"{SimulationResults.SolutionsCount,0:N0}";
-            });
-        }
-
-        _batchedSolutions.Clear();
-        _actualTotalSolutions = 0;
-        StopVisualizationTimer();
-    }
-
+    // --- Additional events (stubs retained) ---
     private void OnSolutionFoundEvent(object? sender, SolutionFoundEventArgs e)
     {
-        if (_solver?.IsSolverCanceled == true || !IsSimulating)
-            return;
+        if (_solver?.IsSolverCanceled == true || !IsSimulating) return;
+        if (e.Solution.Length == 0) return;
 
-        // Increment internal total regardless of materialization (used only at completion for summary)
-        _actualTotalSolutions++;
-        // Removed live UI updates of NoOfSolutions to prevent interim cap value display.
-
-        if (e.Solution.Length == 0)
-        {
-            return;
-        }
-
-        var solutionId = _batchedSolutions.Count + 1;
+        int id = _batchedSolutions.Count + 1;
         var arr = e.Solution.ToArray();
-        if (arr.Length == 0)
-        {
-            return; // defensive, should not happen
-        }
-        var newSolution = new Solution(arr, _solutionFormatter, solutionId);
-        _batchedSolutions.Add(newSolution);
+        var sol = new Solution(arr, _solutionFormatter, id);
+        _batchedSolutions.Add(sol);
 
         if (DisplayMode == DisplayMode.Visualize)
         {
             _uiDispatcher.Invoke(() =>
             {
-                if (!IsSimulating || DisplayMode != DisplayMode.Visualize) return;
-
-                var cap = SimulationSettings.MaxDisplayedCount;
-                bool underCap = cap <= 0 || ObservableSolutions.Count < cap;
-                if (underCap)
-                    ObservableSolutions.Add(newSolution);
-                SelectedSolution = newSolution;
+                if (!IsSimulating) return;
+                if (ObservableSolutions.Count < SimulationSettings.MaxDisplayedCount || SimulationSettings.MaxDisplayedCount <= 0)
+                    ObservableSolutions.Add(sol);
+                SelectedSolution = sol;
             });
         }
     }
@@ -252,11 +223,13 @@ public sealed partial class MainViewModel
                 ProgressLabel = string.Empty;
                 return;
             }
-
             int raw = (int)Math.Round(e.Value);
             SetProgressPercent(raw);
         });
     }
+
+    // --- Missing helper implementations ---
+    private void MaybeForceEarlyProgress() => ForceEarlyProgressIfNeeded();
 
     private static int ComputeValidDepth(Span<int> span, int max)
     {
@@ -264,196 +237,29 @@ public sealed partial class MainViewModel
         for (int col = 0; col < max; col++)
         {
             int row = span[col];
-            if (row < 0)
-                break;
+            if (row < 0) break;
 
-            bool conflict = false;
             for (int prev = 0; prev < col; prev++)
             {
                 int prow = span[prev];
                 if (prow == row || Math.Abs(prow - row) == col - prev)
-                {
-                    conflict = true;
-                    break;
-                }
+                    return depth; // conflict: stop at current depth
             }
-            if (conflict)
-                break;
 
             depth = col + 1;
         }
         return depth;
     }
 
-    private void MaybeForceEarlyProgress() => ForceEarlyProgressIfNeeded();
-
-    private void OnQueenPlacedEvent(object? sender,
-        QueenPlacedEventArgs e)
-    {
-        MaybeForceEarlyProgress();
-
-        if (DisplayMode == DisplayMode.Hide || ChessboardVm == null)
-            return;
-
-        // Use solver-provided board size to avoid UI text parsing pitfalls
-        var boardSize = e.BoardSize;
-        if (boardSize <= 0)
-        {
-            // Fallback to UI text if event did not carry size
-            if (!ParsingUtils.TryParseInt(BoardSizeText, out boardSize))
-                return;
-        }
-
-        var span = e.Solution.Span;
-        var max = Math.Min(boardSize, span.Length);
-        int validDepth = ComputeValidDepth(span, max);
-
-        // Immediate path if delay <= 0
-        if (DelayInMilliseconds <= 0)
-        {
-            if (validDepth == 0)
-            {
-                _uiDispatcher.Invoke(() =>
-                {
-                    ChessboardVm.ClearImages();
-                    _displayedDepth = 0;
-                    _displayedPrefixRows = null;
-                });
-                return;
-            }
-
-            // Build snapshot OUTSIDE dispatcher to avoid capturing ref struct span in lambda
-            int[] snapshotRows = new int[validDepth];
-            for (int i = 0; i < validDepth; i++)
-                snapshotRows[i] = span[i];
-
-            List<Position> positions = new(validDepth);
-            for (int c = 0; c < validDepth; c++)
-                positions.Add(new Position(c, snapshotRows[c]));
-
-            _uiDispatcher.Invoke(() =>
-            {
-                ChessboardVm.PlaceQueens(positions);
-                _displayedDepth = validDepth;
-                _displayedPrefixRows = snapshotRows;
-            });
-            return;
-        }
-
-        // Throttled (timer-driven) path
-        // Build snapshot OUTSIDE dispatcher to avoid capturing ref struct span in lambda
-        int[] throttledSnapshot = validDepth == 0 ? Array.Empty<int>() : new int[validDepth];
-        if (validDepth > 0)
-        {
-            for (int i = 0; i < validDepth; i++)
-                throttledSnapshot[i] = span[i];
-        }
-
-        _uiDispatcher.Invoke(() =>
-        {
-            EnsureVisualizationTimer();
-
-            if (validDepth == 0)
-            {
-                // Clear board and pause timer until a non-empty prefix arrives
-                ChessboardVm.ClearImages();
-                _pendingPrefixRows = null;
-                _pendingDepth = 0;
-                _displayedPrefixRows = null;
-                _displayedDepth = 0;
-                if (_visualizeTimer != null && _visualizeTimer.IsEnabled)
-                    _visualizeTimer.Stop();
-                return;
-            }
-
-            _pendingPrefixRows = throttledSnapshot;
-            _pendingDepth = validDepth;
-
-            if (_visualizeTimer != null)
-            {
-                _visualizeTimer.Interval = TimeSpan.FromMilliseconds(Math.Max(1, DelayInMilliseconds));
-                if (!_visualizeTimer.IsEnabled)
-                    _visualizeTimer.Start();
-            }
-        });
-    }
-
-    partial void OnSelectedSolutionChanged(Solution value)
-    {
-        if (ChessboardVm == null)
-            return;
-        if (value == null)
-        {
-            ChessboardVm.ClearImages();
-            return;
-        }
-
-        EnsureBoardSized();
-        if (IsSimulating && DisplayMode == DisplayMode.Hide)
-            return;
-
-        ChessboardVm.PlaceQueens(value.Positions);
-    }
-
-    private void RenderSelectedSolution()
-    {
-        if (ChessboardVm == null)
-            return;
-        if (SelectedSolution == null)
-        {
-            ChessboardVm.ClearImages();
-            return;
-        }
-
-        EnsureBoardSized();
-        ChessboardVm.PlaceQueens(SelectedSolution.Positions);
-    }
-
     private void EnsureBoardSized()
     {
-        if (ChessboardVm == null)
-            return;
+        if (ChessboardVm == null) return;
+        if (!ParsingUtils.TryParseInt(BoardSizeText, out var boardSize)) return;
 
-        if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) &&
-            (ChessboardVm.Squares.Count == 0 ||
-             ChessboardVm.IsBoardStateUpdatedAndSquaresPopulated(boardSize) == false))
+        if (ChessboardVm.Squares.Count == 0 ||
+            !ChessboardVm.IsBoardStateUpdatedAndSquaresPopulated(boardSize))
         {
             ChessboardVm.CreateSquares(boardSize);
         }
-    }
-
-    partial void OnDelayInMillisecondsChanged(int value)
-    {
-        // Update solver delay
-        if (_solver is NQueen.Kernel.Solvers.BitmaskSolver b)
-            b.DelayInMillisec = value;
-
-        // If visualization timer is active, update interval immediately
-        if (_visualizeTimer != null)
-        {
-            var millis = Math.Max(1, value);
-            _visualizeTimer.Interval = TimeSpan.FromMilliseconds(millis);
-            if (_visualizeTimer.IsEnabled)
-            {
-                // Restart to apply new interval promptly
-                _visualizeTimer.Stop();
-                _visualizeTimer.Start();
-            }
-        }
-    }
-
-    partial void OnIsVisualizedChanged(bool value)
-    {
-        if (value)
-        {
-            if (DelayInMilliseconds < 25)
-                DelayInMilliseconds = Math.Max(25, SimulationSettings.DefaultDelayInMilliseconds);
-            // Enforce storage modes visually
-            _allStorageMode = ResultStorageMode.Materialize;
-            _uniqueStorageMode = ResultStorageMode.Materialize;
-            OnPropertyChanged(nameof(SelectedStorageMode));
-            ApplyStorageModesToSolver();
-        }
-        OnPropertyChanged(nameof(CanChangeStorageMode));
     }
 }

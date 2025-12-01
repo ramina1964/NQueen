@@ -1,10 +1,5 @@
 namespace NQueen.Kernel.Solvers.Engines;
 
-using System;
-using System.Collections.Concurrent;
-using System.Threading.Tasks;
-using NQueen.Domain.Utils;
-
 public static class SymmetryPrunedUniqueCounter
 {
     public static ulong Count(int boardSize, int cap, Action<int[]>? onMaterialized = null)

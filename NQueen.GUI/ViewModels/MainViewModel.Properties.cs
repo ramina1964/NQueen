@@ -20,6 +20,10 @@ public sealed partial class MainViewModel : ObservableObject
         });
     }
 
+    // Disable DisplayMode and Delay editing while simulating
+    public bool CanEditDisplayMode => IsInInputMode && !IsSimulating;
+    public bool CanEditDelay => IsInInputMode && !IsSimulating;
+
     [ObservableProperty]
     private string _progressLabel = string.Empty;
 
@@ -49,12 +53,10 @@ public sealed partial class MainViewModel : ObservableObject
     private IEnumerable<DisplayMode> _enumDisplayModes =
         Enum.GetValues<DisplayMode>().Cast<DisplayMode>();
 
-    // New: storage mode enum options
     [ObservableProperty]
     private IEnumerable<ResultStorageMode> _enumStorageModes =
         Enum.GetValues<ResultStorageMode>().Cast<ResultStorageMode>();
 
-    // Replace dual selected storage modes with a single unified selection
     private ResultStorageMode _allStorageMode = SimulationSettings.DefaultAllStorageMode;
     private ResultStorageMode _uniqueStorageMode = SimulationSettings.DefaultUniqueStorageMode;
 
@@ -62,7 +64,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         get
         {
-            if (IsVisualized) return ResultStorageMode.Materialize; // enforce materialize during visualization for all modes
+            if (IsVisualized) return ResultStorageMode.Materialize;
             return SolutionMode switch
             {
                 SolutionMode.All => _allStorageMode,
@@ -73,7 +75,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         set
         {
-            if (IsVisualized) return; // read-only when visualizing
+            if (IsVisualized) return;
             var changed = false;
             switch (SolutionMode)
             {
@@ -108,7 +110,7 @@ public sealed partial class MainViewModel : ObservableObject
     private bool _isVisualized;
 
     [ObservableProperty]
-    private int _delayInMilliseconds;
+    private int _delayInMilliseconds; // Implementation of OnDelayInMillisecondsChanged moved to Events partial to avoid duplicate
 
     [ObservableProperty]
     private SimulationResults _simulationResults = new([], 0.0);
@@ -138,7 +140,6 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _memoryConsumption = "0";
 
-    // Backward compatibility alias: some XAML may still bind to MemoryUsage.
     public string MemoryUsage => MemoryConsumption;
     partial void OnMemoryConsumptionChanged(string value) => OnPropertyChanged(nameof(MemoryUsage));
 
@@ -148,8 +149,12 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isSimulating;
 
-    partial void OnIsSimulatingChanged(bool value) =>
+    partial void OnIsSimulatingChanged(bool value)
+    {
         RefreshCommandStates();
+        OnPropertyChanged(nameof(CanEditDisplayMode));
+        OnPropertyChanged(nameof(CanEditDelay));
+    }
 
     [ObservableProperty]
     private bool _isInInputMode;
@@ -158,6 +163,8 @@ public sealed partial class MainViewModel : ObservableObject
     {
         RefreshCommandStates();
         OnPropertyChanged(nameof(CanChangeStorageMode));
+        OnPropertyChanged(nameof(CanEditDisplayMode));
+        OnPropertyChanged(nameof(CanEditDelay));
     }
 
     [ObservableProperty]
@@ -178,13 +185,8 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnIsOutputReadyChanged(bool value) =>
         RefreshCommandStates();
 
-    // Removed legacy IsCountOnlyUniqueMode property from this partial to avoid duplication (now kept in main file as legacy comment)
-
-    // When true (primarily in unit tests), suppress all modal MessageBox dialogs.
     [ObservableProperty]
     private bool _suppressUserDialogs;
-
-    // -------- Advanced / Performance Tunables --------
 
     [ObservableProperty]
     private bool _useParallel = SimulationSettings.DefaultUseParallel;
@@ -198,15 +200,12 @@ public sealed partial class MainViewModel : ObservableObject
     private int _parallelRootSplitDepth = SimulationSettings.DefaultParallelRootSplitDepth;
     partial void OnParallelRootSplitDepthChanged(int value)
     {
-        if (value < 1) ParallelRootSplitDepth = 1; // clamp
-        else if (_solver is NQueen.Kernel.Solvers.BitmaskSolver b)
+        if (value < 1) ParallelRootSplitDepth = 1; else if (_solver is NQueen.Kernel.Solvers.BitmaskSolver b)
             b.ParallelRootSplitDepth = value;
     }
 
-    // Auto-tuning flag (true => user cannot modify parallel settings directly)
     private bool _autoTuneParallel = true;
 
-    // Hooks consolidated into validation partial; remove duplicate implementations here.
     private void AutoAdjustParallel()
     {
         if (!_autoTuneParallel || _solver is not NQueen.Kernel.Solvers.BitmaskSolver bs)
@@ -233,8 +232,6 @@ public sealed partial class MainViewModel : ObservableObject
         if (depth > n) depth = n < 1 ? 1 : n;
         bs.ParallelRootSplitDepth = depth;
         ParallelRootSplitDepth = depth;
-
-        // Auto-enable half-board restriction internally when applicable
         bs.EnableHalfBoardRestriction = ComputeHalfBoardRestriction();
         OnPropertyChanged(nameof(EnableHalfBoardRestriction));
     }
@@ -250,15 +247,12 @@ public sealed partial class MainViewModel : ObservableObject
         get => ComputeHalfBoardRestriction();
         set
         {
-            // Ignore user toggles; this is auto-managed.
             var auto = ComputeHalfBoardRestriction();
             if (_solver is NQueen.Kernel.Solvers.BitmaskSolver b)
                 b.EnableHalfBoardRestriction = auto;
             OnPropertyChanged();
         }
     }
-
-    // Remove duplicate implementation to fix CS0757; handled in another partial.
 
     public bool CanChangeStorageMode => !IsVisualized && IsInInputMode;
 }
