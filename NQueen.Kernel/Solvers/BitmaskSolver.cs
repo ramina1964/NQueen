@@ -129,18 +129,16 @@ public partial class BitmaskSolver : ISolver, IDisposable
         {
             if (isUnique)
             {
-                _solutionCount = CountUniqueCanonicalOrPruned(BoardSize, cap: 0, null);
+                // Consolidated: Unique count-only uses adaptive parallel path
+                _solutionCount = CountUniqueAdaptive(BoardSize);
             }
             else
             {
-                // For moderate boards rely on exact path; for larger boards use adaptive parallel enumeration (count-only).
-                if (BoardSize <= 18)
+                // Consolidated thresholds using SimulationSettings for All mode
+                if (BoardSize <= SimulationSettings.ParallelAllAutoEnableThresholdN)
                     _solutionCount = CountAllExact();
                 else
-                {
-                    // Run adaptive enumeration without materialization.
                     EnumerateAllAdaptive(countOnly: true);
-                }
             }
             ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
             return;
@@ -149,7 +147,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
         // Materialization path: adaptive enumeration per mode
         if (isUnique)
         {
-            // When visualizing, use the visualize-aware unique enumeration which raises QueenPlaced
+            // Consolidated: Unique materialize switches to fast mode after cap
             if (DisplayMode == DisplayMode.Visualize)
                 EnumerateUniqueVisualizeAdaptive();
             else
@@ -159,6 +157,35 @@ public partial class BitmaskSolver : ISolver, IDisposable
         {
             EnumerateAllAdaptive(countOnly: false);
         }
+    }
+
+    // New: Adaptive parallel unique count-only
+    private ulong CountUniqueAdaptive(int n)
+    {
+        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
+
+        // Use parallel unified unique engine (cap=0 => count-only) below large-board symmetry threshold
+        if (n <= SimulationSettings.LargeBoardSymmetryPruningThreshold)
+        {
+            ulong total = 0;
+            BitmaskParallelEngine.RunUniqueUnified(
+                n,
+                enableEvents: EnableEvents,
+                cap: 0,
+                onUniqueSolution: _ => { },      // no-op
+                onCompletedUniqueCount: count => total = count,
+                reportProgress: pct =>
+                {
+                    if (EnableEvents)
+                        ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken));
+                },
+                capReached: () => false
+            );
+            return total;
+        }
+
+        // Large boards: symmetry-pruned unique counter
+        return SymmetryPrunedUniqueCounter.Count(n, cap: 0, onMaterialized: null);
     }
 
     private ulong CountAllExact()
@@ -373,7 +400,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
         if (partialStates.Count == 0) { _solutionCount = 0; return; }
 
         // Work-stealing queue with batched tasks
-        var queue = new System.Collections.Concurrent.ConcurrentQueue<(int col, int[] rows, ulong cols, ulong d1, ulong d2)>();
+        var queue = new ConcurrentQueue<(int col, int[] rows, ulong cols, ulong d1, ulong d2)>();
         foreach (var ps in partialStates) queue.Enqueue(ps);
         int batchSize = Math.Max(8, partialStates.Count / (cores * 16));
         var tasks = new List<Task>(cores);
@@ -483,15 +510,21 @@ public partial class BitmaskSolver : ISolver, IDisposable
 
     private void EnumerateUniqueMaterializeAdaptive()
     {
+        // Consolidated: materialize up to cap, then switch to fast count-only (no more materialization)
         SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, EnableIncrementalCanonicalization);
         int cap = _maxDisplayedCount;
         if (cap <= 0)
         {
             _solutionCount = CountUniqueCanonicalOrPruned(BoardSize, cap: 0, null);
+            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
             return;
         }
+
         int materialized = 0;
-        ulong total = CountUniqueCanonicalOrPruned(BoardSize, cap, rows =>
+        ulong totalSoFar = 0;
+
+        // Materialize up to cap
+        totalSoFar = CountUniqueCanonicalOrPruned(BoardSize, cap, rows =>
         {
             if (materialized >= cap) return;
             if (rows.Length <= 25)
@@ -511,8 +544,104 @@ public partial class BitmaskSolver : ISolver, IDisposable
             if (materialized >= cap)
                 _eventsSuppressedAfterCap = true;
         });
-        _solutionCount = total;
+
+        // If we reached cap, switch to fast count-only for the remainder
+        if (materialized >= cap)
+        {
+            // Choose fast path based on thresholds (same constants as All mode)
+            ulong remainderCount;
+            if (BoardSize <= SimulationSettings.ParallelAllMaterializeAutoEnableThresholdN)
+            {
+                // Small boards: canonical unique (no parallel key store overhead)
+                remainderCount = CountUniqueCanonicalOrPruned(BoardSize, cap: 0, onMaterialized: null);
+            }
+            else
+            {
+                // Larger boards: parallel unified unique count-only
+                remainderCount = CountUniqueAdaptive(BoardSize);
+            }
+            _solutionCount = remainderCount;
+            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+            return;
+        }
+
+        // If cap not reached by enumeration, we already have total from canonical counting
+        _solutionCount = totalSoFar;
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+    }
+
+    private ulong CountUniqueCanonicalOrPruned(int boardSize, int cap, Action<int[]>? onMaterialized)
+    {
+        if (boardSize >= SimulationSettings.LargeBoardSymmetryPruningThreshold)
+        {
+            return SymmetryPrunedUniqueCounter.Count(boardSize, cap, onMaterialized);
+        }
+        ulong total = 0;
+        int emitted = 0;
+        CanonicalUniqueSearchEngine.CountUnique(boardSize, rows =>
+        {
+            if (onMaterialized == null) return;
+            if (cap > 0 && emitted >= cap) return;
+            onMaterialized(rows);
+            emitted++;
+        });
+        total = CanonicalUniqueSearchEngine.CountUnique(boardSize);
+        return total;
+    }
+
+    // Private fields
+    private readonly ISolutionFormatter _formatter;
+    private readonly List<(UInt128 packed, int boardSize)> _solutions = [];
+    private readonly List<int[]> _largeBoardRawSolutions = new();
+    private ulong _solutionCount;
+    private Guid _currentSimToken = Guid.Empty;
+    private readonly bool _capEnabled;
+    private readonly int _maxDisplayedCount;
+    private volatile bool _eventsSuppressedAfterCap;
+    private bool _disposed;
+    private const int _lookupThreshold = 20;
+    private const int _largeBoardConstructiveThreshold = 20;
+    private int[]? _scratchBuffer;
+
+    private void ResetForSolve()
+    {
+        _solutions.Clear();
+        _largeBoardRawSolutions.Clear();
+        _solutionCount = 0;
+        IsSolverCanceled = false;
+        _eventsSuppressedAfterCap = false;
+        _scratchBuffer = (_scratchBuffer == null || _scratchBuffer.Length < BoardSize * 8)
+            ? new int[BoardSize * 8]
+            : _scratchBuffer;
+    }
+
+    private SimulationResults BuildResults(TimeSpan elapsed)
+    {
+        var cap = (_capEnabled ? _maxDisplayedCount : 0);
+        var resultSolutions = new List<Solution>(_solutions.Count + _largeBoardRawSolutions.Count);
+        int idx = 1;
+
+        foreach (var tup in (cap > 0 && _solutions.Count > cap ? _solutions.Take(cap) : _solutions))
+        {
+            var packed = tup.packed;
+            var boardSize = tup.boardSize;
+            if (boardSize <= 0) continue;
+            if (boardSize <= 25)
+            {
+                resultSolutions.Add(new Solution(packed, boardSize, _formatter, idx));
+                idx++;
+            }
+        }
+
+        foreach (var raw in _largeBoardRawSolutions)
+        {
+            if (cap > 0 && idx > cap) break;
+            resultSolutions.Add(new Solution(raw, _formatter, idx));
+            idx++;
+        }
+
+        _largeBoardRawSolutions.Clear();
+        return new SimulationResults(resultSolutions, _solutionCount, Math.Round(elapsed.TotalSeconds, 1));
     }
 
     private void SampleMaterializeUsingLookup(bool isUnique)
@@ -520,12 +649,14 @@ public partial class BitmaskSolver : ISolver, IDisposable
         SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, EnableIncrementalCanonicalization);
         int cap = _maxDisplayedCount;
         if (cap <= 0) return;
+
         if (BoardSize >= _largeBoardConstructiveThreshold)
         {
             ConstructiveSampleSolutions(isUnique, cap);
             ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
             return;
         }
+
         if (isUnique)
         {
             var seen = new HashSet<UInt128>();
@@ -545,13 +676,14 @@ public partial class BitmaskSolver : ISolver, IDisposable
                 {
                     if (!ValidateRows(rows)) return false;
                     UInt128 packed = 0;
-                    if (rows.Length <= 25) packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
+                    if (rows.Length <= 25)
+                        packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
                     if (seen.Add(packed))
                     {
                         AddSample(rows);
                         if (seen.Count >= cap)
                         {
-                            _eventsSuppressedAfterCap = true; // fixed typo
+                            _eventsSuppressedAfterCap = true;
                             return true;
                         }
                     }
@@ -591,6 +723,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
                 }
             ));
         }
+
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
 
         void AddSample(int[] rows)
@@ -611,90 +744,6 @@ public partial class BitmaskSolver : ISolver, IDisposable
         }
     }
 
-    private void ConstructiveSampleSolutions(bool isUnique, int cap)
-    {
-        if (cap <= 0) return;
-        var baseRows = GenerateConstructiveSolution(BoardSize);
-        if (!ValidateRows(baseRows)) return;
-        AddMaterialized(baseRows);
-        if (cap == 1) return;
-        int remaining = cap - 1;
-        var variants = GenerateSymmetryVariants(baseRows, remaining);
-        foreach (var v in variants) AddMaterialized(v);
-
-        void AddMaterialized(int[] rows)
-        {
-            if (_solutions.Count + _largeBoardRawSolutions.Count >= cap) return;
-            if (isUnique)
-            {
-                var copyU = new int[rows.Length];
-                Array.Copy(rows, copyU, rows.Length);
-                _largeBoardRawSolutions.Add(copyU);
-                return;
-            }
-            if (rows.Length <= 25)
-            {
-                var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
-                _solutions.Add((packed, rows.Length));
-            }
-            else
-            {
-                var copy = new int[rows.Length];
-                Array.Copy(rows, copy, rows.Length);
-                _largeBoardRawSolutions.Add(copy);
-            }
-        }
-    }
-
-    private static int[] GenerateConstructiveSolution(int n)
-    {
-        var seq = new List<int>(n);
-        if (n % 6 != 2 && n % 6 != 3)
-        {
-            for (int i = 2; i <= n; i += 2) seq.Add(i);
-            for (int i = 1; i <= n; i += 2) seq.Add(i);
-        }
-        else if (n % 6 == 2)
-        {
-            for (int i = 2; i <= n; i += 2) seq.Add(i);
-            for (int i = 1; i <= n; i += 2) seq.Add(i);
-            if (seq.Count >= 4) (seq[0], seq[1]) = (seq[1], seq[0]);
-        }
-        else
-        {
-            for (int i = 2; i <= n - 1; i += 2) seq.Add(i);
-            for (int i = 1; i <= n - 2; i += 2) seq.Add(i);
-            seq.Add(n);
-        }
-        var rows = new int[n];
-        for (int col = 0; col < n; col++) rows[col] = seq[col] - 1;
-        return rows;
-    }
-
-    private static IEnumerable<int[]> GenerateSymmetryVariants(int[] rows, int maxVariants)
-    {
-        var list = new List<int[]>(Math.Min(maxVariants, 7));
-        void AddVariant(int[] r) { if (list.Count < maxVariants) list.Add(r); }
-        int n = rows.Length;
-        int[] Rotate90(int[] src)
-        {
-            var r = new int[n];
-            for (int c = 0; c < n; c++) { int oldRow = src[c]; int newCol = oldRow; int newRow = n - 1 - c; r[newCol] = newRow; }
-            return r;
-        }
-        int[] ReflectVertical(int[] src)
-        { var r = new int[n]; for (int c = 0; c < n; c++) r[n - 1 - c] = src[c]; return r; }
-        int[] ReflectHorizontal(int[] src)
-        { var r = new int[n]; for (int c = 0; c < n; c++) r[c] = n - 1 - src[c]; return r; }
-        var r90 = Rotate90(rows); AddVariant(r90);
-        var r180 = Rotate90(r90); AddVariant(r180);
-        var r270 = Rotate90(r180); AddVariant(r270);
-        var vref = ReflectVertical(rows); AddVariant(vref);
-        var href = ReflectHorizontal(rows); AddVariant(href);
-        var diag = ReflectVertical(r90); AddVariant(diag);
-        return list;
-    }
-
     private bool ValidateRows(int[] rows)
     {
         bool ok = rows.Length == BoardSize;
@@ -702,37 +751,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
         return ok;
     }
 
-    private void ResetForSolve()
-    {
-        _solutions.Clear();
-        _largeBoardRawSolutions.Clear();
-        _solutionCount = 0;
-        IsSolverCanceled = false;
-        _eventsSuppressedAfterCap = false;
-        _scratchBuffer = (_scratchBuffer == null || _scratchBuffer.Length < BoardSize * 8) ? new int[BoardSize * 8] : _scratchBuffer;
-    }
-
-    private SimulationResults BuildResults(TimeSpan elapsed)
-    {
-        var cap = (_capEnabled ? _maxDisplayedCount : 0);
-        var resultSolutions = new List<Solution>(_solutions.Count + _largeBoardRawSolutions.Count);
-        int idx = 1;
-        foreach (var tup in (cap > 0 && _solutions.Count > cap ? _solutions.Take(cap) : _solutions))
-        {
-            var packed = tup.packed;
-            var boardSize = tup.boardSize;
-            if (boardSize <= 0) continue;
-            if (boardSize <= 25) { resultSolutions.Add(new Solution(packed, boardSize, _formatter, idx)); idx++; }
-        }
-        foreach (var raw in _largeBoardRawSolutions)
-        {
-            if (cap > 0 && idx > cap) break;
-            resultSolutions.Add(new Solution(raw, _formatter, idx)); idx++;
-        }
-        _largeBoardRawSolutions.Clear();
-        return new SimulationResults(resultSolutions, _solutionCount, Math.Round(elapsed.TotalSeconds, 1));
-    }
-
+    // IDisposable implementation (needed by interface)
     public void Dispose()
     {
         Dispose(true);
@@ -753,141 +772,122 @@ public partial class BitmaskSolver : ISolver, IDisposable
         _disposed = true;
     }
 
-    // --- All-mode adaptive enumeration (modified to disable incremental canonicalization locally) ---
-    private void MitmEnumerateAll(bool countOnly)
+    // Construct sample solutions for large boards (fast path when using lookup/materialize)
+    private void ConstructiveSampleSolutions(bool isUnique, int cap)
     {
-        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
-        int N = BoardSize;
-        int splitDepth = Math.Min(3, N / 2);
-        int cap = countOnly ? 0 : _maxDisplayedCount;
-        var partials = new List<(int col, int[] rows, ulong cols, ulong d1, ulong d2)>();
-        ulong mask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
-        void Gen(int col, ulong cols, ulong d1, ulong d2, int[] rows)
+        if (cap <= 0) return;
+
+        var baseRows = GenerateConstructiveSolution(BoardSize);
+        if (!ValidateRows(baseRows)) return;
+
+        AddMaterialized(baseRows);
+        if (cap == 1) return;
+
+        int remaining = cap - 1;
+        var variants = GenerateSymmetryVariants(baseRows, remaining);
+        foreach (var v in variants) AddMaterialized(v);
+
+        void AddMaterialized(int[] rows)
         {
-            if (col == splitDepth)
+            if (_solutions.Count + _largeBoardRawSolutions.Count >= cap) return;
+
+            if (isUnique)
             {
-                var snap = new int[N]; Array.Copy(rows, snap, N);
-                partials.Add((col, snap, cols, d1, d2));
+                // For unique mode in constructive sampling, keep raw rows (canonicalization happens elsewhere)
+                var copyU = new int[rows.Length];
+                Array.Copy(rows, copyU, rows.Length);
+                _largeBoardRawSolutions.Add(copyU);
                 return;
             }
-            ulong avail = ~(cols | d1 | d2) & mask;
-            while (avail != 0)
+
+            if (rows.Length <= 25)
             {
-                ulong bitLocal = avail & (ulong)-(long)avail; avail ^= bitLocal;
-                int r = BitOperations.TrailingZeroCount(bitLocal);
-                rows[col] = r;
-                Gen(col + 1, cols | bitLocal, (d1 | bitLocal) << 1, (d2 | bitLocal) >> 1, rows);
-                rows[col] = -1;
+                var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
+                _solutions.Add((packed, rows.Length));
+            }
+            else
+            {
+                var copy = new int[rows.Length];
+                Array.Copy(rows, copy, rows.Length);
+                _largeBoardRawSolutions.Add(copy);
             }
         }
-        var seed = new int[N]; Array.Fill(seed, -1);
-        Gen(0, 0UL, 0UL, 0UL, seed);
-        ulong total = 0; int materialized = 0; object sync = new();
-        Parallel.ForEach(partials, part =>
-        {
-            var (col, rows, cols, d1, d2) = part;
-            void DFS(int c, ulong lc, ulong ld1, ulong ld2)
-            {
-                if (IsSolverCanceled) return;
-                if (c == N)
-                {
-                    Interlocked.Increment(ref total);
-                    if (cap > 0 && materialized < cap)
-                    {
-                        int current = Interlocked.Increment(ref materialized);
-                        if (current <= cap)
-                        {
-                            lock (sync)
-                            {
-                                if (rows.Length <= 25)
-                                {
-                                    UInt128 packed = SymmetryHelper.PackRows(rows);
-                                    _solutions.Add((packed, N));
-                                }
-                                else
-                                {
-                                    var copy = new int[rows.Length];
-                                    Array.Copy(rows, copy, rows.Length);
-                                    _largeBoardRawSolutions.Add(copy);
-                                }
-                            }
-                        }
-                    }
-                    return;
-                }
-                ulong avail = ~(lc | ld1 | ld2) & mask;
-                while (avail != 0 && !IsSolverCanceled)
-                {
-                    ulong bitLocal = avail & (ulong)-(long)avail; avail ^= bitLocal;
-                    int r = BitOperations.TrailingZeroCount(bitLocal);
-                    rows[c] = r;
-                    if (EnablePrefixMinimalityPruning || EnablePartialReflectionPruning)
-                    {
-                        if (ShouldPrunePrefix(rows, c)) { rows[c] = -1; continue; }
-                    }
-                    DFS(c + 1, lc | bitLocal, (ld1 | bitLocal) << 1, (ld2 | bitLocal) >> 1);
-                    rows[c] = -1;
-                }
-            }
-            DFS(col, cols, d1, d2);
-        });
-        _solutionCount = total;
-        if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 
-    private bool ShouldPrunePrefix(int[] rows, int depth)
+    // Standard constructive N-Queens sequence generator (O(n))
+    private static int[] GenerateConstructiveSolution(int n)
     {
-        int[] prefix = new int[depth + 1];
-        for (int i = 0; i <= depth; i++) prefix[i] = rows[i];
-        if (EnablePartialReflectionPruning)
+        var seq = new List<int>(n);
+
+        if (n % 6 != 2 && n % 6 != 3)
         {
-            for (int i = 0; i <= depth; i++)
-            {
-                int reflected = BoardSize - 1 - prefix[i];
-                if (prefix[i] > reflected) return true;
-                if (prefix[i] < reflected) break;
-            }
+            for (int i = 2; i <= n; i += 2) seq.Add(i);
+            for (int i = 1; i <= n; i += 2) seq.Add(i);
         }
-        if (!EnablePrefixMinimalityPruning) return false;
-        for (int i = 0; i <= depth; i++)
+        else if (n % 6 == 2)
         {
-            int transformed = BoardSize - 1 - prefix[depth - i];
-            if (prefix[i] > transformed) return true;
-            if (prefix[i] < transformed) break;
+            for (int i = 2; i <= n; i += 2) seq.Add(i);
+            for (int i = 1; i <= n; i += 2) seq.Add(i);
+            if (seq.Count >= 4) (seq[0], seq[1]) = (seq[1], seq[0]);
         }
-        return false;
+        else
+        {
+            for (int i = 2; i <= n - 1; i += 2) seq.Add(i);
+            for (int i = 1; i <= n - 2; i += 2) seq.Add(i);
+            seq.Add(n);
+        }
+
+        var rows = new int[n];
+        for (int col = 0; col < n; col++)
+            rows[col] = seq[col] - 1; // zero-based rows
+
+        return rows;
     }
 
-    private ulong CountUniqueCanonicalOrPruned(int boardSize, int cap, Action<int[]>? onMaterialized)
+    // Generate up to 7 symmetry variants (rotations/reflections) of a solution
+    private static IEnumerable<int[]> GenerateSymmetryVariants(int[] rows, int maxVariants)
     {
-        if (boardSize >= SimulationSettings.LargeBoardSymmetryPruningThreshold)
-        {
-            return SymmetryPrunedUniqueCounter.Count(boardSize, cap, onMaterialized);
-        }
-        ulong total = 0;
-        int emitted = 0;
-        CanonicalUniqueSearchEngine.CountUnique(boardSize, rows =>
-        {
-            if (onMaterialized == null) return;
-            if (cap > 0 && emitted >= cap) return;
-            onMaterialized(rows);
-            emitted++;
-        });
-        total = CanonicalUniqueSearchEngine.CountUnique(boardSize);
-        return total;
-    }
+        var list = new List<int[]>(Math.Min(maxVariants, 7));
+        void AddVariant(int[] r) { if (list.Count < maxVariants) list.Add(r); }
 
-    // Private fields
-    private readonly ISolutionFormatter _formatter;
-    private readonly List<(UInt128 packed, int boardSize)> _solutions = [];
-    private readonly List<int[]> _largeBoardRawSolutions = new();
-    private ulong _solutionCount;
-    private Guid _currentSimToken = Guid.Empty;
-    private readonly bool _capEnabled;
-    private readonly int _maxDisplayedCount;
-    private volatile bool _eventsSuppressedAfterCap;
-    private bool _disposed;
-    private const int _lookupThreshold = 20;
-    private const int _largeBoardConstructiveThreshold = 20;
-    private int[]? _scratchBuffer;
+        int n = rows.Length;
+
+        int[] Rotate90(int[] src)
+        {
+            var r = new int[n];
+            for (int c = 0; c < n; c++)
+            {
+                int oldRow = src[c];
+                int newCol = oldRow;
+                int newRow = n - 1 - c;
+                r[newCol] = newRow;
+            }
+            return r;
+        }
+
+        int[] ReflectVertical(int[] src)
+        {
+            var r = new int[n];
+            for (int c = 0; c < n; c++)
+                r[n - 1 - c] = src[c];
+            return r;
+        }
+
+        int[] ReflectHorizontal(int[] src)
+        {
+            var r = new int[n];
+            for (int c = 0; c < n; c++)
+                r[c] = n - 1 - src[c];
+            return r;
+        }
+
+        var r90 = Rotate90(rows); AddVariant(r90);
+        var r180 = Rotate90(r90); AddVariant(r180);
+        var r270 = Rotate90(r180); AddVariant(r270);
+        var vref = ReflectVertical(rows); AddVariant(vref);
+        var href = ReflectHorizontal(rows); AddVariant(href);
+        var diag = ReflectVertical(r90); AddVariant(diag);
+
+        return list;
+    }
 }
