@@ -1,4 +1,4 @@
-namespace NQueen.Kernel.Solvers;
+﻿namespace NQueen.Kernel.Solvers;
 
 public partial class BitmaskSolver : ISolver, IDisposable
 {
@@ -146,7 +146,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
             {
                 // Consolidated thresholds using SimulationSettings for All mode
                 if (BoardSize <= SimulationSettings.ParallelAllAutoEnableThresholdN)
-                    _solutionCount = CountAllExact();
+                    _solutionCount = EnumerateAllAndReturnCount();
                 else
                     EnumerateAllAdaptive(countOnly: true);
             }
@@ -172,166 +172,188 @@ public partial class BitmaskSolver : ISolver, IDisposable
     // New: Adaptive parallel unique count-only
     private ulong CountUniqueAdaptive(int n)
     {
-        // Force early pruning for Unique count-only (most value for cost)
+        // Force pruning + disable incremental canonicalization
         bool origPrefix = EnablePrefixMinimalityPruning;
         bool origReflection = EnablePartialReflectionPruning;
         EnablePrefixMinimalityPruning = true;
         EnablePartialReflectionPruning = true;
 
-        // Configure optimizations, no incremental canonicalization in count-only
-        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
+        SearchOptimizations.Configure(
+            EnablePrefixMinimalityPruning,
+            EnablePartialReflectionPruning,
+            incrementalCanonicalization: false);
 
         // Ensure ThreadPool saturates cores for parallel runs
         System.Threading.ThreadPool.SetMinThreads(Environment.ProcessorCount, Environment.ProcessorCount);
 
         try
         {
-            // Use parallel unified unique engine (cap=0 => count-only) below large-board symmetry threshold
-            if (n <= SimulationSettings.LargeBoardSymmetryPruningThreshold)
+            // Mid-range boards (≥ symmetry threshold): use dictionary-free half-board engine
+            if (n >= SimulationSettings.LargeBoardSymmetryPruningThreshold && n <= 22)
+                return CountUniqueFastHalfBoard(n);
+
+            // Small boards: parallel unified unique engine (cap=0 => count-only)
+            if (n < SimulationSettings.LargeBoardSymmetryPruningThreshold)
             {
                 ulong total = 0;
                 BitmaskParallelEngine.RunUniqueUnified(
                     n,
-                    enableEvents: false,    // no events in count-only
+                    enableEvents: false,
                     cap: 0,
-                    onUniqueSolution: _ => { },      // no-op
+                    onUniqueSolution: _ => { },
                     onCompletedUniqueCount: count => total = count,
-                    reportProgress: _ => { },        // suppress progress
+                    reportProgress: _ => { },
                     capReached: () => false
                 );
                 return total;
             }
 
-            // Large boards: symmetry-pruned unique counter (memory-efficient)
+            // Larger boards: symmetry-pruned counter (memory-efficient)
             return SymmetryPrunedUniqueCounter.Count(n, cap: 0, onMaterialized: null);
         }
         finally
         {
-            // Restore flags
             EnablePrefixMinimalityPruning = origPrefix;
             EnablePartialReflectionPruning = origReflection;
             SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
         }
     }
 
-    private ulong CountAllExact()
+    // Level-2: fast unique count-only with half-board restriction, early prefix pruning, pooled scratch
+    private ulong CountUniqueFastHalfBoard(int n)
     {
-        bool applyHalfBoard = BoardSize >= 15 && ((BoardSize & 1) == 1);
-        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
-        int N = BoardSize;
-        bool isOdd = (N & 1) == 1;
-        int centerRow = N / 2;
-        int firstRowLimit = applyHalfBoard ? (N + 1) / 2 : N;
-        // Balanced parallel enumeration: expand to depth 2 then distribute subtrees.
-        int expansionDepth = 2; // good trade-off for N<=18
-        ulong maskFull = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
-        var partials = new List<(int col, int[] rows, ulong cols, ulong d1, ulong d2)>(firstRowLimit * 16);
-        for (int rootRow = 0; rootRow < firstRowLimit; rootRow++)
-        {
-            int[] rows = new int[N]; Array.Fill(rows, -1); rows[0] = rootRow;
-            ulong bitFirst = 1UL << rootRow;
-            Expand(1, bitFirst, bitFirst << 1, bitFirst >> 1, rows);
-        }
-        void Expand(int col, ulong cols, ulong d1, ulong d2, int[] rows)
-        {
-            if (col == N || col == expansionDepth)
-            {
-                var snapshot = new int[N]; Array.Copy(rows, snapshot, N);
-                partials.Add((col, snapshot, cols, d1, d2));
-                return;
-            }
-            ulong avail = ~(cols | d1 | d2) & maskFull;
-            while (avail != 0)
-            {
-                ulong bit = avail & (ulong)-(long)avail; avail ^= bit;
-                int r = BitOperations.TrailingZeroCount(bit);
-                rows[col] = r;
-                Expand(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1, rows);
-                rows[col] = -1;
-            }
-        }
-        if (partials.Count == 0) return 0UL;
+        if (n <= 0) return 0UL;
+
+        // Force pruning locally (do not depend on external flags)
+        bool origPrefix = EnablePrefixMinimalityPruning;
+        bool origReflection = EnablePartialReflectionPruning;
+        EnablePrefixMinimalityPruning = true;
+        EnablePartialReflectionPruning = true;
+
+        SearchOptimizations.Configure(
+            EnablePrefixMinimalityPruning,
+            EnablePartialReflectionPruning,
+            incrementalCanonicalization: false);
+
+        // Half-board: restrict first column root rows to first half (+ center if odd)
+        int firstRowLimitExclusive = (n + 1) / 2;
+        ulong fullMask = (n == 64) ? ulong.MaxValue : ((1UL << n) - 1UL);
         int cores = Environment.ProcessorCount;
-        ulong totalNonCenter = 0UL; ulong totalCenter = 0UL;
-        object sync = new();
-        Parallel.ForEach(partials, new ParallelOptions { MaxDegreeOfParallelism = cores }, part =>
+
+        // Early prune gate for mid/large N
+        int pruneDepthGate = (n >= 18) ? 1 : ((n >= 16) ? 2 : 3);
+
+        // Pool scratch arrays to minimize allocations
+        var scratchPool = System.Buffers.ArrayPool<int>.Shared;
+
+        long total = 0L;
+
+        try
         {
-            var (startCol, rows, cols, d1, d2) = part;
-            ulong localNonCenter = 0UL; ulong localCenter = 0UL;
-            // local stacks
-            ulong[] stackCols = new ulong[N];
-            ulong[] stackD1 = new ulong[N];
-            ulong[] stackD2 = new ulong[N];
-            ulong[] stackAvail = new ulong[N];
-            bool reflectionEqual = true; bool minimalityEqual = true;
-            int pruneGate = int.MaxValue;
-            if (EnablePrefixMinimalityPruning || EnablePartialReflectionPruning)
+            // Partition root rows by ranges to balance across cores
+            var ranges = System.Collections.Concurrent.Partitioner.Create(0, firstRowLimitExclusive, Math.Max(1, firstRowLimitExclusive / (cores * 2)));
+
+            Parallel.ForEach(ranges, new ParallelOptions { MaxDegreeOfParallelism = cores }, range =>
             {
-                if (N >= 20) pruneGate = 1; else if (N >= 16) pruneGate = 2; else if (N >= 15) pruneGate = 3;
-            }
-            int col = startCol;
-            ulong avail = ~(cols | d1 | d2) & maskFull;
-            while (true)
-            {
-                if (IsSolverCanceled) break;
-                if (col == N)
+                int[] rows = new int[n];
+                Array.Fill(rows, -1);
+
+                // Scratch for canonical identity checks
+                int[] scratch = scratchPool.Rent(n * 8);
+                try
                 {
-                    int r0 = rows[0];
-                    if (applyHalfBoard && isOdd && r0 == centerRow) localCenter++; else localNonCenter++;
-                    col--;
-                    if (col < startCol) break;
-                    avail = stackAvail[col]; cols = stackCols[col]; d1 = stackD1[col]; d2 = stackD2[col]; rows[col] = -1;
-                    continue;
-                }
-                if (avail == 0UL)
-                {
-                    col--;
-                    if (col < startCol) break;
-                    avail = stackAvail[col]; cols = stackCols[col]; d1 = stackD1[col]; d2 = stackD2[col]; rows[col] = -1;
-                    continue;
-                }
-                ulong bit = avail & (ulong)-(long)avail; avail ^= bit;
-                int r = BitOperations.TrailingZeroCount(bit);
-                rows[col] = r;
-                if (col >= pruneGate && (EnablePrefixMinimalityPruning || EnablePartialReflectionPruning))
-                {
-                    if (ShouldPruneIncremental(rows, col, N, EnablePartialReflectionPruning, EnablePrefixMinimalityPruning, ref reflectionEqual, ref minimalityEqual))
+                    ulong localCount = 0UL;
+
+                    for (int rootRow = range.Item1; rootRow < range.Item2; rootRow++)
                     {
-                        rows[col] = -1; continue;
+                        rows[0] = rootRow;
+                        ulong bit0 = 1UL << rootRow;
+
+                        DFS(col: 1, cols: bit0, d1: bit0 << 1, d2: bit0 >> 1);
+                    }
+
+                    if (localCount != 0)
+                        System.Threading.Interlocked.Add(ref total, (long)localCount);
+
+                    // DFS local function captures rows/scratch/localCount
+                    void DFS(int col, ulong cols, ulong d1, ulong d2)
+                    {
+                        if (IsSolverCanceled) return;
+                        if (col == n)
+                        {
+                            // Leaf: identity canonical representative (no dictionary)
+                            if (SymmetryHelper.IsIdentityCanonical(rows, scratch))
+                                localCount++;
+                            return;
+                        }
+
+                        ulong avail = ~(cols | d1 | d2) & fullMask;
+                        while (avail != 0 && !IsSolverCanceled)
+                        {
+                            ulong bit = avail & (ulong)-(long)avail;
+                            avail ^= bit;
+                            int r = System.Numerics.BitOperations.TrailingZeroCount(bit);
+
+                            rows[col] = r;
+
+                            // Early prefix pruning: reflection + minimality
+                            if (col >= pruneDepthGate && (EnablePrefixMinimalityPruning || EnablePartialReflectionPruning))
+                            {
+                                if (ShouldPruneUniquePrefix(rows, col, n))
+                                {
+                                    rows[col] = -1;
+                                    continue;
+                                }
+                            }
+
+                            DFS(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1);
+                            rows[col] = -1;
+                        }
                     }
                 }
-                stackCols[col] = cols; stackD1[col] = d1; stackD2[col] = d2; stackAvail[col] = avail;
-                cols |= bit; d1 = (d1 | bit) << 1; d2 = (d2 | bit) >> 1;
-                col++; if (col == N) continue;
-                avail = ~(cols | d1 | d2) & maskFull;
-            }
-            if (localNonCenter > 0 || localCenter > 0)
-            {
-                lock (sync) { totalNonCenter += localNonCenter; totalCenter += localCenter; }
-            }
-        });
-        ulong total = applyHalfBoard ? (totalNonCenter * 2UL + totalCenter) : (totalNonCenter + totalCenter);
-        return total;
+                finally
+                {
+                    scratchPool.Return(scratch, clearArray: false);
+                }
+            });
+        }
+        finally
+        {
+            // Restore flags/config (no persistent side-effects)
+            EnablePrefixMinimalityPruning = origPrefix;
+            EnablePartialReflectionPruning = origReflection;
+            SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
+        }
+
+        return (ulong)total;
     }
 
-    // Incremental pruning helper for CountAllExact path
-    private static bool ShouldPruneIncremental(int[] rows, int depth, int N, bool reflectionEnabled, bool minimalityEnabled, ref bool reflectionEqual, ref bool minimalityEqual)
+    // Unique-specific prefix pruning: reflection + minimality checks on the current prefix
+    private static bool ShouldPruneUniquePrefix(int[] rows, int depth, int N)
     {
-        if (reflectionEnabled && reflectionEqual)
+        // Reflection prefix: ensure prefix <= reflected(prefix)
+        for (int i = 0; i <= depth; i++)
         {
-            int r = rows[depth]; if (r < 0) return false;
+            int r = rows[i];
+            if (r < 0) return false;
             int reflected = N - 1 - r;
             if (r > reflected) return true;
-            if (r < reflected) reflectionEqual = false;
+            if (r < reflected) break; // strictly less; reflection constraint satisfied
         }
-        if (minimalityEnabled && minimalityEqual)
+
+        // Minimality prefix: transform reversed prefix and compare lexicographically
+        for (int i = 0; i <= depth; i++)
         {
-            int first = rows[0]; if (first < 0) return false;
-            int newRow = rows[depth]; if (newRow < 0) return false;
-            int transformed = N - 1 - newRow;
-            if (first > transformed) return true;
-            if (first < transformed) minimalityEqual = false;
+            int a = rows[i];
+            if (a < 0) return false;
+            int b = rows[depth - i];
+            if (b < 0) return false;
+
+            int transformed = N - 1 - b;
+            if (a > transformed) return true;
+            if (a < transformed) break; // strictly less; minimality satisfied
         }
+
         return false;
     }
 
@@ -915,5 +937,11 @@ public partial class BitmaskSolver : ISolver, IDisposable
         var diag = ReflectVertical(r90); AddVariant(diag);
 
         return list;
+    }
+
+    private ulong EnumerateAllAndReturnCount()
+    {
+        EnumerateAllAdaptive(countOnly: true);
+        return _solutionCount;
     }
 }
