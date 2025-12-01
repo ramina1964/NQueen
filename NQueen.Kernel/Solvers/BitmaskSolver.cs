@@ -76,6 +76,12 @@ public partial class BitmaskSolver : ISolver, IDisposable
                 throw new NotSupportedException($"Bitmask solver supports boards up to {BoardSettings.MaxBitmaskBoardSize}. (Requested: {BoardSize})");
             bool allCountOnly = UseCountOnlyAllMode || AllStorageMode == ResultStorageMode.CountOnly;
             bool uniqueCountOnly = UseCountOnlyUniqueMode || UniqueStorageMode == ResultStorageMode.CountOnly;
+
+            // TEMP: disable events for count-only paths (less overhead in hot loops)
+            bool origEnableEvents = EnableEvents;
+            if (uniqueCountOnly || allCountOnly)
+                EnableEvents = false;
+
             ResetForSolve();
             Solution.ResetSequence();
             var sw = Stopwatch.StartNew();
@@ -89,12 +95,16 @@ public partial class BitmaskSolver : ISolver, IDisposable
                     HandleModeCommon(isUnique: true, countOnly: uniqueCountOnly, ref usedLookup);
                     break;
                 case SolutionMode.Single:
-                    SolveSingleMode(); // defined in BitmaskSolver.Single.cs partial
+                    SolveSingleMode();
                     break;
                 default:
                     throw new NotSupportedException($"Unsupported SolutionMode {SolutionMode}");
             }
             sw.Stop();
+
+            // Restore event flag
+            EnableEvents = origEnableEvents;
+
             var results = BuildResults(sw.Elapsed);
             if (usedLookup)
                 return new SimulationResults(results.Solutions, _solutionCount, Math.Round(sw.Elapsed.TotalSeconds, 1));
@@ -162,30 +172,46 @@ public partial class BitmaskSolver : ISolver, IDisposable
     // New: Adaptive parallel unique count-only
     private ulong CountUniqueAdaptive(int n)
     {
+        // Force early pruning for Unique count-only (most value for cost)
+        bool origPrefix = EnablePrefixMinimalityPruning;
+        bool origReflection = EnablePartialReflectionPruning;
+        EnablePrefixMinimalityPruning = true;
+        EnablePartialReflectionPruning = true;
+
+        // Configure optimizations, no incremental canonicalization in count-only
         SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
 
-        // Use parallel unified unique engine (cap=0 => count-only) below large-board symmetry threshold
-        if (n <= SimulationSettings.LargeBoardSymmetryPruningThreshold)
-        {
-            ulong total = 0;
-            BitmaskParallelEngine.RunUniqueUnified(
-                n,
-                enableEvents: EnableEvents,
-                cap: 0,
-                onUniqueSolution: _ => { },      // no-op
-                onCompletedUniqueCount: count => total = count,
-                reportProgress: pct =>
-                {
-                    if (EnableEvents)
-                        ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(pct, _currentSimToken));
-                },
-                capReached: () => false
-            );
-            return total;
-        }
+        // Ensure ThreadPool saturates cores for parallel runs
+        System.Threading.ThreadPool.SetMinThreads(Environment.ProcessorCount, Environment.ProcessorCount);
 
-        // Large boards: symmetry-pruned unique counter
-        return SymmetryPrunedUniqueCounter.Count(n, cap: 0, onMaterialized: null);
+        try
+        {
+            // Use parallel unified unique engine (cap=0 => count-only) below large-board symmetry threshold
+            if (n <= SimulationSettings.LargeBoardSymmetryPruningThreshold)
+            {
+                ulong total = 0;
+                BitmaskParallelEngine.RunUniqueUnified(
+                    n,
+                    enableEvents: false,    // no events in count-only
+                    cap: 0,
+                    onUniqueSolution: _ => { },      // no-op
+                    onCompletedUniqueCount: count => total = count,
+                    reportProgress: _ => { },        // suppress progress
+                    capReached: () => false
+                );
+                return total;
+            }
+
+            // Large boards: symmetry-pruned unique counter (memory-efficient)
+            return SymmetryPrunedUniqueCounter.Count(n, cap: 0, onMaterialized: null);
+        }
+        finally
+        {
+            // Restore flags
+            EnablePrefixMinimalityPruning = origPrefix;
+            EnablePartialReflectionPruning = origReflection;
+            SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
+        }
     }
 
     private ulong CountAllExact()
