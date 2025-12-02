@@ -4,12 +4,12 @@ internal class Program
 {
     static void Main(string[] args)
     {
-        // Skip custom run when invoked by BenchmarkDotNet (it passes '--' and filter args),
-        // or when BENCHMARK_MODE=1 is set.
         var benchMode = Environment.GetEnvironmentVariable("BENCHMARK_MODE");
         if ((benchMode == "1") || (args != null && args.Any(a => a.StartsWith("--"))))
         {
-            return; // let BenchmarkDotNet handle execution
+            // Run all benchmarks in this assembly when invoked by BenchmarkDotNet infrastructure.
+            BenchmarkDotNet.Running.BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
+            return;
         }
 
         int n = 19; // High-N run for All count-only

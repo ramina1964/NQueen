@@ -188,12 +188,12 @@ public partial class BitmaskSolver : ISolver, IDisposable
 
         try
         {
-            // Mid-range boards (≥ symmetry threshold): use dictionary-free half-board engine
-            if (n >= SimulationSettings.LargeBoardSymmetryPruningThreshold && n <= 22)
+            // Mid-range boards (≥ threshold): use dictionary-free half-board engine
+            if (n >= SimulationSettings.UniqueCountOnlyParallelThresholdN && n <= 22)
                 return CountUniqueFastHalfBoard(n);
 
             // Small boards: parallel unified unique engine (cap=0 => count-only)
-            if (n < SimulationSettings.LargeBoardSymmetryPruningThreshold)
+            if (n < SimulationSettings.UniqueCountOnlyParallelThresholdN)
             {
                 ulong total = 0;
                 BitmaskParallelEngine.RunUniqueUnified(
