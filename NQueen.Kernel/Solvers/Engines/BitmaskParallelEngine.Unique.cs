@@ -89,40 +89,64 @@ internal sealed partial class BitmaskParallelEngine
         var lastHeartbeat = System.Diagnostics.Stopwatch.StartNew();
         const int heartbeatMs = 1500;
 
-        // Use ParallelOptions to increase parallelism
-        var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
+        // Bounded work-stealing queue to reduce Partitioner overhead
+        var queue = new ConcurrentQueue<PartialState>();
+        foreach (var ps in partialStates) queue.Enqueue(ps);
+        int cores = Environment.ProcessorCount;
+        int batchSize = Math.Max(8, totalTasks / (cores * 16));
+        var workers = new List<Task>(cores);
 
-        Parallel.ForEach(partialStates, parallelOptions, ps =>
+        for (int w = 0; w < cores; w++)
         {
-            EnumerateFromPartial(ps);
-            int done = Interlocked.Increment(ref progressCounter);
-            if (request.EnableEvents && expectedTotal == 0)
+            workers.Add(Task.Run(() =>
             {
-                double pct = (double)done / totalTasks * 100.0;
-                int bucket = (int)pct / progressBucketSize * progressBucketSize;
-                int observed;
-                while (bucket > (observed = Volatile.Read(ref progressBucketReported)))
+                var localBatch = new List<PartialState>(batchSize);
+                while (!queue.IsEmpty)
                 {
-                    if (Interlocked.CompareExchange(ref progressBucketReported, bucket, observed) == observed)
+                    localBatch.Clear();
+                    for (int i = 0; i < batchSize && queue.TryDequeue(out var item); i++)
+                        localBatch.Add(item);
+                    if (localBatch.Count == 0) break;
+
+                    foreach (var ps in localBatch)
                     {
-                        request.ReportProgress(bucket);
-                        break;
+                        EnumerateFromPartial(ps);
+                        int done = Interlocked.Increment(ref progressCounter);
+                        if (request.EnableEvents && expectedTotal == 0)
+                        {
+                            double pct = (double)done / totalTasks * 100.0;
+                            int bucket = (int)pct / progressBucketSize * progressBucketSize;
+                            int observed;
+                            while (bucket > (observed = Volatile.Read(ref progressBucketReported)))
+                            {
+                                if (Interlocked.CompareExchange(ref progressBucketReported, bucket, observed) == observed)
+                                {
+                                    request.ReportProgress(bucket);
+                                    break;
+                                }
+                            }
+                            if (lastHeartbeat.ElapsedMilliseconds >= heartbeatMs)
+                            {
+                                request.ReportProgress(Math.Min(99.0, pct));
+                                lastHeartbeat.Restart();
+                            }
+                        }
                     }
                 }
-                if (lastHeartbeat.ElapsedMilliseconds >= heartbeatMs)
-                {
-                    request.ReportProgress(Math.Min(99.0, pct));
-                    lastHeartbeat.Restart();
-                }
-            }
-        });
+            }));
+        }
+        Task.WaitAll(workers.ToArray());
 
         request.OnCompletedUniqueCount((ulong)globalUnique.Count);
         request.ReportProgress(100.0);
 
         void EnumerateFromPartial(PartialState ps)
         {
-            int[] rowsArr = (int[])ps.Rows.Clone();
+            // Expand prefix rows (length may be < N) into working N-sized array
+            int[] rowsArr = new int[N];
+            Array.Fill(rowsArr, -1);
+            if (ps.Rows.Length > 0)
+                Array.Copy(ps.Rows, 0, rowsArr, 0, ps.Rows.Length);
             int col = ps.Depth;
             ulong cols = ps.Cols;
             ulong d1 = ps.D1;
@@ -143,99 +167,106 @@ internal sealed partial class BitmaskParallelEngine
             ulong[] stackD2 = new ulong[N];
             ulong[] stackRemaining = new ulong[N];
             int[] scratch = ArrayPool<int>.Shared.Rent(N * 8);
-            while (true)
+            try
             {
-                UniqueInstrumentation.VisitNode();
-                if (col == N)
+                while (true)
                 {
-                    UniqueInstrumentation.VisitLeaf();
-                    UInt128 key = SymmetryHelper.GetCanonicalKey(rowsArr, scratch, out var canonicalSpan);
-                    if (globalUnique.TryAdd(key, 0))
+                    UniqueInstrumentation.VisitNode();
+                    if (col == N)
                     {
-                        if (materializedCount < cap)
+                        UniqueInstrumentation.VisitLeaf();
+                        UInt128 key = SymmetryHelper.GetCanonicalKey(rowsArr, scratch, out var canonicalSpan);
+                        if (globalUnique.TryAdd(key, 0))
                         {
-                            int newVal = Interlocked.Increment(ref materializedCount);
-                            if (newVal <= cap)
+                            if (materializedCount < cap)
                             {
-                                int[] canonicalRows = new int[N]; canonicalSpan.CopyTo(canonicalRows);
-                                request.OnUniqueSolution(canonicalRows);
-                            }
-                        }
-                        if (request.EnableEvents && expectedTotal > 0)
-                        {
-                            ulong uniqueSoFar = (ulong)globalUnique.Count;
-                            double pctSol = (double)uniqueSoFar / expectedTotal * 100.0;
-                            if (pctSol > 99.0) pctSol = 99.0;
-                            if (pctSol >= progressBucketReported + progressBucketSize || lastHeartbeat.ElapsedMilliseconds >= heartbeatMs)
-                            {
-                                int bucket = (int)pctSol;
-                                int observed = Volatile.Read(ref progressBucketReported);
-                                if (bucket > observed && Interlocked.CompareExchange(ref progressBucketReported, bucket, observed) == observed)
+                                int newVal = Interlocked.Increment(ref materializedCount);
+                                if (newVal <= cap)
                                 {
-                                    request.ReportProgress(bucket);
-                                    lastHeartbeat.Restart();
-                                }
-                                else if (lastHeartbeat.ElapsedMilliseconds >= heartbeatMs)
-                                {
-                                    request.ReportProgress(Math.Min(99.0, pctSol));
-                                    lastHeartbeat.Restart();
+                                    int[] canonicalRows = new int[N];
+                                    canonicalSpan.CopyTo(canonicalRows);
+                                    request.OnUniqueSolution(canonicalRows);
                                 }
                             }
+                            if (request.EnableEvents && expectedTotal > 0)
+                            {
+                                ulong uniqueSoFar = (ulong)globalUnique.Count;
+                                double pctSol = (double)uniqueSoFar / expectedTotal * 100.0;
+                                if (pctSol > 99.0) pctSol = 99.0;
+                                if (pctSol >= progressBucketReported + progressBucketSize || lastHeartbeat.ElapsedMilliseconds >= heartbeatMs)
+                                {
+                                    int bucket = (int)pctSol;
+                                    int observed = Volatile.Read(ref progressBucketReported);
+                                    if (bucket > observed && Interlocked.CompareExchange(ref progressBucketReported, bucket, observed) == observed)
+                                    {
+                                        request.ReportProgress(bucket);
+                                        lastHeartbeat.Restart();
+                                    }
+                                    else if (lastHeartbeat.ElapsedMilliseconds >= heartbeatMs)
+                                    {
+                                        request.ReportProgress(Math.Min(99.0, pctSol));
+                                        lastHeartbeat.Restart();
+                                    }
+                                }
+                            }
                         }
-                    }
-                    col--;
-                    if (col < ps.Depth)
-                        break;
-
-                    Restore(col, out remaining); continue;
-                }
-                if (remaining == 0)
-                {
-                    col--;
-                    if (col < ps.Depth) break;
-                    Restore(col, out remaining);
-                    continue;
-                }
-
-                ulong bit = remaining & (ulong)-(long)remaining;
-                remaining ^= bit;
-                int row = BitOperations.TrailingZeroCount(bit);
-                rowsArr[col] = row;
-                stackCols[col] = cols; stackD1[col] = d1;
-                stackD2[col] = d2; stackRemaining[col] = remaining;
-                cols |= bit; d1 = (d1 | bit) << 1; d2 = (d2 | bit) >> 1;
-                col++;
-
-                if (col == N) continue;
-                remaining = ~(cols | d1 | d2) & mask;
-                if (EnableSecondColumnPrune && col == 1)
-                {
-                    int firstRow = rowsArr[0];
-                    if (((N & 1) == 1 && firstRow == N / 2) == false)
-                    {
-                        ulong lowerMask = (1UL << (firstRow + 1)) - 1UL;
-                        remaining &= ~lowerMask;
-                    }
-                }
-                if (EnablePrefixPrune && N >= PrefixPruneThresholdN && col >= PrefixPruneStartDepth)
-                {
-                    if (IdentityPrefixMinimal(rowsArr, col, scratch, N) == false)
-                    {
-                        UniqueInstrumentation.PrefixPrune();
                         col--;
+                        if (col < ps.Depth)
+                            break;
+
                         Restore(col, out remaining);
                         continue;
                     }
+                    if (remaining == 0)
+                    {
+                        col--;
+                        if (col < ps.Depth) break;
+                        Restore(col, out remaining);
+                        continue;
+                    }
+
+                    ulong bit = remaining & (ulong)-(long)remaining;
+                    remaining ^= bit;
+                    int row = BitOperations.TrailingZeroCount(bit);
+                    rowsArr[col] = row;
+                    stackCols[col] = cols; stackD1[col] = d1;
+                    stackD2[col] = d2; stackRemaining[col] = remaining;
+                    cols |= bit; d1 = (d1 | bit) << 1; d2 = (d2 | bit) >> 1;
+                    col++;
+
+                    if (col == N) continue;
+                    remaining = ~(cols | d1 | d2) & mask;
+                    if (EnableSecondColumnPrune && col == 1)
+                    {
+                        int firstRow = rowsArr[0];
+                        if (((N & 1) == 1 && firstRow == N / 2) == false)
+                        {
+                            ulong lowerMask = (1UL << (firstRow + 1)) - 1UL;
+                            remaining &= ~lowerMask;
+                        }
+                    }
+                    if (EnablePrefixPrune && N >= PrefixPruneThresholdN && col >= PrefixPruneStartDepth)
+                    {
+                        if (IdentityPrefixMinimal(rowsArr, col, scratch, N) == false)
+                        {
+                            UniqueInstrumentation.PrefixPrune();
+                            col--;
+                            Restore(col, out remaining);
+                            continue;
+                        }
+                    }
                 }
             }
-            ArrayPool<int>.Shared.Return(scratch, clearArray: UniqueInstrumentation.Enabled);
+            finally
+            {
+                ArrayPool<int>.Shared.Return(scratch, clearArray: UniqueInstrumentation.Enabled);
+            }
             void Restore(int c, out ulong rem)
             {
                 rem = stackRemaining[c]; cols = stackCols[c]; d1 = stackD1[c]; d2 = stackD2[c];
             }
         }
     }
-
     public static void RunUniqueUnified(
         int boardSize, bool enableEvents, int cap,
         Action<int[]> onUniqueSolution, Action<ulong> onCompletedUniqueCount,
@@ -262,8 +293,9 @@ internal sealed partial class BitmaskParallelEngine
         {
             if (depth == splitDepth)
             {
-                var prefix = new int[N];
-                Array.Copy(rows, prefix, N);
+                // Store only the active prefix to reduce copy and memory footprint
+                var prefix = new int[depth];
+                if (depth > 0) Array.Copy(rows, 0, prefix, 0, depth);
                 dest.Add(new PartialState(prefix, depth, cols, d1, d2));
                 depth--;
                 if (depth < 0)
