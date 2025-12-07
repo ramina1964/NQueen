@@ -70,6 +70,14 @@ internal sealed partial class BitmaskParallelEngine
         ulong mask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
         ulong[] rowBits = new ulong[N];
         for (int r = 0; r < N; r++) rowBits[r] = 1UL << r;
+        // Precompute lower masks for second-column pruning
+        // REVERT: remove cached masks and compute inline to match prior behavior
+        // ulong[] lowerMasks = new ulong[N];
+        // for (int r = 0; r < N; r++)
+        // {
+        //     int minRow = r + 1;
+        //     lowerMasks[r] = minRow < N ? ((1UL << minRow) - 1UL) : ((1UL << N) - 1UL);
+        // }
 
         var partialStates = new List<PartialState>();
 
@@ -89,53 +97,84 @@ internal sealed partial class BitmaskParallelEngine
         var lastHeartbeat = System.Diagnostics.Stopwatch.StartNew();
         const int heartbeatMs = 1500;
 
-        // Bounded work-stealing queue to reduce Partitioner overhead
-        var queue = new ConcurrentQueue<PartialState>();
-        foreach (var ps in partialStates) queue.Enqueue(ps);
-        int cores = Environment.ProcessorCount;
-        int batchSize = Math.Max(8, totalTasks / (cores * 16));
-        var workers = new List<Task>(cores);
-
-        for (int w = 0; w < cores; w++)
+        if (N >= 19)
         {
-            workers.Add(Task.Run(() =>
+            var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
+            Parallel.ForEach(partialStates, parallelOptions, ps =>
             {
-                var localBatch = new List<PartialState>(batchSize);
-                while (!queue.IsEmpty)
+                EnumerateFromPartial(ps);
+                int done = Interlocked.Increment(ref progressCounter);
+                if (request.EnableEvents && expectedTotal == 0)
                 {
-                    localBatch.Clear();
-                    for (int i = 0; i < batchSize && queue.TryDequeue(out var item); i++)
-                        localBatch.Add(item);
-                    if (localBatch.Count == 0) break;
-
-                    foreach (var ps in localBatch)
+                    double pct = (double)done / totalTasks * 100.0;
+                    int bucket = (int)pct / progressBucketSize * progressBucketSize;
+                    int observed;
+                    while (bucket > (observed = Volatile.Read(ref progressBucketReported)))
                     {
-                        EnumerateFromPartial(ps);
-                        int done = Interlocked.Increment(ref progressCounter);
-                        if (request.EnableEvents && expectedTotal == 0)
+                        if (Interlocked.CompareExchange(ref progressBucketReported, bucket, observed) == observed)
                         {
-                            double pct = (double)done / totalTasks * 100.0;
-                            int bucket = (int)pct / progressBucketSize * progressBucketSize;
-                            int observed;
-                            while (bucket > (observed = Volatile.Read(ref progressBucketReported)))
+                            request.ReportProgress(bucket);
+                            break;
+                        }
+                    }
+                    if (lastHeartbeat.ElapsedMilliseconds >= heartbeatMs)
+                    {
+                        request.ReportProgress(Math.Min(99.0, pct));
+                        lastHeartbeat.Restart();
+                    }
+                }
+            });
+        }
+        else
+        {
+            // Bounded work-stealing queue to reduce Partitioner overhead for mid-range N
+            var queue = new ConcurrentQueue<PartialState>();
+            foreach (var ps in partialStates) queue.Enqueue(ps);
+            int cores = Environment.ProcessorCount;
+            int batchSize = Math.Max(8, Math.Max(1, queue.Count) / (cores * 8));
+            var workers = new List<Task>(cores);
+
+            for (int w = 0; w < cores; w++)
+            {
+                workers.Add(Task.Run(() =>
+                {
+                    var localBatch = new List<PartialState>(batchSize);
+                    while (!queue.IsEmpty)
+                    {
+                        localBatch.Clear();
+                        for (int i = 0; i < batchSize && queue.TryDequeue(out var item); i++)
+                            localBatch.Add(item);
+                        if (localBatch.Count == 0) break;
+
+                        foreach (var ps in localBatch)
+                        {
+                            EnumerateFromPartial(ps);
+                            int done = Interlocked.Increment(ref progressCounter);
+                            if (request.EnableEvents && expectedTotal == 0)
                             {
-                                if (Interlocked.CompareExchange(ref progressBucketReported, bucket, observed) == observed)
+                                double pct = (double)done / totalTasks * 100.0;
+                                int bucket = (int)pct / progressBucketSize * progressBucketSize;
+                                int observed;
+                                while (bucket > (observed = Volatile.Read(ref progressBucketReported)))
                                 {
-                                    request.ReportProgress(bucket);
-                                    break;
+                                    if (Interlocked.CompareExchange(ref progressBucketReported, bucket, observed) == observed)
+                                    {
+                                        request.ReportProgress(bucket);
+                                        break;
+                                    }
                                 }
-                            }
-                            if (lastHeartbeat.ElapsedMilliseconds >= heartbeatMs)
-                            {
-                                request.ReportProgress(Math.Min(99.0, pct));
-                                lastHeartbeat.Restart();
+                                if (lastHeartbeat.ElapsedMilliseconds >= heartbeatMs)
+                                {
+                                    request.ReportProgress(Math.Min(99.0, pct));
+                                    lastHeartbeat.Restart();
+                                }
                             }
                         }
                     }
-                }
-            }));
+                }));
+            }
+            Task.WaitAll(workers.ToArray());
         }
-        Task.WaitAll(workers.ToArray());
 
         request.OnCompletedUniqueCount((ulong)globalUnique.Count);
         request.ReportProgress(100.0);
