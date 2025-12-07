@@ -80,9 +80,10 @@ public sealed partial class MainViewModel :
             return;
 
         var baseValidationOk = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
+        int visualizeMax = SolutionMode == SolutionMode.Single ? 8 : 10;
         var visualizationInvalid =
             DisplayMode == DisplayMode.Visualize &&
-            parsedSize > SimulationSettings.MaxVisualizeBoardSize;
+            parsedSize > visualizeMax;
 
         if (!baseValidationOk || visualizationInvalid)
             return; // Leave existing board state untouched (matches invalid input behavior).

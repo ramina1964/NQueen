@@ -25,6 +25,11 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         RefreshCommandStates();
     }
 
+    private int GetVisualizeMaxForCurrentMode()
+    {
+        return SolutionMode == SolutionMode.Single ? 8 : 10;
+    }
+
     private void ValidateProperty(string propertyName)
     {
         if (propertyName != nameof(BoardSizeText)) return;
@@ -42,10 +47,13 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
             .ToList();
         foreach (var err in propertyErrors) AddBoardSizeError(err);
         if (ParsingUtils.TryParseInt(BoardSizeText, out var boardSize)
-            && DisplayMode == DisplayMode.Visualize
-            && boardSize > SimulationSettings.MaxVisualizeBoardSize)
+            && DisplayMode == DisplayMode.Visualize)
         {
-            AddBoardSizeError(ErrorMessages.VisualizeSizeTooLarge);
+            int visualizeMax = GetVisualizeMaxForCurrentMode();
+            if (boardSize > visualizeMax)
+            {
+                AddBoardSizeError($"Visualization is only supported for boards up to {visualizeMax}. Switch to Hide mode or reduce the board size.");
+            }
         }
         FinalizeBoardSizeValidation(propertyName);
     }
@@ -93,19 +101,20 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
     {
         if (!_errors.TryGetValue(nameof(BoardSizeText), out var list) || list.Count == 0) return;
         if (!ParsingUtils.TryParseInt(BoardSizeText, out var boardSize)) return;
-        if (DisplayMode != DisplayMode.Visualize || boardSize <= SimulationSettings.MaxVisualizeBoardSize)
+        int visualizeMax = GetVisualizeMaxForCurrentMode();
+        if (DisplayMode != DisplayMode.Visualize || boardSize <= visualizeMax)
         {
-            if (list.Remove(ErrorMessages.VisualizeSizeTooLarge))
+            // Remove any previous visualization size error regardless of its text
+            var toRemove = list.Where(m => m.Contains("Visualization is only supported for boards up to")).ToList();
+            foreach (var msg in toRemove) list.Remove(msg);
+            if (list.Count == 0)
             {
-                if (list.Count == 0)
-                {
-                    _errors.Remove(nameof(BoardSizeText));
-                    IsValid = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
-                }
-                OnErrorsChanged(nameof(BoardSizeText));
-                OnPropertyChanged(nameof(BoardSizeError));
-                RefreshCommandStates();
+                _errors.Remove(nameof(BoardSizeText));
+                IsValid = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
             }
+            OnErrorsChanged(nameof(BoardSizeText));
+            OnPropertyChanged(nameof(BoardSizeError));
+            RefreshCommandStates();
         }
     }
 
@@ -120,13 +129,20 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         }
         var valid = InputViewModel.ValidateBoardSize(BoardSizeText).IsValid;
         if (valid && DisplayMode == DisplayMode.Visualize &&
-            ParsingUtils.TryParseInt(BoardSizeText, out var boardSize) &&
-            boardSize > SimulationSettings.MaxVisualizeBoardSize)
+            ParsingUtils.TryParseInt(BoardSizeText, out var boardSize))
         {
-            AddBoardSizeError(ErrorMessages.VisualizeSizeTooLarge);
-            OnErrorsChanged(nameof(BoardSizeText));
-            OnPropertyChanged(nameof(BoardSizeError));
-            valid = false;
+            int visualizeMax = GetVisualizeMaxForCurrentMode();
+            if (boardSize > visualizeMax)
+            {
+                AddBoardSizeError($"Visualization is only supported for boards up to {visualizeMax}. Switch to Hide mode or reduce the board size.");
+                OnErrorsChanged(nameof(BoardSizeText));
+                OnPropertyChanged(nameof(BoardSizeError));
+                valid = false;
+            }
+            else
+            {
+                ClearVisualizationConstraintIfSatisfied();
+            }
         }
         else
         {
@@ -161,7 +177,8 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         {
             var validationResult = InputViewModel.ValidateBoardSize(previousBoardSizeText);
             bool validForNewMode = validationResult.IsValid;
-            bool visualizationOk = DisplayMode != DisplayMode.Visualize || prevSize <= SimulationSettings.MaxVisualizeBoardSize;
+            int visualizeMax = GetVisualizeMaxForCurrentMode();
+            bool visualizationOk = DisplayMode != DisplayMode.Visualize || prevSize <= visualizeMax;
             if (validForNewMode && visualizationOk && previousBoardSizeText != BoardSizeText)
                 BoardSizeText = previousBoardSizeText;
         }

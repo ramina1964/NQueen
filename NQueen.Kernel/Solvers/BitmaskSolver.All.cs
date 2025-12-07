@@ -70,7 +70,7 @@ public partial class BitmaskSolver
                 AggressiveSymmetry: false,
                 CountOnly: false,
                 DisplayMode,
-                DelayInMillisec,
+                DelayInMillisec: Math.Max(SimulationSettings.MinDelayInMilliseconds, DelayInMillisec),
                 _currentSimToken,
                 () => IsSolverCanceled,
                 p => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },

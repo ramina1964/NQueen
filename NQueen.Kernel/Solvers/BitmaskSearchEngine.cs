@@ -129,7 +129,9 @@ internal sealed class BitmaskSearchEngine
             RootTotal = request.RestrictFirstCol ? maxRow0 : N,
             LastDepth = -1,
             Visualize = visualize,
-            Delay = (visualize && request.DelayInMillisec > 0) ? request.DelayInMillisec : 0,
+            Delay = (visualize && request.DelayInMillisec > 0)
+                ? Math.Max(SimulationSettings.MinDelayInMilliseconds, request.DelayInMillisec)
+                : 0,
             QueenPlacedSampleRate = sampleRate,
             ReflectionEqual = true,
             MinimalityEqual = true

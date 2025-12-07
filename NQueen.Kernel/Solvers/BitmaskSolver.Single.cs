@@ -4,8 +4,10 @@ public partial class BitmaskSolver
 {
     private void SolveSingleMode()
     {
-        // 1. Curated fast path
-        if (NQueen.Domain.Utils.ExpectedSolutionData.SingleSolutions.TryGetValue(BoardSize, out var list) &&
+        bool visualize = DisplayMode == DisplayMode.Visualize;
+
+        // 1. Curated fast path (skip when visualizing to show real backtracking)
+        if (!visualize && NQueen.Domain.Utils.ExpectedSolutionData.SingleSolutions.TryGetValue(BoardSize, out var list) &&
             list.Count > 0)
         {
             var rows = list[0];
@@ -18,8 +20,8 @@ public partial class BitmaskSolver
             return;
         }
 
-        // 2. Large board constructive path
-        if (BoardSize > 25)
+        // 2. Large board constructive path (skip when visualizing)
+        if (!visualize && BoardSize > 25)
         {
             var rows = GenerateConstructiveSingleSolution(BoardSize);
             if (!ValidateRows(rows)) return;
@@ -31,7 +33,7 @@ public partial class BitmaskSolver
             return;
         }
 
-        // 3. Fallback enumeration
+        // 3. Fallback enumeration (always used when visualizing to show full backtracking)
         BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
             BoardSize,
             RestrictFirstCol: false,
@@ -39,7 +41,7 @@ public partial class BitmaskSolver
             AggressiveSymmetry: false,
             CountOnly: false,
             DisplayMode,
-            DelayInMillisec,
+            DelayInMillisec: Math.Max(SimulationSettings.MinDelayInMilliseconds, DelayInMillisec),
             _currentSimToken,
             () => IsSolverCanceled,
             p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
@@ -54,8 +56,6 @@ public partial class BitmaskSolver
                 if (_solutions.Count == 0 && _largeBoardRawSolutions.Count == 0 && (!_capEnabled || _maxDisplayedCount > 0))
                 {
                     _solutionCount = 1;
-                    // Emit visualization for final solution only; UI animates via timer.
-                    EmitSingleVisualization(rows);
                     MaterializeSingle(rows);
                     if (EnableEvents && !_eventsSuppressedAfterCap)
                         SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));

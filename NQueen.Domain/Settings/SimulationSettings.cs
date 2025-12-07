@@ -4,7 +4,8 @@ public static class SimulationSettings
 {
     // Maximum count of displayed solutions
     public const int MaxDisplayedCount = 5;
-    public const int DefaultDelayInMilliseconds = 70;
+    public const int DefaultDelayInMilliseconds = 120;
+    public const int MinDelayInMilliseconds = 50;
     public const SolutionMode DefaultSolutionMode = SolutionMode.Unique;
     public const DisplayMode DefaultDisplayMode = DisplayMode.Hide;
 
@@ -39,7 +40,7 @@ public static class SimulationSettings
     public const int ProgressIntervalInMilliSec = 10_000;
 
     // Visualization is allowed only up to and including this board size.
-    public const int MaxVisualizeBoardSize = 6;
+    public const int MaxVisualizeBoardSize = 10;
 
     // Threshold at/above which we throttle parallel progress updates for All modes.
     public const int LargeBoardProgressThrottleThreshold = 16;
