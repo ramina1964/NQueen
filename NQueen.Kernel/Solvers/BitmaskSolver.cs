@@ -246,7 +246,10 @@ public partial class BitmaskSolver : ISolver, IDisposable
 
         int cap = countOnly ? 0 : _maxDisplayedCount;
         bool materialize = !countOnly && cap > 0;
+        // Enable advanced symmetry pruning for larger boards (mirrors BitmaskSearchEngine behavior)
+        bool symmetryActive = N >= 14;
         ulong totalNonCenter = 0; ulong totalCenter = 0; int materialized = 0;
+        long totalNonCenterL = 0, totalCenterL = 0;
         int cores = Environment.ProcessorCount;
         int maxDepth = 4;
         int depth = 2;
@@ -270,6 +273,10 @@ public partial class BitmaskSolver : ISolver, IDisposable
                 return;
             }
             ulong avail = ~(cols | d1 | d2) & fullMask;
+            if (symmetryActive)
+            {
+                avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(N, col, rows, avail);
+            }
             for (ulong a = avail; a != 0; a &= (a - 1))
             {
                 ulong bitLocal = a & (ulong)-(long)a;
@@ -319,6 +326,10 @@ public partial class BitmaskSolver : ISolver, IDisposable
                             ulong d2Local = item.d2;
                             int col = startCol;
                             ulong avail = ~(colsLocal | d1Local | d2Local) & fullMask;
+                            if (symmetryActive)
+                            {
+                                avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(N, col, rows, avail);
+                            }
                             while (true)
                             {
                                 if (IsSolverCanceled) break;
@@ -368,6 +379,10 @@ public partial class BitmaskSolver : ISolver, IDisposable
                                 colsLocal |= bitLocal; d1Local = (d1Local | bitLocal) << 1; d2Local = (d2Local | bitLocal) >> 1;
                                 col++; if (col == N) continue;
                                 avail = ~(colsLocal | d1Local | d2Local) & fullMask;
+                                if (symmetryActive)
+                                {
+                                    avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(N, col, rows, avail);
+                                }
                             }
                         }
                     }
@@ -379,14 +394,13 @@ public partial class BitmaskSolver : ISolver, IDisposable
                     poolD2.Return(stackD2, clearArray: false);
                     poolAvail.Return(stackAvail, clearArray: false);
                 }
-                lock (mergeLock)
-                {
-                    totalNonCenter += threadNonCenter;
-                    totalCenter += threadCenter;
-                }
+                System.Threading.Interlocked.Add(ref totalNonCenterL, (long)threadNonCenter);
+                System.Threading.Interlocked.Add(ref totalCenterL, (long)threadCenter);
             }));
         }
         Task.WaitAll(tasks.ToArray());
+        totalNonCenter = (ulong)System.Threading.Interlocked.Read(ref totalNonCenterL);
+        totalCenter = (ulong)System.Threading.Interlocked.Read(ref totalCenterL);
         ulong combined = halfBoard ? (totalNonCenter * 2UL + totalCenter) : (totalNonCenter + totalCenter);
         _solutionCount = combined;
         if (EnableEvents && !countOnly) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
