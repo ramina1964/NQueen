@@ -182,6 +182,11 @@ internal sealed class BitmaskSearchEngine
                 cols = frame.Cols; d1 = frame.D1; d2 = frame.D2; remaining = frame.Remaining;
                 reflectionEqual = frame.ReflectionEqual; minimalityEqual = frame.MinimalityEqual;
                 queenRows[col] = -1;
+                if (s.Visualize)
+                {
+                    request.OnQueenPlaced(new Memory<int>(s.QueenRows));
+                    if (s.Delay > 0) System.Threading.Thread.Sleep(s.Delay);
+                }
                 continue;
             }
             if (remaining == 0)
@@ -191,6 +196,11 @@ internal sealed class BitmaskSearchEngine
                 cols = frame.Cols; d1 = frame.D1; d2 = frame.D2; remaining = frame.Remaining;
                 reflectionEqual = frame.ReflectionEqual; minimalityEqual = frame.MinimalityEqual;
                 queenRows[col] = -1;
+                if (s.Visualize)
+                {
+                    request.OnQueenPlaced(new Memory<int>(s.QueenRows));
+                    if (s.Delay > 0) System.Threading.Thread.Sleep(s.Delay);
+                }
                 continue;
             }
             ulong bit = remaining & (ulong)-(long)remaining;
@@ -200,6 +210,11 @@ internal sealed class BitmaskSearchEngine
             if (col >= pruneDepthGate && ShouldPrunePrefixIncremental(s.QueenRows, col, N, reflectionEnabled, prefixEnabled, ref reflectionEqual, ref minimalityEqual))
             {
                 queenRows[col] = -1;
+                if (s.Visualize)
+                {
+                    request.OnQueenPlaced(new Memory<int>(s.QueenRows));
+                    if (s.Delay > 0) System.Threading.Thread.Sleep(s.Delay);
+                }
                 continue;
             }
             if (col == 0) ReportRootProgress(ref s, request);

@@ -102,9 +102,10 @@ public class SolverTests
             boardSize: 8,
             solutionMode: SolutionMode.Single,
             displayMode: DisplayMode.Visualize,
-            solutionFormatter: new DefaultSolutionFormatter());
-
-        solver.EnableEvents = true;
+            solutionFormatter: new DefaultSolutionFormatter())
+        {
+            EnableEvents = true
+        };
         int queenEvents = 0;
         int lastDepth = 0;
 

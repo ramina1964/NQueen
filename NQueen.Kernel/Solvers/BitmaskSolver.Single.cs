@@ -6,28 +6,39 @@ public partial class BitmaskSolver
     {
         bool visualize = DisplayMode == DisplayMode.Visualize;
 
-        // Fast visualization path: emit events and materialize from a constructive solution
         if (visualize)
         {
-            var rows = GenerateConstructiveSingleSolution(BoardSize);
-            if (!ValidateRows(rows)) return;
-            _solutionCount = 1;
-
-            // Emit N incremental QueenPlaced events without sleeping
-            int n = rows.Length;
-            var prefix = new int[n];
-            Array.Fill(prefix, -1);
-            for (int depth = 1; depth <= n; depth++)
-            {
-                if (IsSolverCanceled) break;
-                prefix[depth - 1] = rows[depth - 1];
-                var snapshot = new int[n];
-                Array.Copy(prefix, snapshot, n);
-                QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(new Memory<int>(snapshot), BoardSize));
-            }
-
-            MaterializeSingle(rows);
-            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+            // Engine-backed visualization: emit placements/removals and honor DelayInMillisec
+            BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
+                BoardSize,
+                RestrictFirstCol: false,
+                EnhancedSymmetry: false,
+                AggressiveSymmetry: false,
+                CountOnly: false,
+                DisplayMode,
+                DelayInMillisec: Math.Max(0, DelayInMillisec),
+                _currentSimToken,
+                () => IsSolverCanceled,
+                p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
+                m =>
+                {
+                    if (EnableEvents && !_eventsSuppressedAfterCap)
+                        QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize));
+                },
+                rows =>
+                {
+                    if (!ValidateRows(rows)) return false;
+                    if (_solutions.Count == 0 && _largeBoardRawSolutions.Count == 0 && (!_capEnabled || _maxDisplayedCount > 0))
+                    {
+                        _solutionCount = 1;
+                        MaterializeSingle(rows);
+                        if (EnableEvents && !_eventsSuppressedAfterCap)
+                            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
+                        return true;
+                    }
+                    return false;
+                }
+            ));
             return;
         }
 

@@ -198,66 +198,58 @@ public partial class BitmaskSolver : ISolver, IDisposable
         bool halfBoard = N >= 15 && ((N & 1) == 1);
         bool isOdd = (N & 1) == 1; int centerRow = N / 2;
 
-        // Fast visualization path for All mode
+        // Visualization path: use engine to emit incremental placements/backtracks with delay
         if (!countOnly && DisplayMode == DisplayMode.Visualize)
         {
-            var rowsVis = GenerateConstructiveSolution(N);
-            if (!IsValidNQueenSolution(rowsVis))
-            {
-                int[]? first = null;
-                BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
-                    N,
-                    RestrictFirstCol: false,
-                    EnhancedSymmetry: false,
-                    AggressiveSymmetry: false,
-                    CountOnly: false,
-                    DisplayMode,
-                    DelayInMillisec: 0,
-                    _currentSimToken,
-                    () => IsSolverCanceled,
-                    _ => { },
-                    m => { if (EnableEvents) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, N)); },
-                    rows =>
+            int cap = _maxDisplayedCount;
+            int materialized = 0;
+            var seen = new List<UInt128>(cap);
+            BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
+                N,
+                RestrictFirstCol: false,
+                EnhancedSymmetry: false,
+                AggressiveSymmetry: false,
+                CountOnly: false,
+                DisplayMode,
+                DelayInMillisec: Math.Max(0, DelayInMillisec),
+                _currentSimToken,
+                () => IsSolverCanceled,
+                p => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
+                m => { if (EnableEvents) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, N)); },
+                rows =>
+                {
+                    if (!ValidateRows(rows)) return false;
+                    if (cap <= 0) return false;
+                    if (materialized < cap)
                     {
-                        if (!ValidateRows(rows)) return false;
-                        first = rows.ToArray();
-                        return true;
+                        if (rows.Length <= 25)
+                        {
+                            var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer ?? new int[rows.Length * 8], out _);
+                            _solutions.Add((packed, rows.Length));
+                            seen.Add(packed);
+                        }
+                        else
+                        {
+                            var copy = new int[rows.Length];
+                            Array.Copy(rows, copy, rows.Length);
+                            _largeBoardRawSolutions.Add(copy);
+                        }
+                        materialized++;
+                        if (EnableEvents && !_eventsSuppressedAfterCap)
+                            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
+                        if (materialized >= cap)
+                        {
+                            _eventsSuppressedAfterCap = true;
+                            return true; // stop engine after cap
+                        }
                     }
-                ));
-                rowsVis = first ?? rowsVis;
-            }
-            if (ValidateRows(rowsVis))
-            {
-                if (EnableEvents)
-                {
-                    var prefix = new int[N];
-                    Array.Fill(prefix, -1);
-                    for (int d = 1; d <= N; d++)
-                    {
-                        if (IsSolverCanceled) break;
-                        prefix[d - 1] = rowsVis[d - 1];
-                        var snapshot = new int[N];
-                        Array.Copy(prefix, snapshot, N);
-                        QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(new Memory<int>(snapshot), BoardSize));
-                    }
+                    return false;
                 }
-                _solutionCount = ExpectedSolutionCounts.GetAll(BoardSize);
-                if (rowsVis.Length <= 25)
-                {
-                    var packed = SymmetryHelper.GetCanonicalKey(rowsVis, _scratchBuffer ?? new int[rowsVis.Length * 8], out _);
-                    _solutions.Add((packed, rowsVis.Length));
-                }
-                else
-                {
-                    var copy = new int[rowsVis.Length];
-                    Array.Copy(rowsVis, copy, rowsVis.Length);
-                    _largeBoardRawSolutions.Add(copy);
-                }
-                if (EnableEvents && !_eventsSuppressedAfterCap)
-                    SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rowsVis), BoardSize));
-                ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
-                return;
-            }
+            ));
+            ulong lookup = ExpectedSolutionCounts.GetAll(N);
+            _solutionCount = lookup > 0 ? lookup : (ulong)seen.Count;
+            if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+            return;
         }
 
         // Use engine for small boards only; push 15–17 to parallel partial-state path
@@ -307,11 +299,10 @@ public partial class BitmaskSolver : ISolver, IDisposable
             return;
         }
 
-        int cap = countOnly ? 0 : _maxDisplayedCount;
-        bool materialize = !countOnly && cap > 0;
-        // Disable symmetry pruning for All mode to avoid undercount during enumeration
-        bool symmetryActive = false;
-        ulong totalNonCenter = 0; ulong totalCenter = 0; int materialized = 0;
+        int cap2 = countOnly ? 0 : _maxDisplayedCount;
+        bool materialize2 = !countOnly && cap2 > 0;
+        bool symmetryActive = false; // avoid undercount in All mode
+        int materializedCount = 0;
         long totalNonCenterL = 0, totalCenterL = 0;
         int cores = Environment.ProcessorCount;
         int maxDepth = 4;
@@ -400,10 +391,10 @@ public partial class BitmaskSolver : ISolver, IDisposable
                                 {
                                     int r0 = rows[0];
                                     if (halfBoard && isOdd && r0 == centerRow) threadCenter++; else threadNonCenter++;
-                                    if (materialize && threadMat < cap)
+                                    if (materialize2 && threadMat < cap2)
                                     {
-                                        int current = System.Threading.Interlocked.Increment(ref materialized);
-                                        if (current <= cap)
+                                        int current = System.Threading.Interlocked.Increment(ref materializedCount);
+                                        if (current <= cap2)
                                         {
                                             lock (mergeLock)
                                             {
@@ -420,7 +411,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
                                                 }
                                                 if (EnableEvents && !_eventsSuppressedAfterCap)
                                                     SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
-                                                if (current == cap) _eventsSuppressedAfterCap = true;
+                                                if (current == cap2) _eventsSuppressedAfterCap = true;
                                             }
                                         }
                                         threadMat = current;
@@ -462,9 +453,9 @@ public partial class BitmaskSolver : ISolver, IDisposable
             }));
         }
         Task.WaitAll(tasks.ToArray());
-        totalNonCenter = (ulong)System.Threading.Interlocked.Read(ref totalNonCenterL);
-        totalCenter = (ulong)System.Threading.Interlocked.Read(ref totalCenterL);
-        ulong combined = halfBoard ? (totalNonCenter * 2UL + totalCenter) : (totalNonCenter + totalCenter);
+        ulong nonCenter = (ulong)System.Threading.Interlocked.Read(ref totalNonCenterL);
+        ulong center = (ulong)System.Threading.Interlocked.Read(ref totalCenterL);
+        ulong combined = halfBoard ? (nonCenter * 2UL + center) : (nonCenter + center);
         _solutionCount = combined;
         if (EnableEvents && !countOnly) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
@@ -748,7 +739,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
         }
         else
         {
-            int materialized = 0;
+            int materializedSamples = 0;
             BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
                 BoardSize,
                 RestrictFirstCol: false,
@@ -764,11 +755,11 @@ public partial class BitmaskSolver : ISolver, IDisposable
                 rows =>
                 {
                     if (!ValidateRows(rows)) return false;
-                    if (materialized < cap)
+                    if (materializedSamples < cap)
                     {
                         AddSample(rows);
-                        materialized++;
-                        if (materialized >= cap)
+                        materializedSamples++;
+                        if (materializedSamples >= cap)
                         {
                             _eventsSuppressedAfterCap = true;
                             return true;
