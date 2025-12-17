@@ -377,7 +377,6 @@ public partial class BitmaskSolver : ISolver, IDisposable
         int N = BoardSize;
         bool halfBoard = N >= 15 && ((N & 1) == 1);
         bool isOdd = (N & 1) == 1; int centerRow = N / 2;
-        // Use parallel partial-state enumeration for N>=18
         if (N <= 17)
         {
             int capSmall = countOnly ? 0 : _maxDisplayedCount;
@@ -424,6 +423,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
             return;
         }
         int cap = countOnly ? 0 : _maxDisplayedCount;
+        bool materialize = !countOnly && cap > 0;
         ulong totalNonCenter = 0; ulong totalCenter = 0; int materialized = 0;
         int cores = Environment.ProcessorCount;
         int maxDepth = 4;
@@ -451,7 +451,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
             for (ulong a = avail; a != 0; a &= (a - 1))
             {
                 ulong bitLocal = a & (ulong)-(long)a;
-                int row = BitOperations.TrailingZeroCount(bitLocal);
+                int row = FastTzcnt(bitLocal);
                 rows[col] = row;
                 ulong nextCols = cols | bitLocal;
                 ulong nextD1 = (d1 | bitLocal) << 1;
@@ -504,7 +504,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
                                 {
                                     int r0 = rows[0];
                                     if (halfBoard && isOdd && r0 == centerRow) threadCenter++; else threadNonCenter++;
-                                    if (!countOnly && cap > 0 && threadMat < cap)
+                                    if (materialize && threadMat < cap)
                                     {
                                         int current = System.Threading.Interlocked.Increment(ref materialized);
                                         if (current <= cap)
@@ -540,7 +540,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
                                     continue;
                                 }
                                 ulong bitLocal = avail & (ulong)-(long)avail; avail ^= bitLocal;
-                                int row = BitOperations.TrailingZeroCount(bitLocal);
+                                int row = FastTzcnt(bitLocal);
                                 rows[col] = row;
                                 stackCols[col] = colsLocal; stackD1[col] = d1Local; stackD2[col] = d2Local; stackAvail[col] = avail;
                                 colsLocal |= bitLocal; d1Local = (d1Local | bitLocal) << 1; d2Local = (d2Local | bitLocal) >> 1;
