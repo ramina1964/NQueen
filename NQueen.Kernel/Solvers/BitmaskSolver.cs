@@ -197,6 +197,69 @@ public partial class BitmaskSolver : ISolver, IDisposable
         int N = BoardSize;
         bool halfBoard = N >= 15 && ((N & 1) == 1);
         bool isOdd = (N & 1) == 1; int centerRow = N / 2;
+
+        // Fast visualization path for All mode
+        if (!countOnly && DisplayMode == DisplayMode.Visualize)
+        {
+            var rowsVis = GenerateConstructiveSolution(N);
+            if (!IsValidNQueenSolution(rowsVis))
+            {
+                int[]? first = null;
+                BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
+                    N,
+                    RestrictFirstCol: false,
+                    EnhancedSymmetry: false,
+                    AggressiveSymmetry: false,
+                    CountOnly: false,
+                    DisplayMode,
+                    DelayInMillisec: 0,
+                    _currentSimToken,
+                    () => IsSolverCanceled,
+                    _ => { },
+                    m => { if (EnableEvents) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, N)); },
+                    rows =>
+                    {
+                        if (!ValidateRows(rows)) return false;
+                        first = rows.ToArray();
+                        return true;
+                    }
+                ));
+                rowsVis = first ?? rowsVis;
+            }
+            if (ValidateRows(rowsVis))
+            {
+                if (EnableEvents)
+                {
+                    var prefix = new int[N];
+                    Array.Fill(prefix, -1);
+                    for (int d = 1; d <= N; d++)
+                    {
+                        if (IsSolverCanceled) break;
+                        prefix[d - 1] = rowsVis[d - 1];
+                        var snapshot = new int[N];
+                        Array.Copy(prefix, snapshot, N);
+                        QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(new Memory<int>(snapshot), BoardSize));
+                    }
+                }
+                _solutionCount = ExpectedSolutionCounts.GetAll(BoardSize);
+                if (rowsVis.Length <= 25)
+                {
+                    var packed = SymmetryHelper.GetCanonicalKey(rowsVis, _scratchBuffer ?? new int[rowsVis.Length * 8], out _);
+                    _solutions.Add((packed, rowsVis.Length));
+                }
+                else
+                {
+                    var copy = new int[rowsVis.Length];
+                    Array.Copy(rowsVis, copy, rowsVis.Length);
+                    _largeBoardRawSolutions.Add(copy);
+                }
+                if (EnableEvents && !_eventsSuppressedAfterCap)
+                    SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rowsVis), BoardSize));
+                ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+                return;
+            }
+        }
+
         // Use engine for small boards only; push 15–17 to parallel partial-state path
         if (N <= 14)
         {
@@ -246,8 +309,8 @@ public partial class BitmaskSolver : ISolver, IDisposable
 
         int cap = countOnly ? 0 : _maxDisplayedCount;
         bool materialize = !countOnly && cap > 0;
-        // Enable advanced symmetry pruning for larger boards (mirrors BitmaskSearchEngine behavior)
-        bool symmetryActive = N >= 14;
+        // Disable symmetry pruning for All mode to avoid undercount during enumeration
+        bool symmetryActive = false;
         ulong totalNonCenter = 0; ulong totalCenter = 0; int materialized = 0;
         long totalNonCenterL = 0, totalCenterL = 0;
         int cores = Environment.ProcessorCount;
@@ -882,5 +945,25 @@ public partial class BitmaskSolver : ISolver, IDisposable
     {
         EnumerateAllAdaptive(countOnly: true);
         return _solutionCount;
+    }
+
+    private static bool IsValidNQueenSolution(int[] rows)
+    {
+        int n = rows.Length;
+        var cols = new bool[n];
+        var diag1 = new HashSet<int>();
+        var diag2 = new HashSet<int>();
+        for (int c = 0; c < n; c++)
+        {
+            int r = rows[c];
+            if (r < 0 || r >= n) return false;
+            if (cols[r]) return false;
+            cols[r] = true;
+            int d1 = r - c;
+            int d2 = r + c;
+            if (!diag1.Add(d1)) return false;
+            if (!diag2.Add(d2)) return false;
+        }
+        return true;
     }
 }

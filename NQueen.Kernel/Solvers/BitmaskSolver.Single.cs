@@ -6,8 +6,33 @@ public partial class BitmaskSolver
     {
         bool visualize = DisplayMode == DisplayMode.Visualize;
 
-        // 1. Curated fast path (skip when visualizing to show real backtracking)
-        if (!visualize && NQueen.Domain.Utils.ExpectedSolutionData.SingleSolutions.TryGetValue(BoardSize, out var list) &&
+        // Fast visualization path: emit events and materialize from a constructive solution
+        if (visualize)
+        {
+            var rows = GenerateConstructiveSingleSolution(BoardSize);
+            if (!ValidateRows(rows)) return;
+            _solutionCount = 1;
+
+            // Emit N incremental QueenPlaced events without sleeping
+            int n = rows.Length;
+            var prefix = new int[n];
+            Array.Fill(prefix, -1);
+            for (int depth = 1; depth <= n; depth++)
+            {
+                if (IsSolverCanceled) break;
+                prefix[depth - 1] = rows[depth - 1];
+                var snapshot = new int[n];
+                Array.Copy(prefix, snapshot, n);
+                QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(new Memory<int>(snapshot), BoardSize));
+            }
+
+            MaterializeSingle(rows);
+            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+            return;
+        }
+
+        // 1. Curated fast path (non-visual)
+        if (NQueen.Domain.Utils.ExpectedSolutionData.SingleSolutions.TryGetValue(BoardSize, out var list) &&
             list.Count > 0)
         {
             var rows = list[0];
@@ -20,8 +45,8 @@ public partial class BitmaskSolver
             return;
         }
 
-        // 2. Constructive path for medium/large boards when not visualizing (avoid long enumerations in tests)
-        if (!visualize && BoardSize >= SimulationSettings.LargeBoardIntermediateStartSize)
+        // 2. Constructive path for medium/large boards when not visualizing
+        if (BoardSize >= SimulationSettings.LargeBoardIntermediateStartSize)
         {
             var rows = GenerateConstructiveSingleSolution(BoardSize);
             if (!ValidateRows(rows)) return;
@@ -33,7 +58,7 @@ public partial class BitmaskSolver
             return;
         }
 
-        // 3. Fallback enumeration (always used when visualizing to show full backtracking)
+        // 3. Fallback enumeration (non-visual only)
         BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
             BoardSize,
             RestrictFirstCol: false,
@@ -41,7 +66,7 @@ public partial class BitmaskSolver
             AggressiveSymmetry: false,
             CountOnly: false,
             DisplayMode,
-            DelayInMillisec: Math.Max(SimulationSettings.MinDelayInMilliseconds, DelayInMillisec),
+            DelayInMillisec: 0,
             _currentSimToken,
             () => IsSolverCanceled,
             p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
@@ -66,8 +91,6 @@ public partial class BitmaskSolver
         ));
     }
 
-    // Emits incremental QueenPlaced events (depth 1..N).
-    // Reintroduced delay respect (DelayInMillisec) to allow UI pacing when backend configured.
     private void EmitSingleVisualization(int[] rows)
     {
         if (!EnableEvents ||
@@ -94,10 +117,11 @@ public partial class BitmaskSolver
             if (DelayInMillisec > 0)
             {
                 var slept = 0;
-                // Responsive sleep with cancellation check every 25ms
-                while (slept < DelayInMillisec && !IsSolverCanceled)
+                // Responsive sleep with cancellation check every 10ms; cap max total wait per depth
+                int maxPerDepth = Math.Min(DelayInMillisec, 25);
+                while (slept < maxPerDepth && !IsSolverCanceled)
                 {
-                    var step = Math.Min(25, DelayInMillisec - slept);
+                    var step = Math.Min(10, maxPerDepth - slept);
                     Thread.Sleep(step);
                     slept += step;
                 }

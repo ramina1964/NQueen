@@ -61,6 +61,59 @@ public partial class BitmaskSolver
 
     private void EnumerateUniqueVisualizeAdaptive()
     {
+        // Fast visualization path: emit a first solution quickly and stop
+        if (DisplayMode == DisplayMode.Visualize)
+        {
+            var rows = GenerateConstructiveSolution(BoardSize);
+            if (!IsValidNQueenSolution(rows))
+            {
+                int[]? first = null;
+                BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
+                    BoardSize,
+                    RestrictFirstCol: false,
+                    EnhancedSymmetry: false,
+                    AggressiveSymmetry: false,
+                    CountOnly: false,
+                    DisplayMode,
+                    DelayInMillisec: 0,
+                    _currentSimToken,
+                    () => IsSolverCanceled,
+                    _ => { },
+                    m => { if (EnableEvents) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize)); },
+                    rowsFound =>
+                    {
+                        if (!ValidateRows(rowsFound)) return false;
+                        first = rowsFound.ToArray();
+                        return true;
+                    }
+                ));
+                rows = first ?? rows;
+            }
+            if (ValidateRows(rows))
+            {
+                // Emit incremental QueenPlaced events
+                if (EnableEvents)
+                {
+                    int n = rows.Length;
+                    var prefix = new int[n];
+                    Array.Fill(prefix, -1);
+                    for (int depth = 1; depth <= n; depth++)
+                    {
+                        if (IsSolverCanceled) break;
+                        prefix[depth - 1] = rows[depth - 1];
+                        var snapshot = new int[n];
+                        Array.Copy(prefix, snapshot, n);
+                        QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(new Memory<int>(snapshot), BoardSize));
+                    }
+                }
+                // Materialize and finalize
+                _solutionCount = ExpectedSolutionCounts.GetUnique(BoardSize);
+                MaterializeUniqueSingle(rows);
+                ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+                return;
+            }
+        }
+
         // Visualization path: enumerate unique solutions while emitting QueenPlaced events with delay.
         SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, EnableIncrementalCanonicalization);
         int N = BoardSize;
@@ -79,37 +132,53 @@ public partial class BitmaskSolver
             () => IsSolverCanceled,
             p => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
             m => { if (EnableEvents) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, N)); },
-            rows =>
+            rowsFound =>
             {
-                if (!ValidateRows(rows)) return false;
-                // Canonical packing for uniqueness detection
+                if (!ValidateRows(rowsFound)) return false;
                 UInt128 packed = 0;
-                if (rows.Length <= 25) packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
-                if (!seen.Add(packed)) return false; // skip duplicate canonical forms
+                if (rowsFound.Length <= 25) packed = SymmetryHelper.GetCanonicalKey(rowsFound, _scratchBuffer!, out _);
+                if (!seen.Add(packed)) return false;
                 if (materialized < cap)
                 {
-                    if (rows.Length <= 25)
-                        _solutions.Add((packed, rows.Length));
+                    if (rowsFound.Length <= 25)
+                        _solutions.Add((packed, rowsFound.Length));
                     else
                     {
-                        var copy = new int[rows.Length];
-                        Array.Copy(rows, copy, rows.Length);
+                        var copy = new int[rowsFound.Length];
+                        Array.Copy(rowsFound, copy, rowsFound.Length);
                         _largeBoardRawSolutions.Add(copy);
                     }
                     materialized++;
                     if (EnableEvents && !_eventsSuppressedAfterCap)
-                        SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
+                        SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rowsFound), BoardSize));
                     if (materialized >= cap)
                     {
-                        _eventsSuppressedAfterCap = true; // stops SolutionFound, but QueenPlaced continues
-                        return true; // stop enumeration early (cap reached)
+                        _eventsSuppressedAfterCap = true;
+                        return true;
                     }
                 }
                 return false;
             }
         ));
-        _solutionCount = (ulong)seen.Count; // number of unique canonical solutions enumerated (sampled up to cap)
+        _solutionCount = (ulong)seen.Count;
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+    }
+
+    private void MaterializeUniqueSingle(int[] rows)
+    {
+        if (rows.Length <= 25)
+        {
+            var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer ?? new int[rows.Length * 8], out _);
+            _solutions.Add((packed, rows.Length));
+        }
+        else
+        {
+            var copy = new int[rows.Length];
+            Array.Copy(rows, copy, rows.Length);
+            _largeBoardRawSolutions.Add(copy);
+        }
+        if (EnableEvents && !_eventsSuppressedAfterCap)
+            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
     }
 
     // Materialization path for Unique mode: delegate to unified executor

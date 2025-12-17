@@ -225,7 +225,8 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
             b.EnableEvents = visualize;
             if (visualize)
             {
-                b.DelayInMillisec = DelayInMilliseconds > 0 ? DelayInMilliseconds : SimulationSettings.DefaultDelayInMilliseconds;
+                // Use the current UI-configured delay value as-is (0 allowed for tests)
+                b.DelayInMillisec = DelayInMilliseconds;
                 // Avoid parallel visualization for smoother UI
                 b.UseParallel = false;
             }
