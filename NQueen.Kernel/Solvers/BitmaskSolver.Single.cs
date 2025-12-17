@@ -20,8 +20,8 @@ public partial class BitmaskSolver
             return;
         }
 
-        // 2. Large board constructive path (skip when visualizing)
-        if (!visualize && BoardSize > 25)
+        // 2. Constructive path for medium/large boards when not visualizing (avoid long enumerations in tests)
+        if (!visualize && BoardSize >= SimulationSettings.LargeBoardIntermediateStartSize)
         {
             var rows = GenerateConstructiveSingleSolution(BoardSize);
             if (!ValidateRows(rows)) return;

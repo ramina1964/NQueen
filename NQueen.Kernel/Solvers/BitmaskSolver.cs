@@ -155,12 +155,19 @@ public partial class BitmaskSolver : ISolver, IDisposable
         {
             if (isUnique)
             {
-                // Consolidated: Unique count-only uses adaptive parallel path
                 _solutionCount = CountUniqueAdaptive(BoardSize);
             }
             else
             {
-                // Consolidated thresholds using SimulationSettings for All mode
+                // Auto-tune All count-only for performance
+                if (BoardSize >= 14)
+                {
+                    EnablePrefixMinimalityPruning = false;
+                    EnablePartialReflectionPruning = false;
+                    UseAdaptiveDepth = true;
+                    ParallelRootSplitDepth = 3;
+                }
+
                 if (BoardSize <= SimulationSettings.ParallelAllAutoEnableThresholdN)
                     _solutionCount = EnumerateAllAndReturnCount();
                 else
@@ -173,7 +180,6 @@ public partial class BitmaskSolver : ISolver, IDisposable
         // Materialization path: adaptive enumeration per mode
         if (isUnique)
         {
-            // Consolidated: Unique materialize switches to fast mode after cap
             if (DisplayMode == DisplayMode.Visualize)
                 EnumerateUniqueVisualizeAdaptive();
             else
@@ -185,199 +191,14 @@ public partial class BitmaskSolver : ISolver, IDisposable
         }
     }
 
-    // New: Adaptive parallel unique count-only
-    private ulong CountUniqueAdaptive(int n)
-    {
-        bool origPrefix = EnablePrefixMinimalityPruning;
-        bool origReflection = EnablePartialReflectionPruning;
-        EnablePrefixMinimalityPruning = true;
-        EnablePartialReflectionPruning = true;
-
-        SearchOptimizations.Configure(
-            EnablePrefixMinimalityPruning,
-            EnablePartialReflectionPruning,
-            incrementalCanonicalization: false);
-
-        System.Threading.ThreadPool.SetMinThreads(Environment.ProcessorCount, Environment.ProcessorCount);
-
-        try
-        {
-            if (n >= SimulationSettings.UniqueCountOnlyParallelThresholdN && n <= 22)
-                return CountUniqueFastHalfBoard(n);
-
-            if (n < SimulationSettings.UniqueCountOnlyParallelThresholdN)
-            {
-                ulong total = 0;
-                BitmaskParallelEngine.RunUniqueUnified(
-                    n,
-                    enableEvents: false,
-                    cap: 0,
-                    onUniqueSolution: _ => { },
-                    onCompletedUniqueCount: count => total = count,
-                    reportProgress: _ => { },
-                    capReached: () => false
-                );
-                return total;
-            }
-
-            return SymmetryPrunedUniqueCounter.Count(n, cap: 0, onMaterialized: null);
-        }
-        finally
-        {
-            EnablePrefixMinimalityPruning = origPrefix;
-            EnablePartialReflectionPruning = origReflection;
-            SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
-        }
-    }
-
-    // Level-2: fast unique count-only with half-board restriction, early prefix pruning, pooled scratch
-    private ulong CountUniqueFastHalfBoard(int n)
-    {
-        if (n <= 0) return 0UL;
-
-        bool origPrefix = EnablePrefixMinimalityPruning;
-        bool origReflection = EnablePartialReflectionPruning;
-        EnablePrefixMinimalityPruning = true;
-        EnablePartialReflectionPruning = true;
-
-        SearchOptimizations.Configure(
-            EnablePrefixMinimalityPruning,
-            EnablePartialReflectionPruning,
-            incrementalCanonicalization: false);
-
-        int firstRowLimitExclusive = (n + 1) / 2;
-        ulong fullMask = (n == 64) ? ulong.MaxValue : ((1UL << n) - 1UL);
-        int cores = Environment.ProcessorCount;
-
-        // Match BitmaskSearchEngine thresholds
-        int pruneDepthGate = int.MaxValue;
-        if (EnablePrefixMinimalityPruning || EnablePartialReflectionPruning)
-        {
-            if (n >= 20) pruneDepthGate = 1;
-            else if (n >= 16) pruneDepthGate = 2;
-            else if (n >= 15) pruneDepthGate = 3;
-        }
-
-        // Pool scratch arrays to minimize allocations
-        var scratchPool = System.Buffers.ArrayPool<int>.Shared;
-
-        long total = 0L;
-
-        try
-        {
-            // Ensure ThreadPool saturates cores for parallel runs
-            System.Threading.ThreadPool.SetMinThreads(cores, cores);
-
-            // Use finer-grained partitioning to keep cores busy
-            int chunk = Math.Max(1, firstRowLimitExclusive / (cores * 8));
-            var ranges = System.Collections.Concurrent.Partitioner.Create(0, firstRowLimitExclusive, chunk);
-            var po = new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = cores };
-
-            System.Threading.Tasks.Parallel.ForEach(ranges, po, range =>
-            {
-                int[] rows = new int[n];
-                Array.Fill(rows, -1);
-
-                // Scratch for canonical identity checks
-                int[] scratch = scratchPool.Rent(n * 8);
-                try
-                {
-                    ulong localCount = 0UL;
-
-                    for (int rootRow = range.Item1; rootRow < range.Item2; rootRow++)
-                    {
-                        rows[0] = rootRow;
-                        ulong bit0 = 1UL << rootRow;
-
-                        bool reflectionEqual = true;
-                        bool minimalityEqual = true;
-                        DFS(col: 1, cols: bit0, d1: bit0 << 1, d2: bit0 >> 1, reflectionEnabled: EnablePartialReflectionPruning, minimalityEnabled: EnablePrefixMinimalityPruning, pruneDepthGate, ref reflectionEqual, ref minimalityEqual);
-                    }
-
-                    if (localCount != 0)
-                        System.Threading.Interlocked.Add(ref total, (long)localCount);
-
-                    // DFS local function captures rows/scratch/localCount
-                    void DFS(int col, ulong cols, ulong d1, ulong d2, bool reflectionEnabled, bool minimalityEnabled, int pruneGate, ref bool reflectionEqual, ref bool minimalityEqual)
-                    {
-                        if (IsSolverCanceled) return;
-                        if (col == n)
-                        {
-                            // Leaf: identity canonical representative (no dictionary)
-                            if (SymmetryHelper.IsIdentityCanonical(rows, scratch))
-                                localCount++;
-                            return;
-                        }
-
-                        ulong avail = ~(cols | d1 | d2) & fullMask;
-                        while (avail != 0 && !IsSolverCanceled)
-                        {
-                            ulong bit = avail & (ulong)-(long)avail;
-                            avail ^= bit;
-                            int r = FastTzcnt(bit);
-
-                            rows[col] = r;
-
-                            if (col >= pruneGate && ShouldPrunePrefixIncremental(rows, col, n, reflectionEnabled, minimalityEnabled, ref reflectionEqual, ref minimalityEqual))
-                            {
-                                rows[col] = -1;
-                                // On prune, do not mutate flags outside this branch; continue
-                                continue;
-                            }
-
-                            // Capture current equality flags for the next level
-                            bool nextReflectionEqual = reflectionEqual;
-                            bool nextMinimalityEqual = minimalityEqual;
-                            DFS(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1, reflectionEnabled, minimalityEnabled, pruneGate, ref nextReflectionEqual, ref nextMinimalityEqual);
-                            rows[col] = -1;
-                            // No need to restore flags: parent has its own reflectionEqual/minimalityEqual values
-                        }
-                    }
-                }
-                finally
-                {
-                    scratchPool.Return(scratch, clearArray: false);
-                }
-            });
-        }
-        finally
-        {
-            EnablePrefixMinimalityPruning = origPrefix;
-            EnablePartialReflectionPruning = origReflection;
-            SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
-        }
-
-        return (ulong)total;
-    }
-
-    // Exact incremental prefix pruning semantics (mirrors BitmaskSearchEngine)
-    private static bool ShouldPrunePrefixIncremental(int[] rows, int depth, int N, bool reflectionEnabled, bool minimalityEnabled, ref bool reflectionEqual, ref bool minimalityEqual)
-    {
-        if (reflectionEnabled && reflectionEqual)
-        {
-            int r = rows[depth]; if (r < 0) return false;
-            int reflected = N - 1 - r;
-            if (r > reflected) return true;
-            if (r < reflected) reflectionEqual = false;
-        }
-        if (minimalityEnabled && minimalityEqual)
-        {
-            int first = rows[0]; if (first < 0) return false;
-            int newRow = rows[depth]; if (newRow < 0) return false;
-            int transformed = N - 1 - newRow;
-            if (first > transformed) return true;
-            if (first < transformed) minimalityEqual = false;
-        }
-        return false;
-    }
-
     private void EnumerateAllAdaptive(bool countOnly)
     {
         SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
         int N = BoardSize;
         bool halfBoard = N >= 15 && ((N & 1) == 1);
         bool isOdd = (N & 1) == 1; int centerRow = N / 2;
-        if (N <= 17)
+        // Use engine for small boards only; push 15–17 to parallel partial-state path
+        if (N <= 14)
         {
             int capSmall = countOnly ? 0 : _maxDisplayedCount;
             ulong countNonCenter = 0; ulong countCenter = 0; int materializedSmall = 0;
@@ -422,6 +243,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
             if (EnableEvents && !countOnly) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
             return;
         }
+
         int cap = countOnly ? 0 : _maxDisplayedCount;
         bool materialize = !countOnly && cap > 0;
         ulong totalNonCenter = 0; ulong totalCenter = 0; int materialized = 0;
@@ -570,80 +392,182 @@ public partial class BitmaskSolver : ISolver, IDisposable
         if (EnableEvents && !countOnly) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 
-    private void EnumerateUniqueMaterializeAdaptive()
+    // Unique counting (adaptive)
+    private ulong CountUniqueAdaptive(int n)
     {
-        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, EnableIncrementalCanonicalization);
-        int cap = _maxDisplayedCount;
-        if (cap <= 0)
+        bool origPrefix = EnablePrefixMinimalityPruning;
+        bool origReflection = EnablePartialReflectionPruning;
+        EnablePrefixMinimalityPruning = true;
+        EnablePartialReflectionPruning = true;
+
+        SearchOptimizations.Configure(
+            EnablePrefixMinimalityPruning,
+            EnablePartialReflectionPruning,
+            incrementalCanonicalization: false);
+
+        System.Threading.ThreadPool.SetMinThreads(Environment.ProcessorCount, Environment.ProcessorCount);
+
+        try
         {
-            _solutionCount = CountUniqueCanonicalOrPruned(BoardSize, cap: 0, null);
-            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
-            return;
+            if (n >= SimulationSettings.UniqueCountOnlyParallelThresholdN && n <= 22)
+                return CountUniqueFastHalfBoard(n);
+
+            if (n < SimulationSettings.UniqueCountOnlyParallelThresholdN)
+            {
+                ulong total = 0;
+                BitmaskParallelEngine.RunUniqueUnified(
+                    n,
+                    enableEvents: false,
+                    cap: 0,
+                    onUniqueSolution: _ => { },
+                    onCompletedUniqueCount: count => total = count,
+                    reportProgress: _ => { },
+                    capReached: () => false
+                );
+                return total;
+            }
+
+            return SymmetryPrunedUniqueCounter.Count(n, cap: 0, onMaterialized: null);
         }
-
-        int materialized = 0;
-        ulong totalSoFar = 0;
-
-        totalSoFar = CountUniqueCanonicalOrPruned(BoardSize, cap, rows =>
+        finally
         {
-            if (materialized >= cap) return;
-            if (rows.Length <= 25)
-            {
-                UInt128 packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
-                _solutions.Add((packed, rows.Length));
-            }
-            else
-            {
-                var copy = new int[rows.Length];
-                Array.Copy(rows, copy, rows.Length);
-                _largeBoardRawSolutions.Add(copy);
-            }
-            materialized++;
-            if (EnableEvents && !_eventsSuppressedAfterCap)
-                SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
-            if (materialized >= cap)
-                _eventsSuppressedAfterCap = true;
-        });
-
-        if (materialized >= cap)
-        {
-            ulong remainderCount;
-            if (BoardSize <= SimulationSettings.ParallelAllMaterializeAutoEnableThresholdN)
-            {
-                remainderCount = CountUniqueCanonicalOrPruned(BoardSize, cap: 0, onMaterialized: null);
-            }
-            else
-            {
-                remainderCount = CountUniqueAdaptive(BoardSize);
-            }
-            _solutionCount = remainderCount;
-            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
-            return;
+            EnablePrefixMinimalityPruning = origPrefix;
+            EnablePartialReflectionPruning = origReflection;
+            SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
         }
-
-        _solutionCount = totalSoFar;
-        ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 
-    private ulong CountUniqueCanonicalOrPruned(int boardSize, int cap, Action<int[]>? onMaterialized)
+    // Fast unique count-only half-board path
+    private ulong CountUniqueFastHalfBoard(int n)
     {
-        if (boardSize >= SimulationSettings.LargeBoardSymmetryPruningThreshold)
+        if (n <= 0) return 0UL;
+
+        bool origPrefix = EnablePrefixMinimalityPruning;
+        bool origReflection = EnablePartialReflectionPruning;
+        EnablePrefixMinimalityPruning = true;
+        EnablePartialReflectionPruning = true;
+
+        SearchOptimizations.Configure(
+            EnablePrefixMinimalityPruning,
+            EnablePartialReflectionPruning,
+            incrementalCanonicalization: false);
+
+        int firstRowLimitExclusive = (n + 1) / 2;
+        ulong fullMask = (n == 64) ? ulong.MaxValue : ((1UL << n) - 1UL);
+        int cores = Environment.ProcessorCount;
+
+        int pruneDepthGate = int.MaxValue;
+        if (EnablePrefixMinimalityPruning || EnablePartialReflectionPruning)
         {
-            return SymmetryPrunedUniqueCounter.Count(boardSize, cap, onMaterialized);
+            if (n >= 20) pruneDepthGate = 1;
+            else if (n >= 16) pruneDepthGate = 2;
+            else if (n >= 15) pruneDepthGate = 3;
         }
-        ulong total = 0;
-        int emitted = 0;
-        CanonicalUniqueSearchEngine.CountUnique(boardSize, rows =>
+
+        var scratchPool = System.Buffers.ArrayPool<int>.Shared;
+
+        long total = 0L;
+
+        try
         {
-            if (onMaterialized == null) return;
-            if (cap > 0 && emitted >= cap) return;
-            onMaterialized(rows);
-            emitted++;
-        });
-        total = CanonicalUniqueSearchEngine.CountUnique(boardSize);
-        return total;
+            System.Threading.ThreadPool.SetMinThreads(cores, cores);
+
+            int chunk = Math.Max(1, firstRowLimitExclusive / (cores * 8));
+            var ranges = System.Collections.Concurrent.Partitioner.Create(0, firstRowLimitExclusive, chunk);
+            var po = new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = cores };
+
+            System.Threading.Tasks.Parallel.ForEach(ranges, po, range =>
+            {
+                int[] rows = new int[n];
+                Array.Fill(rows, -1);
+
+                int[] scratch = scratchPool.Rent(n * 8);
+                try
+                {
+                    ulong localCount = 0UL;
+
+                    for (int rootRow = range.Item1; rootRow < range.Item2; rootRow++)
+                    {
+                        rows[0] = rootRow;
+                        ulong bit0 = 1UL << rootRow;
+
+                        bool reflectionEqual = true;
+                        bool minimalityEqual = true;
+                        DFS(col: 1, cols: bit0, d1: bit0 << 1, d2: bit0 >> 1, reflectionEnabled: EnablePartialReflectionPruning, minimalityEnabled: EnablePrefixMinimalityPruning, pruneDepthGate, ref reflectionEqual, ref minimalityEqual);
+                    }
+
+                    if (localCount != 0)
+                        System.Threading.Interlocked.Add(ref total, (long)localCount);
+
+                    void DFS(int col, ulong cols, ulong d1, ulong d2, bool reflectionEnabled, bool minimalityEnabled, int pruneGate, ref bool reflectionEqual, ref bool minimalityEqual)
+                    {
+                        if (IsSolverCanceled) return;
+                        if (col == n)
+                        {
+                            if (SymmetryHelper.IsIdentityCanonical(rows, scratch))
+                                localCount++;
+                            return;
+                        }
+
+                        ulong avail = ~(cols | d1 | d2) & fullMask;
+                        while (avail != 0 && !IsSolverCanceled)
+                        {
+                            ulong bit = avail & (ulong)-(long)avail;
+                            avail ^= bit;
+                            int r = FastTzcnt(bit);
+
+                            rows[col] = r;
+
+                            if (col >= pruneGate && ShouldPrunePrefixIncremental(rows, col, n, reflectionEnabled, minimalityEnabled, ref reflectionEqual, ref minimalityEqual))
+                            {
+                                rows[col] = -1;
+                                continue;
+                            }
+
+                            bool nextReflectionEqual = reflectionEqual;
+                            bool nextMinimalityEqual = minimalityEqual;
+                            DFS(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1, reflectionEnabled, minimalityEnabled, pruneGate, ref nextReflectionEqual, ref nextMinimalityEqual);
+                            rows[col] = -1;
+                        }
+                    }
+                }
+                finally
+                {
+                    scratchPool.Return(scratch, clearArray: false);
+                }
+            });
+        }
+        finally
+        {
+            EnablePrefixMinimalityPruning = origPrefix;
+            EnablePartialReflectionPruning = origReflection;
+            SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
+        }
+
+        return (ulong)total;
     }
 
+    private static bool ShouldPrunePrefixIncremental(int[] rows, int depth, int N, bool reflectionEnabled, bool minimalityEnabled, ref bool reflectionEqual, ref bool minimalityEqual)
+    {
+        if (reflectionEnabled && reflectionEqual)
+        {
+            int r = rows[depth]; if (r < 0) return false;
+            int reflected = N - 1 - r;
+            if (r > reflected) return true;
+            if (r < reflected) reflectionEqual = false;
+        }
+        if (minimalityEnabled && minimalityEqual)
+        {
+            int first = rows[0]; if (first < 0) return false;
+            int newRow = rows[depth]; if (newRow < 0) return false;
+            int transformed = N - 1 - newRow;
+            if (first > transformed) return true;
+            if (first < transformed) minimalityEqual = false;
+        }
+        return false;
+    }
+
+    // ------------ private fields and helpers ------------
     private readonly ISolutionFormatter _formatter;
     private readonly List<(UInt128 packed, int boardSize)> _solutions = [];
     private readonly List<int[]> _largeBoardRawSolutions = new();

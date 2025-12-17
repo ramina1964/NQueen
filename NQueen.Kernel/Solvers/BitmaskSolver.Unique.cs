@@ -111,4 +111,10 @@ public partial class BitmaskSolver
         _solutionCount = (ulong)seen.Count; // number of unique canonical solutions enumerated (sampled up to cap)
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
+
+    // Materialization path for Unique mode: delegate to unified executor
+    private void EnumerateUniqueMaterializeAdaptive()
+    {
+        ExecuteUniqueModeUnified();
+    }
 }
