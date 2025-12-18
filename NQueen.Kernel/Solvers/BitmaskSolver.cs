@@ -42,12 +42,19 @@ public partial class BitmaskSolver : ISolver, IDisposable
         _capEnabled = true;
     }
 
+    private int _delayInMillisec; // enforce min delay via setter below
+
     // ---------------- Public properties / events ----------------
     public event EventHandler<QueenPlacedEventArgs>? QueenPlaced;
     public event EventHandler<SolutionFoundEventArgs>? SolutionFound;
     public event EventHandler<ProgressUpdateEventArgs>? ProgressValueChanged;
 
-    public int DelayInMillisec { get; set; }
+    public int DelayInMillisec
+    {
+        get => _delayInMillisec;
+        set => _delayInMillisec = value <= 0 ? 0 : Math.Max(NQueen.Domain.Settings.SimulationSettings.MinDelayInMilliseconds, value);
+    }
+
     public int ProgressValue { get; set; }
     public int BoardSize { get; private set; }
     public SolutionMode SolutionMode { get; private set; }

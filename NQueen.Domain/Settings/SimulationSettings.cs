@@ -4,8 +4,8 @@ public static class SimulationSettings
 {
     // Maximum count of displayed solutions
     public const int MaxDisplayedCount = 5;
-    public const int DefaultDelayInMilliseconds = 120;
-    public const int MinDelayInMilliseconds = 50;
+    public const int DefaultDelayInMilliseconds = 500;
+    public const int MinDelayInMilliseconds = 5;
     public const SolutionMode DefaultSolutionMode = SolutionMode.Unique;
     public const DisplayMode DefaultDisplayMode = DisplayMode.Hide;
 
@@ -15,6 +15,7 @@ public static class SimulationSettings
 
     // Threshold to auto-enable parallel execution for All mode (count-only path)
     public const int ParallelAllAutoEnableThresholdN = 15;
+
     // Threshold to auto-enable parallel execution for All mode (materialize path)
     public const int ParallelAllMaterializeAutoEnableThresholdN = 14;
 

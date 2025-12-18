@@ -231,7 +231,6 @@ public sealed partial class MainViewModel
                 });
 
                 _batchedSolutions.Clear();
-                _actualTotalSolutions = 0;
                 StopVisualizationTimer();
 
                 if (SelectedSolution != null && ChessboardVm != null)

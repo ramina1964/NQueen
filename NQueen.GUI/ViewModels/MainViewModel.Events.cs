@@ -9,8 +9,25 @@ public sealed partial class MainViewModel
     private int[]? _displayedPrefixRows;
     private int _displayedDepth;
     private readonly List<Solution> _batchedSolutions = [];
-    private int _actualTotalSolutions;
     private bool _hasProgressTick;
+
+    // Enforce domain min and propagate to solver + timer
+    partial void OnDelayInMillisecondsChanged(int value)
+    {
+        // Allow 0 to mean "no delay"; otherwise clamp to domain min (5ms)
+        int clamped = value <= 0 ? 0 : Math.Max(SimulationSettings.MinDelayInMilliseconds, value);
+        if (clamped != value)
+        {
+            _delayInMilliseconds = clamped;
+            OnPropertyChanged(nameof(DelayInMilliseconds));
+        }
+
+        if (_solver is NQueen.Kernel.Solvers.BitmaskSolver b)
+            b.DelayInMillisec = clamped;
+
+        if (_visualizeTimer != null)
+            _visualizeTimer.Interval = TimeSpan.FromMilliseconds(clamped > 0 ? clamped : 1);
+    }
 
     // --- Event subscriptions ---
     private void SubscribeToSimulationEvents()
@@ -35,9 +52,14 @@ public sealed partial class MainViewModel
     private void EnsureVisualizationTimer()
     {
         if (_visualizeTimer != null) return;
+
+        int clamped = DelayInMilliseconds <= 0
+            ? 0
+            : Math.Max(SimulationSettings.MinDelayInMilliseconds, DelayInMilliseconds);
+
         _visualizeTimer = new DispatcherTimer
         {
-            Interval = TimeSpan.FromMilliseconds(Math.Max(1, DelayInMilliseconds))
+            Interval = TimeSpan.FromMilliseconds(clamped > 0 ? clamped : 1)
         };
         _visualizeTimer.Tick += VisualizationTimer_Tick;
     }
@@ -74,8 +96,14 @@ public sealed partial class MainViewModel
             RenderPrefix(_pendingPrefixRows, _pendingDepth);
         }
 
+        // Keep timer interval in sync with clamped delay
         if (_visualizeTimer != null)
-            _visualizeTimer.Interval = TimeSpan.FromMilliseconds(Math.Max(1, DelayInMilliseconds));
+        {
+            int clamped = DelayInMilliseconds <= 0
+                ? 0
+                : Math.Max(SimulationSettings.MinDelayInMilliseconds, DelayInMilliseconds);
+            _visualizeTimer.Interval = TimeSpan.FromMilliseconds(clamped > 0 ? clamped : 1);
+        }
     }
 
     private static bool RowsEqual(int[] a, int[] b, int depth)
