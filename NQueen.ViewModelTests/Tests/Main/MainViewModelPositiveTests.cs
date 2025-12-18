@@ -5,29 +5,8 @@ public class MainViewModelPositiveTests : IDisposable
     public MainViewModelPositiveTests() =>
         _serviceProvider = TestHelpers.CreateServiceProvider();
 
-    [Theory]
-    [InlineData(4, SolutionMode.Single, DisplayMode.Visualize)]
-    public async Task Chessboard_ShouldUpdateQueenPlacements(
-        int boardSize, SolutionMode solutionMode, DisplayMode displayMode)
-    {
-        // Arrange
-        var mockFormatter = new Mock<ISolutionFormatter>().Object;
-        var mockSolver = TestHelpers.CreateMockSolver(
-        [
-            new Solution([1, 3, 0, 2], mockFormatter, null)
-        ]);
-
-        var simContext = new SimulationContext(
-            boardSize, solutionMode, displayMode);
-
-        var mainVm = TestHelpers.CreateMainViewModelWithMock(mockSolver.Object, simContext);
-
-        // Act
-        await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
-
-        // Assert
-        AssertionHelpers.AssertChessboardState(mainVm, boardSize);
-    }
+    // Removed redundant Single-mode visualization chessboard test now covered by
+    // FinalVisualization_ShouldShowValidFirstSolution_ForSingleMode_RealSolver
 
     [Theory]
     [InlineData(8, SolutionMode.Single, DisplayMode.Visualize)]
@@ -68,25 +47,8 @@ public class MainViewModelPositiveTests : IDisposable
         mainVm.IsSimulating.Should().BeFalse(TestConst.SimulationNotStoppedError);
     }
 
-    [Theory]
-    [InlineData(8, SolutionMode.Single, DisplayMode.Visualize)]
-    public async Task Visualization_ShouldUpdateDuringSimulation(
-        int boardSize, SolutionMode solutionMode, DisplayMode displayMode)
-    {
-        // Arrange
-        var mockFormatter = new Mock<ISolutionFormatter>().Object;
-        var mockSolver = TestHelpers.CreateMockSolver(
-            [new Solution(new int[] { 0, 4, 7, 5, 2, 6, 1, 3 }, mockFormatter, null)]
-        );
-        var simContext = new SimulationContext(boardSize, solutionMode, displayMode);
-        var mainVm = TestHelpers.CreateMainViewModelWithMock(mockSolver.Object, simContext);
-
-        // Act
-        await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
-
-        // Assert
-        AssertionHelpers.AssertChessboardState(mainVm, boardSize);
-    }
+    // Removed redundant mock-based Single-mode visualization update test now covered by
+    // FinalVisualization_ShouldShowValidFirstSolution_ForSingleMode_RealSolver
 
     [Fact]
     public async Task MainViewModel_ShouldUpdateSolutionsAfterSimulation()

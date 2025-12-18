@@ -46,27 +46,66 @@ public class VisualizationAllModeTests
 
     [Theory]
     [InlineData(8)]
-    public async Task FinalVisualization_ShouldShowValidFirstSolution_ForUniqueMode(int boardSize)
+    public async Task FinalVisualization_ShouldShowValidFirstSolution_ForUniqueMode_RealSolver(int boardSize)
     {
-        // Arrange: use a mocked solver to avoid heavy unique enumeration while still exercising visualization
-        var mockFormatter = new DefaultSolutionFormatter();
-        // Known valid 8-queens solution
-        var positionsArr = new int[] { 0, 4, 7, 5, 2, 6, 1, 3 };
-        var solution = new Solution(positionsArr.Take(boardSize).ToArray(), mockFormatter, null);
-        var mockSolver = NQueen.ViewModelTests.Setup.TestHelpers.CreateMockSolver(new List<Solution> { solution });
-
-        var simContext = new SimulationContext(boardSize, SolutionMode.Unique, DisplayMode.Visualize);
-        var mainVm = NQueen.ViewModelTests.Setup.TestHelpers.CreateMainViewModelWithMock(
-            mockSolver.Object, simContext, simulationResults: null, mockFormatter);
+        // Arrange: integration test with real solver to catch visualization regressions in Unique mode
+        var mainVm = TestHelpers.CreateMainViewModel(
+            boardSize: boardSize,
+            solutionMode: SolutionMode.Unique,
+            displayMode: DisplayMode.Visualize,
+            simulationResults: null,
+            solutionFormatter: null,
+            suppressUserDialogs: true);
 
         // Act
-        await NQueen.ViewModelTests.Setup.TestHelpers.WaitForSimulationCompletionAsync(mainVm);
+        await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
 
-        // Assert
+        // Assert: same guards as All-mode test to catch renderer regressions
         mainVm.ObservableSolutions.Should().NotBeEmpty();
         mainVm.SelectedSolution.Should().NotBeNull();
-        var sol = mainVm.SelectedSolution!;
-        var positions = sol.Positions.ToList();
+        mainVm.ChessboardVm.Squares.Count(sq => !string.IsNullOrEmpty(sq.ImagePath))
+            .Should().Be(boardSize);
+
+        var solution = mainVm.SelectedSolution!;
+        var positions = solution.Positions.ToList();
+        positions.Count.Should().Be(boardSize);
+        positions.Select(p => p.RowIndex).Distinct().Count().Should().BeGreaterThan(1);
+        for (int i = 0; i < positions.Count; i++)
+        {
+            for (int j = i + 1; j < positions.Count; j++)
+            {
+                var a = positions[i];
+                var b = positions[j];
+                a.RowIndex.Should().NotBe(b.RowIndex);
+                Math.Abs(a.RowIndex - b.RowIndex).Should().NotBe(Math.Abs(a.ColumnIndex - b.ColumnIndex));
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(8)]
+    public async Task FinalVisualization_ShouldShowValidFirstSolution_ForSingleMode_RealSolver(int boardSize)
+    {
+        // Arrange: integration test with real solver to catch visualization regressions in Single mode
+        var mainVm = TestHelpers.CreateMainViewModel(
+            boardSize: boardSize,
+            solutionMode: SolutionMode.Single,
+            displayMode: DisplayMode.Visualize,
+            simulationResults: null,
+            solutionFormatter: null,
+            suppressUserDialogs: true);
+
+        // Act
+        await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
+
+        // Assert: same guards as other modes
+        mainVm.ObservableSolutions.Should().NotBeEmpty();
+        mainVm.SelectedSolution.Should().NotBeNull();
+        mainVm.ChessboardVm.Squares.Count(sq => !string.IsNullOrEmpty(sq.ImagePath))
+            .Should().Be(boardSize);
+
+        var solution = mainVm.SelectedSolution!;
+        var positions = solution.Positions.ToList();
         positions.Count.Should().Be(boardSize);
         positions.Select(p => p.RowIndex).Distinct().Count().Should().BeGreaterThan(1);
         for (int i = 0; i < positions.Count; i++)
