@@ -47,6 +47,8 @@ public static class TestHelpers
         vm.DisplayMode = displayMode;
         vm.BoardSizeText = boardSize.ToString();
         vm.SimulationResults = simulationResults ?? new SimulationResults([], 0);
+        // Tests should not incur visualization delay; 0 disables throttling/timer
+        vm.DelayInMilliseconds = 0;
         return vm;
     }
 
@@ -76,6 +78,8 @@ public static class TestHelpers
         vm.DisplayMode = ctx.DisplayMode;
         vm.BoardSizeText = ctx.BoardSize.ToString();
         vm.SimulationResults = simulationResults ?? new SimulationResults([], 0);
+        // Tests should not incur visualization delay; 0 disables throttling/timer
+        vm.DelayInMilliseconds = 0;
         return vm;
     }
 
@@ -98,6 +102,8 @@ public static class TestHelpers
 
         vm.BoardSizeText = boardSizeText;
         vm.SelectedStorageMode = ResultStorageMode.Materialize; // unified property
+        // Ensure zero delay also for this path
+        vm.DelayInMilliseconds = 0;
         return vm;
     }
 
@@ -138,6 +144,9 @@ public static class TestHelpers
             BoardSizeText = boardSize.ToString(),
             IsIdle = true
         };
+
+        // Ensure tests do not wait on visualization delay
+        vm.DelayInMilliseconds = 0;
 
         var simContext = new SimulationContext(boardSize, solutionMode, displayMode);
         var simulationResults = await solver.GetSimResultsAsync(simContext);

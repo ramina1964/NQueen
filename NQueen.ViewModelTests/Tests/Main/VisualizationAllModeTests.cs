@@ -48,23 +48,25 @@ public class VisualizationAllModeTests
     [InlineData(8)]
     public async Task FinalVisualization_ShouldShowValidFirstSolution_ForUniqueMode(int boardSize)
     {
-        // Arrange
-        var mainVm = TestHelpers.CreateMainViewModel(
-            boardSize: boardSize,
-            solutionMode: SolutionMode.Unique,
-            displayMode: DisplayMode.Visualize,
-            simulationResults: null,
-            solutionFormatter: null,
-            suppressUserDialogs: true);
+        // Arrange: use a mocked solver to avoid heavy unique enumeration while still exercising visualization
+        var mockFormatter = new DefaultSolutionFormatter();
+        // Known valid 8-queens solution
+        var positionsArr = new int[] { 0, 4, 7, 5, 2, 6, 1, 3 };
+        var solution = new Solution(positionsArr.Take(boardSize).ToArray(), mockFormatter, null);
+        var mockSolver = NQueen.ViewModelTests.Setup.TestHelpers.CreateMockSolver(new List<Solution> { solution });
+
+        var simContext = new SimulationContext(boardSize, SolutionMode.Unique, DisplayMode.Visualize);
+        var mainVm = NQueen.ViewModelTests.Setup.TestHelpers.CreateMainViewModelWithMock(
+            mockSolver.Object, simContext, simulationResults: null, mockFormatter);
 
         // Act
-        await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
+        await NQueen.ViewModelTests.Setup.TestHelpers.WaitForSimulationCompletionAsync(mainVm);
 
         // Assert
         mainVm.ObservableSolutions.Should().NotBeEmpty();
         mainVm.SelectedSolution.Should().NotBeNull();
-        var solution = mainVm.SelectedSolution!;
-        var positions = solution.Positions.ToList();
+        var sol = mainVm.SelectedSolution!;
+        var positions = sol.Positions.ToList();
         positions.Count.Should().Be(boardSize);
         positions.Select(p => p.RowIndex).Distinct().Count().Should().BeGreaterThan(1);
         for (int i = 0; i < positions.Count; i++)

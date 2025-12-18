@@ -16,8 +16,8 @@ public class ProgressRelayTests : IDisposable
         mockSolver.Setup(s => s.GetSimResultsAsync(It.IsAny<SimulationContext>()))
             .Returns(async () =>
             {
-                // Delay longer than heartbeat interval so synthetic tick would be needed.
-                await Task.Delay(SimulationSettings.ProgressIntervalInMilliSec + 2000);
+                // Keep the task brief; we manually force heartbeat conditions below via _lastProgressUpdateUtc.
+                await Task.Delay(300);
                 // Return a trivial solution set so simulation can finish cleanly.
                 return new SimulationResults(new[] { new Solution(new[] { 0 }, _formatter, null) }, 0.0);
             });

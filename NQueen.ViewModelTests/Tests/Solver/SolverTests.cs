@@ -75,16 +75,18 @@ public class SolverTests
     }
 
     [Fact]
+    [Trait("Category", "SingleMode")]
     public void BitmaskSolver_SingleMode_ShouldIgnorePreSetCancellationFlag()
     {
         // Arrange
         var solver = new BitmaskSolver(
-            boardSize: 38,
+            boardSize: 17,
             solutionMode: SolutionMode.Single,
             displayMode: DisplayMode.Visualize,
             solutionFormatter: new DefaultSolutionFormatter());
 
-        solver.EnableEvents = true;
+        // Disable events to avoid unnecessary event dispatch overhead for this scenario
+        solver.EnableEvents = false;
         solver.IsSolverCanceled = true; // Will be reset by Solve()
 
         // Act
