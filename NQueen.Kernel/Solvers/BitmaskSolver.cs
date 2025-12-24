@@ -16,7 +16,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
         }
         return tbl;
     }
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int FastTzcnt(ulong bit) => DeBruijnIndex64[(bit * DeBruijn64) >> 58];
 
     private readonly object _sync = new();
@@ -138,8 +138,8 @@ public partial class BitmaskSolver : ISolver, IDisposable
     // Unified handler for Unique/All
     private void HandleModeCommon(bool isUnique, bool countOnly, ref bool usedLookup)
     {
-        // Attempt lookup first when board size >= threshold
-        if (BoardSize >= _lookupThreshold)
+        // Attempt lookup first when board size >= global threshold
+        if (BoardSize >= NQueen.Domain.Settings.SimulationSettings.LookupThresholdN)
         {
             ulong lookup = isUnique ? ExpectedSolutionCounts.GetUnique(BoardSize) : ExpectedSolutionCounts.GetAll(BoardSize);
             if (lookup > 0)
@@ -167,7 +167,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
             else
             {
                 // Auto-tune All count-only for performance
-                if (BoardSize >= 14)
+                if (BoardSize >= NQueen.Domain.Settings.SimulationSettings.ParallelAllMaterializeAutoEnableThresholdN)
                 {
                     EnablePrefixMinimalityPruning = false;
                     EnablePartialReflectionPruning = false;
@@ -175,7 +175,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
                     ParallelRootSplitDepth = 3;
                 }
 
-                if (BoardSize <= SimulationSettings.ParallelAllAutoEnableThresholdN)
+                if (BoardSize <= NQueen.Domain.Settings.SimulationSettings.ParallelAllAutoEnableThresholdN)
                     _solutionCount = EnumerateAllAndReturnCount();
                 else
                     EnumerateAllAdaptive(countOnly: true);
@@ -202,7 +202,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
     {
         SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
         int N = BoardSize;
-        bool halfBoard = N >= 15 && ((N & 1) == 1);
+        bool halfBoard = N >= NQueen.Domain.Settings.SimulationSettings.LargeBoardSymmetryPruningThreshold && ((N & 1) == 1);
         bool isOdd = (N & 1) == 1; int centerRow = N / 2;
 
         // Visualization path: use engine to emit incremental placements/backtracks with delay
@@ -260,7 +260,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
         }
 
         // Use engine for small boards only; push 15–17 to parallel partial-state path
-        if (N <= 14)
+        if (N <= NQueen.Domain.Settings.SimulationSettings.ParallelAllMaterializeAutoEnableThresholdN)
         {
             int capSmall = countOnly ? 0 : _maxDisplayedCount;
             ulong countNonCenter = 0; ulong countCenter = 0; int materializedSmall = 0;
@@ -484,10 +484,10 @@ public partial class BitmaskSolver : ISolver, IDisposable
 
         try
         {
-            if (n >= SimulationSettings.UniqueCountOnlyParallelThresholdN && n <= 22)
+            if (n >= NQueen.Domain.Settings.SimulationSettings.UniqueCountOnlyParallelThresholdN && n <= 22)
                 return CountUniqueFastHalfBoard(n);
 
-            if (n < SimulationSettings.UniqueCountOnlyParallelThresholdN)
+            if (n < NQueen.Domain.Settings.SimulationSettings.UniqueCountOnlyParallelThresholdN)
             {
                 ulong total = 0;
                 BitmaskParallelEngine.RunUniqueUnified(
@@ -534,9 +534,9 @@ public partial class BitmaskSolver : ISolver, IDisposable
         int pruneDepthGate = int.MaxValue;
         if (EnablePrefixMinimalityPruning || EnablePartialReflectionPruning)
         {
-            if (n >= 20) pruneDepthGate = 1;
+            if (n >= NQueen.Domain.Settings.SimulationSettings.PrefixPruneEarlyThresholdN) pruneDepthGate = 1;
             else if (n >= 16) pruneDepthGate = 2;
-            else if (n >= 15) pruneDepthGate = 3;
+            else if (n >= NQueen.Domain.Settings.SimulationSettings.LargeBoardSymmetryPruningThreshold) pruneDepthGate = 3;
         }
 
         var scratchPool = System.Buffers.ArrayPool<int>.Shared;
@@ -652,8 +652,6 @@ public partial class BitmaskSolver : ISolver, IDisposable
     private readonly int _maxDisplayedCount;
     private volatile bool _eventsSuppressedAfterCap;
     private bool _disposed;
-    private const int _lookupThreshold = 20;
-    private const int _largeBoardConstructiveThreshold = 20;
     private int[]? _scratchBuffer;
 
     private void ResetForSolve()
@@ -703,7 +701,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
         int cap = _maxDisplayedCount;
         if (cap <= 0) return;
 
-        if (BoardSize >= _largeBoardConstructiveThreshold)
+        if (BoardSize >= NQueen.Domain.Settings.SimulationSettings.ConstructiveSampleThresholdN)
         {
             ConstructiveSampleSolutions(isUnique, cap);
             ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
@@ -943,25 +941,5 @@ public partial class BitmaskSolver : ISolver, IDisposable
     {
         EnumerateAllAdaptive(countOnly: true);
         return _solutionCount;
-    }
-
-    private static bool IsValidNQueenSolution(int[] rows)
-    {
-        int n = rows.Length;
-        var cols = new bool[n];
-        var diag1 = new HashSet<int>();
-        var diag2 = new HashSet<int>();
-        for (int c = 0; c < n; c++)
-        {
-            int r = rows[c];
-            if (r < 0 || r >= n) return false;
-            if (cols[r]) return false;
-            cols[r] = true;
-            int d1 = r - c;
-            int d2 = r + c;
-            if (!diag1.Add(d1)) return false;
-            if (!diag2.Add(d2)) return false;
-        }
-        return true;
     }
 }

@@ -9,6 +9,9 @@ public static class SimulationSettings
     public const SolutionMode DefaultSolutionMode = SolutionMode.Unique;
     public const DisplayMode DefaultDisplayMode = DisplayMode.Hide;
 
+    // Global lookup threshold for using precomputed counts instead of enumeration
+    public const int LookupThresholdN = 21;
+
     // Parallel tuning
     public const bool DefaultUseParallel = true;
     public const int DefaultParallelRootSplitDepth = 1;
@@ -48,6 +51,12 @@ public static class SimulationSettings
 
     // Threshold at/above which symmetry-pruned unique counting is used for Unique+CountOnly mode.
     public const int LargeBoardSymmetryPruningThreshold = 15;
+
+    // Early prefix-pruning depth gate activation threshold for large boards
+    public const int PrefixPruneEarlyThresholdN = 20;
+
+    // Constructive sampling threshold for large boards (avoid heavy engine materialization)
+    public const int ConstructiveSampleThresholdN = 20;
 
     // New constant for dynamic root split limit
     public const int DynamicRootSplitLimitN = 19;

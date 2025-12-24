@@ -115,7 +115,7 @@ public class HighBoardCountsTests(SolverBackEndFixture fixture)
     {
         if (Environment.GetEnvironmentVariable("RUN_UNIQUE19_ENUM") != "1") return; // heavy gating
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        ulong count = NQueen.Kernel.Solvers.Engines.CanonicalUniqueSearchEngine.CountUnique(19);
+        ulong count = Kernel.Solvers.Engines.CanonicalUniqueSearchEngine.CountUnique(19);
         sw.Stop();
         string fileName = "Unique_FullEnumeration_N19.txt";
         string path = Path.Combine(Environment.CurrentDirectory, fileName);
