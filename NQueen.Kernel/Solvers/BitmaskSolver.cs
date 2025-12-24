@@ -534,20 +534,21 @@ public partial class BitmaskSolver : ISolver, IDisposable
         int pruneDepthGate = int.MaxValue;
         if (EnablePrefixMinimalityPruning || EnablePartialReflectionPruning)
         {
-            if (n >= NQueen.Domain.Settings.SimulationSettings.PrefixPruneEarlyThresholdN) pruneDepthGate = 1;
+            // Push earliest pruning for very large boards
+            if (n >= NQueen.Domain.Settings.SimulationSettings.PrefixPruneEarlyThresholdN) pruneDepthGate = 0;
             else if (n >= 16) pruneDepthGate = 2;
             else if (n >= NQueen.Domain.Settings.SimulationSettings.LargeBoardSymmetryPruningThreshold) pruneDepthGate = 3;
         }
 
         var scratchPool = System.Buffers.ArrayPool<int>.Shared;
-
         long total = 0L;
 
         try
         {
             System.Threading.ThreadPool.SetMinThreads(cores, cores);
 
-            int chunk = Math.Max(1, firstRowLimitExclusive / (cores * 8));
+            // Larger chunks reduce scheduler overhead on very large N
+            int chunk = Math.Max(1, firstRowLimitExclusive / (cores * 4));
             var ranges = System.Collections.Concurrent.Partitioner.Create(0, firstRowLimitExclusive, chunk);
             var po = new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = cores };
 
@@ -589,10 +590,12 @@ public partial class BitmaskSolver : ISolver, IDisposable
                         {
                             ulong bit = avail & (ulong)-(long)avail;
                             avail ^= bit;
-                            int r = FastTzcnt(bit);
+                            // Prefer JIT intrinsic for trailing zero count in the hot loop
+                            int r = System.Numerics.BitOperations.TrailingZeroCount(bit);
 
                             rows[col] = r;
 
+                            // If early-equality already broke, skip symmetry checks quickly
                             if (col >= pruneGate && ShouldPrunePrefixIncremental(rows, col, n, reflectionEnabled, minimalityEnabled, ref reflectionEqual, ref minimalityEqual))
                             {
                                 rows[col] = -1;
@@ -620,26 +623,6 @@ public partial class BitmaskSolver : ISolver, IDisposable
         }
 
         return (ulong)total;
-    }
-
-    private static bool ShouldPrunePrefixIncremental(int[] rows, int depth, int N, bool reflectionEnabled, bool minimalityEnabled, ref bool reflectionEqual, ref bool minimalityEqual)
-    {
-        if (reflectionEnabled && reflectionEqual)
-        {
-            int r = rows[depth]; if (r < 0) return false;
-            int reflected = N - 1 - r;
-            if (r > reflected) return true;
-            if (r < reflected) reflectionEqual = false;
-        }
-        if (minimalityEnabled && minimalityEqual)
-        {
-            int first = rows[0]; if (first < 0) return false;
-            int newRow = rows[depth]; if (newRow < 0) return false;
-            int transformed = N - 1 - newRow;
-            if (first > transformed) return true;
-            if (first < transformed) minimalityEqual = false;
-        }
-        return false;
     }
 
     // ------------ private fields and helpers ------------
@@ -941,5 +924,25 @@ public partial class BitmaskSolver : ISolver, IDisposable
     {
         EnumerateAllAdaptive(countOnly: true);
         return _solutionCount;
+    }
+
+    private static bool ShouldPrunePrefixIncremental(int[] rows, int depth, int N, bool reflectionEnabled, bool minimalityEnabled, ref bool reflectionEqual, ref bool minimalityEqual)
+    {
+        if (reflectionEnabled && reflectionEqual)
+        {
+            int r = rows[depth]; if (r < 0) return false;
+            int reflected = N - 1 - r;
+            if (r > reflected) return true;
+            if (r < reflected) reflectionEqual = false;
+        }
+        if (minimalityEnabled && minimalityEqual)
+        {
+            int first = rows[0]; if (first < 0) return false;
+            int newRow = rows[depth]; if (newRow < 0) return false;
+            int transformed = N - 1 - newRow;
+            if (first > transformed) return true;
+            if (first < transformed) minimalityEqual = false;
+        }
+        return false;
     }
 }
