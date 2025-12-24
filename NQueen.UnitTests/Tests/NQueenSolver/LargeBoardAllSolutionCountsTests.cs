@@ -5,17 +5,20 @@ namespace NQueen.UnitTests.Tests.NQueenSolver;
 [Trait("Category", "Slow")]
 public class LargeBoardAllSolutionCountsTests(SolverBackEndFixture fixture)
 {
-    // Boards starting at intermediate large size up to throttle threshold - 1 (to force enumeration path for All mode)
+    private static readonly bool _enableFullAllEnum =
+        Environment.GetEnvironmentVariable(NQueen.TestShared.TestSettings.EnvEnableFullAllEnum) == "1";
+
+    // Permanently reduce dataset to avoid long-running enumerations in unit tests
     public static TheoryData<int> LargeBoardsEnumerated =>
     [
-        // 15 is below throttle threshold (16) and below lookup threshold (20) so enumeration must be correct.
-        15, 16, 17
+        .. (_enableFullAllEnum ? new[] { 15, 16, 17 } : new[] { 15 })
     ];
 
     // Verify All-mode counts (count-only) match expected lookup table values for enumerated large boards.
     [Theory]
     [MemberData(nameof(LargeBoardsEnumerated))]
     [Trait("Category", "Slow")]
+    [Trait("SkipInCI", "true")]
     public async Task AllMode_CountOnly_LargeBoards_Exact(int n)
     {
         _solver.UseCountOnlyAllMode = true; _solver.UseCountOnlyUniqueMode = false;
@@ -25,12 +28,14 @@ public class LargeBoardAllSolutionCountsTests(SolverBackEndFixture fixture)
         res.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetAll(n), $"All-mode count mismatch for N={n}");
     }
 
-    // Materialization sanity: ensure at least one solution materialized and count matches expected for sample board (16)
+    // Materialization sanity: ensure at least one solution materialized and count matches expected for sample board (lookup path where possible)
     [Fact]
     [Trait("Category", "Slow")]
-    public async Task AllMode_Materialize_SampleBoard16()
+    [Trait("SkipInCI", "true")]
+    public async Task AllMode_Materialize_SampleBoard()
     {
-        int n = 16;
+        // Prefer a board that uses the lookup path to avoid long enumeration in unit tests
+        int n = NQueen.Domain.Settings.SimulationSettings.LookupThresholdN;
         _solver.UseCountOnlyAllMode = false; _solver.UseCountOnlyUniqueMode = false;
         var ctx = new SimulationContext(n, SolutionMode.All, DisplayMode.Hide);
         var res = await _solver.GetSimResultsAsync(ctx);

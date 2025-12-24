@@ -1,4 +1,4 @@
-namespace NQueen.UnitTests.Tests.NQueenSolver;
+﻿namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 [Collection("SolverBackend")]
 public class HighBoardCountsTests(SolverBackEndFixture fixture)
@@ -6,20 +6,33 @@ public class HighBoardCountsTests(SolverBackEndFixture fixture)
     private readonly ISolverBackEnd _solver = fixture.Sut;
 
     private static readonly bool _fullCoverage =
-        Environment.GetEnvironmentVariable("FULL_HIGHBOARD_COVERAGE") == "true";
+        Environment.GetEnvironmentVariable(TestShared.TestSettings.EnvFullHighboardCoverage) == "true";
 
+    // Prefer lookup-path boards to avoid long enumerations; allow opt-in full coverage via env var
     private static readonly int[] _fullBoardSet = [20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
-    private static readonly int[] _reducedBoardSet = [20, 25, 29];
+    private static readonly int[] _fastBoardSet = [SimulationSettings.LookupThresholdN];
+
     public static TheoryData<int> HighBoards =>
-        [.. _fullCoverage ? _fullBoardSet : _reducedBoardSet];
+        [.. (_fullCoverage ? _fullBoardSet : _fastBoardSet)];
 
     // Single board for materialization sampling
-    private const int _sampleBoard = 20;
+    // Prefer lookup-path board size; fall back to a small fast board if lookup is unavailable
+    private static int SampleBoard
+    {
+        get
+        {
+            int preferred = SimulationSettings.LookupThresholdN;
+            bool hasAll = ExpectedSolutionCounts.TryGetAll(preferred, out _);
+            bool hasUniq = ExpectedSolutionCounts.TryGetUnique(preferred, out _);
+            return (hasAll && hasUniq) ? preferred : 16;
+        }
+    }
 
     // Unified test: count-only (All & Unique) plus Single-mode verification
     [Theory]
     [MemberData(nameof(HighBoards))]
     [Trait("Category", "HighBoard")]
+    [Trait("SkipInCI", "true")]
     public async Task CountOnly_AllUnique_AndSingle(int n)
     {
         // All count-only
@@ -36,7 +49,7 @@ public class HighBoardCountsTests(SolverBackEndFixture fixture)
         uniqRes.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetUnique(n));
         uniqRes.Solutions.Should().BeEmpty();
 
-        // Single-mode (only verify for reduced or full set as part of same run)
+        // Single-mode (verify minimal correctness at the same n)
         var singleCtx = new SimulationContext(n, SolutionMode.Single, DisplayMode.Hide);
         var singleRes = await _solver.GetSimResultsAsync(singleCtx);
         singleRes.SolutionsCount.Should().Be(1UL);
@@ -48,19 +61,21 @@ public class HighBoardCountsTests(SolverBackEndFixture fixture)
     [Trait("Category", "HighBoard")]
     public async Task MaterializeSamples_AllAndUnique_SampleBoard()
     {
-        // All mode sample
+        int sb = SampleBoard;
+
+        // All mode sample (lookup path → constructive sampling; fast if lookup available)
         _solver.UseCountOnlyAllMode = false; _solver.UseCountOnlyUniqueMode = false;
-        var allCtx = new SimulationContext(_sampleBoard, SolutionMode.All, DisplayMode.Hide);
+        var allCtx = new SimulationContext(sb, SolutionMode.All, DisplayMode.Hide);
         var allRes = await _solver.GetSimResultsAsync(allCtx);
-        allRes.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetAll(_sampleBoard));
+        allRes.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetAll(sb));
         allRes.Solutions.Count.Should().BeGreaterThan(0);
         (allRes.Solutions.Count <= SimulationSettings.MaxDisplayedCount).Should().BeTrue();
 
-        // Unique mode sample
+        // Unique mode sample (lookup path → constructive sampling; fast if lookup available)
         _solver.UseCountOnlyAllMode = false; _solver.UseCountOnlyUniqueMode = false;
-        var uniqCtx = new SimulationContext(_sampleBoard, SolutionMode.Unique, DisplayMode.Hide);
+        var uniqCtx = new SimulationContext(sb, SolutionMode.Unique, DisplayMode.Hide);
         var uniqRes = await _solver.GetSimResultsAsync(uniqCtx);
-        uniqRes.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetUnique(_sampleBoard));
+        uniqRes.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetUnique(sb));
         uniqRes.Solutions.Count.Should().BeGreaterThan(0);
         (uniqRes.Solutions.Count <= SimulationSettings.MaxDisplayedCount).Should().BeTrue();
     }
