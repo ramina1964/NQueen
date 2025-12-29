@@ -534,8 +534,9 @@ public partial class BitmaskSolver : ISolver, IDisposable
         int pruneDepthGate = int.MaxValue;
         if (EnablePrefixMinimalityPruning || EnablePartialReflectionPruning)
         {
-            // Push earliest pruning for very large boards
-            if (n >= NQueen.Domain.Settings.SimulationSettings.PrefixPruneEarlyThresholdN) pruneDepthGate = 0;
+            // Push earliest pruning for N>=20
+            if (n >= 20) pruneDepthGate = 1;
+            else if (n >= NQueen.Domain.Settings.SimulationSettings.PrefixPruneEarlyThresholdN) pruneDepthGate = 0;
             else if (n >= 16) pruneDepthGate = 2;
             else if (n >= NQueen.Domain.Settings.SimulationSettings.LargeBoardSymmetryPruningThreshold) pruneDepthGate = 3;
         }
@@ -548,7 +549,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
             System.Threading.ThreadPool.SetMinThreads(cores, cores);
 
             // Larger chunks reduce scheduler overhead on very large N
-            int chunk = Math.Max(1, firstRowLimitExclusive / (cores * 4));
+            int chunk = Math.Max(1, firstRowLimitExclusive / (cores * 2));
             var ranges = System.Collections.Concurrent.Partitioner.Create(0, firstRowLimitExclusive, chunk);
             var po = new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = cores };
 
@@ -596,10 +597,13 @@ public partial class BitmaskSolver : ISolver, IDisposable
                             rows[col] = r;
 
                             // If early-equality already broke, skip symmetry checks quickly
-                            if (col >= pruneGate && ShouldPrunePrefixIncremental(rows, col, n, reflectionEnabled, minimalityEnabled, ref reflectionEqual, ref minimalityEqual))
+                            if (col >= pruneGate && (reflectionEnabled || minimalityEnabled))
                             {
-                                rows[col] = -1;
-                                continue;
+                                if (ShouldPrunePrefixIncremental(rows, col, n, reflectionEnabled, minimalityEnabled, ref reflectionEqual, ref minimalityEqual))
+                                {
+                                    rows[col] = -1;
+                                    continue;
+                                }
                             }
 
                             bool nextReflectionEqual = reflectionEqual;
