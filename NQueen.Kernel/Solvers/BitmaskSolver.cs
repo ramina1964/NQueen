@@ -1,6 +1,7 @@
 ﻿namespace NQueen.Kernel.Solvers;
 
-public partial class BitmaskSolver : ISolver, IDisposable
+public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
+    int maxDisplayedCount = SimulationSettings.MaxDisplayedCount) : ISolver, IDisposable
 {
     // DeBruijn-based fast trailing zero count (local copy to avoid cross-type dependency)
     private const ulong DeBruijn64 = 0x03F79D71B4CB0A89UL;
@@ -15,18 +16,6 @@ public partial class BitmaskSolver : ISolver, IDisposable
             tbl[idx] = (byte)i;
         }
         return tbl;
-    }
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int FastTzcnt(ulong bit) => DeBruijnIndex64[(bit * DeBruijn64) >> 58];
-
-    private readonly object _sync = new();
-
-    public BitmaskSolver(ISolutionFormatter solutionFormatter,
-        int maxDisplayedCount = SimulationSettings.MaxDisplayedCount)
-    {
-        _formatter = solutionFormatter ?? throw new ArgumentNullException(nameof(solutionFormatter));
-        _maxDisplayedCount = maxDisplayedCount;
-        _capEnabled = true;
     }
 
     public BitmaskSolver(ISolutionFormatter solutionFormatter, bool enableCap)
@@ -167,7 +156,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
             else
             {
                 // Auto-tune All count-only for performance
-                if (BoardSize >= NQueen.Domain.Settings.SimulationSettings.ParallelAllMaterializeAutoEnableThresholdN)
+                if (BoardSize >= SimulationSettings.ParallelAllMaterializeAutoEnableThresholdN)
                 {
                     EnablePrefixMinimalityPruning = false;
                     EnablePartialReflectionPruning = false;
@@ -455,19 +444,20 @@ public partial class BitmaskSolver : ISolver, IDisposable
                     poolD2.Return(stackD2, clearArray: false);
                     poolAvail.Return(stackAvail, clearArray: false);
                 }
-                System.Threading.Interlocked.Add(ref totalNonCenterL, (long)threadNonCenter);
-                System.Threading.Interlocked.Add(ref totalCenterL, (long)threadCenter);
+
+                Interlocked.Add(ref totalNonCenterL, (long)threadNonCenter);
+
+                Interlocked.Add(ref totalCenterL, (long)threadCenter);
             }));
         }
         Task.WaitAll(tasks.ToArray());
-        ulong nonCenter = (ulong)System.Threading.Interlocked.Read(ref totalNonCenterL);
-        ulong center = (ulong)System.Threading.Interlocked.Read(ref totalCenterL);
+        ulong nonCenter = (ulong)Interlocked.Read(ref totalNonCenterL);
+        ulong center = (ulong)Interlocked.Read(ref totalCenterL);
         ulong combined = halfBoard ? (nonCenter * 2UL + center) : (nonCenter + center);
         _solutionCount = combined;
         if (EnableEvents && !countOnly) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 
-    // Unique counting (adaptive)
     private ulong CountUniqueAdaptive(int n)
     {
         bool origPrefix = EnablePrefixMinimalityPruning;
@@ -480,14 +470,14 @@ public partial class BitmaskSolver : ISolver, IDisposable
             EnablePartialReflectionPruning,
             incrementalCanonicalization: false);
 
-        System.Threading.ThreadPool.SetMinThreads(Environment.ProcessorCount, Environment.ProcessorCount);
+        ThreadPool.SetMinThreads(Environment.ProcessorCount, Environment.ProcessorCount);
 
         try
         {
             if (n >= NQueen.Domain.Settings.SimulationSettings.UniqueCountOnlyParallelThresholdN && n <= 22)
                 return CountUniqueFastHalfBoard(n);
 
-            if (n < NQueen.Domain.Settings.SimulationSettings.UniqueCountOnlyParallelThresholdN)
+            if (n < SimulationSettings.UniqueCountOnlyParallelThresholdN)
             {
                 ulong total = 0;
                 BitmaskParallelEngine.RunUniqueUnified(
@@ -508,7 +498,10 @@ public partial class BitmaskSolver : ISolver, IDisposable
         {
             EnablePrefixMinimalityPruning = origPrefix;
             EnablePartialReflectionPruning = origReflection;
-            SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
+            SearchOptimizations.Configure(
+                EnablePrefixMinimalityPruning,
+                EnablePartialReflectionPruning,
+                incrementalCanonicalization: false);
         }
     }
 
@@ -536,9 +529,9 @@ public partial class BitmaskSolver : ISolver, IDisposable
         {
             // Push earliest pruning for N>=20
             if (n >= 20) pruneDepthGate = 1;
-            else if (n >= NQueen.Domain.Settings.SimulationSettings.PrefixPruneEarlyThresholdN) pruneDepthGate = 0;
+            else if (n >= SimulationSettings.PrefixPruneEarlyThresholdN) pruneDepthGate = 0;
             else if (n >= 16) pruneDepthGate = 2;
-            else if (n >= NQueen.Domain.Settings.SimulationSettings.LargeBoardSymmetryPruningThreshold) pruneDepthGate = 3;
+            else if (n >= SimulationSettings.LargeBoardSymmetryPruningThreshold) pruneDepthGate = 3;
         }
 
         var scratchPool = System.Buffers.ArrayPool<int>.Shared;
@@ -546,14 +539,14 @@ public partial class BitmaskSolver : ISolver, IDisposable
 
         try
         {
-            System.Threading.ThreadPool.SetMinThreads(cores, cores);
+            ThreadPool.SetMinThreads(cores, cores);
 
             // Larger chunks reduce scheduler overhead on very large N
             int chunk = Math.Max(1, firstRowLimitExclusive / (cores * 2));
-            var ranges = System.Collections.Concurrent.Partitioner.Create(0, firstRowLimitExclusive, chunk);
-            var po = new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = cores };
+            var ranges = Partitioner.Create(0, firstRowLimitExclusive, chunk);
+            var po = new ParallelOptions { MaxDegreeOfParallelism = cores };
 
-            System.Threading.Tasks.Parallel.ForEach(ranges, po, range =>
+            Parallel.ForEach(ranges, po, range =>
             {
                 int[] rows = new int[n];
                 Array.Fill(rows, -1);
@@ -570,13 +563,16 @@ public partial class BitmaskSolver : ISolver, IDisposable
 
                         bool reflectionEqual = true;
                         bool minimalityEqual = true;
-                        DFS(col: 1, cols: bit0, d1: bit0 << 1, d2: bit0 >> 1, reflectionEnabled: EnablePartialReflectionPruning, minimalityEnabled: EnablePrefixMinimalityPruning, pruneDepthGate, ref reflectionEqual, ref minimalityEqual);
+                        DFS(col: 1, cols: bit0, d1: bit0 << 1, d2: bit0 >> 1,
+                            reflectionEnabled: EnablePartialReflectionPruning, minimalityEnabled:
+                            EnablePrefixMinimalityPruning, pruneDepthGate, ref reflectionEqual, ref minimalityEqual);
                     }
 
                     if (localCount != 0)
-                        System.Threading.Interlocked.Add(ref total, (long)localCount);
+                        Interlocked.Add(ref total, (long)localCount);
 
-                    void DFS(int col, ulong cols, ulong d1, ulong d2, bool reflectionEnabled, bool minimalityEnabled, int pruneGate, ref bool reflectionEqual, ref bool minimalityEqual)
+                    void DFS(int col, ulong cols, ulong d1, ulong d2, bool reflectionEnabled,
+                        bool minimalityEnabled, int pruneGate, ref bool reflectionEqual, ref bool minimalityEqual)
                     {
                         if (IsSolverCanceled) return;
                         if (col == n)
@@ -592,14 +588,15 @@ public partial class BitmaskSolver : ISolver, IDisposable
                             ulong bit = avail & (ulong)-(long)avail;
                             avail ^= bit;
                             // Prefer JIT intrinsic for trailing zero count in the hot loop
-                            int r = System.Numerics.BitOperations.TrailingZeroCount(bit);
+                            int r = BitOperations.TrailingZeroCount(bit);
 
                             rows[col] = r;
 
                             // If early-equality already broke, skip symmetry checks quickly
                             if (col >= pruneGate && (reflectionEnabled || minimalityEnabled))
                             {
-                                if (ShouldPrunePrefixIncremental(rows, col, n, reflectionEnabled, minimalityEnabled, ref reflectionEqual, ref minimalityEqual))
+                                if (ShouldPrunePrefixIncremental(rows, col, n, reflectionEnabled, minimalityEnabled,
+                                    ref reflectionEqual, ref minimalityEqual))
                                 {
                                     rows[col] = -1;
                                     continue;
@@ -623,20 +620,23 @@ public partial class BitmaskSolver : ISolver, IDisposable
         {
             EnablePrefixMinimalityPruning = origPrefix;
             EnablePartialReflectionPruning = origReflection;
-            SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
+            SearchOptimizations.Configure(
+                EnablePrefixMinimalityPruning,
+                EnablePartialReflectionPruning,
+                incrementalCanonicalization: false);
         }
 
         return (ulong)total;
     }
 
     // ------------ private fields and helpers ------------
-    private readonly ISolutionFormatter _formatter;
+    private readonly ISolutionFormatter _formatter = solutionFormatter ?? throw new ArgumentNullException(nameof(solutionFormatter));
     private readonly List<(UInt128 packed, int boardSize)> _solutions = [];
     private readonly List<int[]> _largeBoardRawSolutions = new();
     private ulong _solutionCount;
     private Guid _currentSimToken = Guid.Empty;
-    private readonly bool _capEnabled;
-    private readonly int _maxDisplayedCount;
+    private readonly bool _capEnabled = true;
+    private readonly int _maxDisplayedCount = maxDisplayedCount;
     private volatile bool _eventsSuppressedAfterCap;
     private bool _disposed;
     private int[]? _scratchBuffer;
@@ -688,7 +688,7 @@ public partial class BitmaskSolver : ISolver, IDisposable
         int cap = _maxDisplayedCount;
         if (cap <= 0) return;
 
-        if (BoardSize >= NQueen.Domain.Settings.SimulationSettings.ConstructiveSampleThresholdN)
+        if (BoardSize >= SimulationSettings.ConstructiveSampleThresholdN)
         {
             ConstructiveSampleSolutions(isUnique, cap);
             ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
@@ -708,8 +708,14 @@ public partial class BitmaskSolver : ISolver, IDisposable
                 DelayInMillisec,
                 _currentSimToken,
                 () => IsSolverCanceled,
-                p => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
-                m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize)); },
+                p =>
+                {
+                    if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken));
+                },
+                m =>
+                {
+                    if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize));
+                },
                 rows =>
                 {
                     if (!ValidateRows(rows)) return false;
@@ -742,8 +748,15 @@ public partial class BitmaskSolver : ISolver, IDisposable
                 DelayInMillisec,
                 _currentSimToken,
                 () => IsSolverCanceled,
-                p => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
-                m => { if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize)); },
+                p =>
+                {
+                    if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken));
+                },
+                m =>
+                {
+                    if (EnableEvents && !_eventsSuppressedAfterCap) QueenPlaced?.Invoke(
+                    this, new QueenPlacedEventArgs(m, BoardSize));
+                },
                 rows =>
                 {
                     if (!ValidateRows(rows)) return false;
@@ -949,4 +962,9 @@ public partial class BitmaskSolver : ISolver, IDisposable
         }
         return false;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int FastTzcnt(ulong bit) => DeBruijnIndex64[(bit * DeBruijn64) >> 58];
+
+    private readonly object _sync = new();
 }
