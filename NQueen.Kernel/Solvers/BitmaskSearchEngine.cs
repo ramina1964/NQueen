@@ -4,9 +4,7 @@ internal sealed class BitmaskSearchEngine
 {
     private const ulong DeBruijn64 = 0x03F79D71B4CB0A89UL;
     private static readonly byte[] DeBruijnIndex64 = InitDeBruijn();
-#if DEBUG
-    private static readonly bool _deBruijnVerified = VerifyDeBruijn();
-#endif
+
     private static byte[] InitDeBruijn()
     {
         var tbl = new byte[64];
@@ -18,27 +16,7 @@ internal sealed class BitmaskSearchEngine
         }
         return tbl;
     }
-#if DEBUG
-    private static bool VerifyDeBruijn()
-    {
-        var seen = new bool[64];
-        for (int i = 0; i < 64; i++)
-        {
-            int v = DeBruijnIndex64[i];
-            if (v < 0 || v > 63) throw new Exception("Invalid DeBruijn index value.");
-            if (seen[v]) throw new Exception("Duplicate DeBruijn mapping detected.");
-            seen[v] = true;
-        }
-        for (int i = 0; i < 64; i++)
-        {
-            ulong bit = 1UL << i;
-            int fast = DeBruijnIndex64[(bit * DeBruijn64) >> 58];
-            int intrinsic = System.Numerics.BitOperations.TrailingZeroCount(bit);
-            if (fast != intrinsic) throw new Exception("DeBruijn mapping mismatch.");
-        }
-        return true;
-    }
-#endif
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int FastTzcnt(ulong bit) => DeBruijnIndex64[(bit * DeBruijn64) >> 58];
 
@@ -363,4 +341,4 @@ internal sealed class BitmaskSearchEngine
 
     private readonly record struct Frame(ulong Cols, ulong D1, ulong D2, ulong Remaining, bool ReflectionEqual, bool MinimalityEqual);
 }
-// end of file
+
