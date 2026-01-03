@@ -1,7 +1,3 @@
-using System;
-using System.Numerics;
-using NQueen.Domain.Utils;
-
 namespace NQueen.Kernel.Solvers.Engines;
 
 public static class CanonicalUniqueSearchEngine

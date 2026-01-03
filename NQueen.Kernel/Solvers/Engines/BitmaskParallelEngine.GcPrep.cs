@@ -1,12 +1,5 @@
 namespace NQueen.Kernel.Solvers.Engines;
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Runtime;
-using NQueen.Domain.Settings;
-using NQueen.Domain.Utils;
-
 /// <summary>
 /// Helper methods to warm up JIT and reduce GC pressure before a large Unique-mode run (e.g. N=19).
 /// </summary>

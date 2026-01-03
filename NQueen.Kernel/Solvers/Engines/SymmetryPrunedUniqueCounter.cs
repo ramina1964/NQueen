@@ -14,14 +14,17 @@ public static class SymmetryPrunedUniqueCounter
         {
             if (N >= 20) pruneDepthGate = 1; else if (N >= 16) pruneDepthGate = 2;
         }
-        Parallel.ForEach(System.Collections.Concurrent.Partitioner.Create(0, N), range =>
+        Parallel.ForEach(Partitioner.Create(0, N), range =>
         {
             int[] rows = new int[N];
             Array.Fill(rows, -1);
             int[] scratch = new int[N * 8];
             int localMaterialized = 0;
             ulong localCount = 0UL;
-            System.Collections.Generic.List<int[]>? localMaterializedList = (materializedQueue != null) ? new System.Collections.Generic.List<int[]>(Math.Min(cap, 128)) : null;
+            var localMaterializedList = (materializedQueue != null)
+                ? new List<int[]>(Math.Min(cap, 128))
+                : null;
+
             void DFS(int col, ulong cols, ulong d1, ulong d2)
             {
                 if (col == N)
@@ -44,7 +47,7 @@ public static class SymmetryPrunedUniqueCounter
                 {
                     ulong bit = avail & (ulong)-(long)avail;
                     avail ^= bit;
-                    int r = System.Numerics.BitOperations.TrailingZeroCount(bit);
+                    int r = BitOperations.TrailingZeroCount(bit);
                     rows[col] = r;
                     if (col >= pruneDepthGate && ShouldPrunePrefixFast(rows, col, N)) { rows[col] = -1; continue; }
                     DFS(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1);
@@ -57,13 +60,14 @@ public static class SymmetryPrunedUniqueCounter
                 ulong bit0 = 1UL << rootRow;
                 DFS(1, bit0, bit0 << 1, bit0 >> 1);
             }
-            System.Threading.Interlocked.Add(ref totalCount, localCount);
+            Interlocked.Add(ref totalCount, localCount);
             if (localMaterializedList != null)
             {
                 foreach (var sol in localMaterializedList)
                     materializedQueue!.Enqueue(sol);
             }
         });
+
         if (materializedQueue != null && onMaterialized != null)
         {
             int emitted = 0;

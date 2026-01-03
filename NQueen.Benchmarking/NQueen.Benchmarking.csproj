@@ -25,4 +25,10 @@
 		<Folder Include="Artifacts\results\" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Reference Update="System.Collections.Immutable">
+	    <Private>False</Private>
+	  </Reference>
+	</ItemGroup>
+
 </Project>

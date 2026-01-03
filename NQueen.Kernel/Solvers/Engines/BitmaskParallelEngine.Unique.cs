@@ -1,5 +1,3 @@
-using System.Buffers;
-
 namespace NQueen.Kernel.Solvers.Engines;
 
 internal sealed partial class BitmaskParallelEngine
