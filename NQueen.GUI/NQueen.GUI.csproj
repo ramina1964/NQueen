@@ -1,17 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <UseWPF>true</UseWPF>
+    <LangVersion>14.0</LangVersion>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+
+    <UseWPF>true</UseWPF>
+    <OutputType>WinExe</OutputType>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Images\WhiteQueen.png" />
-    <None Remove="ViewModels\MainViewModel.cs~RF2326ee9.TMP" />
   </ItemGroup>
 
   <ItemGroup>

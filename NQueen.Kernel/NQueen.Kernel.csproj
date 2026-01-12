@@ -2,11 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>14.0</LangVersion>
     <Nullable>enable</Nullable>
-    <AssemblyName>NQueen.Kernel</AssemblyName>
-    <RootNamespace>NQueen.Kernel</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
   </PropertyGroup>
 
   <ItemGroup>
