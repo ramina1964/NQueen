@@ -21,7 +21,7 @@ public class NQueenBench
 
 internal class Program
 {
-    static void Main(string[] args)
+    private static void Main(string[] args)
     {
         var benchMode = Environment.GetEnvironmentVariable("BENCHMARK_MODE");
         if ((benchMode == "1") || (args != null && args.Any(a => a.StartsWith("--"))))

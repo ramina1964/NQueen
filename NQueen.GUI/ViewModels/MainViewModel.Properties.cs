@@ -205,7 +205,7 @@ public sealed partial class MainViewModel : ObservableObject
             b.ParallelRootSplitDepth = value;
     }
 
-    private bool _autoTuneParallel = true;
+    private readonly bool _autoTuneParallel = true;
 
     private void AutoAdjustParallel()
     {

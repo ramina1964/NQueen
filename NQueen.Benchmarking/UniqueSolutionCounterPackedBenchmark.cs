@@ -21,5 +21,5 @@ public class UniqueSolutionCounterPackedBenchmark
         return results.SolutionsCount;
     }
 
-    private ISolutionFormatter _formatter = new DefaultSolutionFormatter();
+    private readonly ISolutionFormatter _formatter = new DefaultSolutionFormatter();
 }
