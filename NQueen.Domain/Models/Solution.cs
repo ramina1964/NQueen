@@ -1,5 +1,4 @@
-﻿using System.Threading;
-namespace NQueen.Domain.Models;
+﻿namespace NQueen.Domain.Models;
 
 public class Solution
 {

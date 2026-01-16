@@ -1,12 +1,6 @@
-using System;
-using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
-using NQueen.Kernel.Solvers;
-using NQueen.Domain.Enums;
-using NQueen.Domain.Interfaces;
-using System.Collections.Generic;
-using NQueen.Domain.Models;
 using Microsoft.VSDiagnostics;
+using NQueen.Domain.Models;
 
 namespace NQueen.Benchmarking
 {

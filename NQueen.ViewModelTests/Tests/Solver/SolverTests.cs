@@ -9,7 +9,7 @@ public class SolverTests
         var solver = new Mock<ISolverBackEnd>();
         solver.Setup(s => s.GetSimResultsAsync(It.IsAny<SimulationContext>()))
             .ReturnsAsync(new SimulationResults(
-                [ new Solution([0, 1, 2], new DefaultSolutionFormatter(), id: null) ],
+                [new Solution([0, 1, 2], new DefaultSolutionFormatter(), id: null)],
                 totalSolutions: 1UL,
                 ElapsedTimeInSec: 0.0));
 

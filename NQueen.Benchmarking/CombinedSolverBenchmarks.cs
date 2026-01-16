@@ -67,7 +67,7 @@ public class AllModeVariantsBenchmark
         return solver.Solve().SolutionsCount;
     }
 
-    [Benchmark(Description = "All Sequential Materialize (capped)")] 
+    [Benchmark(Description = "All Sequential Materialize (capped)")]
     public (int materialized, ulong total) All_Sequential_Materialize()
     {
         using var solver = new BitmaskSolver(BoardSize, SolutionMode.All, DisplayMode.Hide, _formatter)

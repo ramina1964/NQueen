@@ -1,8 +1,3 @@
-using System;
-using BenchmarkDotNet.Attributes;
-using NQueen.Kernel.Solvers;
-using NQueen.Domain.Enums;
-using NQueen.Domain.Interfaces;
 using Microsoft.VSDiagnostics;
 
 namespace NQueen.Benchmarking

@@ -1,6 +1,3 @@
-using System;
-using System.Windows.Threading;
-
 namespace NQueen.GUI.ViewModels;
 
 public sealed partial class MainViewModel

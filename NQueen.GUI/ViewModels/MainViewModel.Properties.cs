@@ -200,7 +200,8 @@ public sealed partial class MainViewModel : ObservableObject
     private int _parallelRootSplitDepth = SimulationSettings.DefaultParallelRootSplitDepth;
     partial void OnParallelRootSplitDepthChanged(int value)
     {
-        if (value < 1) ParallelRootSplitDepth = 1; else if (_solver is NQueen.Kernel.Solvers.BitmaskSolver b)
+        if (value < 1) ParallelRootSplitDepth = 1;
+        else if (_solver is NQueen.Kernel.Solvers.BitmaskSolver b)
             b.ParallelRootSplitDepth = value;
     }
 

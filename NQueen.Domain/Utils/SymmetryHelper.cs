@@ -133,7 +133,7 @@ public static partial class SymmetryHelper
     }
 
     public static int MaxRowExclusiveForColumn(int boardSize, int column, int[] queenRows) => column == 0 ? (boardSize + 1) / 2 : boardSize;
-    
+
     public static int GetScratchBufferSize(int boardSize) => boardSize * 8;
 
     public static UInt128 PackRows(ReadOnlySpan<int> rows)
