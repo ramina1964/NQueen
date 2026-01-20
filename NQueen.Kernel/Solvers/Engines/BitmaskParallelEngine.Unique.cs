@@ -2,6 +2,19 @@ namespace NQueen.Kernel.Solvers.Engines;
 
 internal sealed partial class BitmaskParallelEngine
 {
+    // Minimal request type needed by RunUnique/RunUniqueUnified
+    public readonly record struct UniqueRequest(
+        int BoardSize,
+        bool EnableEvents,
+        Func<bool> ShouldMaterialize,
+        Action<int[]> OnUniqueSolution,
+        Action<ulong> OnCompletedUniqueCount,
+        Action<double> ReportProgress
+    );
+
+    // If RunUnique uses RootFrame, keep this too
+    private readonly record struct RootFrame(int Col, ulong Cols, ulong D1, ulong D2, int[] Rows);
+
     internal static class UniqueInstrumentation
     {
         // Set Enabled to true if you want instrumentation code to run.
@@ -60,6 +73,10 @@ internal sealed partial class BitmaskParallelEngine
 
         int N = request.BoardSize; request.ReportProgress(0.0);
         if (N <= 0) { request.OnCompletedUniqueCount(0); return; }
+
+        var plan = NQueen.Kernel.Solvers.ParallelSplitDepthHeuristic.GetSplitPlan(N);
+        int splitDepth = plan.SplitDepth;
+
         var globalUnique = new ConcurrentDictionary<UInt128, byte>();
         int materializedCount = 0;
         int cap = request.ShouldMaterialize() ? SimulationSettings.MaxDisplayedCount : 0;
@@ -80,10 +97,10 @@ internal sealed partial class BitmaskParallelEngine
         var partialStates = new List<PartialState>();
 
         // Use the new split depth calculation
-        int splitDepth = (N >= SimulationSettings.DynamicRootSplitLimitN)
-            ? SimulationSettings.CalculateSplitDepth(N)
-            : ((N >= DepthSplitThresholdN && DepthSplitLevel > 0)
-                ? DepthSplitLevel : 1);
+        // int splitDepth = (N >= SimulationSettings.DynamicRootSplitLimitN)
+        //     ? SimulationSettings.CalculateSplitDepth(N)
+        //     : ((N >= DepthSplitThresholdN && DepthSplitLevel > 0)
+        //         ? DepthSplitLevel : 1);
 
         GeneratePartialStates(N, splitDepth, mask, partialStates);
 

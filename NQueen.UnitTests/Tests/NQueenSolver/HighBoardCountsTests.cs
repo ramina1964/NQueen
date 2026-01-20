@@ -130,7 +130,10 @@ public class HighBoardCountsTests(SolverBackEndFixture fixture)
     {
         if (Environment.GetEnvironmentVariable("RUN_UNIQUE19_ENUM") != "1") return; // heavy gating
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        ulong count = Kernel.Solvers.Engines.CanonicalUniqueSearchEngine.CountUnique(19);
+
+        // Use the consolidated, supported path (symmetry-pruned counter)
+        ulong count = NQueen.Kernel.Solvers.Engines.SymmetryPrunedUniqueCounter.Count(19, cap: 0, onMaterialized: null);
+
         sw.Stop();
         string fileName = "Unique_FullEnumeration_N19.txt";
         string path = Path.Combine(Environment.CurrentDirectory, fileName);
@@ -142,7 +145,7 @@ public class HighBoardCountsTests(SolverBackEndFixture fixture)
             $"EnumeratedCount: {count}",
             $"ElapsedSeconds: {sw.Elapsed.TotalSeconds:F2}",
             $"ElapsedHHMMSS: {sw.Elapsed:hh\\:mm\\:ss}",
-            "Note: This test performs exhaustive canonical minimality enumeration and can take a very long time."
+            "Note: This test performs symmetry-pruned unique counting."
         ]);
         count.Should().Be(ExpectedSolutionCounts.GetUnique(19));
     }

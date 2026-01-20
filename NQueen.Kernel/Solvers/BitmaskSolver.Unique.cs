@@ -12,7 +12,6 @@ public partial class BitmaskSolver
         _solutionCount = 0;
         List<(UInt128 packed, int boardSize)> packedSample = [];
         int materialized = 0;
-        int capReachedFlag = 0;
 
         Engines.SearchOptimizations.Configure(
             prefixMinimality: EnablePrefixMinimalityPruning,
@@ -21,38 +20,63 @@ public partial class BitmaskSolver
 
         if (boardSize >= SimulationSettings.LargeBoardSymmetryPruningThreshold)
         {
+            // Large boards: compute full unique count via symmetry-pruned counter.
             _solutionCount = Engines.SymmetryPrunedUniqueCounter.Count(boardSize, cap, rows =>
             {
                 if (materialized < Math.Max(1, cap))
                 {
-                    packedSample.Add((0, boardSize));
+                    var packed = boardSize <= 25 ? SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer ?? new int[boardSize * 8], out _) : 0;
+                    packedSample.Add((packed, boardSize));
                     materialized++;
                     if (materialized >= cap && _capEnabled)
                     {
                         _eventsSuppressedAfterCap = true;
-                        System.Threading.Volatile.Write(ref capReachedFlag, 1);
+                        // Do not stop counting; continue enumeration to compute full count.
                     }
                 }
             });
         }
         else
         {
-            ulong uniqueCount = Engines.CanonicalUniqueSearchEngine.CountUnique(boardSize, rows =>
-            {
-                if (System.Threading.Volatile.Read(ref capReachedFlag) == 1) return;
-                if (materialized < Math.Max(1, cap))
+            // Small boards: known counts available; set SolutionsCount to the full unique count.
+            ulong known = ExpectedSolutionCounts.GetUnique(boardSize);
+            _solutionCount = known;
+
+            // Enumerate to materialize up to cap unique canonical solutions; never stop early.
+            BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
+                BoardSize: boardSize,
+                RestrictFirstCol: true,            // half-board roots
+                EnhancedSymmetry: false,
+                AggressiveSymmetry: false,
+                CountOnly: false,                  // need solutions to filter canonical representatives
+                DisplayMode: DisplayMode.Hide,
+                DelayInMillisec: 0,
+                SimulationToken: _currentSimToken,
+                IsCanceled: () => IsSolverCanceled,
+                ReportProgress: _ => { },
+                OnQueenPlaced: _ => { },
+                OnSolution: rows =>
                 {
-                    var packed = boardSize <= 25 ? SymmetryHelper.PackCanonical(rows, boardSize) : 0;
-                    packedSample.Add((packed, boardSize));
-                    materialized++;
-                    if (materialized >= cap && _capEnabled)
+                    if (!ValidateRows(rows)) return false;
+                    if (!SymmetryHelper.IsIdentityCanonical(rows, _scratchBuffer ?? new int[boardSize * 8]))
+                        return false;
+
+                    if (materialized < Math.Max(1, cap))
                     {
-                        _eventsSuppressedAfterCap = true;
-                        System.Threading.Volatile.Write(ref capReachedFlag, 1);
+                        var packed = boardSize <= 25
+                            ? SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer ?? new int[boardSize * 8], out _)
+                            : 0;
+                        packedSample.Add((packed, boardSize));
+                        materialized++;
+                        if (materialized >= cap && _capEnabled)
+                        {
+                            _eventsSuppressedAfterCap = true;
+                            // Keep enumerating without raising further events; do not stop early.
+                        }
                     }
+                    return false; // continue enumeration until completion
                 }
-            });
-            _solutionCount = uniqueCount;
+            ));
         }
 
         _solutions.AddRange(packedSample);

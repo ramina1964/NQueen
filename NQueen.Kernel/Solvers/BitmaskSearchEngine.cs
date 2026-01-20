@@ -100,10 +100,6 @@ internal sealed class BitmaskSearchEngine
             Mask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL),
             MaxRow0 = maxRow0,
             StackFrames = new Frame[N],
-            StackCols = new ulong[N], // retained for backward compatibility
-            StackD1 = new ulong[N],
-            StackD2 = new ulong[N],
-            StackRemaining = new ulong[N],
             RootTotal = request.RestrictFirstCol ? maxRow0 : N,
             LastDepth = -1,
             Visualize = visualize,
@@ -321,11 +317,6 @@ internal sealed class BitmaskSearchEngine
         public ulong Diag2;
         public int MaxRow0;
         public Frame[] StackFrames = [];
-        // Legacy arrays retained (not used in new loops) to avoid breaking other partial code paths
-        public ulong[] StackCols = [];
-        public ulong[] StackD1 = [];
-        public ulong[] StackD2 = [];
-        public ulong[] StackRemaining = [];
         public int RootPlacements;
         public int RootTotal;
         public int QueenPlacedCounter;

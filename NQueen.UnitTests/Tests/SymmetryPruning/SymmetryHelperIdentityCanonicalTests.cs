@@ -48,9 +48,13 @@ public class SymmetryHelperIdentityCanonicalTests(SolverBackEndFixture fixture) 
     {
         int cap = int.MaxValue;
         var collected = new List<int[]>();
-        ulong count = NQueen.Kernel.Solvers.Engines.FundamentalUniqueEnumerationEngine.Enumerate(n, cap, rows => collected.Add(rows));
+
+        // Use the consolidated symmetry-pruned unique counter
+        ulong count = Kernel.Solvers.Engines.SymmetryPrunedUniqueCounter.Count(n, cap, rows => collected.Add(rows));
+
         count.Should().Be(ExpectedSolutionCounts.GetUnique(n));
         collected.Count.Should().BeLessThanOrEqualTo((int)count);
+
         foreach (var sol in collected)
         {
             int[] scratch = new int[n * 8];
