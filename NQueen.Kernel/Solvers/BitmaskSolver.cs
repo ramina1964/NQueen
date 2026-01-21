@@ -187,277 +187,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         }
     }
 
-    private void EnumerateAllAdaptive(bool countOnly)
-    {
-        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, incrementalCanonicalization: false);
-        int N = BoardSize;
-        bool halfBoard = N >= NQueen.Domain.Settings.SimulationSettings.LargeBoardSymmetryPruningThreshold && ((N & 1) == 1);
-        bool isOdd = (N & 1) == 1; int centerRow = N / 2;
-
-        // Visualization path: use engine to emit incremental placements/backtracks with delay
-        if (!countOnly && DisplayMode == DisplayMode.Visualize)
-        {
-            int cap = _maxDisplayedCount;
-            int materialized = 0;
-            var seen = new List<UInt128>(cap);
-            BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
-                N,
-                RestrictFirstCol: false,
-                EnhancedSymmetry: false,
-                AggressiveSymmetry: false,
-                CountOnly: false,
-                DisplayMode,
-                DelayInMillisec: Math.Max(0, DelayInMillisec),
-                _currentSimToken,
-                () => IsSolverCanceled,
-                p => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
-                m => { if (EnableEvents) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, N)); },
-                rows =>
-                {
-                    if (!ValidateRows(rows)) return false;
-                    if (cap <= 0) return false;
-                    if (materialized < cap)
-                    {
-                        if (rows.Length <= 25)
-                        {
-                            var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer ?? new int[rows.Length * 8], out _);
-                            _solutions.Add((packed, rows.Length));
-                            seen.Add(packed);
-                        }
-                        else
-                        {
-                            var copy = new int[rows.Length];
-                            Array.Copy(rows, copy, rows.Length);
-                            _largeBoardRawSolutions.Add(copy);
-                        }
-                        materialized++;
-                        if (EnableEvents && !_eventsSuppressedAfterCap)
-                            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
-                        if (materialized >= cap)
-                        {
-                            _eventsSuppressedAfterCap = true;
-                            return true; // stop engine after cap
-                        }
-                    }
-                    return false;
-                }
-            ));
-            ulong lookup = ExpectedSolutionCounts.GetAll(N);
-            _solutionCount = lookup > 0 ? lookup : (ulong)seen.Count;
-            if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
-            return;
-        }
-
-        // Use engine for small boards only; push 15–17 to parallel partial-state path
-        if (N <= NQueen.Domain.Settings.SimulationSettings.ParallelAllMaterializeAutoEnableThresholdN)
-        {
-            int capSmall = countOnly ? 0 : _maxDisplayedCount;
-            ulong countNonCenter = 0; ulong countCenter = 0; int materializedSmall = 0;
-            BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
-                N,
-                RestrictFirstCol: halfBoard,
-                EnhancedSymmetry: false,
-                AggressiveSymmetry: false,
-                CountOnly: countOnly,
-                DisplayMode,
-                DelayInMillisec,
-                _currentSimToken,
-                () => IsSolverCanceled,
-                p => { if (EnableEvents && !countOnly) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
-                m => { if (EnableEvents && !_eventsSuppressedAfterCap && !countOnly) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, N)); },
-                rows =>
-                {
-                    if (!ValidateRows(rows)) return false;
-                    int r0 = rows[0];
-                    if (halfBoard && isOdd && r0 == centerRow) countCenter++; else countNonCenter++;
-                    if (!countOnly && capSmall > 0 && materializedSmall < capSmall)
-                    {
-                        if (rows.Length <= 25)
-                        {
-                            UInt128 packed = SymmetryHelper.PackRows(rows);
-                            _solutions.Add((packed, rows.Length));
-                        }
-                        else
-                        {
-                            var copy = new int[rows.Length];
-                            Array.Copy(rows, copy, rows.Length);
-                            _largeBoardRawSolutions.Add(copy);
-                        }
-                        materializedSmall++;
-                        if (materializedSmall >= capSmall && _capEnabled)
-                            _eventsSuppressedAfterCap = true;
-                    }
-                    return false;
-                }
-            ));
-            _solutionCount = halfBoard ? (countNonCenter * 2UL + countCenter) : (countNonCenter + countCenter);
-            if (EnableEvents && !countOnly) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
-            return;
-        }
-
-        int cap2 = countOnly ? 0 : _maxDisplayedCount;
-        bool materialize2 = !countOnly && cap2 > 0;
-        bool symmetryActive = false; // avoid undercount in All mode
-        int materializedCount = 0;
-        long totalNonCenterL = 0, totalCenterL = 0;
-        int cores = Environment.ProcessorCount;
-        int maxDepth = 4;
-        int depth = 2;
-        double branchEstimate = Math.Max(2.0, N * 0.55);
-        while (depth < maxDepth && Math.Pow(branchEstimate, depth) < cores * 256) depth++;
-        var partialStates = new List<(int col, int[] rows, ulong cols, ulong d1, ulong d2)>();
-        ulong fullMask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
-        int firstRowLimit = halfBoard ? (N + 1) / 2 : N;
-        for (int rootRow = 0; rootRow < firstRowLimit; rootRow++)
-        {
-            int[] rows = new int[N]; Array.Fill(rows, -1); rows[0] = rootRow;
-            ulong bit = 1UL << rootRow;
-            Gen(1, bit, bit << 1, bit >> 1, rows);
-        }
-        void Gen(int col, ulong cols, ulong d1, ulong d2, int[] rows)
-        {
-            if (col == N || col == depth)
-            {
-                var snap = new int[N]; Array.Copy(rows, snap, N);
-                partialStates.Add((col, snap, cols, d1, d2));
-                return;
-            }
-            ulong avail = ~(cols | d1 | d2) & fullMask;
-            if (symmetryActive)
-            {
-                avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(N, col, rows, avail);
-            }
-            for (ulong a = avail; a != 0; a &= (a - 1))
-            {
-                ulong bitLocal = a & (ulong)-(long)a;
-                int row = FastTzcnt(bitLocal);
-                rows[col] = row;
-                ulong nextCols = cols | bitLocal;
-                ulong nextD1 = (d1 | bitLocal) << 1;
-                ulong nextD2 = (d2 | bitLocal) >> 1;
-                Gen(col + 1, nextCols, nextD1, nextD2, rows);
-                rows[col] = -1;
-            }
-        }
-        if (partialStates.Count == 0) { _solutionCount = 0; return; }
-
-        var queue = new ConcurrentQueue<(int col, int[] rows, ulong cols, ulong d1, ulong d2)>();
-        foreach (var ps in partialStates) queue.Enqueue(ps);
-        int batchSize = Math.Max(8, partialStates.Count / (cores * 16));
-        var tasks = new List<Task>(cores);
-        var poolCols = System.Buffers.ArrayPool<ulong>.Shared;
-        var poolD1 = System.Buffers.ArrayPool<ulong>.Shared;
-        var poolD2 = System.Buffers.ArrayPool<ulong>.Shared;
-        var poolAvail = System.Buffers.ArrayPool<ulong>.Shared;
-        object mergeLock = new();
-        for (int t = 0; t < cores; t++)
-        {
-            tasks.Add(Task.Run(() =>
-            {
-                ulong threadNonCenter = 0; ulong threadCenter = 0; int threadMat = 0;
-                var stackCols = poolCols.Rent(N);
-                var stackD1 = poolD1.Rent(N);
-                var stackD2 = poolD2.Rent(N);
-                var stackAvail = poolAvail.Rent(N);
-                try
-                {
-                    var batch = new List<(int col, int[] rows, ulong cols, ulong d1, ulong d2)>(batchSize);
-                    while (!queue.IsEmpty && !IsSolverCanceled)
-                    {
-                        batch.Clear();
-                        for (int i = 0; i < batchSize && queue.TryDequeue(out var item); i++) batch.Add(item);
-                        if (batch.Count == 0) break;
-                        foreach (var item in batch)
-                        {
-                            var startCol = item.col;
-                            var rows = item.rows;
-                            ulong colsLocal = item.cols;
-                            ulong d1Local = item.d1;
-                            ulong d2Local = item.d2;
-                            int col = startCol;
-                            ulong avail = ~(colsLocal | d1Local | d2Local) & fullMask;
-                            if (symmetryActive)
-                            {
-                                avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(N, col, rows, avail);
-                            }
-                            while (true)
-                            {
-                                if (IsSolverCanceled) break;
-                                if (col == N)
-                                {
-                                    int r0 = rows[0];
-                                    if (halfBoard && isOdd && r0 == centerRow) threadCenter++; else threadNonCenter++;
-                                    if (materialize2 && threadMat < cap2)
-                                    {
-                                        int current = System.Threading.Interlocked.Increment(ref materializedCount);
-                                        if (current <= cap2)
-                                        {
-                                            lock (mergeLock)
-                                            {
-                                                if (rows.Length <= 25)
-                                                {
-                                                    UInt128 packed = SymmetryHelper.PackRows(rows);
-                                                    _solutions.Add((packed, rows.Length));
-                                                }
-                                                else
-                                                {
-                                                    var copy = new int[rows.Length];
-                                                    Array.Copy(rows, copy, rows.Length);
-                                                    _largeBoardRawSolutions.Add(copy);
-                                                }
-                                                if (EnableEvents && !_eventsSuppressedAfterCap)
-                                                    SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
-                                                if (current == cap2) _eventsSuppressedAfterCap = true;
-                                            }
-                                        }
-                                        threadMat = current;
-                                    }
-                                    col--; if (col < startCol) break;
-                                    avail = stackAvail[col]; colsLocal = stackCols[col]; d1Local = stackD1[col]; d2Local = stackD2[col]; rows[col] = -1;
-                                    continue;
-                                }
-                                if (avail == 0UL)
-                                {
-                                    col--; if (col < startCol) break;
-                                    avail = stackAvail[col]; colsLocal = stackCols[col]; d1Local = stackD1[col]; d2Local = stackD2[col]; rows[col] = -1;
-                                    continue;
-                                }
-                                ulong bitLocal = avail & (ulong)-(long)avail; avail ^= bitLocal;
-                                int row = FastTzcnt(bitLocal);
-                                rows[col] = row;
-                                stackCols[col] = colsLocal; stackD1[col] = d1Local; stackD2[col] = d2Local; stackAvail[col] = avail;
-                                colsLocal |= bitLocal; d1Local = (d1Local | bitLocal) << 1; d2Local = (d2Local | bitLocal) >> 1;
-                                col++; if (col == N) continue;
-                                avail = ~(colsLocal | d1Local | d2Local) & fullMask;
-                                if (symmetryActive)
-                                {
-                                    avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(N, col, rows, avail);
-                                }
-                            }
-                        }
-                    }
-                }
-                finally
-                {
-                    poolCols.Return(stackCols, clearArray: false);
-                    poolD1.Return(stackD1, clearArray: false);
-                    poolD2.Return(stackD2, clearArray: false);
-                    poolAvail.Return(stackAvail, clearArray: false);
-                }
-
-                Interlocked.Add(ref totalNonCenterL, (long)threadNonCenter);
-
-                Interlocked.Add(ref totalCenterL, (long)threadCenter);
-            }));
-        }
-        Task.WaitAll(tasks.ToArray());
-        ulong nonCenter = (ulong)Interlocked.Read(ref totalNonCenterL);
-        ulong center = (ulong)Interlocked.Read(ref totalCenterL);
-        ulong combined = halfBoard ? (nonCenter * 2UL + center) : (nonCenter + center);
-        _solutionCount = combined;
-        if (EnableEvents && !countOnly) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
-    }
-
     private ulong CountUniqueAdaptive(int n)
     {
         bool origPrefix = EnablePrefixMinimalityPruning;
@@ -795,6 +524,12 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         }
     }
 
+    private ulong EnumerateAllAndReturnCount()
+    {
+        EnumerateAllAdaptive(countOnly: true);
+        return _solutionCount;
+    }
+
     private bool ValidateRows(int[] rows)
     {
         bool ok = rows.Length == BoardSize;
@@ -822,6 +557,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         _disposed = true;
     }
 
+    // Constructive helpers (kept here so SampleMaterializeUsingLookup compiles)
     private void ConstructiveSampleSolutions(bool isUnique, int cap)
     {
         if (cap <= 0) return;
@@ -850,7 +586,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
             if (rows.Length <= 25)
             {
-                var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
+                var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer ?? new int[rows.Length * 8], out _);
                 _solutions.Add((packed, rows.Length));
             }
             else
@@ -887,7 +623,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         var rows = new int[n];
         for (int col = 0; col < n; col++)
             rows[col] = seq[col] - 1;
-
         return rows;
     }
 
@@ -937,12 +672,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         return list;
     }
 
-    private ulong EnumerateAllAndReturnCount()
-    {
-        EnumerateAllAdaptive(countOnly: true);
-        return _solutionCount;
-    }
-
+    // Keeping local version to avoid ripple changes; used by CountUniqueFastHalfBoard
     private static bool ShouldPrunePrefixIncremental(int[] rows, int depth, int N, bool reflectionEnabled, bool minimalityEnabled, ref bool reflectionEqual, ref bool minimalityEqual)
     {
         if (reflectionEnabled && reflectionEqual)

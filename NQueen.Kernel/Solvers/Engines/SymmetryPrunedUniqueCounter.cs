@@ -76,6 +76,7 @@ public static class SymmetryPrunedUniqueCounter
         return totalCount;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool ShouldPrunePrefixFast(int[] rows, int depth, int N)
     {
         bool reflectionEnabled = SearchOptimizations.ReflectionPrefixPruningEnabled;

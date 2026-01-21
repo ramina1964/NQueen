@@ -52,28 +52,28 @@ public static class BitboardNQueenSolver
     }
 
     // Core DFS using bit masks. Allocation-free hot path.
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private static long Search(int n, ulong mask, int row, ulong columns, ulong diag1, ulong diag2)
     {
         if (row == n)
             return 1;
 
-        ulong blocked = columns | diag1 | diag2;
-        ulong available = (~blocked) & mask;
+        ulong available = ~(columns | diag1 | diag2) & mask;
 
         long count = 0;
         while (available != 0)
         {
-            // Extract least significant set bit without signed casts
-            ulong lsb = available & (~available + 1);
-            available ^= lsb;
+            // Extract least significant set bit and clear it (branchless)
+            ulong bit = available & (ulong)-(long)available;
+            available &= (available - 1);
 
             count += Search(
                 n,
                 mask,
                 row + 1,
-                columns | lsb,
-                (diag1 | lsb) << 1,
-                (diag2 | lsb) >> 1);
+                columns | bit,
+                (diag1 | bit) << 1,
+                (diag2 | bit) >> 1);
         }
 
         return count;

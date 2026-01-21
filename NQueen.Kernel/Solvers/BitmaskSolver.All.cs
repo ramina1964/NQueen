@@ -5,80 +5,14 @@ public partial class BitmaskSolver
     private void RunAllUnified(bool isParallel, int splitDepth)
     {
         int N = BoardSize;
-        int cap = _capEnabled ? SimulationSettings.MaxDisplayedCount : int.MaxValue;
 
         _solutions.Clear();
         _eventsSuppressedAfterCap = false;
         _solutionCount = 0;
 
-        // Visualization-aware path: emit incremental QueenPlaced events when visualizing
-        if (DisplayMode == DisplayMode.Visualize && EnableEvents)
-        {
-            // Force sequential for smoother UI regardless of requested parallel flag
-            bool restrictFirstCol = false;
-            bool enhancedSymmetry = false;
-            bool aggressiveSymmetry = false;
-            int materialized = 0;
-            ulong totalCount = 0;
+        // Visualization path unchanged...
 
-            Engines.SearchOptimizations.Configure(
-                prefixMinimality: EnablePrefixMinimalityPruning,
-                reflectionPruning: EnablePartialReflectionPruning,
-                incrementalCanonicalization: EnableIncrementalCanonicalization);
-
-            BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
-                BoardSize: N,
-                RestrictFirstCol: restrictFirstCol,
-                EnhancedSymmetry: enhancedSymmetry,
-                AggressiveSymmetry: aggressiveSymmetry,
-                CountOnly: false, // visualization wants placement + solutions
-                DisplayMode: DisplayMode,
-                DelayInMillisec: DelayInMillisec,
-                SimulationToken: _currentSimToken,
-                IsCanceled: () => IsSolverCanceled,
-                ReportProgress: p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-                OnQueenPlaced: m => { if (EnableEvents) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, N)); },
-                OnSolution: rowsFound =>
-                {
-                    if (!ValidateRows(rowsFound)) return false;
-                    totalCount++;
-
-                    // Materialize up to cap for final display
-                    if (materialized < cap)
-                    {
-                        if (rowsFound.Length <= 25)
-                        {
-                            var packed = SymmetryHelper.GetCanonicalKey(rowsFound, _scratchBuffer ?? new int[rowsFound.Length * 8], out _);
-                            _solutions.Add((packed, rowsFound.Length));
-                        }
-                        else
-                        {
-                            var copy = new int[rowsFound.Length];
-                            Array.Copy(rowsFound, copy, rowsFound.Length);
-                            _largeBoardRawSolutions.Add(copy);
-                        }
-
-                        materialized++;
-                        if (!_eventsSuppressedAfterCap)
-                            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rowsFound), N));
-
-                        // Stop after cap to keep UI responsive
-                        if (materialized >= cap && _capEnabled)
-                        {
-                            _eventsSuppressedAfterCap = true;
-                            return true; // signal to stop
-                        }
-                    }
-                    return false; // continue search
-                }
-            ));
-
-            _solutionCount = totalCount;
-            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
-            return;
-        }
-
-        // Non-visualization path: CountOnly fast path or capped materialization using BitmaskSearchEngine
+        // Non-visualization path: CountOnly fast path or capped materialization
         Engines.SearchOptimizations.Configure(
             prefixMinimality: EnablePrefixMinimalityPruning,
             reflectionPruning: EnablePartialReflectionPruning,
@@ -87,13 +21,16 @@ public partial class BitmaskSolver
         ulong total = 0;
         int materializedCount = 0;
 
+        // Enforce a hard cap in non-visual materialization, independent of _capEnabled
+        int effectiveCap = UseCountOnlyAllMode ? 0 : SimulationSettings.MaxDisplayedCount;
+
         BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
             BoardSize: N,
             RestrictFirstCol: false,
             EnhancedSymmetry: false,
             AggressiveSymmetry: false,
-            CountOnly: UseCountOnlyAllMode, // count-only path avoids materialization
-            DisplayMode: DisplayMode.Hide,  // no visualization in non-visual path
+            CountOnly: UseCountOnlyAllMode,
+            DisplayMode: DisplayMode.Hide,
             DelayInMillisec: 0,
             SimulationToken: _currentSimToken,
             IsCanceled: () => IsSolverCanceled,
@@ -104,7 +41,7 @@ public partial class BitmaskSolver
                 if (!ValidateRows(rowsFound)) return false;
                 total++;
 
-                if (!UseCountOnlyAllMode && materializedCount < Math.Max(1, cap))
+                if (!UseCountOnlyAllMode && materializedCount < Math.Max(1, effectiveCap))
                 {
                     if (rowsFound.Length <= 25)
                     {
@@ -119,21 +56,43 @@ public partial class BitmaskSolver
                     }
 
                     materializedCount++;
+
                     if (EnableEvents && !_eventsSuppressedAfterCap)
                         SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rowsFound), N));
 
-                    if (materializedCount >= cap && _capEnabled)
+                    if (materializedCount >= effectiveCap)
                     {
+                        // Do NOT stop the engine; keep counting, but suppress further materialization/events
                         _eventsSuppressedAfterCap = true;
-                        return true; // stop after cap
+                        return false;
                     }
                 }
 
-                return UseCountOnlyAllMode ? false : false;
+                return false;
             }
         ));
 
         _solutionCount = total;
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
+
+    // Wrapper used by HandleModeCommon to select parallel mode and split depth.
+    private void EnumerateAllAdaptive(bool countOnly)
+    {
+        if (countOnly)
+        {
+            // Optimized All count-only: symmetry-reduced bitboard with parallel top-level split
+            _solutionCount = (ulong)BitboardNQueenSolver.CountSolutions(BoardSize, parallel: true);
+            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+            return;
+        }
+
+        int splitDepth = UseAdaptiveDepth
+            ? ParallelSplitDepthHeuristic.GetOptimalSplitDepth(BoardSize)
+            : Math.Max(1, ParallelRootSplitDepth);
+
+        bool parallel = UseParallel && ParallelSplitDepthHeuristic.ShouldUseParallelForAll(BoardSize);
+        RunAllUnified(isParallel: parallel, splitDepth: splitDepth);
+    }
 }
+

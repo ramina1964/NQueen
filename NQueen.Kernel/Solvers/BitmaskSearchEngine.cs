@@ -20,28 +20,6 @@ internal sealed class BitmaskSearchEngine
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int FastTzcnt(ulong bit) => DeBruijnIndex64[(bit * DeBruijn64) >> 58];
 
-    // Incremental prefix pruning (reflection + minimality) via equality flags
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool ShouldPrunePrefixIncremental(int[] rows, int depth, int N, bool reflectionEnabled, bool minimalityEnabled, ref bool reflectionEqual, ref bool minimalityEqual)
-    {
-        if (reflectionEnabled && reflectionEqual)
-        {
-            int r = rows[depth]; if (r < 0) return false;
-            int reflected = N - 1 - r;
-            if (r > reflected) return true;
-            if (r < reflected) reflectionEqual = false;
-        }
-        if (minimalityEnabled && minimalityEqual)
-        {
-            int first = rows[0]; if (first < 0) return false;
-            int newRow = rows[depth]; if (newRow < 0) return false;
-            int transformed = N - 1 - newRow;
-            if (first > transformed) return true;
-            if (first < transformed) minimalityEqual = false;
-        }
-        return false;
-    }
-
     public readonly record struct Request(
         int BoardSize,
         bool RestrictFirstCol,
@@ -119,8 +97,8 @@ internal sealed class BitmaskSearchEngine
         int[]? solutionBuffer = null;
         bool needsCopy = request.OnSolution != null && !request.CountOnly;
         if (needsCopy) solutionBuffer = new int[N];
-        bool prefixEnabled = SearchOptimizations.PrefixMinimalityPruningEnabled;
-        bool reflectionEnabled = SearchOptimizations.ReflectionPrefixPruningEnabled;
+        bool prefixEnabled = Engines.SearchOptimizations.PrefixMinimalityPruningEnabled;
+        bool reflectionEnabled = Engines.SearchOptimizations.ReflectionPrefixPruningEnabled;
         bool symmetryActive = (request.EnhancedSymmetry || request.AggressiveSymmetry) && N >= 14;
         bool aggressiveActive = request.AggressiveSymmetry && symmetryActive;
         int pruneDepthGate = int.MaxValue;
@@ -181,7 +159,9 @@ internal sealed class BitmaskSearchEngine
             remaining &= remaining - 1;
             int row = FastTzcnt(bit);
             queenRows[col] = row;
-            if (col >= pruneDepthGate && ShouldPrunePrefixIncremental(s.QueenRows, col, N, reflectionEnabled, prefixEnabled, ref reflectionEqual, ref minimalityEqual))
+            if (col >= pruneDepthGate &&
+                Engines.SearchOptimizations.ShouldPrunePrefixIncremental(
+                    s.QueenRows, col, N, reflectionEnabled, prefixEnabled, ref reflectionEqual, ref minimalityEqual))
             {
                 queenRows[col] = -1;
                 if (s.Visualize)
@@ -224,8 +204,8 @@ internal sealed class BitmaskSearchEngine
     {
         int N = s.N;
         int pruneDepthGate = int.MaxValue;
-        bool prefixEnabled = SearchOptimizations.PrefixMinimalityPruningEnabled;
-        bool reflectionEnabled = SearchOptimizations.ReflectionPrefixPruningEnabled;
+        bool prefixEnabled = Engines.SearchOptimizations.PrefixMinimalityPruningEnabled;
+        bool reflectionEnabled = Engines.SearchOptimizations.ReflectionPrefixPruningEnabled;
         if (prefixEnabled || reflectionEnabled)
         {
             if (N >= 20) pruneDepthGate = 1;
@@ -264,7 +244,9 @@ internal sealed class BitmaskSearchEngine
             remaining &= remaining - 1;
             int row = FastTzcnt(bit);
             rows[col] = row;
-            if (col >= pruneDepthGate && ShouldPrunePrefixIncremental(rows, col, N, reflectionEnabled, prefixEnabled, ref reflectionEqual, ref minimalityEqual))
+            if (col >= pruneDepthGate &&
+                Engines.SearchOptimizations.ShouldPrunePrefixIncremental(
+                    rows, col, N, reflectionEnabled, prefixEnabled, ref reflectionEqual, ref minimalityEqual))
             {
                 rows[col] = -1;
                 continue;
