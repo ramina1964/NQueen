@@ -10,10 +10,8 @@ public partial class BitmaskSolver
         _eventsSuppressedAfterCap = false;
         _solutionCount = 0;
 
-        // Visualization path unchanged...
-
         // Non-visualization path: CountOnly fast path or capped materialization
-        Engines.SearchOptimizations.Configure(
+        SearchOptimizations.Configure(
             prefixMinimality: EnablePrefixMinimalityPruning,
             reflectionPruning: EnablePartialReflectionPruning,
             incrementalCanonicalization: EnableIncrementalCanonicalization);

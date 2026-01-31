@@ -97,10 +97,10 @@ internal sealed class BitmaskSearchEngine
         int[]? solutionBuffer = null;
         bool needsCopy = request.OnSolution != null && !request.CountOnly;
         if (needsCopy) solutionBuffer = new int[N];
-        bool prefixEnabled = Engines.SearchOptimizations.PrefixMinimalityPruningEnabled;
-        bool reflectionEnabled = Engines.SearchOptimizations.ReflectionPrefixPruningEnabled;
+        bool prefixEnabled = SearchOptimizations.PrefixMinimalityPruningEnabled;
+        bool reflectionEnabled = SearchOptimizations.ReflectionPrefixPruningEnabled;
         bool symmetryActive = (request.EnhancedSymmetry || request.AggressiveSymmetry) && N >= 14;
-        bool aggressiveActive = request.AggressiveSymmetry && symmetryActive;
+        bool isAggressive = request.AggressiveSymmetry && symmetryActive;
         int pruneDepthGate = int.MaxValue;
         if (prefixEnabled || reflectionEnabled)
         {
@@ -137,7 +137,7 @@ internal sealed class BitmaskSearchEngine
                 if (s.Visualize)
                 {
                     request.OnQueenPlaced(new Memory<int>(s.QueenRows));
-                    if (s.Delay > 0) System.Threading.Thread.Sleep(s.Delay);
+                    if (s.Delay > 0) Thread.Sleep(s.Delay);
                 }
                 continue;
             }
@@ -151,7 +151,7 @@ internal sealed class BitmaskSearchEngine
                 if (s.Visualize)
                 {
                     request.OnQueenPlaced(new Memory<int>(s.QueenRows));
-                    if (s.Delay > 0) System.Threading.Thread.Sleep(s.Delay);
+                    if (s.Delay > 0) Thread.Sleep(s.Delay);
                 }
                 continue;
             }
@@ -160,14 +160,16 @@ internal sealed class BitmaskSearchEngine
             int row = FastTzcnt(bit);
             queenRows[col] = row;
             if (col >= pruneDepthGate &&
-                Engines.SearchOptimizations.ShouldPrunePrefixIncremental(
-                    s.QueenRows, col, N, reflectionEnabled, prefixEnabled, ref reflectionEqual, ref minimalityEqual))
+                SearchOptimizations.ShouldPrunePrefixIncremental(
+                    s.QueenRows, col, N, reflectionEnabled, prefixEnabled,
+                    ref reflectionEqual, ref minimalityEqual))
             {
                 queenRows[col] = -1;
                 if (s.Visualize)
                 {
                     request.OnQueenPlaced(new Memory<int>(s.QueenRows));
-                    if (s.Delay > 0) System.Threading.Thread.Sleep(s.Delay);
+                    if (s.Delay > 0)
+                        Thread.Sleep(s.Delay);
                 }
                 continue;
             }
@@ -183,8 +185,14 @@ internal sealed class BitmaskSearchEngine
             remaining = (~attacked) & s.Mask;
             if (symmetryActive)
             {
-                ulong avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(N, col, s.QueenRows, remaining);
-                if (aggressiveActive && col == 2 && queenRows[1] >= 0 && !((N & 1) == 1 && queenRows[0] == N / 2))
+                ulong avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(
+                    N, col, s.QueenRows, remaining);
+
+                var isSecondColAggressivePrune = isAggressive && col == 2 &&
+                    queenRows[1] >= 0 && !((N & 1) == 1 &&
+                    queenRows[0] == N / 2);
+
+                if (isSecondColAggressivePrune)
                 {
                     int minRow = queenRows[1];
                     if (minRow < N)
@@ -204,14 +212,15 @@ internal sealed class BitmaskSearchEngine
     {
         int N = s.N;
         int pruneDepthGate = int.MaxValue;
-        bool prefixEnabled = Engines.SearchOptimizations.PrefixMinimalityPruningEnabled;
-        bool reflectionEnabled = Engines.SearchOptimizations.ReflectionPrefixPruningEnabled;
+        bool prefixEnabled = SearchOptimizations.PrefixMinimalityPruningEnabled;
+        bool reflectionEnabled = SearchOptimizations.ReflectionPrefixPruningEnabled;
         if (prefixEnabled || reflectionEnabled)
         {
             if (N >= 20) pruneDepthGate = 1;
             else if (N >= 16) pruneDepthGate = 2;
             else if (N >= 15) pruneDepthGate = 3;
         }
+
         int col = s.Col;
         ulong cols = s.Cols;
         ulong d1 = s.Diag1;

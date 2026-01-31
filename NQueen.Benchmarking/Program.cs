@@ -23,11 +23,13 @@ internal class Program
 {
     private static void Main(string[] args)
     {
+        Console.WriteLine("Running NQueen benchmarks (Release)…");
         var benchMode = Environment.GetEnvironmentVariable("BENCHMARK_MODE");
         if ((benchMode == "1") || (args != null && args.Any(a => a.StartsWith("--"))))
         {
             // Run all benchmarks in this assembly when invoked by BenchmarkDotNet infrastructure.
             BenchmarkDotNet.Running.BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
+            Console.WriteLine("Done. See BenchmarkDotNet.Artifacts for detailed reports.");
             return;
         }
 
