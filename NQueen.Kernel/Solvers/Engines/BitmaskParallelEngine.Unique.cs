@@ -41,16 +41,22 @@ internal sealed partial class BitmaskParallelEngine
         var lastHeartbeat = Stopwatch.StartNew();
         const int heartbeatMs = 1500;
 
-        // NEW: cached flags for readability
         bool eventsEnabled = request.EnableEvents;
         bool hasExpectedTotal = expectedTotal > 0;
 
-        // Replace the current Parallel.ForEach body with this overload that provides per-worker locals:
-        var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
+        // Slightly under-subscribe to reduce memory contention on high N
+        int cores = Environment.ProcessorCount;
+        var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, cores - 1) };
+
         Parallel.ForEach(
             source: partialStates,
             parallelOptions: parallelOptions,
-            localInit: () => (localUnique: new HashSet<UInt128>(), scratch: ArrayPool<int>.Shared.Rent(N * 8)),
+            localInit: () =>
+            {
+                // Pre-size shards to reduce rehashing
+                int initialCapacity = 4096;
+                return (localUnique: new HashSet<UInt128>(initialCapacity), scratch: ArrayPool<int>.Shared.Rent(N * 8));
+            },
             body: (ps, loopState, local) =>
             {
                 EnumerateFromPartial(ps, local.localUnique, local.scratch);
@@ -70,7 +76,6 @@ internal sealed partial class BitmaskParallelEngine
         request.OnCompletedUniqueCount((ulong)globalUnique.Count);
         request.ReportProgress(100.0);
 
-        // helper to centralize progress buckets/heartbeat
         static void ReportBucket(
             int done, int totalTasks,
             ref int progressBucketReported, int progressBucketSize,
@@ -95,7 +100,6 @@ internal sealed partial class BitmaskParallelEngine
             }
         }
 
-        // Update EnumerateFromPartial to accept the per-worker locals:
         void EnumerateFromPartial(PartialState ps, HashSet<UInt128> localUnique, int[] scratch)
         {
             int[] rowsArr = new int[N];
@@ -107,93 +111,119 @@ internal sealed partial class BitmaskParallelEngine
             ulong cols = ps.Cols;
             ulong d1 = ps.D1;
             ulong d2 = ps.D2;
-            ulong remaining = ~(cols | d1 | d2) & mask;
+            ulong avail = ~(cols | d1 | d2) & mask;
 
-            ulong[] stackCols = new ulong[N];
-            ulong[] stackD1 = new ulong[N];
-            ulong[] stackD2 = new ulong[N];
-            ulong[] stackRemaining = new ulong[N];
-            while (true)
+            // Use ArrayPool for per-frame stacks
+            var pool = ArrayPool<ulong>.Shared;
+            ulong[] stackCols = pool.Rent(N);
+            ulong[] stackD1 = pool.Rent(N);
+            ulong[] stackD2 = pool.Rent(N);
+            ulong[] stackAvail = pool.Rent(N);
+
+            try
             {
-                if (col == N)
+                while (true)
                 {
-                    UInt128 key = SymmetryHelper.GetCanonicalKey(rowsArr, scratch, out var canonicalSpan);
-                    if (localUnique.Add(key))
+                    if (col == N)
                     {
-                        if (materializedCount < cap)
+                        ReadOnlySpan<int> canonicalSpan;
+                        UInt128 key;
+                        if (SymmetryHelper.IsIdentityCanonical(rowsArr, scratch))
                         {
-                            int newVal = Interlocked.Increment(ref materializedCount);
-                            if (newVal <= cap)
-                            {
-                                var canonicalRows = new int[N];
-                                canonicalSpan.CopyTo(canonicalRows);
-                                request.OnUniqueSolution(canonicalRows);
-                            }
+                            key = SymmetryHelper.PackRows(rowsArr);
+                            canonicalSpan = rowsArr;
                         }
-                        if (eventsEnabled && hasExpectedTotal)
+                        else
                         {
-                            ulong uniqueSoFar = (ulong)globalUnique.Count;
-                            double pctSol = (double)uniqueSoFar / expectedTotal * 100.0;
-                            if (pctSol > 99.0) pctSol = 99.0;
-                            if (pctSol >= progressBucketReported + progressBucketSize || lastHeartbeat.ElapsedMilliseconds >= heartbeatMs)
+                            key = SymmetryHelper.GetCanonicalKey(rowsArr, scratch, out canonicalSpan);
+                        }
+
+                        if (localUnique.Add(key))
+                        {
+                            if (materializedCount < cap)
                             {
-                                int bucket = (int)pctSol;
-                                int observed = Volatile.Read(ref progressBucketReported);
-                                if (bucket > observed && Interlocked.CompareExchange(ref progressBucketReported, bucket, observed) == observed)
+                                int newVal = Interlocked.Increment(ref materializedCount);
+                                if (newVal <= cap)
                                 {
-                                    request.ReportProgress(bucket);
-                                    lastHeartbeat.Restart();
-                                }
-                                else if (lastHeartbeat.ElapsedMilliseconds >= heartbeatMs)
-                                {
-                                    request.ReportProgress(Math.Min(99.0, pctSol));
-                                    lastHeartbeat.Restart();
+                                    var canonicalRows = new int[N];
+                                    canonicalSpan.CopyTo(canonicalRows);
+                                    request.OnUniqueSolution(canonicalRows);
                                 }
                             }
+                            if (eventsEnabled && hasExpectedTotal)
+                            {
+                                ulong uniqueSoFar = (ulong)globalUnique.Count;
+                                double pctSol = (double)uniqueSoFar / expectedTotal * 100.0;
+                                if (pctSol > 99.0) pctSol = 99.0;
+                                if (pctSol >= progressBucketReported + progressBucketSize || lastHeartbeat.ElapsedMilliseconds >= heartbeatMs)
+                                {
+                                    int bucket = (int)pctSol;
+                                    int observed = Volatile.Read(ref progressBucketReported);
+                                    if (bucket > observed && Interlocked.CompareExchange(ref progressBucketReported, bucket, observed) == observed)
+                                    {
+                                        request.ReportProgress(bucket);
+                                        lastHeartbeat.Restart();
+                                    }
+                                    else if (lastHeartbeat.ElapsedMilliseconds >= heartbeatMs)
+                                    {
+                                        request.ReportProgress(Math.Min(99.0, pctSol));
+                                        lastHeartbeat.Restart();
+                                    }
+                                }
+                            }
                         }
-                    }
-                    col--;
-                    if (col < ps.Depth) break;
-                    Restore(col, out remaining);
-                    continue;
-                }
-
-                if (remaining == 0)
-                {
-                    col--;
-                    if (col < ps.Depth) break;
-                    Restore(col, out remaining);
-                    continue;
-                }
-
-                ulong bit = remaining & (ulong)-(long)remaining;
-                remaining ^= bit;
-                int row = BitOperations.TrailingZeroCount(bit);
-                rowsArr[col] = row;
-
-                stackCols[col] = cols; stackD1[col] = d1;
-                stackD2[col] = d2; stackRemaining[col] = remaining;
-
-                cols |= bit; d1 = (d1 | bit) << 1; d2 = (d2 | bit) >> 1;
-                col++;
-
-                if (col == N) continue;
-                remaining = ~(cols | d1 | d2) & mask;
-
-                if (N >= PrefixPruneThresholdN && col >= PrefixPruneStartDepth)
-                {
-                    if (!IdentityPrefixMinimal(rowsArr, col, scratch, N))
-                    {
                         col--;
-                        Restore(col, out remaining);
+                        if (col < ps.Depth) break;
+                        Restore(col, out avail);
                         continue;
                     }
+
+                    if (avail == 0UL)
+                    {
+                        col--;
+                        if (col < ps.Depth) break;
+                        Restore(col, out avail);
+                        continue;
+                    }
+
+                    ulong bit = avail & (ulong)-(long)avail;
+                    avail ^= bit;
+                    int row = BitOperations.TrailingZeroCount(bit);
+                    rowsArr[col] = row;
+
+                    stackCols[col] = cols;
+                    stackD1[col] = d1;
+                    stackD2[col] = d2;
+                    stackAvail[col] = avail;
+
+                    cols |= bit; d1 = (d1 | bit) << 1; d2 = (d2 | bit) >> 1;
+                    col++;
+
+                    if (col == N) continue;
+                    avail = ~(cols | d1 | d2) & mask;
+
+                    if (N >= PrefixPruneThresholdN && col >= PrefixPruneStartDepth)
+                    {
+                        if (!IdentityPrefixMinimal(rowsArr, col, scratch, N))
+                        {
+                            col--;
+                            Restore(col, out avail);
+                            continue;
+                        }
+                    }
                 }
+            }
+            finally
+            {
+                pool.Return(stackCols, clearArray: false);
+                pool.Return(stackD1, clearArray: false);
+                pool.Return(stackD2, clearArray: false);
+                pool.Return(stackAvail, clearArray: false);
             }
 
             void Restore(int c, out ulong rem)
             {
-                rem = stackRemaining[c];
+                rem = stackAvail[c];
                 cols = stackCols[c];
                 d1 = stackD1[c];
                 d2 = stackD2[c];
@@ -273,7 +303,7 @@ internal sealed partial class BitmaskParallelEngine
             if (depth == 1)
             {
                 int firstRow = rows[0];
-                if (!((N & 1) == 1 && firstRow == N / 2))
+                if (!IsOddCenterFirstRow(N, firstRow))
                 {
                     ulong lowerMask = (1UL << (firstRow + 1)) - 1UL;
                     avail &= ~lowerMask;
@@ -328,6 +358,8 @@ internal sealed partial class BitmaskParallelEngine
         }
         return true;
     }
+
+    private static bool IsOddCenterFirstRow(int N, int r) => ((N & 1) == 1) && r == (N / 2);
 
     private readonly record struct PartialState(int[] Rows, int Depth, ulong Cols, ulong D1, ulong D2);
 }
