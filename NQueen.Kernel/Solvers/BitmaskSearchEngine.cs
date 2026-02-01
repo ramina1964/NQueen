@@ -42,7 +42,14 @@ internal sealed class BitmaskSearchEngine
         ValidateBoardSize(request.BoardSize);
         var state = CreateState(request);
         state.Col = 0;
+
+        // Initialize progress reporter: 1% buckets, 1500ms heartbeat
+        var reporter = new ProgressReporter(request.ReportProgress, bucketSize: 1, heartbeatMs: 1500);
+        int bucketReported = -1;
+
+        // Initial progress
         request.ReportProgress(0.0);
+
         ulong attacked0 = state.Cols | state.Diag1 | state.Diag2;
         state.Remaining = (~attacked0) & state.Mask;
         if (request.RestrictFirstCol)
@@ -53,7 +60,10 @@ internal sealed class BitmaskSearchEngine
         {
             state.Remaining = SymmetryHelper.ApplyAdvancedSymmetryPruning(state.N, 0, state.QueenRows, state.Remaining);
         }
-        if (request.CountOnly) MainLoopCountOnly(ref state, request); else MainLoop(ref state, request);
+        if (request.CountOnly) MainLoopCountOnly(ref state, request, reporter, ref bucketReported);
+        else MainLoop(ref state, request, reporter, ref bucketReported);
+
+        // Final progress
         request.ReportProgress(100.0);
     }
 
@@ -90,7 +100,7 @@ internal sealed class BitmaskSearchEngine
         };
     }
 
-    private static void MainLoop(ref SearchState s, in Request request)
+    private static void MainLoop(ref SearchState s, in Request request, ProgressReporter reporter, ref int bucketReported)
     {
         int N = s.N;
         Span<int> queenRows = s.QueenRows;
@@ -101,6 +111,7 @@ internal sealed class BitmaskSearchEngine
         bool reflectionEnabled = SearchOptimizations.ReflectionPrefixPruningEnabled;
         bool symmetryActive = (request.EnhancedSymmetry || request.AggressiveSymmetry) && N >= 14;
         bool isAggressive = request.AggressiveSymmetry && symmetryActive;
+
         int pruneDepthGate = int.MaxValue;
         if (prefixEnabled || reflectionEnabled)
         {
@@ -108,6 +119,7 @@ internal sealed class BitmaskSearchEngine
             else if (N >= 16) pruneDepthGate = 2;
             else if (N >= 15) pruneDepthGate = 3;
         }
+
         int col = s.Col;
         ulong cols = s.Cols;
         ulong d1 = s.Diag1;
@@ -115,9 +127,11 @@ internal sealed class BitmaskSearchEngine
         ulong remaining = s.Remaining;
         bool reflectionEqual = s.ReflectionEqual;
         bool minimalityEqual = s.MinimalityEqual;
+
         while (true)
         {
             if (request.IsCanceled()) break;
+
             if (col == N)
             {
                 if (request.OnSolution != null)
@@ -141,6 +155,7 @@ internal sealed class BitmaskSearchEngine
                 }
                 continue;
             }
+
             if (remaining == 0)
             {
                 col--; if (col < 0) break;
@@ -155,10 +170,12 @@ internal sealed class BitmaskSearchEngine
                 }
                 continue;
             }
+
             ulong bit = remaining & (ulong)-(long)remaining;
             remaining &= remaining - 1;
             int row = FastTzcnt(bit);
             queenRows[col] = row;
+
             if (col >= pruneDepthGate &&
                 SearchOptimizations.ShouldPrunePrefixIncremental(
                     s.QueenRows, col, N, reflectionEnabled, prefixEnabled,
@@ -168,29 +185,39 @@ internal sealed class BitmaskSearchEngine
                 if (s.Visualize)
                 {
                     request.OnQueenPlaced(new Memory<int>(s.QueenRows));
-                    if (s.Delay > 0)
-                        Thread.Sleep(s.Delay);
+                    if (s.Delay > 0) Thread.Sleep(s.Delay);
                 }
                 continue;
             }
-            if (col == 0) ReportRootProgress(ref s, request);
+
+            // Root progress: use bucket/heartbeat throttling
+            if (col == 0)
+            {
+                s.RootPlacements++;
+                reporter.ReportBucket(s.RootPlacements, s.RootTotal, ref bucketReported);
+            }
+
             if (!request.CountOnly) MaybeRaisePlacementEvent(ref s, request);
             s.StackFrames[col] = new Frame(cols, d1, d2, remaining, reflectionEqual, minimalityEqual);
             cols |= bit;
             d1 = (d1 | bit) << 1;
             d2 = (d2 | bit) >> 1;
             col++;
+
             if (col == N) continue;
+
             ulong attacked = cols | d1 | d2;
             remaining = (~attacked) & s.Mask;
+
             if (symmetryActive)
             {
                 ulong avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(
                     N, col, s.QueenRows, remaining);
 
-                var isSecondColAggressivePrune = isAggressive && col == 2 &&
-                    queenRows[1] >= 0 && !((N & 1) == 1 &&
-                    queenRows[0] == N / 2);
+                var isSecondColAggressivePrune =
+                    isAggressive && col == 2 &&
+                    queenRows[1] >= 0 &&
+                    !(((N & 1) == 1) && queenRows[0] == N / 2);
 
                 if (isSecondColAggressivePrune)
                 {
@@ -205,15 +232,16 @@ internal sealed class BitmaskSearchEngine
                 remaining = avail;
             }
         }
+
         s.Col = col; s.Cols = cols; s.Diag1 = d1; s.Diag2 = d2; s.Remaining = remaining; s.ReflectionEqual = reflectionEqual; s.MinimalityEqual = minimalityEqual;
     }
 
-    private static void MainLoopCountOnly(ref SearchState s, in Request request)
+    private static void MainLoopCountOnly(ref SearchState s, in Request request, ProgressReporter reporter, ref int bucketReported)
     {
         int N = s.N;
         int pruneDepthGate = int.MaxValue;
-        bool prefixEnabled = SearchOptimizations.PrefixMinimalityPruningEnabled;
-        bool reflectionEnabled = SearchOptimizations.ReflectionPrefixPruningEnabled;
+        bool prefixEnabled = Engines.SearchOptimizations.PrefixMinimalityPruningEnabled;
+        bool reflectionEnabled = Engines.SearchOptimizations.ReflectionPrefixPruningEnabled;
         if (prefixEnabled || reflectionEnabled)
         {
             if (N >= 20) pruneDepthGate = 1;
@@ -229,9 +257,11 @@ internal sealed class BitmaskSearchEngine
         ulong remaining = s.Remaining;
         bool reflectionEqual = s.ReflectionEqual;
         bool minimalityEqual = s.MinimalityEqual;
+
         while (true)
         {
             if (request.IsCanceled()) break;
+
             if (col == N)
             {
                 if (request.OnSolution != null && request.OnSolution(rows)) break;
@@ -241,18 +271,22 @@ internal sealed class BitmaskSearchEngine
                 rows[col] = -1;
                 continue;
             }
+
             if (remaining == 0)
             {
-                col--; if (col < 0) break;
+                col--;
+                if (col < 0) break;
                 var frame = s.StackFrames[col];
                 cols = frame.Cols; d1 = frame.D1; d2 = frame.D2; remaining = frame.Remaining; reflectionEqual = frame.ReflectionEqual; minimalityEqual = frame.MinimalityEqual;
                 rows[col] = -1;
                 continue;
             }
+
             ulong bit = remaining & (ulong)-(long)remaining;
             remaining &= remaining - 1;
             int row = FastTzcnt(bit);
             rows[col] = row;
+
             if (col >= pruneDepthGate &&
                 Engines.SearchOptimizations.ShouldPrunePrefixIncremental(
                     rows, col, N, reflectionEnabled, prefixEnabled, ref reflectionEqual, ref minimalityEqual))
@@ -260,21 +294,26 @@ internal sealed class BitmaskSearchEngine
                 rows[col] = -1;
                 continue;
             }
+
+            // Root progress: use bucket/heartbeat throttling
             if (col == 0)
             {
                 s.RootPlacements++;
-                double pct = (double)s.RootPlacements / s.RootTotal * 100.0;
-                request.ReportProgress(pct);
+                reporter.ReportBucket(s.RootPlacements, s.RootTotal, ref bucketReported);
             }
+
             s.StackFrames[col] = new Frame(cols, d1, d2, remaining, reflectionEqual, minimalityEqual);
             cols |= bit;
             d1 = (d1 | bit) << 1;
             d2 = (d2 | bit) >> 1;
             col++;
+
             if (col == N) continue;
+
             ulong attacked = cols | d1 | d2;
             remaining = (~attacked) & s.Mask;
         }
+
         s.Col = col; s.Cols = cols; s.Diag1 = d1; s.Diag2 = d2; s.Remaining = remaining; s.ReflectionEqual = reflectionEqual; s.MinimalityEqual = minimalityEqual;
     }
 
@@ -322,5 +361,42 @@ internal sealed class BitmaskSearchEngine
     }
 
     private readonly record struct Frame(ulong Cols, ulong D1, ulong D2, ulong Remaining, bool ReflectionEqual, bool MinimalityEqual);
+}
+
+// Simple centralized reporter with bucket/heartbeat throttling (placed in same file for convenience)
+internal readonly struct ProgressReporter
+{
+    private readonly Action<double> _report;
+    private readonly int _bucketSize;
+    private readonly Stopwatch _heartbeat;
+    private readonly int _heartbeatMs;
+
+    public ProgressReporter(Action<double> report, int bucketSize = 1, int heartbeatMs = 1500)
+    {
+        _report = report;
+        _bucketSize = bucketSize;
+        _heartbeat = Stopwatch.StartNew();
+        _heartbeatMs = heartbeatMs;
+    }
+
+    public void ReportBucket(int done, int totalTasks, ref int bucketReported)
+    {
+        double pct = totalTasks == 0 ? 100.0 : (double)done / totalTasks * 100.0;
+        int bucket = (int)pct / _bucketSize * _bucketSize;
+        int observed;
+        while (bucket > (observed = Volatile.Read(ref bucketReported)))
+        {
+            if (Interlocked.CompareExchange(ref bucketReported, bucket, observed) == observed)
+            {
+                _report(bucket);
+                break;
+            }
+        }
+        if (_heartbeat.ElapsedMilliseconds >= _heartbeatMs)
+        {
+            _report(Math.Min(99.0, pct));
+            _heartbeat.Restart();
+        }
+    }
 }
 
