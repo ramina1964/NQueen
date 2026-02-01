@@ -25,7 +25,8 @@ internal sealed partial class BitmaskParallelEngine
 
         var globalUnique = new ConcurrentDictionary<UInt128, byte>();
         int materializedCount = 0;
-        int cap = request.ShouldMaterialize() ? SimulationSettings.MaxDisplayedCount : 0;
+        bool shouldMaterialize = request.ShouldMaterialize();
+        int cap = shouldMaterialize ? SimulationSettings.MaxDisplayedCount : 0;
         ulong expectedTotal = N <= 29 ? ExpectedSolutionCounts.GetUniqueFast(N) : 0UL;
 
         ulong mask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
@@ -45,15 +46,17 @@ internal sealed partial class BitmaskParallelEngine
         int cores = Environment.ProcessorCount;
         var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, cores - 1) };
 
+        // Pre-size local HashSet capacity based on plan roots and degree to reduce rehashing
+        int initialCapacity = Math.Max(4096, plan.TargetRoots * 64 / Math.Max(1, parallelOptions.MaxDegreeOfParallelism));
+
         Parallel.ForEach(
             source: partialStates,
             parallelOptions: parallelOptions,
             localInit: () =>
             {
-                int initialCapacity = 4096;
                 return (localUnique: new HashSet<UInt128>(initialCapacity), scratch: ArrayPool<int>.Shared.Rent(N * 8));
             },
-            body: (ps, loopState, local) =>
+            body: (ps, _, local) =>
             {
                 EnumerateFromPartial(ps, local.localUnique, local.scratch);
                 int done = Interlocked.Increment(ref progressCounter);
@@ -94,23 +97,22 @@ internal sealed partial class BitmaskParallelEngine
                 {
                     if (col == N)
                     {
-                        var (key, canonicalRows) = SearchHelpers.PackIdentityIfCanonical(rowsArr, scratch, N);
-                        if (localUnique.Add(key))
+                        if (shouldMaterialize)
                         {
-                            if (materializedCount < cap)
+                            var (key, canonicalRows) = SearchHelpers.PackIdentityKeyAndRows(rowsArr, scratch, N);
+                            if (localUnique.Add(key))
                             {
-                                int newVal = Interlocked.Increment(ref materializedCount);
-                                if (newVal <= cap)
-                                    request.OnUniqueSolution(canonicalRows);
-                            }
-                            // Optional progress against expected total (kept as-is)
-                            if (eventsEnabled && expectedTotal > 0)
-                            {
-                                ulong uniqueSoFar = (ulong)globalUnique.Count;
-                                double pctSol = (double)uniqueSoFar / expectedTotal * 100.0;
-                                if (pctSol > 99.0) pctSol = 99.0;
-                                if (pctSol >= progressBucketReported + 1 || reporterEqualsHeartbeat())
+                                if (materializedCount < cap)
                                 {
+                                    int newVal = Interlocked.Increment(ref materializedCount);
+                                    if (newVal <= cap)
+                                        request.OnUniqueSolution(canonicalRows);
+                                }
+                                if (eventsEnabled && expectedTotal > 0)
+                                {
+                                    ulong uniqueSoFar = (ulong)globalUnique.Count;
+                                    double pctSol = (double)uniqueSoFar / expectedTotal * 100.0;
+                                    if (pctSol > 99.0) pctSol = 99.0;
                                     int bucket = (int)pctSol;
                                     int observed = Volatile.Read(ref progressBucketReported);
                                     if (bucket > observed && Interlocked.CompareExchange(ref progressBucketReported, bucket, observed) == observed)
@@ -118,6 +120,13 @@ internal sealed partial class BitmaskParallelEngine
                                 }
                             }
                         }
+                        else
+                        {
+                            // No materialization requested: compute only canonical key
+                            UInt128 key = SearchHelpers.PackIdentityKey(rowsArr, scratch);
+                            localUnique.Add(key);
+                        }
+
                         col--;
                         if (col < ps.Depth) break;
                         Restore(col, out avail);
@@ -174,30 +183,7 @@ internal sealed partial class BitmaskParallelEngine
                 d1 = stackD1[c];
                 d2 = stackD2[c];
             }
-
-            // Local helper to reuse current reporter heartbeat gate for expected-total path
-            bool reporterEqualsHeartbeat() => false; // keep as no-op to preserve current behavior
         }
-    }
-
-    public static void RunUniqueUnified(
-        int boardSize,
-        bool enableEvents,
-        int cap,
-        Action<int[]> onUniqueSolution,
-        Action<ulong> onCompletedUniqueCount,
-        Action<double> reportProgress,
-        Func<bool> capReached)
-    {
-        var req = new UniqueRequest(
-            boardSize,
-            enableEvents,
-            () => cap > 0,
-            onUniqueSolution,
-            onCompletedUniqueCount,
-            reportProgress);
-
-        RunUnique(req);
     }
 
     private static void GeneratePartialStates(int N, int splitDepth, ulong mask, List<PartialState> dest)
@@ -256,7 +242,6 @@ internal sealed partial class BitmaskParallelEngine
 
             avail = ~(cols | d1 | d2) & mask;
 
-            // Apply second-column prune at split generation only
             if (depth == 1)
             {
                 int firstRow = rows[0];
@@ -278,10 +263,8 @@ internal sealed partial class BitmaskParallelEngine
         }
     }
 
-    // Prefix-minimality check against identity transform (8 symmetries)
     private static bool IdentityPrefixMinimal(int[] rows, int depth, int[] scratch, int N)
     {
-        // Initialize scratch with sentinel
         for (int t = 0; t < 8; t++)
         {
             int baseOffset = t * N;
@@ -289,7 +272,6 @@ internal sealed partial class BitmaskParallelEngine
                 scratch[baseOffset + i] = int.MaxValue;
         }
 
-        // Build partial transforms for the current prefix
         for (int c = 0; c < depth; c++)
         {
             int r = rows[c];
@@ -305,7 +287,6 @@ internal sealed partial class BitmaskParallelEngine
             scratch[7 * N + (N - 1 - r)] = N - 1 - c;
         }
 
-        // Lex compare each transform against identity
         for (int t = 1; t < 8; t++)
         {
             for (int i = 0; i < depth; i++)
@@ -320,6 +301,5 @@ internal sealed partial class BitmaskParallelEngine
         return true;
     }
 
-    // Partial state for parallel split plan expansion
     private readonly record struct PartialState(int[] Rows, int Depth, ulong Cols, ulong D1, ulong D2);
 }

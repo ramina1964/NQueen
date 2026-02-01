@@ -203,21 +203,21 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
         try
         {
-            if (n >= NQueen.Domain.Settings.SimulationSettings.UniqueCountOnlyParallelThresholdN && n <= 22)
+            if (n >= SimulationSettings.UniqueCountOnlyParallelThresholdN && n <= 22)
                 return CountUniqueFastHalfBoard(n);
 
             if (n < SimulationSettings.UniqueCountOnlyParallelThresholdN)
             {
                 ulong total = 0;
-                BitmaskParallelEngine.RunUniqueUnified(
-                    n,
-                    enableEvents: false,
-                    cap: 0,
-                    onUniqueSolution: _ => { },
-                    onCompletedUniqueCount: count => total = count,
-                    reportProgress: _ => { },
-                    capReached: () => false
-                );
+                BitmaskParallelEngine.RunUnique(new BitmaskParallelEngine.UniqueRequest
+                {
+                    BoardSize = n,
+                    EnableEvents = false,
+                    ShouldMaterialize = () => false,
+                    OnUniqueSolution = _ => { },
+                    OnCompletedUniqueCount = count => total = count,
+                    ReportProgress = _ => { }
+                });
                 return total;
             }
 
