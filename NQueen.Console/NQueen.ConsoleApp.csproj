@@ -9,6 +9,7 @@
 
 		<OutputType>Exe</OutputType>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<Platforms>AnyCPU;x64</Platforms>
 	</PropertyGroup>
 
 	<ItemGroup>
