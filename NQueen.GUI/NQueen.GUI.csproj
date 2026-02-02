@@ -10,6 +10,7 @@
     <UseWPF>true</UseWPF>
     <OutputType>WinExe</OutputType>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>

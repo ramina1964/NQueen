@@ -3,7 +3,7 @@ namespace NQueen.Benchmarking;
 public class UniqueModeVariantsBenchmark
 {
     // Representative sizes across scaling points
-    [Params(12, 14, 16, 18, 19)]
+    [Params(12, 14, 16)]
     public int BoardSize { get; set; }
 
     private readonly ISolutionFormatter _formatter = new DefaultSolutionFormatter();
