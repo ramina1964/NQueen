@@ -332,9 +332,11 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                                 }
                             }
 
-                            bool nextReflectionEqual = reflectionEqual;
-                            bool nextMinimalityEqual = minimalityEqual;
-                            DFS(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1, reflectionEnabled, minimalityEnabled, pruneGate, ref nextReflectionEqual, ref nextMinimalityEqual);
+                            bool savedReflectionEqual = reflectionEqual;
+                            bool savedMinimalityEqual = minimalityEqual;
+                            DFS(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1, reflectionEnabled, minimalityEnabled, pruneGate, ref reflectionEqual, ref minimalityEqual);
+                            reflectionEqual = savedReflectionEqual;
+                            minimalityEqual = savedMinimalityEqual;
                             rows[col] = -1;
                         }
                     }
