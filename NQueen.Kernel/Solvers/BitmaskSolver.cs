@@ -3,20 +3,6 @@
 public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     int maxDisplayedCount = SimulationSettings.MaxDisplayedCount) : ISolver, IDisposable
 {
-    // DeBruijn-based fast trailing zero count (local copy to avoid cross-type dependency)
-    private const ulong DeBruijn64 = 0x03F79D71B4CB0A89UL;
-    private static readonly byte[] DeBruijnIndex64 = InitDeBruijn();
-    private static byte[] InitDeBruijn()
-    {
-        var tbl = new byte[64];
-        for (int i = 0; i < 64; i++)
-        {
-            ulong bit = 1UL << i;
-            int idx = (int)((bit * DeBruijn64) >> 58);
-            tbl[idx] = (byte)i;
-        }
-        return tbl;
-    }
 
     public BitmaskSolver(ISolutionFormatter solutionFormatter, bool enableCap)
         : this(solutionFormatter, SimulationSettings.MaxDisplayedCount) => _capEnabled = enableCap;
@@ -332,7 +318,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                                 bool savedReflectionEqual = reflectionEqual;
                                 bool savedMinimalityEqual = minimalityEqual;
                                 
-                                if (ShouldPrunePrefixIncremental(rows, col, n, reflectionEnabled, minimalityEnabled,
+                                if (SearchOptimizations.ShouldPrunePrefixIncremental(rows, col, n, reflectionEnabled, minimalityEnabled,
                                     ref reflectionEqual, ref minimalityEqual))
                                 {
                                     reflectionEqual = savedReflectionEqual;
@@ -687,29 +673,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         return list;
     }
 
-    // Keeping local version to avoid ripple changes; used by CountUniqueFastHalfBoard
-    private static bool ShouldPrunePrefixIncremental(int[] rows, int depth, int N, bool reflectionEnabled, bool minimalityEnabled, ref bool reflectionEqual, ref bool minimalityEqual)
-    {
-        if (reflectionEnabled && reflectionEqual)
-        {
-            int r = rows[depth]; if (r < 0) return false;
-            int reflected = N - 1 - r;
-            if (r > reflected) return true;
-            if (r < reflected) reflectionEqual = false;
-        }
-        if (minimalityEnabled && minimalityEqual)
-        {
-            int first = rows[0]; if (first < 0) return false;
-            int newRow = rows[depth]; if (newRow < 0) return false;
-            int transformed = N - 1 - newRow;
-            if (first > transformed) return true;
-            if (first < transformed) minimalityEqual = false;
-        }
-        return false;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int FastTzcnt(ulong bit) => DeBruijnIndex64[(bit * DeBruijn64) >> 58];
+    
 
     private readonly object _sync = new();
 }
