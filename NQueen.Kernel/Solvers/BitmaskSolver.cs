@@ -303,7 +303,8 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                     void DFS(int col, ulong cols, ulong d1, ulong d2, bool reflectionEnabled,
                         bool minimalityEnabled, int pruneGate, ref bool reflectionEqual, ref bool minimalityEqual)
                     {
-                        if (IsSolverCanceled) return;
+                        // Check cancellation less frequently (every 16 depth levels) to reduce overhead
+                        if ((col & 0xF) == 0 && IsSolverCanceled) return;
                         if (col == n)
                         {
                             if (SymmetryHelper.IsIdentityCanonical(rows, scratch))
@@ -312,7 +313,11 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                         }
 
                         ulong avail = ~(cols | d1 | d2) & fullMask;
-                        while (avail != 0 && !IsSolverCanceled)
+                        // Precompute whether we need symmetry checks to avoid repeated flag evaluations
+                        bool needSymmetryCheck = col >= pruneGate && 
+                            ((reflectionEnabled && reflectionEqual) || (minimalityEnabled && minimalityEqual));
+                        
+                        while (avail != 0)
                         {
                             ulong bit = avail & (ulong)-(long)avail;
                             avail ^= bit;
@@ -322,21 +327,29 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                             rows[col] = r;
 
                             // If early-equality already broke, skip symmetry checks quickly
-                            if (col >= pruneGate && (reflectionEnabled || minimalityEnabled))
+                            if (needSymmetryCheck)
                             {
+                                bool savedReflectionEqual = reflectionEqual;
+                                bool savedMinimalityEqual = minimalityEqual;
+                                
                                 if (ShouldPrunePrefixIncremental(rows, col, n, reflectionEnabled, minimalityEnabled,
                                     ref reflectionEqual, ref minimalityEqual))
                                 {
+                                    reflectionEqual = savedReflectionEqual;
+                                    minimalityEqual = savedMinimalityEqual;
                                     rows[col] = -1;
                                     continue;
                                 }
+                                
+                                DFS(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1, reflectionEnabled, minimalityEnabled, pruneGate, ref reflectionEqual, ref minimalityEqual);
+                                reflectionEqual = savedReflectionEqual;
+                                minimalityEqual = savedMinimalityEqual;
                             }
-
-                            bool savedReflectionEqual = reflectionEqual;
-                            bool savedMinimalityEqual = minimalityEqual;
-                            DFS(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1, reflectionEnabled, minimalityEnabled, pruneGate, ref reflectionEqual, ref minimalityEqual);
-                            reflectionEqual = savedReflectionEqual;
-                            minimalityEqual = savedMinimalityEqual;
+                            else
+                            {
+                                DFS(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1, reflectionEnabled, minimalityEnabled, pruneGate, ref reflectionEqual, ref minimalityEqual);
+                            }
+                            
                             rows[col] = -1;
                         }
                     }
