@@ -11,14 +11,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="BenchmarkDotNet" />
 		<PackageReference Include="Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\NQueen.Domain\NQueen.Domain.csproj" />
 		<ProjectReference Include="..\NQueen.Kernel\NQueen.Kernel.csproj" />
-		<ProjectReference Include="..\NQueen.Shared\NQueen.Shared.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -30,12 +28,6 @@
 	    <Generator>ResXFileCodeGenerator</Generator>
 	    <LastGenOutput>Resources.Designer.cs</LastGenOutput>
 	  </EmbeddedResource>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Reference Update="System.Collections.Immutable">
-	    <Private>False</Private>
-	  </Reference>
 	</ItemGroup>
 
 </Project>
