@@ -1,6 +1,3 @@
-using BenchmarkDotNet.Order;
-using NQueen.Domain.Models;
-
 namespace NQueen.Benchmarking;
 
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
