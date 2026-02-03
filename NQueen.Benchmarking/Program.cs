@@ -1,8 +1,3 @@
-using BenchmarkDotNet.Diagnosers;
-using BenchmarkDotNet.Running;
-using Microsoft.VSDiagnostics;
-using NQueen.Kernel;
-
 namespace NQueen.Benchmarking;
 
 [MemoryDiagnoser]
