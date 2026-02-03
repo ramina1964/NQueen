@@ -15,6 +15,5 @@ global using System.Collections.Concurrent;
 global using System.Collections.Generic;
 global using System.Diagnostics;
 global using System.Numerics;
-global using System.Runtime;
 global using System.Runtime.CompilerServices;
 global using System.Threading.Tasks;
