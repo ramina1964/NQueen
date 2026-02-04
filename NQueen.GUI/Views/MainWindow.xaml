@@ -37,10 +37,10 @@
             Margin="0,0,0,10"
             Padding="0"
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Center"
+            VerticalAlignment="Top"
             Background="WhiteSmoke"
             CornerRadius="8">
-            <view:ActiveSolutionUserControl HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+            <view:ActiveSolutionUserControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
         </Border>
 
         <!--  Left: Solution List  -->
@@ -65,7 +65,7 @@
         <Grid
             Grid.Row="1"
             Grid.Column="2"
-            Margin="0"
+            Margin="0, -7, 0, 0"
             HorizontalAlignment="Center"
             VerticalAlignment="Top">
 
