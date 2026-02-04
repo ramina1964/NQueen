@@ -15,8 +15,8 @@
         Padding="0"
         HorizontalAlignment="Stretch"
         VerticalContentAlignment="Stretch"
-        Background="Bisque"
-        BorderBrush="Black"
+        Background="White"
+        BorderBrush="Gray"
         BorderThickness="1"
         Header="Selected Solution">
 
@@ -33,7 +33,7 @@
                 Margin="0,0,8,0"
                 VerticalAlignment="Center"
                 Content="Locations"
-                Foreground="Purple"
+                Foreground="Black"
                 Style="{StaticResource LabelStyle}" />
 
             <!--  Scrollable text for solution details  -->
@@ -45,7 +45,7 @@
                 VerticalScrollBarVisibility="Hidden">
                 <TextBlock
                     VerticalAlignment="Center"
-                    Foreground="Purple"
+                    Foreground="Black"
                     Text="{Binding SelectedSolution.Details}"
                     TextWrapping="Wrap" />
             </ScrollViewer>
