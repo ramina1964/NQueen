@@ -9,38 +9,41 @@
     xmlns:viewmodel="clr-namespace:NQueen.GUI.ViewModels"
     Title="Solutions of NQueen Problem using Symmetry Pruned Backtracking with .NET 10.0"
     MinWidth="1200"
-    MinHeight="1000"
+    MinHeight="1400"
     Background="White"
     FontSize="14"
     ResizeMode="CanResize"
     WindowStartupLocation="CenterScreen"
     WindowState="Normal"
+    SizeToContent="Manual"
     mc:Ignorable="d">
 
     <!--  Main grid layout for the window  -->
-    <Grid Margin="10" Background="White">
+    <Grid Margin="10" Background="White" Grid.IsSharedSizeScope="True" HorizontalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" MinHeight="40" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" MinWidth="140" />
-            <ColumnDefinition Width="*" MaxWidth="1000" />
+            <ColumnDefinition x:Name="LeftColumn" Width="Auto" MinWidth="140" SharedSizeGroup="LeftCol" />
+            <ColumnDefinition Width="10" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="10" />
             <ColumnDefinition Width="400" />
         </Grid.ColumnDefinitions>
 
         <!--  Top header row  -->
-        <Border
+        <Border x:Name="HeaderBorder"
             Grid.Row="0"
             Grid.Column="0"
-            Grid.ColumnSpan="3"
+            Grid.ColumnSpan="5"
             Margin="0,0,0,10"
             Padding="0"
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Center"
+            VerticalAlignment="Top"
             Background="WhiteSmoke"
             CornerRadius="8">
-            <view:ActiveSolutionUserControl HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+            <view:ActiveSolutionUserControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
         </Border>
 
         <!--  Left: Solution List  -->
@@ -48,25 +51,27 @@
             x:Name="solutionList"
             Grid.Row="1"
             Grid.Column="0"
-            Margin="0,0,10,0"
-            HorizontalAlignment="Stretch"
+            Margin="0"
+            HorizontalAlignment="Left"
+            MinWidth="140"
             VerticalAlignment="Top" />
 
         <!--  Center: Chessboard  -->
         <ContentControl
             x:Name="chessboardPlaceholder"
             Grid.Row="1"
-            Grid.Column="1"
-            Margin="0,0,10,0"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Top" />
+            Grid.Column="2"
+            Margin="0"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            MinWidth="200" />
 
         <!--  Right: Controls (anchored to top) -->
         <Grid
             Grid.Row="1"
-            Grid.Column="2"
-            Margin="0"
-            HorizontalAlignment="Center"
+            Grid.Column="4"
+            Margin="0,0,0,0"
+            HorizontalAlignment="Left"
             VerticalAlignment="Top">
 
             <Grid.RowDefinitions>

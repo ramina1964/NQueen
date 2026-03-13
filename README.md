@@ -1,3 +1,3 @@
 # NQueen
 
-A WPF Desktop Application Using .NET 9.0 for Solving N-Queen Problem by the Recursive Backtracking Algorithm
+A Combined Console App and WPF Desktop Application Implemented in .NET 10.0 for Solving the N-Queen Problem by the Symmetry Pruning Backtracking Algorithm
