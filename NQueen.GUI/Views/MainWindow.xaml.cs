@@ -115,40 +115,25 @@ public partial class MainWindow : Window, IDisposable
         // Row 1 (* row) gives the available height for the board
         var rowHeight = grid.RowDefinitions[1].ActualHeight;
 
-        // Available width = grid width minus left column, two 10-px spacers, and 400-px right panel.
-        // Column 5 (Width="*") absorbs whatever is left, so this formula gives the combined space
-        // for the board column (Col 2) and the trailing absorber column (Col 5).
-        var leftWidth = grid.ColumnDefinitions[0].ActualWidth;
+        // Column 0 (solution list) and Column 2 (chessboard) are kept equal width at all times.
+        // The available horizontal space minus the two 10-px spacers and the 400-px right panel
+        // is split evenly between them.  Column 5 (Width="*") absorbs any remainder so that
+        // extra space always appears after the right panel, not between columns.
         var rightWidth = grid.ColumnDefinitions[4].ActualWidth; // fixed 400
         var spacerWidth = grid.ColumnDefinitions[1].ActualWidth + grid.ColumnDefinitions[3].ActualWidth; // 10 + 10
-        var layoutAvailable = Math.Max(0, grid.ActualWidth - leftWidth - rightWidth - spacerWidth);
-
-        // Subtract explicit margins on the chessboard placeholder (currently 0)
-        var totalHorizontalMargin = chessboardPlaceholder.Margin.Left + chessboardPlaceholder.Margin.Right;
-        var availableWidth = Math.Max(0, layoutAvailable - totalHorizontalMargin);
+        var maxBoardSizeFromWidth = Math.Max(0, (grid.ActualWidth - spacerWidth - rightWidth) / 2.0);
 
         // Guard: layout not ready yet (window still initialising)
-        if (availableWidth <= 0 || rowHeight <= 0)
+        if (maxBoardSizeFromWidth <= 0 || rowHeight <= 0)
             return;
 
-        // Target a square board bounded by both available height and available width.
-        // Setting chessBoard.Width = targetBoardSize fills Col 2; Col 5 absorbs the remainder
-        // so all extra horizontal space ends up after the right panel, not between columns.
-        var targetBoardSize = Math.Min(rowHeight, availableWidth);
+        // Square board bounded by both available height and half the available horizontal space
+        var targetBoardSize = Math.Min(rowHeight, maxBoardSizeFromWidth);
 
-        // Apply a smaller initial cap so initial squares fit comfortably
-        if (!_initialChessboardSized)
-        {
-            const double initialMax = 600.0; // tweak as needed
-            targetBoardSize = Math.Min(targetBoardSize, initialMax);
-            _initialChessboardSized = true;
-        }
-
-        // Set chessboard to the targeted square size; container will constrain if needed
+        // Size the chessboard and the solution-list panel identically
         chessBoard.Width = targetBoardSize;
         chessBoard.Height = targetBoardSize;
-
-        // Set the height of the solution list to match the chessboard
+        solutionList.Width = targetBoardSize;
         solutionList.Height = targetBoardSize;
 
         MainViewModel.ChessboardVm.WindowWidth = chessBoard.ActualWidth;
@@ -160,5 +145,4 @@ public partial class MainWindow : Window, IDisposable
 
     private bool _disposed = false;
     private readonly IServiceProvider _serviceProvider;
-    private bool _initialChessboardSized = false;
 }
