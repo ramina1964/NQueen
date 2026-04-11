@@ -13,6 +13,7 @@ public partial class MainWindow : Window, IDisposable
 
         Loaded += MainView_Loaded;
         SizeChanged += MainView_SizeChanged;
+        DpiChanged += MainView_DpiChanged;
         MainViewModel = mainViewModel;
         _serviceProvider = serviceProvider;
 
@@ -66,6 +67,7 @@ public partial class MainWindow : Window, IDisposable
                 // Unsubscribe from events
                 Loaded -= MainView_Loaded;
                 SizeChanged -= MainView_SizeChanged;
+                DpiChanged -= MainView_DpiChanged;
 
                 MainViewModel = null!;
             }
@@ -99,32 +101,39 @@ public partial class MainWindow : Window, IDisposable
         }
     }
 
+    private void MainView_DpiChanged(object sender, DpiChangedEventArgs e)
+    {
+        // Recalculate board geometry when the window is moved to a monitor with a different DPI
+        if (chessboardPlaceholder.Content is ChessboardUserControl chessBoard)
+            UpdateChessboardAndRelatedUI(chessBoard);
+    }
+
     private void UpdateChessboardAndRelatedUI(ChessboardUserControl chessBoard)
     {
         var grid = (Grid)Content;
 
-        // Compute available height by subtracting header height and the grid's top/bottom margins
-        var rootMargin = ((FrameworkElement)grid).Margin;
-        var headerBorder = (Border?)FindName("HeaderBorder");
-        var headerHeight = headerBorder is not null
-            ? headerBorder.ActualHeight + headerBorder.Margin.Bottom
-            : 0.0;
-        // Use the actual height of the content row (accounts for right panel needs and layout rounding)
+        // Row 1 (* row) gives the available height for the board
         var rowHeight = grid.RowDefinitions[1].ActualHeight;
 
-        // Compute available width for the center column by measuring available space
-        // between left and right columns within the root grid
+        // Available width = grid width minus left column, two 10-px spacers, and 400-px right panel.
+        // Column 5 (Width="*") absorbs whatever is left, so this formula gives the combined space
+        // for the board column (Col 2) and the trailing absorber column (Col 5).
         var leftWidth = grid.ColumnDefinitions[0].ActualWidth;
         var rightWidth = grid.ColumnDefinitions[4].ActualWidth; // fixed 400
         var spacerWidth = grid.ColumnDefinitions[1].ActualWidth + grid.ColumnDefinitions[3].ActualWidth; // 10 + 10
         var layoutAvailable = Math.Max(0, grid.ActualWidth - leftWidth - rightWidth - spacerWidth);
 
-        // Subtract the left and right margin of the chessboardPlaceholder dynamically
+        // Subtract explicit margins on the chessboard placeholder (currently 0)
         var totalHorizontalMargin = chessboardPlaceholder.Margin.Left + chessboardPlaceholder.Margin.Right;
         var availableWidth = Math.Max(0, layoutAvailable - totalHorizontalMargin);
 
-        // Target a square board bounded by both available height and available width
-        // (avoids a feedback loop where setting Width drove SizeChanged which re-read rowHeight)
+        // Guard: layout not ready yet (window still initialising)
+        if (availableWidth <= 0 || rowHeight <= 0)
+            return;
+
+        // Target a square board bounded by both available height and available width.
+        // Setting chessBoard.Width = targetBoardSize fills Col 2; Col 5 absorbs the remainder
+        // so all extra horizontal space ends up after the right panel, not between columns.
         var targetBoardSize = Math.Min(rowHeight, availableWidth);
 
         // Apply a smaller initial cap so initial squares fit comfortably
