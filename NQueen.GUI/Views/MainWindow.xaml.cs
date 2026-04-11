@@ -112,9 +112,8 @@ public partial class MainWindow : Window, IDisposable
         // Use the actual height of the content row (accounts for right panel needs and layout rounding)
         var rowHeight = grid.RowDefinitions[1].ActualHeight;
 
-        // Compute available width for the center column (auto) by measuring available space
+        // Compute available width for the center column by measuring available space
         // between left and right columns within the root grid
-        // With SizeToContent=Width and center Auto, grid width equals sum of columns + spacers
         var leftWidth = grid.ColumnDefinitions[0].ActualWidth;
         var rightWidth = grid.ColumnDefinitions[4].ActualWidth; // fixed 400
         var spacerWidth = grid.ColumnDefinitions[1].ActualWidth + grid.ColumnDefinitions[3].ActualWidth; // 10 + 10
@@ -124,8 +123,9 @@ public partial class MainWindow : Window, IDisposable
         var totalHorizontalMargin = chessboardPlaceholder.Margin.Left + chessboardPlaceholder.Margin.Right;
         var availableWidth = Math.Max(0, layoutAvailable - totalHorizontalMargin);
 
-        // Target a square board driven by available vertical height
-        var targetBoardSize = rowHeight;
+        // Target a square board bounded by both available height and available width
+        // (avoids a feedback loop where setting Width drove SizeChanged which re-read rowHeight)
+        var targetBoardSize = Math.Min(rowHeight, availableWidth);
 
         // Apply a smaller initial cap so initial squares fit comfortably
         if (!_initialChessboardSized)
@@ -133,17 +133,6 @@ public partial class MainWindow : Window, IDisposable
             const double initialMax = 600.0; // tweak as needed
             targetBoardSize = Math.Min(targetBoardSize, initialMax);
             _initialChessboardSized = true;
-        }
-
-        // Keep window width constant based on content so gaps stay 10px
-        // Width = margins + left column + spacer(10) + board + spacer(10) + right column(400)
-        var desiredWindowWidth = rootMargin.Left + rootMargin.Right
-            + leftWidth + grid.ColumnDefinitions[1].ActualWidth
-            + targetBoardSize + grid.ColumnDefinitions[3].ActualWidth
-            + rightWidth;
-        if (!double.IsNaN(desiredWindowWidth) && desiredWindowWidth > 0)
-        {
-            Width = desiredWindowWidth;
         }
 
         // Set chessboard to the targeted square size; container will constrain if needed
@@ -157,8 +146,6 @@ public partial class MainWindow : Window, IDisposable
         MainViewModel.ChessboardVm.WindowHeight = chessBoard.ActualHeight;
 
         MainViewModel.ResetChessboard(targetBoardSize);
-
-        // (width already set above using targetBoardSize)
     }
 
 
