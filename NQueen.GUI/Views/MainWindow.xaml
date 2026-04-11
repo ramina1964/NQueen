@@ -27,16 +27,17 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition x:Name="LeftColumn" Width="Auto" MinWidth="140" SharedSizeGroup="LeftCol" />
             <ColumnDefinition Width="10" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="10" />
             <ColumnDefinition Width="400" />
+            <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <!--  Top header row  -->
         <Border x:Name="HeaderBorder"
             Grid.Row="0"
             Grid.Column="0"
-            Grid.ColumnSpan="5"
+            Grid.ColumnSpan="6"
             Margin="0,0,0,10"
             Padding="0"
             HorizontalAlignment="Stretch"
