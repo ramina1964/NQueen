@@ -1,0 +1,33 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="NQueen.Benchmarking/NQueen.Benchmarking.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
+  <Project Path="NQueen.Console/NQueen.ConsoleApp.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
+  <Project Path="NQueen.Domain/NQueen.Domain.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
+  <Project Path="NQueen.GUI/NQueen.GUI.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
+  <Project Path="NQueen.Kernel/NQueen.Kernel.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
+  <Project Path="NQueen.Shared/NQueen.Shared.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
+  <Project Path="NQueen.TestShared/NQueen.TestShared.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
+  <Project Path="NQueen.UnitTests/NQueen.UnitTests.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
+  <Project Path="NQueen.ViewModelTests/NQueen.ViewModelTests.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
+</Solution>
