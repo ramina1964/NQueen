@@ -232,12 +232,6 @@ public sealed partial class MainViewModel
 
                 _batchedSolutions.Clear();
                 StopVisualizationTimer();
-
-                if (SelectedSolution != null && ChessboardVm != null)
-                {
-                    EnsureBoardSized();
-                    ChessboardVm.PlaceQueens(SelectedSolution.Positions);
-                }
                 RefreshCommandStates();
                 break;
         }
