@@ -115,25 +115,24 @@ public partial class MainWindow : Window, IDisposable
         // Row 1 (* row) gives the available height for the board
         var rowHeight = grid.RowDefinitions[1].ActualHeight;
 
-        // Column 0 (solution list) and Column 2 (chessboard) are kept equal width at all times.
-        // The available horizontal space minus the two 10-px spacers and the 400-px right panel
-        // is split evenly between them.  Column 5 (Width="*") absorbs any remainder so that
-        // extra space always appears after the right panel, not between columns.
+        // Column 0 (solution list) auto-sizes to its content; Column 2 (chessboard) fills the
+        // remaining horizontal space after Col 0, the two 10-px spacers and the 400-px right panel.
+        // Column 5 (Width="*") absorbs any extra so widths/gaps between content columns stay fixed.
+        var leftWidth = grid.ColumnDefinitions[0].ActualWidth;  // natural/auto width of solution list
         var rightWidth = grid.ColumnDefinitions[4].ActualWidth; // fixed 400
         var spacerWidth = grid.ColumnDefinitions[1].ActualWidth + grid.ColumnDefinitions[3].ActualWidth; // 10 + 10
-        var maxBoardSizeFromWidth = Math.Max(0, (grid.ActualWidth - spacerWidth - rightWidth) / 2.0);
+        var availableWidth = Math.Max(0, grid.ActualWidth - leftWidth - spacerWidth - rightWidth);
 
         // Guard: layout not ready yet (window still initialising)
-        if (maxBoardSizeFromWidth <= 0 || rowHeight <= 0)
+        if (availableWidth <= 0 || rowHeight <= 0)
             return;
 
-        // Square board bounded by both available height and half the available horizontal space
-        var targetBoardSize = Math.Min(rowHeight, maxBoardSizeFromWidth);
+        // Square board bounded by both available height and available horizontal space
+        var targetBoardSize = Math.Min(rowHeight, availableWidth);
 
-        // Size the chessboard and the solution-list panel identically
+        // Size the chessboard; solution list height tracks the board, width auto-sized by content
         chessBoard.Width = targetBoardSize;
         chessBoard.Height = targetBoardSize;
-        solutionList.Width = targetBoardSize;
         solutionList.Height = targetBoardSize;
 
         MainViewModel.ChessboardVm.WindowWidth = chessBoard.ActualWidth;

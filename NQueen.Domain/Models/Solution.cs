@@ -14,7 +14,7 @@ public class Solution
             if (v < 0)
                 throw new ArgumentException("Queen positions must contain non-negative values.", nameof(queenPositions));
         Id = id ?? Interlocked.Increment(ref _globalSequence);
-        Name = $"Solution {Id}"; // updated naming
+        Name = $"Solution No. {Id:D2}";
         _queenPositions = queenPositions; // materialized upfront
         BoardSize = queenPositions.Length;
         Positions = MapQueenArrayToPositions(_queenPositions);
@@ -27,7 +27,7 @@ public class Solution
         if (boardSize <= 0 || boardSize > 25)
             throw new ArgumentOutOfRangeException(nameof(boardSize), "Packed storage supports board sizes 1..25.");
         Id = id ?? Interlocked.Increment(ref _globalSequence);
-        Name = $"Solution {Id}"; // updated naming
+        Name = $"Solution No. {Id:D2}";
         BoardSize = boardSize;
         _packed = packedRows;
         _formatter = formatter;
