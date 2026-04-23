@@ -142,6 +142,27 @@ __pycache__/
 /NQueen.GUI/NQueen Results.xlsm
 
 # -------------------------
+# Code Coverage
+# Raw intermediate files and most generated assets are NOT tracked.
+# Only the summary page and the 4 main badges are tracked.
+# -------------------------
+.coverage-raw/
+**/TestResults/
+coverage.json
+coverage.xml
+coverage.cobertura.xml
+
+# Ignore everything in CoverageReport/ by default ...
+CoverageReport/*
+
+# ... then selectively un-ignore what we want to keep
+!CoverageReport/index.html
+!CoverageReport/badge_linecoverage.svg
+!CoverageReport/badge_branchcoverage.svg
+!CoverageReport/badge_methodcoverage.svg
+!CoverageReport/badge_combined.svg
+
+# -------------------------
 # Documentation - track files directly under docs/ but ignore the ignored subfolder
 # -------------------------
 docs/ignored/
