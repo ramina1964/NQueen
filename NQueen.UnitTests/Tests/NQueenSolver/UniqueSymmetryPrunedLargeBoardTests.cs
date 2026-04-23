@@ -1,5 +1,6 @@
 namespace NQueen.UnitTests.Tests.NQueenSolver;
 
+[Trait("Category", "Slow")]
 public class UniqueSymmetryPrunedLargeBoardTests
 {
     [Theory]
