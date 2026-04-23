@@ -1,6 +1,7 @@
 ﻿namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 [Collection("SolverBackend")]
+[Trait("Category", "Slow")]
 public class HighBoardCountsTests(SolverBackEndFixture fixture)
 {
     private readonly ISolverBackEnd _solver = fixture.Sut;
