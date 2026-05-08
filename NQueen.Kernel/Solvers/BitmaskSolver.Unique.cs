@@ -20,24 +20,35 @@ public partial class BitmaskSolver
 
         if (boardSize >= SimulationSettings.LargeBoardSymmetryPruningThreshold)
         {
-            // Large boards: compute full unique count via symmetry-pruned counter.
-            _solutionCount = Engines.SymmetryPrunedUniqueCounter.Count(boardSize, cap,
-                prefixMinimality: EnablePrefixMinimalityPruning,
-                reflectionPruning: EnablePartialReflectionPruning,
-                onMaterialized: rows =>
+            if (boardSize >= SimulationSettings.UniqueCountOnlyParallelThresholdN)
             {
-                if (materialized < Math.Max(1, cap))
+                // Two-phase approach (mirrors CollectAllSamplesAndCountParallel in All mode):
+                //   Phase 1 — collect up to cap canonical samples via an early-exit DFS (milliseconds).
+                //   Phase 2 — count using CountUniqueFastHalfBoard, the same half-board algorithm
+                //              used by the CountOnly path, cutting the search space by ~half vs.
+                //              SymmetryPrunedUniqueCounter which traverses all N root rows.
+                CollectUniqueSamplesDFS(boardSize, Math.Max(1, cap), packedSample, ref materialized);
+                _solutionCount = CountUniqueFastHalfBoard(boardSize);
+            }
+            else
+            {
+                // N=15: SymmetryPrunedUniqueCounter is the correct path; CountUniqueFastHalfBoard
+                // is only reliable for N >= UniqueCountOnlyParallelThresholdN (16).
+                _solutionCount = Engines.SymmetryPrunedUniqueCounter.Count(boardSize, cap,
+                    prefixMinimality: EnablePrefixMinimalityPruning,
+                    reflectionPruning: EnablePartialReflectionPruning,
+                    onMaterialized: rows =>
                 {
-                    var packed = boardSize <= 25 ? SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _) : 0;
-                    packedSample.Add((packed, boardSize));
-                    materialized++;
-                    if (materialized >= cap && _capEnabled)
+                    if (materialized < Math.Max(1, cap))
                     {
-                        _eventsSuppressedAfterCap = true;
-                        // Do not stop counting; continue enumeration to compute full count.
+                        var packed = boardSize <= 25 ? SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _) : 0;
+                        packedSample.Add((packed, boardSize));
+                        materialized++;
+                        if (materialized >= cap && _capEnabled)
+                            _eventsSuppressedAfterCap = true;
                     }
-                }
-            });
+                });
+            }
         }
         else
         {
@@ -178,5 +189,51 @@ public partial class BitmaskSolver
     private void EnumerateUniqueMaterializeAdaptive()
     {
         ExecuteUniqueModeUnified();
+    }
+
+    // Phase 1 of the two-phase Unique Materialize path for large boards (N >= 16).
+    // Runs a sequential DFS over all N root rows and stops as soon as cap *canonical*
+    // solutions are stored.  Canonical identity is verified via IsIdentityCanonical so
+    // every solution stored is a genuine unique representative — not a rotation or
+    // reflection of another.  Cost is negligible (milliseconds) because cap is tiny (5).
+    private void CollectUniqueSamplesDFS(int N, int cap,
+        List<(UInt128 packed, int boardSize)> target, ref int materialized)
+    {
+        ulong mask = N == 64 ? ulong.MaxValue : (1UL << N) - 1UL;
+        int[] rows = new int[N];
+        Array.Fill(rows, -1);
+        int localMaterialized = materialized; // local copy — ref params can't be captured
+
+        DFS(0, 0UL, 0UL, 0UL);
+
+        materialized = localMaterialized; // write back
+
+        void DFS(int col, ulong cols, ulong d1, ulong d2)
+        {
+            if (localMaterialized >= cap || IsSolverCanceled) return;
+            if (col == N)
+            {
+                if (!SymmetryHelper.IsIdentityCanonical(rows, _scratchBuffer!))
+                    return;
+
+                var packed = N <= 25 ? SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _) : 0UL;
+                target.Add(((UInt128)packed, N));
+                if (EnableEvents && !_eventsSuppressedAfterCap)
+                    SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), N));
+                localMaterialized++;
+                if (localMaterialized >= cap)
+                    _eventsSuppressedAfterCap = true;
+                return;
+            }
+            ulong avail = ~(cols | d1 | d2) & mask;
+            while (avail != 0 && localMaterialized < cap && !IsSolverCanceled)
+            {
+                ulong bit = avail & (ulong)-(long)avail;
+                avail ^= bit;
+                rows[col] = BitOperations.TrailingZeroCount(bit);
+                DFS(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1);
+            }
+            rows[col] = -1;
+        }
     }
 }
