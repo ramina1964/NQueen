@@ -21,11 +21,14 @@ public partial class BitmaskSolver
         if (boardSize >= SimulationSettings.LargeBoardSymmetryPruningThreshold)
         {
             // Large boards: compute full unique count via symmetry-pruned counter.
-            _solutionCount = Engines.SymmetryPrunedUniqueCounter.Count(boardSize, cap, rows =>
+            _solutionCount = Engines.SymmetryPrunedUniqueCounter.Count(boardSize, cap,
+                prefixMinimality: EnablePrefixMinimalityPruning,
+                reflectionPruning: EnablePartialReflectionPruning,
+                onMaterialized: rows =>
             {
                 if (materialized < Math.Max(1, cap))
                 {
-                    var packed = boardSize <= 25 ? SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer ?? new int[boardSize * 8], out _) : 0;
+                    var packed = boardSize <= 25 ? SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _) : 0;
                     packedSample.Add((packed, boardSize));
                     materialized++;
                     if (materialized >= cap && _capEnabled)
@@ -58,13 +61,13 @@ public partial class BitmaskSolver
                 OnSolution: rows =>
                 {
                     if (!ValidateRows(rows)) return false;
-                    if (!SymmetryHelper.IsIdentityCanonical(rows, _scratchBuffer ?? new int[boardSize * 8]))
+                    if (!SymmetryHelper.IsIdentityCanonical(rows, _scratchBuffer!))
                         return false;
 
                     if (materialized < Math.Max(1, cap))
                     {
                         var packed = boardSize <= 25
-                            ? SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer ?? new int[boardSize * 8], out _)
+                            ? SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _)
                             : 0;
                         packedSample.Add((packed, boardSize));
                         materialized++;
@@ -158,7 +161,7 @@ public partial class BitmaskSolver
     {
         if (rows.Length <= 25)
         {
-            var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer ?? new int[rows.Length * 8], out _);
+            var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
             _solutions.Add((packed, rows.Length));
         }
         else

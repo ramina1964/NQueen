@@ -2,15 +2,23 @@ namespace NQueen.Kernel.Solvers.Engines;
 
 public static class SymmetryPrunedUniqueCounter
 {
-    public static ulong Count(int boardSize, int cap, Action<int[]>? onMaterialized = null)
+    public static ulong Count(int boardSize, int cap, Action<int[]>? onMaterialized = null,
+        bool prefixMinimality = false, bool reflectionPruning = false)
     {
         if (boardSize <= 0) return 0UL;
         int N = boardSize;
         ulong maskAll = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL);
         var totalCount = 0UL;
         var materializedQueue = (onMaterialized != null && cap > 0) ? new ConcurrentQueue<int[]>() : null;
+
+        // Capture flags as locals before Parallel.ForEach starts so that a concurrent
+        // Configure() call on the global SearchOptimizations statics cannot corrupt
+        // in-flight pruning decisions for this invocation.
+        bool localPrefixMinimality = prefixMinimality;
+        bool localReflectionPruning = reflectionPruning;
+
         int pruneDepthGate = int.MaxValue;
-        if (SearchOptimizations.PrefixMinimalityPruningEnabled || SearchOptimizations.ReflectionPrefixPruningEnabled)
+        if (localPrefixMinimality || localReflectionPruning)
         {
             if (N >= 20) pruneDepthGate = 1; else if (N >= 16) pruneDepthGate = 2;
         }
@@ -49,7 +57,7 @@ public static class SymmetryPrunedUniqueCounter
                     avail ^= bit;
                     int r = BitOperations.TrailingZeroCount(bit);
                     rows[col] = r;
-                    if (col >= pruneDepthGate && ShouldPrunePrefixFast(rows, col, N)) { rows[col] = -1; continue; }
+                    if (col >= pruneDepthGate && ShouldPrunePrefixFast(rows, col, N, localReflectionPruning, localPrefixMinimality)) { rows[col] = -1; continue; }
                     DFS(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1);
                     rows[col] = -1;
                 }
@@ -77,10 +85,9 @@ public static class SymmetryPrunedUniqueCounter
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool ShouldPrunePrefixFast(int[] rows, int depth, int N)
+    private static bool ShouldPrunePrefixFast(int[] rows, int depth, int N,
+        bool reflectionEnabled, bool minimalityEnabled)
     {
-        bool reflectionEnabled = SearchOptimizations.ReflectionPrefixPruningEnabled;
-        bool minimalityEnabled = SearchOptimizations.PrefixMinimalityPruningEnabled;
         if (!reflectionEnabled && !minimalityEnabled) return false;
         if (reflectionEnabled)
         {

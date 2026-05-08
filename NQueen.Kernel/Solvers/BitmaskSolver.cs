@@ -207,7 +207,10 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                 return total;
             }
 
-            return SymmetryPrunedUniqueCounter.Count(n, cap: 0, onMaterialized: null);
+            return SymmetryPrunedUniqueCounter.Count(n, cap: 0,
+                prefixMinimality: EnablePrefixMinimalityPruning,
+                reflectionPruning: EnablePartialReflectionPruning,
+                onMaterialized: null);
         }
         finally
         {

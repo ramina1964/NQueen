@@ -30,12 +30,18 @@ public sealed partial class MainViewModel
             DisplayMode = DisplayMode.Hide;
         }
 
-        if (_solver is NQueen.Kernel.Solvers.BitmaskSolver bitmask)
+        if (_solver is Kernel.Solvers.BitmaskSolver bitmask)
         {
             bitmask.UseParallel = UseParallel;
             bitmask.ParallelRootSplitDepth = ParallelRootSplitDepth;
             bitmask.AllStorageMode = SolutionMode == SolutionMode.All || SolutionMode == SolutionMode.Single ? SelectedStorageMode : bitmask.AllStorageMode;
             bitmask.UniqueStorageMode = SolutionMode == SolutionMode.Unique ? SelectedStorageMode : bitmask.UniqueStorageMode;
+            bitmask.EnableHalfBoardRestriction = boardSize >= 15;
+            bitmask.EnablePrefixMinimalityPruning = true;
+            bitmask.EnablePartialReflectionPruning = true;
+            bitmask.UseAdaptiveDepth = boardSize >= 14;
+            bitmask.UseCountOnlyAllMode = bitmask.AllStorageMode == ResultStorageMode.CountOnly;
+            bitmask.UseCountOnlyUniqueMode = bitmask.UniqueStorageMode == ResultStorageMode.CountOnly;
         }
 
         _solver.IsSolverCanceled = false;
