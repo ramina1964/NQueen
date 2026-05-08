@@ -5,7 +5,6 @@ public sealed class SolutionFoundEventArgs : System.EventArgs
     public Memory<int> Solution { get; }
     public int BoardSize { get; }
     public UInt128 PackedCanonical { get; }
-    public UInt128 PackedSolution => PackedCanonical; // legacy alias
 
     public SolutionFoundEventArgs(Memory<int> solution, int boardSize, UInt128 packedCanonical)
     {

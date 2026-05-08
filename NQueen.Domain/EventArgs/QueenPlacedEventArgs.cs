@@ -5,8 +5,6 @@ public readonly struct QueenPlacedEventArgs
     public Memory<int> Solution { get; }
     public int BoardSize { get; }
     public UInt128 PackedCanonical { get; }
-    // Legacy compatibility property
-    public UInt128 PackedSolution => PackedCanonical;
 
     public QueenPlacedEventArgs(Memory<int> solution, int boardSize, UInt128 packedCanonical)
     {

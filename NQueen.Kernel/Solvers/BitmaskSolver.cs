@@ -179,7 +179,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
             if (DisplayMode == DisplayMode.Visualize)
                 EnumerateUniqueVisualizeAdaptive();
             else
-                EnumerateUniqueMaterializeAdaptive();
+                ExecuteUniqueModeUnified();
         }
         else
         {
