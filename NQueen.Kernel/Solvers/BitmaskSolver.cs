@@ -31,22 +31,37 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     }
 
     public int ProgressValue { get; set; }
+
     public int BoardSize { get; private set; }
+
     public SolutionMode SolutionMode { get; private set; }
+
     public DisplayMode DisplayMode { get; private set; }
+
     public bool IsSolverCanceled { get; set; }
+
     public bool EnableEvents { get; set; } = true;
+
     public ResultStorageMode AllStorageMode { get; set; } = ResultStorageMode.Materialize;
+
     public ResultStorageMode UniqueStorageMode { get; set; } = ResultStorageMode.Materialize;
+
     public bool UseCountOnlyUniqueMode { get; set; } = false;
+
     public bool UseCountOnlyAllMode { get; set; } = false;
+
     public bool UseParallel { get; set; } = true;
+
     public int ParallelRootSplitDepth { get; set; } = 1;
+
     public bool UseAdaptiveDepth { get; set; } = false;
+
     public bool EnablePrefixMinimalityPruning { get; set; } = false; // Opt #1
+
     public bool EnableIncrementalCanonicalization { get; set; } = false; // Opt #3 (driver flag)
+
     public bool EnablePartialReflectionPruning { get; set; } = false; // Opt #14
-    public bool EnableMitmAllSplit { get; set; } = false; // Opt #4
+
     public bool EnableHalfBoardRestriction { get; set; } = false; // new flag (applies to All mode; materialize + count-only)
 
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
@@ -75,7 +90,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
             bool allCountOnly = UseCountOnlyAllMode || AllStorageMode == ResultStorageMode.CountOnly;
             bool uniqueCountOnly = UseCountOnlyUniqueMode || UniqueStorageMode == ResultStorageMode.CountOnly;
 
-            // TEMP: disable events for count-only paths (less overhead in hot loops)
             bool origEnableEvents = EnableEvents;
             if (uniqueCountOnly || allCountOnly)
                 EnableEvents = false;
@@ -189,11 +203,17 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
         try
         {
-            if (n >= SimulationSettings.UniqueCountOnlyParallelThresholdN && n <= 22)
-                return CountUniqueFastHalfBoard(n);
-
-            if (n < SimulationSettings.UniqueCountOnlyParallelThresholdN)
+            // CountUniqueAdaptive is only called for N <= LookupThresholdN-1 (20).
+            // The two branches below are exhaustive for that range; no fallthrough exists.
+            if (n >= SimulationSettings.UniqueCountOnlyParallelThresholdN)
             {
+                // N= 16 .. 20: half-board parallel DFS — the same algorithm used by CountOnly.
+                // The former n<=22 upper cap is removed; the lookup table makes N>=21 unreachable here.
+                return CountUniqueFastHalfBoard(n);
+            }
+            else
+            {
+                // N < 16: parallel canonical enumeration via BitmaskParallelEngine.
                 ulong total = 0;
                 BitmaskParallelEngine.RunUnique(new BitmaskParallelEngine.UniqueRequest
                 {
@@ -206,11 +226,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                 });
                 return total;
             }
-
-            return SymmetryPrunedUniqueCounter.Count(n, cap: 0,
-                prefixMinimality: EnablePrefixMinimalityPruning,
-                reflectionPruning: EnablePartialReflectionPruning,
-                onMaterialized: null);
         }
         finally
         {
@@ -252,7 +267,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
             else if (n >= SimulationSettings.LargeBoardSymmetryPruningThreshold) pruneDepthGate = 3;
         }
 
-        var scratchPool = System.Buffers.ArrayPool<int>.Shared;
+        var scratchPool = ArrayPool<int>.Shared;
         long total = 0L;
 
         try
@@ -303,9 +318,9 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
                         ulong avail = ~(cols | d1 | d2) & fullMask;
                         // Precompute whether we need symmetry checks to avoid repeated flag evaluations
-                        bool needSymmetryCheck = col >= pruneGate && 
+                        bool needSymmetryCheck = col >= pruneGate &&
                             ((reflectionEnabled && reflectionEqual) || (minimalityEnabled && minimalityEqual));
-                        
+
                         while (avail != 0)
                         {
                             ulong bit = avail & (ulong)-(long)avail;
@@ -320,7 +335,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                             {
                                 bool savedReflectionEqual = reflectionEqual;
                                 bool savedMinimalityEqual = minimalityEqual;
-                                
+
                                 if (SearchOptimizations.ShouldPrunePrefixIncremental(rows, col, n, reflectionEnabled, minimalityEnabled,
                                     ref reflectionEqual, ref minimalityEqual))
                                 {
@@ -329,7 +344,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                                     rows[col] = -1;
                                     continue;
                                 }
-                                
+
                                 DFS(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1, reflectionEnabled, minimalityEnabled, pruneGate, ref reflectionEqual, ref minimalityEqual);
                                 reflectionEqual = savedReflectionEqual;
                                 minimalityEqual = savedMinimalityEqual;
@@ -338,7 +353,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                             {
                                 DFS(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1, reflectionEnabled, minimalityEnabled, pruneGate, ref reflectionEqual, ref minimalityEqual);
                             }
-                            
+
                             rows[col] = -1;
                         }
                     }
@@ -675,8 +690,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
         return list;
     }
-
-    
 
     private readonly object _sync = new();
 }
