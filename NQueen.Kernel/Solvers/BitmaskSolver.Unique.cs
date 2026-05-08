@@ -168,28 +168,7 @@ public partial class BitmaskSolver
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 
-    private void MaterializeUniqueSingle(int[] rows)
-    {
-        if (rows.Length <= 25)
-        {
-            var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
-            _solutions.Add((packed, rows.Length));
-        }
-        else
-        {
-            var copy = new int[rows.Length];
-            Array.Copy(rows, copy, rows.Length);
-            _largeBoardRawSolutions.Add(copy);
-        }
-        if (EnableEvents && !_eventsSuppressedAfterCap)
-            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
-    }
-
-    // Materialization path for Unique mode: delegate to unified executor
-    private void EnumerateUniqueMaterializeAdaptive()
-    {
-        ExecuteUniqueModeUnified();
-    }
+    private void EnumerateUniqueMaterializeAdaptive() => ExecuteUniqueModeUnified();
 
     // Phase 1 of the two-phase Unique Materialize path for large boards (N >= 16).
     // Runs a sequential DFS over all N root rows and stops as soon as cap *canonical*

@@ -2,7 +2,7 @@ namespace NQueen.Kernel.Solvers;
 
 public partial class BitmaskSolver
 {
-    private void RunAllUnified(bool isParallel, int splitDepth)
+    private void RunAllUnified()
     {
         int N = BoardSize;
 
@@ -104,7 +104,7 @@ public partial class BitmaskSolver
             : Math.Max(1, ParallelRootSplitDepth);
 
         bool parallel = UseParallel && ParallelSplitDepthHeuristic.ShouldUseParallelForAll(BoardSize);
-        RunAllUnified(isParallel: parallel, splitDepth: splitDepth);
+        RunAllUnified();
     }
 
     // Phase 1: collect up to cap solutions via an early-exit DFS (completes in milliseconds).
