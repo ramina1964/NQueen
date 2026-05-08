@@ -99,11 +99,6 @@ public partial class BitmaskSolver
             return;
         }
 
-        int splitDepth = UseAdaptiveDepth
-            ? ParallelSplitDepthHeuristic.GetOptimalSplitDepth(BoardSize)
-            : Math.Max(1, ParallelRootSplitDepth);
-
-        bool parallel = UseParallel && ParallelSplitDepthHeuristic.ShouldUseParallelForAll(BoardSize);
         RunAllUnified();
     }
 

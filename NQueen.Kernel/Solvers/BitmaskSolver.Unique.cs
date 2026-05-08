@@ -168,8 +168,6 @@ public partial class BitmaskSolver
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 
-    private void EnumerateUniqueMaterializeAdaptive() => ExecuteUniqueModeUnified();
-
     // Phase 1 of the two-phase Unique Materialize path for large boards (N >= 16).
     // Runs a sequential DFS over all N root rows and stops as soon as cap *canonical*
     // solutions are stored.  Canonical identity is verified via IsIdentityCanonical so
