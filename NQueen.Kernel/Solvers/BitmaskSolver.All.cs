@@ -43,7 +43,7 @@ public partial class BitmaskSolver
                 {
                     if (rowsFound.Length <= 25)
                     {
-                        var packed = SymmetryHelper.GetCanonicalKey(rowsFound, _scratchBuffer ?? new int[rowsFound.Length * 8], out _);
+                        var packed = SymmetryHelper.GetCanonicalKey(rowsFound, _scratchBuffer!, out _);
                         _solutions.Add((packed, rowsFound.Length));
                     }
                     else
