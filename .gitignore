@@ -3,6 +3,25 @@
 ## Register with: git config --global core.excludesfile "$env:USERPROFILE\.gitignore_global"
 
 # -------------------------
+# Build output
+# -------------------------
+[Bb]in/
+[Oo]bj/
+
+# -------------------------
+# Visual Studio
+# -------------------------
+.vs/
+*.user
+*_wpftmp.csproj
+
+# -------------------------
+# BenchmarkDotNet
+# -------------------------
+BenchmarkDotNet.Artifacts/
+**/Artifacts/
+
+# -------------------------
 # ASP.NET Scaffolding
 # -------------------------
 ScaffoldingReadMe.txt
