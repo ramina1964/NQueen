@@ -2,8 +2,8 @@ namespace NQueen.Benchmarking;
 
 public class UniqueModeVariantsBenchmark
 {
-    // Representative sizes across scaling points
-    [Params(12, 14, 16)]
+    // Extended range to cover the full CountUniqueFastHalfBoard region (N=16..20)
+    [Params(16, 17, 18, 19, 20)]
     public int BoardSize { get; set; }
 
     private readonly ISolutionFormatter _formatter = new DefaultSolutionFormatter();
