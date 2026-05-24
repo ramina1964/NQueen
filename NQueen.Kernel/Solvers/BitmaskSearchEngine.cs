@@ -46,7 +46,7 @@ internal sealed class BitmaskSearchEngine
         state.Col = 0;
 
         // Initialize progress reporter: 1% buckets, 1500ms heartbeat
-        var reporter = new ProgressReporter(request.ReportProgress, bucketSize: 1, heartbeatMs: 1500);
+        var reporter = new Engines.ProgressReporter(request.ReportProgress, bucketSize: 1, heartbeatMs: 1500);
         int bucketReported = -1;
 
         // Initial progress
@@ -102,7 +102,7 @@ internal sealed class BitmaskSearchEngine
         };
     }
 
-    private static void MainLoop(ref SearchState s, in Request request, ProgressReporter reporter, ref int bucketReported)
+    private static void MainLoop(ref SearchState s, in Request request, Engines.ProgressReporter reporter, ref int bucketReported)
     {
         int N = s.N;
         Span<int> queenRows = s.QueenRows;
@@ -238,7 +238,7 @@ internal sealed class BitmaskSearchEngine
         s.Col = col; s.Cols = cols; s.Diag1 = d1; s.Diag2 = d2; s.Remaining = remaining; s.ReflectionEqual = reflectionEqual; s.MinimalityEqual = minimalityEqual;
     }
 
-    private static void MainLoopCountOnly(ref SearchState s, in Request request, ProgressReporter reporter, ref int bucketReported)
+    private static void MainLoopCountOnly(ref SearchState s, in Request request, Engines.ProgressReporter reporter, ref int bucketReported)
     {
         int N = s.N;
         int pruneDepthGate = int.MaxValue;
@@ -319,13 +319,6 @@ internal sealed class BitmaskSearchEngine
         s.Col = col; s.Cols = cols; s.Diag1 = d1; s.Diag2 = d2; s.Remaining = remaining; s.ReflectionEqual = reflectionEqual; s.MinimalityEqual = minimalityEqual;
     }
 
-    private static void ReportRootProgress(ref SearchState s, in Request request)
-    {
-        s.RootPlacements++;
-        double pct = (double)s.RootPlacements / s.RootTotal * 100.0;
-        request.ReportProgress(pct);
-    }
-
     private static void MaybeRaisePlacementEvent(ref SearchState s, in Request request)
     {
         if (!s.Visualize) return;
@@ -364,41 +357,3 @@ internal sealed class BitmaskSearchEngine
 
     private readonly record struct Frame(ulong Cols, ulong D1, ulong D2, ulong Remaining, bool ReflectionEqual, bool MinimalityEqual);
 }
-
-// Simple centralized reporter with bucket/heartbeat throttling (placed in same file for convenience)
-internal readonly struct ProgressReporter
-{
-    private readonly Action<double> _report;
-    private readonly int _bucketSize;
-    private readonly Stopwatch _heartbeat;
-    private readonly int _heartbeatMs;
-
-    public ProgressReporter(Action<double> report, int bucketSize = 1, int heartbeatMs = 1500)
-    {
-        _report = report;
-        _bucketSize = bucketSize;
-        _heartbeat = Stopwatch.StartNew();
-        _heartbeatMs = heartbeatMs;
-    }
-
-    public void ReportBucket(int done, int totalTasks, ref int bucketReported)
-    {
-        double pct = totalTasks == 0 ? 100.0 : (double)done / totalTasks * 100.0;
-        int bucket = (int)pct / _bucketSize * _bucketSize;
-        int observed;
-        while (bucket > (observed = Volatile.Read(ref bucketReported)))
-        {
-            if (Interlocked.CompareExchange(ref bucketReported, bucket, observed) == observed)
-            {
-                _report(bucket);
-                break;
-            }
-        }
-        if (_heartbeat.ElapsedMilliseconds >= _heartbeatMs)
-        {
-            _report(Math.Min(99.0, pct));
-            _heartbeat.Restart();
-        }
-    }
-}
-

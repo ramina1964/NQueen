@@ -13,10 +13,6 @@ public partial class BitmaskSolver
         List<(UInt128 packed, int boardSize)> packedSample = [];
         int materialized = 0;
 
-        SearchOptimizations.Configure(
-            prefixMinimality: EnablePrefixMinimalityPruning,
-            reflectionPruning: EnablePartialReflectionPruning,
-            incrementalCanonicalization: EnableIncrementalCanonicalization);
         if (boardSize >= SimulationSettings.LargeBoardSymmetryPruningThreshold)
         {
             if (boardSize >= SimulationSettings.UniqueCountOnlyParallelThresholdN)
