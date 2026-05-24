@@ -2,15 +2,13 @@
 
 public partial class MainWindow : Window, IDisposable
 {
+    // Layout constants
+    private const double OuterMargin = 10; // grid Margin on each side
+    private const double BoardMargin =  8; // breathing space above/below board
+    private const double SafetyPad   = 12; // absorbs 1px border + 2px margin rounding at bottom of board and listbox
+
     public MainWindow(MainViewModel mainViewModel, IServiceProvider serviceProvider)
     {
-        // Derive minimum window dimensions from the usable work area (screen minus taskbar).
-        // Using 60% of the work area as a safe minimum ensures the window is always usable
-        // on any monitor, including laptops, without ever overflowing the screen on startup.
-        var workArea = SystemParameters.WorkArea;
-        MinWidth  = Math.Round(workArea.Width  * 0.60);
-        MinHeight = Math.Round(workArea.Height * 0.60);
-
         InitializeComponent();
         _serviceProvider = serviceProvider
             ?? throw new ArgumentNullException(nameof(serviceProvider));
@@ -19,10 +17,7 @@ public partial class MainWindow : Window, IDisposable
             ?? throw new ArgumentNullException(nameof(mainViewModel));
 
         Loaded += MainView_Loaded;
-        SizeChanged += MainView_SizeChanged;
-        DpiChanged += MainView_DpiChanged;
         MainViewModel = mainViewModel;
-        _serviceProvider = serviceProvider;
 
         // Resolve and add ChessboardUserControl to the MainWindow
         var chessboard = _serviceProvider.GetRequiredService<ChessboardUserControl>();
@@ -66,21 +61,14 @@ public partial class MainWindow : Window, IDisposable
 
         if (disposing)
         {
-            // Dispose of any managed resources
             if (MainViewModel != null)
             {
                 MainViewModel.Dispose();
-
-                // Unsubscribe from events
                 Loaded -= MainView_Loaded;
-                SizeChanged -= MainView_SizeChanged;
-                DpiChanged -= MainView_DpiChanged;
-
                 MainViewModel = null!;
             }
         }
 
-        // Clean up any unmanaged resources here
         _disposed = true;
     }
 
@@ -89,60 +77,57 @@ public partial class MainWindow : Window, IDisposable
         if (chessboardPlaceholder.Content is not ChessboardUserControl board)
             throw new InvalidOperationException(
                 "chessboardPlaceholder.Content is not a ChessboardUserControl.");
-        else
-        {
-            // Initialize layout once at load. Further recalculations only happen on window resize.
-            UpdateChessboardAndRelatedUI(board);
-        }
+
+        ApplyFixedLayout(board);
     }
 
-    private void MainView_SizeChanged(object sender, SizeChangedEventArgs e)
+    private void ApplyFixedLayout(ChessboardUserControl chessBoard)
     {
-        // Only recompute layout on window size changes, not on internal content changes
-        if (e.WidthChanged || e.HeightChanged)
-        {
-            if (chessboardPlaceholder.Content is ChessboardUserControl chessBoard)
-            {
-                UpdateChessboardAndRelatedUI(chessBoard);
-            }
-        }
-    }
+        var workArea = SystemParameters.WorkArea;
 
-    private void MainView_DpiChanged(object sender, DpiChangedEventArgs e)
-    {
-        // Recalculate board geometry when the window is moved to a monitor with a different DPI
-        if (chessboardPlaceholder.Content is ChessboardUserControl chessBoard)
-            UpdateChessboardAndRelatedUI(chessBoard);
-    }
-
-    private void UpdateChessboardAndRelatedUI(ChessboardUserControl chessBoard)
-    {
+        // Force a layout pass so row heights are populated.
+        UpdateLayout();
         var grid = (Grid)Content;
 
-        // WPF owns Column 2 (Width="*") and allocates it all remaining space after the fixed
-        // sibling columns. Simply read what WPF decided — no manual subtraction needed.
-        var availableWidth  = grid.ColumnDefinitions[2].ActualWidth;
-        var availableHeight = grid.RowDefinitions[1].ActualHeight;
+        // Use the actual rendered Row 0 height (includes HeaderBorder + its Margin="0,0,0,10").
+        // HeaderBorder.ActualHeight alone excludes the margin, under-counting by 10px and
+        // squeezing Row 1 — which was clipping the bottom border of the board and listbox.
+        var row0Height = grid.RowDefinitions[0].ActualHeight;
 
-        // Guard: layout not ready yet (window still initialising)
-        if (availableWidth <= 0 || availableHeight <= 0)
-            return;
+        // For a NoResize window the chrome is: title bar + fixed (non-resize) border top + bottom.
+        var chromeHeight = SystemParameters.WindowCaptionHeight
+                         + SystemParameters.FixedFrameHorizontalBorderHeight * 2;
 
-        // Square board: take the smaller of the two available dimensions
-        var targetBoardSize = Math.Min(availableHeight, availableWidth);
+        // boardSize fills everything that is not chrome, header, outer margins or breathing room.
+        var boardSize = Math.Floor(workArea.Height
+                        - chromeHeight
+                        - OuterMargin * 2
+                        - BoardMargin * 2
+                        - row0Height
+                        - SafetyPad);
+        boardSize = Math.Max(200, boardSize);
 
-        // Size the chessboard; solution list height tracks the board
-        chessBoard.Width  = targetBoardSize;
-        chessBoard.Height = targetBoardSize;
-        solutionList.Height = targetBoardSize;
+        // Column 2 is exactly boardSize wide — no slack, no gaps.
+        grid.ColumnDefinitions[2].Width = new GridLength(boardSize);
 
-        // Use targetBoardSize directly — ActualWidth/Height are stale until the next layout pass
-        MainViewModel.ChessboardVm.WindowWidth  = targetBoardSize;
-        MainViewModel.ChessboardVm.WindowHeight = targetBoardSize;
+        // Size board and solution list.
+        chessBoard.Width    = boardSize;
+        chessBoard.Height   = boardSize;
+        solutionList.Height = boardSize;
 
-        MainViewModel.ResetChessboard(targetBoardSize);
+        // Set window size explicitly so nothing is approximated.
+        // Height = chrome + outer margins + header + breathing + board
+        Width  = OuterMargin + 150 + 10 + boardSize + 10 + 400 + OuterMargin;
+        Height = chromeHeight
+               + OuterMargin + row0Height + BoardMargin
+               + boardSize
+               + BoardMargin + OuterMargin;
+
+        // Pass exact dimensions to the ViewModel.
+        MainViewModel.ChessboardVm.WindowWidth  = boardSize;
+        MainViewModel.ChessboardVm.WindowHeight = boardSize;
+        MainViewModel.ResetChessboard(boardSize);
     }
-
 
     private bool _disposed = false;
     private readonly IServiceProvider _serviceProvider;
