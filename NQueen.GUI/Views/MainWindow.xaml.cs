@@ -4,6 +4,13 @@ public partial class MainWindow : Window, IDisposable
 {
     public MainWindow(MainViewModel mainViewModel, IServiceProvider serviceProvider)
     {
+        // Derive minimum window dimensions from the usable work area (screen minus taskbar).
+        // Using 60% of the work area as a safe minimum ensures the window is always usable
+        // on any monitor, including laptops, without ever overflowing the screen on startup.
+        var workArea = SystemParameters.WorkArea;
+        MinWidth  = Math.Round(workArea.Width  * 0.60);
+        MinHeight = Math.Round(workArea.Height * 0.60);
+
         InitializeComponent();
         _serviceProvider = serviceProvider
             ?? throw new ArgumentNullException(nameof(serviceProvider));
@@ -112,31 +119,26 @@ public partial class MainWindow : Window, IDisposable
     {
         var grid = (Grid)Content;
 
-        // Row 1 (* row) gives the available height for the board
-        var rowHeight = grid.RowDefinitions[1].ActualHeight;
-
-        // Column 0 (solution list) auto-sizes to its content; Column 2 (chessboard) fills the
-        // remaining horizontal space after Col 0, the two 10-px spacers and the 400-px right panel.
-        // Column 5 (Width="*") absorbs any extra so widths/gaps between content columns stay fixed.
-        var leftWidth = grid.ColumnDefinitions[0].ActualWidth;  // natural/auto width of solution list
-        var rightWidth = grid.ColumnDefinitions[4].ActualWidth; // fixed 400
-        var spacerWidth = grid.ColumnDefinitions[1].ActualWidth + grid.ColumnDefinitions[3].ActualWidth; // 10 + 10
-        var availableWidth = Math.Max(0, grid.ActualWidth - leftWidth - spacerWidth - rightWidth);
+        // WPF owns Column 2 (Width="*") and allocates it all remaining space after the fixed
+        // sibling columns. Simply read what WPF decided — no manual subtraction needed.
+        var availableWidth  = grid.ColumnDefinitions[2].ActualWidth;
+        var availableHeight = grid.RowDefinitions[1].ActualHeight;
 
         // Guard: layout not ready yet (window still initialising)
-        if (availableWidth <= 0 || rowHeight <= 0)
+        if (availableWidth <= 0 || availableHeight <= 0)
             return;
 
-        // Square board bounded by both available height and available horizontal space
-        var targetBoardSize = Math.Min(rowHeight, availableWidth);
+        // Square board: take the smaller of the two available dimensions
+        var targetBoardSize = Math.Min(availableHeight, availableWidth);
 
-        // Size the chessboard; solution list height tracks the board, width auto-sized by content
-        chessBoard.Width = targetBoardSize;
+        // Size the chessboard; solution list height tracks the board
+        chessBoard.Width  = targetBoardSize;
         chessBoard.Height = targetBoardSize;
         solutionList.Height = targetBoardSize;
 
-        MainViewModel.ChessboardVm.WindowWidth = chessBoard.ActualWidth;
-        MainViewModel.ChessboardVm.WindowHeight = chessBoard.ActualHeight;
+        // Use targetBoardSize directly — ActualWidth/Height are stale until the next layout pass
+        MainViewModel.ChessboardVm.WindowWidth  = targetBoardSize;
+        MainViewModel.ChessboardVm.WindowHeight = targetBoardSize;
 
         MainViewModel.ResetChessboard(targetBoardSize);
     }

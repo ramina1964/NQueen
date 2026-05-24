@@ -262,7 +262,8 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
             _lastValidBoardSize = ParsingUtils.ParseIntOrThrow(BoardSizeText);
             OnPropertyChanged(nameof(BoardSize));
             var boardDimension = Math.Min(ChessboardVm.WindowWidth, ChessboardVm.WindowHeight);
-            ResetChessboard(boardDimension);
+            if (boardDimension > 0)
+                ResetChessboard(boardDimension);
         }
         RefreshCommandStates();
     }
@@ -281,7 +282,8 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         if (ChessboardVm != null)
         {
             var boardDimension = Math.Min(ChessboardVm.WindowWidth, ChessboardVm.WindowHeight);
-            ResetChessboard(boardDimension);
+            if (boardDimension > 0)
+                ResetChessboard(boardDimension);
         }
     }
 

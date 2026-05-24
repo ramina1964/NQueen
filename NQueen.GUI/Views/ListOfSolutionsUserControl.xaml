@@ -24,6 +24,7 @@
             <ListBox
                 BorderThickness="0"
                 Foreground="Black"
+                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                 ItemsSource="{Binding ObservableSolutions}"
                 SelectedItem="{Binding SelectedSolution}">
                 <ListBox.ItemContainerStyle>
