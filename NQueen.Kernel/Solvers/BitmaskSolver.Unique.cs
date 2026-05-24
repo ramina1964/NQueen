@@ -13,11 +13,10 @@ public partial class BitmaskSolver
         List<(UInt128 packed, int boardSize)> packedSample = [];
         int materialized = 0;
 
-        Engines.SearchOptimizations.Configure(
+        SearchOptimizations.Configure(
             prefixMinimality: EnablePrefixMinimalityPruning,
             reflectionPruning: EnablePartialReflectionPruning,
             incrementalCanonicalization: EnableIncrementalCanonicalization);
-
         if (boardSize >= SimulationSettings.LargeBoardSymmetryPruningThreshold)
         {
             if (boardSize >= SimulationSettings.UniqueCountOnlyParallelThresholdN)
@@ -89,7 +88,9 @@ public partial class BitmaskSolver
                         }
                     }
                     return false; // continue enumeration until completion
-                }
+                },
+                PrefixMinimalityPruning: EnablePrefixMinimalityPruning,
+                ReflectionPruning: EnablePartialReflectionPruning
             ));
         }
 
@@ -100,7 +101,6 @@ public partial class BitmaskSolver
     private void EnumerateUniqueVisualizeAdaptive()
     {
         // Visualization path: enumerate unique solutions while emitting QueenPlaced events with delay.
-        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, EnableIncrementalCanonicalization);
         int N = BoardSize;
         int cap = _maxDisplayedCount;
         int materialized = 0;
@@ -158,7 +158,9 @@ public partial class BitmaskSolver
 
                 // Continue enumeration to discover all unique solutions (do not stop after first)
                 return false;
-            }
+            },
+            PrefixMinimalityPruning: EnablePrefixMinimalityPruning,
+            ReflectionPruning: EnablePartialReflectionPruning
         ));
 
         // Count equals unique keys for small boards; for larger boards (packed==0) we use seen.Count if any,

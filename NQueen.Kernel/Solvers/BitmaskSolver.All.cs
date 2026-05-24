@@ -11,11 +11,6 @@ public partial class BitmaskSolver
         _solutionCount = 0;
 
         // Non-visualization path: CountOnly fast path or capped materialization
-        SearchOptimizations.Configure(
-            prefixMinimality: EnablePrefixMinimalityPruning,
-            reflectionPruning: EnablePartialReflectionPruning,
-            incrementalCanonicalization: EnableIncrementalCanonicalization);
-
         ulong total = 0;
         int materializedCount = 0;
 
@@ -67,7 +62,9 @@ public partial class BitmaskSolver
                 }
 
                 return false;
-            }
+            },
+            PrefixMinimalityPruning: EnablePrefixMinimalityPruning,
+            ReflectionPruning: EnablePartialReflectionPruning
         ));
 
         _solutionCount = total;

@@ -194,11 +194,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         EnablePrefixMinimalityPruning = true;
         EnablePartialReflectionPruning = true;
 
-        SearchOptimizations.Configure(
-            EnablePrefixMinimalityPruning,
-            EnablePartialReflectionPruning,
-            incrementalCanonicalization: false);
-
         ThreadPool.SetMinThreads(Environment.ProcessorCount, Environment.ProcessorCount);
 
         try
@@ -231,10 +226,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         {
             EnablePrefixMinimalityPruning = origPrefix;
             EnablePartialReflectionPruning = origReflection;
-            SearchOptimizations.Configure(
-                EnablePrefixMinimalityPruning,
-                EnablePartialReflectionPruning,
-                incrementalCanonicalization: false);
         }
     }
 
@@ -247,11 +238,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         bool origReflection = EnablePartialReflectionPruning;
         EnablePrefixMinimalityPruning = true;
         EnablePartialReflectionPruning = true;
-
-        SearchOptimizations.Configure(
-            EnablePrefixMinimalityPruning,
-            EnablePartialReflectionPruning,
-            incrementalCanonicalization: false);
 
         int firstRowLimitExclusive = (n + 1) / 2;
         ulong fullMask = (n == 64) ? ulong.MaxValue : ((1UL << n) - 1UL);
@@ -368,10 +354,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         {
             EnablePrefixMinimalityPruning = origPrefix;
             EnablePartialReflectionPruning = origReflection;
-            SearchOptimizations.Configure(
-                EnablePrefixMinimalityPruning,
-                EnablePartialReflectionPruning,
-                incrementalCanonicalization: false);
         }
 
         return (ulong)total;
@@ -432,7 +414,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
     private void SampleMaterializeUsingLookup(bool isUnique)
     {
-        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, EnableIncrementalCanonicalization);
         int cap = _maxDisplayedCount;
         if (cap <= 0) return;
 
@@ -480,7 +461,9 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                         }
                     }
                     return false;
-                }
+                },
+                PrefixMinimalityPruning: EnablePrefixMinimalityPruning,
+                ReflectionPruning: EnablePartialReflectionPruning
             ));
         }
         else
@@ -519,7 +502,9 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                         }
                     }
                     return false;
-                }
+                },
+                PrefixMinimalityPruning: EnablePrefixMinimalityPruning,
+                ReflectionPruning: EnablePartialReflectionPruning
             ));
         }
 
