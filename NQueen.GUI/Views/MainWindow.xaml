@@ -10,9 +10,9 @@
     Title="Solutions of NQueen Problem using Symmetry Pruned Backtracking with .NET 10.0"
     Background="White"
     FontSize="14"
-    ResizeMode="CanResize"
+    ResizeMode="NoResize"
     WindowStartupLocation="CenterScreen"
-    WindowState="Maximized"
+    WindowState="Normal"
     SizeToContent="Manual"
     mc:Ignorable="d">
 
@@ -25,7 +25,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition x:Name="LeftColumn" Width="150" SharedSizeGroup="LeftCol" />
             <ColumnDefinition Width="10" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition x:Name="BoardColumn" Width="Auto" />
             <ColumnDefinition Width="10" />
             <ColumnDefinition Width="400" />
         </Grid.ColumnDefinitions>
@@ -60,7 +60,7 @@
             Grid.Row="1"
             Grid.Column="2"
             Margin="0"
-            HorizontalAlignment="Stretch"
+            HorizontalAlignment="Left"
             VerticalAlignment="Top"
             MinWidth="200" />
 
