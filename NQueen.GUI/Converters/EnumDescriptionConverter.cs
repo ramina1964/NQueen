@@ -4,10 +4,10 @@ public class EnumDescriptionConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value == null)
+        if (value is not Enum en)
             return DependencyProperty.UnsetValue;
 
-        return GetDescription((Enum)value);
+        return GetDescription(en);
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
@@ -15,17 +15,8 @@ public class EnumDescriptionConverter : IValueConverter
 
     public static string GetDescription(Enum en)
     {
-        Type type = en.GetType();
-        var memInfo = type.GetMember(en.ToString());
-        if (memInfo != null && memInfo.Length > 0)
-        {
-            object[] attrs = memInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
-            if (attrs != null && attrs.Length > 0)
-            {
-                return ((DescriptionAttribute)attrs[0]).Description;
-            }
-        }
-
-        return en.ToString();
+        var member = en.GetType().GetMember(en.ToString()).FirstOrDefault();
+        var description = member?.GetCustomAttribute<DescriptionAttribute>()?.Description;
+        return description ?? en.ToString();
     }
 }

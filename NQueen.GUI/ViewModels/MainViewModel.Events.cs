@@ -155,7 +155,7 @@ public sealed partial class MainViewModel
     // --- QueenPlaced event (uses helpers above) ---
     private void OnQueenPlacedEvent(object? sender, QueenPlacedEventArgs e)
     {
-        MaybeForceEarlyProgress();
+        ForceEarlyProgressIfNeeded();
 
         if (ChessboardVm == null || DisplayMode == DisplayMode.Hide) return;
         EnsureBoardSized();

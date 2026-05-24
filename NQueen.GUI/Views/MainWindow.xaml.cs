@@ -1,4 +1,7 @@
-﻿namespace NQueen.GUI.Views;
+﻿using System.Runtime.InteropServices;
+using System.Windows.Interop;
+
+namespace NQueen.GUI.Views;
 
 public partial class MainWindow : Window, IDisposable
 {
@@ -17,6 +20,7 @@ public partial class MainWindow : Window, IDisposable
             ?? throw new ArgumentNullException(nameof(mainViewModel));
 
         Loaded += MainView_Loaded;
+        LocationChanged += OnLocationChanged;
         MainViewModel = mainViewModel;
 
         // Resolve and add ChessboardUserControl to the MainWindow
@@ -54,6 +58,13 @@ public partial class MainWindow : Window, IDisposable
         }
     }
 
+    protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
+    {
+        base.OnDpiChanged(oldDpi, newDpi);
+        if (chessboardPlaceholder.Content is ChessboardUserControl board)
+            ApplyFixedLayout(board);
+    }
+
     protected virtual void Dispose(bool disposing)
     {
         if (_disposed)
@@ -65,6 +76,7 @@ public partial class MainWindow : Window, IDisposable
             {
                 MainViewModel.Dispose();
                 Loaded -= MainView_Loaded;
+                LocationChanged -= OnLocationChanged;
                 MainViewModel = null!;
             }
         }
@@ -78,20 +90,35 @@ public partial class MainWindow : Window, IDisposable
             throw new InvalidOperationException(
                 "chessboardPlaceholder.Content is not a ChessboardUserControl.");
 
+        // Capture the initial monitor so the LocationChanged handler
+        // does not fire an immediate redundant re-layout.
+        _currentMonitor = MonitorFromWindow(new WindowInteropHelper(this).Handle, MonitorDefaultToNearest);
+
         ApplyFixedLayout(board);
+    }
+
+    private void OnLocationChanged(object? sender, EventArgs e)
+    {
+        var hwnd = new WindowInteropHelper(this).Handle;
+        if (hwnd == IntPtr.Zero) return;
+
+        var monitor = MonitorFromWindow(hwnd, MonitorDefaultToNearest);
+        if (monitor == _currentMonitor) return;
+
+        _currentMonitor = monitor;
+        if (chessboardPlaceholder.Content is ChessboardUserControl board)
+            ApplyFixedLayout(board);
     }
 
     private void ApplyFixedLayout(ChessboardUserControl chessBoard)
     {
-        var workArea = SystemParameters.WorkArea;
+        var workArea = GetCurrentMonitorWorkArea();
 
         // Force a layout pass so row heights are populated.
         UpdateLayout();
         var grid = (Grid)Content;
 
         // Use the actual rendered Row 0 height (includes HeaderBorder + its Margin="0,0,0,10").
-        // HeaderBorder.ActualHeight alone excludes the margin, under-counting by 10px and
-        // squeezing Row 1 — which was clipping the bottom border of the board and listbox.
         var row0Height = grid.RowDefinitions[0].ActualHeight;
 
         // For a NoResize window the chrome is: title bar + fixed (non-resize) border top + bottom.
@@ -116,7 +143,6 @@ public partial class MainWindow : Window, IDisposable
         solutionList.Height = boardSize;
 
         // Set window size explicitly so nothing is approximated.
-        // Height = chrome + outer margins + header + breathing + board
         Width  = OuterMargin + 150 + 10 + boardSize + 10 + 400 + OuterMargin;
         Height = chromeHeight
                + OuterMargin + row0Height + BoardMargin
@@ -129,6 +155,61 @@ public partial class MainWindow : Window, IDisposable
         MainViewModel.ResetChessboard(boardSize);
     }
 
+    /// <summary>
+    /// Returns the work area of the monitor that currently contains this window,
+    /// in device-independent pixels (DIPs) at the window's current DPI.
+    /// Unlike <see cref="SystemParameters.WorkArea"/>, this is per-monitor aware.
+    /// </summary>
+    private Rect GetCurrentMonitorWorkArea()
+    {
+        var hwnd = new WindowInteropHelper(this).Handle;
+        if (hwnd == IntPtr.Zero)
+            return SystemParameters.WorkArea;
+
+        var hMonitor = MonitorFromWindow(hwnd, MonitorDefaultToNearest);
+        var info = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
+        if (!GetMonitorInfo(hMonitor, ref info))
+            return SystemParameters.WorkArea;
+
+        var source = PresentationSource.FromVisual(this);
+        if (source?.CompositionTarget == null)
+            return SystemParameters.WorkArea;
+
+        // M11/M22 is the DIP-to-device-pixel scale at the window's current DPI.
+        double dpiScaleX = source.CompositionTarget.TransformToDevice.M11;
+        double dpiScaleY = source.CompositionTarget.TransformToDevice.M22;
+
+        return new Rect(
+            info.rcWork.Left   / dpiScaleX,
+            info.rcWork.Top    / dpiScaleY,
+            (info.rcWork.Right  - info.rcWork.Left) / dpiScaleX,
+            (info.rcWork.Bottom - info.rcWork.Top)  / dpiScaleY);
+    }
+
+    // --- P/Invoke ---
+
+    private const uint MonitorDefaultToNearest = 2;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT { public int Left, Top, Right, Bottom; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MONITORINFO
+    {
+        public int  cbSize;
+        public RECT rcMonitor;
+        public RECT rcWork;
+        public uint dwFlags;
+    }
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
+
+    [DllImport("user32.dll")]
+    private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+    // --- Private fields ---
+    private IntPtr _currentMonitor = IntPtr.Zero;
     private bool _disposed = false;
     private readonly IServiceProvider _serviceProvider;
 }

@@ -25,17 +25,13 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
             if (rowIndex < 0 || columnIndex < 0)
                 continue;
 
-            try
-            {
-                var square = Squares.First(sq =>
-                    sq.Position.ColumnIndex == columnIndex && sq.Position.RowIndex == rowIndex);
+            var square = Squares.FirstOrDefault(sq =>
+                sq.Position.ColumnIndex == columnIndex && sq.Position.RowIndex == rowIndex);
 
+            if (square is null)
+                Debug.WriteLine($"PlaceQueens: no square at ({columnIndex}, {rowIndex}).");
+            else
                 square.ImagePath = QueenImagePath;
-            }
-            catch (InvalidOperationException ex)
-            {
-                Debug.WriteLine($"Error in PlaceQueens: No matching square found for position ({rowIndex}, {columnIndex}). Exception: {ex.Message}");
-            }
         }
     }
 
@@ -45,22 +41,19 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
             return;
 
         Squares.Clear();
-        var width = WindowWidth / boardSize;
-        var height = width;
+        var cellSize = WindowWidth / boardSize;
 
         for (var rowIndex = boardSize - 1; rowIndex >= 0; rowIndex--)
         {
             for (var columnIndex = 0; columnIndex < boardSize; columnIndex++)
             {
                 var position = new Position(columnIndex, rowIndex);
-                var square = new SquareViewModel(position, FindColor(position))
+                Squares.Add(new SquareViewModel(position, FindColor(position))
                 {
                     ImagePath = string.Empty,
-                    Height = height,
-                    Width = width,
-                };
-
-                Squares.Add(square);
+                    Height = cellSize,
+                    Width = cellSize,
+                });
             }
         }
 
@@ -76,27 +69,27 @@ public partial class ChessboardViewModel(IDispatcher uiDispatcher) : ObservableO
         WindowHeight == _lastHeight &&
         Squares.Count > 0;
 
-    // --- Private Methods and Fields ---
-
     public void ClearImages()
     {
         foreach (var sq in Squares)
             sq.ImagePath = null!;
     }
 
-    private static SolidColorBrush FindColor(Position position)
-    {
-        var colIndex = (position.ColumnIndex + position.RowIndex) % 2 == 1
-            ? Colors.Wheat
-            : Colors.Brown;
+    // --- Private ---
 
-        return new SolidColorBrush(colIndex);
-    }
+    private static SolidColorBrush FindColor(Position position) =>
+        (position.ColumnIndex + position.RowIndex) % 2 == 1
+            ? s_wheatBrush
+            : s_brownBrush;
+
+    private static readonly SolidColorBrush s_wheatBrush = new(Colors.Wheat);
+    private static readonly SolidColorBrush s_brownBrush = new(Colors.Brown);
 
     private int _lastBoardSize = -1;
     private double _lastWidth = -1;
     private double _lastHeight = -1;
 
+    // Stored for future dispatcher use; suppress unused-field warning
     private readonly IDispatcher _uiDispatcher = uiDispatcher
-        ?? throw new ArgumentNullException(nameof(_uiDispatcher));
+        ?? throw new ArgumentNullException(nameof(uiDispatcher));
 }

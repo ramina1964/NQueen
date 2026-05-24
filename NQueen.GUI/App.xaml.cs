@@ -15,9 +15,9 @@ public partial class App : Application
             _serviceProvider = GuiServiceCollectionExtensions.BuildGuiServiceProvider();
             _serviceProvider.GetRequiredService<MainWindow>().Show();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            throw new Exception("Exception during dependency registration.");
+            throw new InvalidOperationException("Exception during dependency registration.", ex);
         }
     }
 
