@@ -13,17 +13,17 @@
     ResizeMode="NoResize"
     WindowStartupLocation="CenterScreen"
     WindowState="Normal"
-    SizeToContent="Manual"
+    SizeToContent="Width"
     mc:Ignorable="d">
 
     <!--  Main grid layout for the window  -->
-    <Grid Margin="10" Background="White" Grid.IsSharedSizeScope="True" HorizontalAlignment="Stretch">
+    <Grid Margin="10" Background="White" HorizontalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" MinHeight="40" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition x:Name="LeftColumn" Width="150" SharedSizeGroup="LeftCol" />
+            <ColumnDefinition x:Name="LeftColumn" Width="150" />
             <ColumnDefinition Width="10" />
             <ColumnDefinition x:Name="BoardColumn" Width="Auto" />
             <ColumnDefinition Width="10" />
@@ -60,7 +60,7 @@
             Grid.Row="1"
             Grid.Column="2"
             Margin="0"
-            HorizontalAlignment="Left"
+            HorizontalAlignment="Stretch"
             VerticalAlignment="Top"
             MinWidth="200" />
 
@@ -69,7 +69,7 @@
             Grid.Row="1"
             Grid.Column="4"
             Margin="0,0,0,0"
-            HorizontalAlignment="Left"
+            HorizontalAlignment="Stretch"
             VerticalAlignment="Top">
 
             <Grid.RowDefinitions>
@@ -83,10 +83,7 @@
             </Grid.RowDefinitions>
 
             <Grid.ColumnDefinitions>
-                <ColumnDefinition
-                    Width="Auto"
-                    MinWidth="220"
-                    SharedSizeGroup="RightCol" />
+                <ColumnDefinition Width="*" MinWidth="220" />
             </Grid.ColumnDefinitions>
 
             <ContentControl
