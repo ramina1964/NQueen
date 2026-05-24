@@ -65,13 +65,7 @@ public sealed partial class MainViewModel : ObservableObject
         get
         {
             if (IsVisualized) return ResultStorageMode.Materialize;
-            return SolutionMode switch
-            {
-                SolutionMode.All => _allStorageMode,
-                SolutionMode.Unique => _uniqueStorageMode,
-                SolutionMode.Single => _allStorageMode,
-                _ => _allStorageMode
-            };
+            return SolutionMode == SolutionMode.Unique ? _uniqueStorageMode : _allStorageMode;
         }
         set
         {
@@ -205,11 +199,9 @@ public sealed partial class MainViewModel : ObservableObject
             b.ParallelRootSplitDepth = value;
     }
 
-    private readonly bool _autoTuneParallel = true;
-
     private void AutoAdjustParallel()
     {
-        if (!_autoTuneParallel || _solver is not NQueen.Kernel.Solvers.BitmaskSolver bs)
+        if (_solver is not NQueen.Kernel.Solvers.BitmaskSolver bs)
             return;
         if (!ParsingUtils.TryParseInt(BoardSizeText, out var n))
             return;

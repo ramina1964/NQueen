@@ -6,13 +6,6 @@ public sealed partial class MainViewModel
 
     private async Task SimulateAsync()
     {
-        if (_solver == null)
-        {
-            MessageBox.Show("Solver is not initialized.", "Error",
-                MessageBoxButton.OK, MessageBoxImage.Error);
-            return;
-        }
-
         if (IsSimulating)
             return;
 

@@ -7,7 +7,6 @@
     xmlns:local="clr-namespace:NQueen.GUI.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
-    Width="360"
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
     d:DesignHeight="450"
     d:DesignWidth="800"
