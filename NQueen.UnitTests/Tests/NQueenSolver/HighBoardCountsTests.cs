@@ -36,25 +36,35 @@ public class HighBoardCountsTests(SolverBackEndFixture fixture)
     [Trait("SkipInCI", "true")]
     public async Task CountOnly_AllUnique_AndSingle(int n)
     {
-        // All count-only
-        _solver.UseCountOnlyAllMode = true; _solver.UseCountOnlyUniqueMode = false;
-        var allCtx = new SimulationContext(n, SolutionMode.All, DisplayMode.Hide);
-        var allRes = await _solver.GetSimResultsAsync(allCtx);
-        allRes.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetAll(n));
-        allRes.Solutions.Should().BeEmpty();
+        bool origAll = _solver.UseCountOnlyAllMode;
+        bool origUnique = _solver.UseCountOnlyUniqueMode;
+        try
+        {
+            // All count-only
+            _solver.UseCountOnlyAllMode = true; _solver.UseCountOnlyUniqueMode = false;
+            var allCtx = new SimulationContext(n, SolutionMode.All, DisplayMode.Hide);
+            var allRes = await _solver.GetSimResultsAsync(allCtx);
+            allRes.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetAll(n));
+            allRes.Solutions.Should().BeEmpty();
 
-        // Unique count-only
-        _solver.UseCountOnlyAllMode = false; _solver.UseCountOnlyUniqueMode = true;
-        var uniqCtx = new SimulationContext(n, SolutionMode.Unique, DisplayMode.Hide);
-        var uniqRes = await _solver.GetSimResultsAsync(uniqCtx);
-        uniqRes.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetUnique(n));
-        uniqRes.Solutions.Should().BeEmpty();
+            // Unique count-only
+            _solver.UseCountOnlyAllMode = false; _solver.UseCountOnlyUniqueMode = true;
+            var uniqCtx = new SimulationContext(n, SolutionMode.Unique, DisplayMode.Hide);
+            var uniqRes = await _solver.GetSimResultsAsync(uniqCtx);
+            uniqRes.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetUnique(n));
+            uniqRes.Solutions.Should().BeEmpty();
 
-        // Single-mode (verify minimal correctness at the same n)
-        var singleCtx = new SimulationContext(n, SolutionMode.Single, DisplayMode.Hide);
-        var singleRes = await _solver.GetSimResultsAsync(singleCtx);
-        singleRes.SolutionsCount.Should().Be(1UL);
-        singleRes.Solutions.Should().ContainSingle();
+            // Single-mode (verify minimal correctness at the same n)
+            var singleCtx = new SimulationContext(n, SolutionMode.Single, DisplayMode.Hide);
+            var singleRes = await _solver.GetSimResultsAsync(singleCtx);
+            singleRes.SolutionsCount.Should().Be(1UL);
+            singleRes.Solutions.Should().ContainSingle();
+        }
+        finally
+        {
+            _solver.UseCountOnlyAllMode = origAll;
+            _solver.UseCountOnlyUniqueMode = origUnique;
+        }
     }
 
     // Combined materialization sampling for both All and Unique (only sample board)
@@ -63,22 +73,31 @@ public class HighBoardCountsTests(SolverBackEndFixture fixture)
     public async Task MaterializeSamples_AllAndUnique_SampleBoard()
     {
         int sb = SampleBoard;
+        bool origAll = _solver.UseCountOnlyAllMode;
+        bool origUnique = _solver.UseCountOnlyUniqueMode;
+        try
+        {
+            // All mode sample (lookup path → constructive sampling; fast if lookup available)
+            _solver.UseCountOnlyAllMode = false; _solver.UseCountOnlyUniqueMode = false;
+            var allCtx = new SimulationContext(sb, SolutionMode.All, DisplayMode.Hide);
+            var allRes = await _solver.GetSimResultsAsync(allCtx);
+            allRes.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetAll(sb));
+            allRes.Solutions.Count.Should().BeGreaterThan(0);
+            (allRes.Solutions.Count <= SimulationSettings.MaxDisplayedCount).Should().BeTrue();
 
-        // All mode sample (lookup path → constructive sampling; fast if lookup available)
-        _solver.UseCountOnlyAllMode = false; _solver.UseCountOnlyUniqueMode = false;
-        var allCtx = new SimulationContext(sb, SolutionMode.All, DisplayMode.Hide);
-        var allRes = await _solver.GetSimResultsAsync(allCtx);
-        allRes.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetAll(sb));
-        allRes.Solutions.Count.Should().BeGreaterThan(0);
-        (allRes.Solutions.Count <= SimulationSettings.MaxDisplayedCount).Should().BeTrue();
-
-        // Unique mode sample (lookup path → constructive sampling; fast if lookup available)
-        _solver.UseCountOnlyAllMode = false; _solver.UseCountOnlyUniqueMode = false;
-        var uniqCtx = new SimulationContext(sb, SolutionMode.Unique, DisplayMode.Hide);
-        var uniqRes = await _solver.GetSimResultsAsync(uniqCtx);
-        uniqRes.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetUnique(sb));
-        uniqRes.Solutions.Count.Should().BeGreaterThan(0);
-        (uniqRes.Solutions.Count <= SimulationSettings.MaxDisplayedCount).Should().BeTrue();
+            // Unique mode sample (lookup path → constructive sampling; fast if lookup available)
+            _solver.UseCountOnlyAllMode = false; _solver.UseCountOnlyUniqueMode = false;
+            var uniqCtx = new SimulationContext(sb, SolutionMode.Unique, DisplayMode.Hide);
+            var uniqRes = await _solver.GetSimResultsAsync(uniqCtx);
+            uniqRes.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetUnique(sb));
+            uniqRes.Solutions.Count.Should().BeGreaterThan(0);
+            (uniqRes.Solutions.Count <= SimulationSettings.MaxDisplayedCount).Should().BeTrue();
+        }
+        finally
+        {
+            _solver.UseCountOnlyAllMode = origAll;
+            _solver.UseCountOnlyUniqueMode = origUnique;
+        }
     }
 
     // Performance N=19 test only when explicitly requested (lookup shortcut, no enumeration)
