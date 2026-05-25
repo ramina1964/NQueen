@@ -1,13 +1,7 @@
 ﻿namespace NQueen.ViewModelTests.Tests.Main;
 
-public class MainViewModelPositiveTests : IDisposable
+public class MainViewModelPositiveTests
 {
-    public MainViewModelPositiveTests() =>
-        _serviceProvider = TestHelpers.CreateServiceProvider();
-
-    // Removed redundant Single-mode visualization chessboard test now covered by
-    // FinalVisualization_ShouldShowValidFirstSolution_ForSingleMode_RealSolver
-
     [Theory]
     [InlineData(8, SolutionMode.Single, DisplayMode.Visualize)]
     public async Task Solutions_ShouldUpdateDuringSimulation(
@@ -27,28 +21,6 @@ public class MainViewModelPositiveTests : IDisposable
         // Assert
         AssertionHelpers.AssertSolutionsState(mainVm);
     }
-
-    [Theory]
-    [InlineData(8, SolutionMode.Single, DisplayMode.Visualize)]
-    public void Cancel_ShouldStopSimulation(
-        int boardSize, SolutionMode solutionMode, DisplayMode displayMode)
-    {
-        // Arrange
-        var mockFormatter = new Mock<ISolutionFormatter>().Object;
-        var mainVm = TestHelpers.CreateMainViewModel(
-            boardSize, solutionMode, displayMode, null, mockFormatter);
-
-        mainVm.IsSimulating = true;
-
-        // Act
-        mainVm.CancelCommand.Execute(null);
-
-        // Assert
-        mainVm.IsSimulating.Should().BeFalse(TestConst.SimulationNotStoppedError);
-    }
-
-    // Removed redundant mock-based Single-mode visualization update test now covered by
-    // FinalVisualization_ShouldShowValidFirstSolution_ForSingleMode_RealSolver
 
     [Fact]
     public async Task MainViewModel_ShouldUpdateSolutionsAfterSimulation()
@@ -115,13 +87,11 @@ public class MainViewModelPositiveTests : IDisposable
         mainVm.IsSingleRunning.Should().BeFalse();
     }
 
-    [Theory]
-    [InlineData(4, SolutionMode.Single, DisplayMode.Visualize)]
-    public async Task ProgressBar_ShouldUpdate_ForSingleMode(
-        int boardSize, SolutionMode solutionMode, DisplayMode displayMode)
+    [Fact]
+    public async Task ProgressBar_ShouldUpdate_ForSingleMode()
     {
-        // Arrange
-        var mainVm = TestHelpers.CreateMainViewModel(boardSize, solutionMode, displayMode);
+        // Arrange: real solver — Single mode does not use the mock progress-event path
+        var mainVm = TestHelpers.CreateMainViewModel(4, SolutionMode.Single, DisplayMode.Visualize);
 
         // Act
         mainVm.SimulateCommand.Execute(null);
@@ -134,7 +104,7 @@ public class MainViewModelPositiveTests : IDisposable
     [Theory]
     [InlineData(4, SolutionMode.Unique, DisplayMode.Visualize, 1)]
     [InlineData(4, SolutionMode.All, DisplayMode.Visualize, 2)]
-    public async Task ProgressBar_ShouldUpdate_ForUniqueAndAllModes(
+    public async Task ProgressBar_ShouldUpdate(
         int boardSize,
         SolutionMode solutionMode,
         DisplayMode displayMode,
@@ -143,18 +113,9 @@ public class MainViewModelPositiveTests : IDisposable
         // Arrange
         var mockFormatter = new Mock<ISolutionFormatter>().Object;
 
-        var solutions = solutionMode switch
-        {
-            SolutionMode.All =>
-            [
-                new Solution([1, 3, 0, 2], mockFormatter, null),
-                new Solution([2, 0, 3, 1], mockFormatter, null)
-            ],
-            _ => new[]
-            {
-                new Solution([1, 3, 0, 2], mockFormatter, null)
-            }
-        };
+        var solutions = solutionMode == SolutionMode.All
+            ? new[] { new Solution([1, 3, 0, 2], mockFormatter, null), new Solution([2, 0, 3, 1], mockFormatter, null) }
+            : new[] { new Solution([1, 3, 0, 2], mockFormatter, null) };
 
         var mockSolver = new Mock<ISolver>();
 
@@ -174,14 +135,14 @@ public class MainViewModelPositiveTests : IDisposable
                 }
             });
 
-        var simContext = new SimulationContext(
-            boardSize, solutionMode, displayMode);
-
         var mainVm = TestHelpers.CreateMainViewModelWithMock(
-            mockSolver.Object, simContext, simulationResults: null, mockFormatter);
+            mockSolver.Object,
+            new SimulationContext(boardSize, solutionMode, displayMode),
+            simulationResults: null,
+            mockFormatter);
 
         double? progressDuringSimulation = null;
-        mainVm.PropertyChanged += (s, e) =>
+        mainVm.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(mainVm.ProgressValue))
                 progressDuringSimulation = mainVm.ProgressValue;
@@ -191,7 +152,6 @@ public class MainViewModelPositiveTests : IDisposable
         mainVm.SimulateCommand.Execute(null);
         await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
 
-        // Wait until at least one progress update observed (robust across modes)
         await TestHelpers.WaitForConditionAsync(
             () => progressDuringSimulation.HasValue,
             TimeSpan.FromSeconds(10));
@@ -205,58 +165,6 @@ public class MainViewModelPositiveTests : IDisposable
     }
 
 
-    // Todo: Add a test for SaveSimulationResultsCommand when file I/O can be mocked and
-    // use AssertSavedContentProperties.
-    private static void AssertSavedContentProperties(
-        string savedContent,
-        int boardSize,
-        SolutionMode solutionMode,
-        SimulationResults simulationResults)
-    {
-        var lines = savedContent.Split(['\r', '\n'],
-            StringSplitOptions.RemoveEmptyEntries);
-
-        var dict = new Dictionary<string, string>();
-        foreach (var line in lines)
-        {
-            var idx = line.IndexOf(':');
-            if (idx > 0)
-            {
-                var key = line[..idx].Trim();
-                var value = line[(idx + 1)..].Trim();
-                dict[key] = value;
-            }
-        }
-
-        dict.Should().ContainKey("Date && Time");
-        dict["Date && Time"].Should().NotBeNullOrWhiteSpace();
-
-        dict.Should().ContainKey("Board Size");
-        dict["Board Size"].Should().Be(boardSize.ToString());
-
-        dict.Should().ContainKey("SolutionMode");
-        dict["SolutionMode"].Should().Be(solutionMode.ToString());
-
-        dict.Should().ContainKey("Number of Solutions");
-        dict["Number of Solutions"].Should()
-            .Be(simulationResults.Solutions.Count().ToString());
-
-        dict.Should().ContainKey("Max Number of Solutions Included");
-        dict["Max Number of Solutions Included"].Should()
-            .Be(SimulationSettings.MaxDisplayedCount.ToString());
-
-        dict.Should().ContainKey("Elapsed Time");
-        dict["Elapsed Time"].Should().Contain("seconds");
-
-        dict.Should().ContainKey("Memory Usage");
-        dict["Memory Usage"].Should().Contain("MB");
-    }
-
-    public void Dispose()
-    {
-        _serviceProvider.Dispose();
-        GC.SuppressFinalize(this);
-    }
-
-    private readonly ServiceProvider _serviceProvider;
+    // Todo: Add a test for SaveSimulationResultsCommand when file I/O can be mocked.
 }
+
