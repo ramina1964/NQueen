@@ -32,11 +32,7 @@ public static class TestServiceCollectionExtensions
             .AddViewModelTestServices(enableCap)
             .BuildServiceProvider();
 
-    // Backward compatible aliases
-    public static ServiceProvider InitializeForTests(bool enableCap = false) =>
-        BuildTestServiceProvider(enableCap);
-
-    public static ServiceProvider InitializeForTestsWithMock(ISolver mockSolver, bool enableCap = false)
+    public static ServiceProvider BuildTestServiceProviderWithMock(ISolver mockSolver, bool enableCap = false)
     {
         var services = new ServiceCollection();
 

@@ -11,17 +11,13 @@ public partial class BitmaskSolver
         _solutionCount = 0;
 
         // Non-visualization path: CountOnly fast path or capped materialization
-        SearchOptimizations.Configure(
-            prefixMinimality: EnablePrefixMinimalityPruning,
-            reflectionPruning: EnablePartialReflectionPruning,
-            incrementalCanonicalization: EnableIncrementalCanonicalization);
-
         ulong total = 0;
         int materializedCount = 0;
 
         // Enforce a hard cap in non-visual materialization, independent of _capEnabled
         int effectiveCap = UseCountOnlyAllMode ? 0 : SimulationSettings.MaxDisplayedCount;
 
+        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning);
         BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
             BoardSize: N,
             RestrictFirstCol: false,

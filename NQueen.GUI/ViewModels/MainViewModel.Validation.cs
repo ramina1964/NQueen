@@ -184,6 +184,18 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         }
         AutoAdjustParallel();
 
+        // Enforce Materialize for Single (no storage choice); restore CountOnly for Unique/All
+        if (value == SolutionMode.Single)
+        {
+            _allStorageMode = ResultStorageMode.Materialize;
+            _uniqueStorageMode = ResultStorageMode.Materialize;
+        }
+        else if (!IsVisualized)
+        {
+            _allStorageMode = ResultStorageMode.CountOnly;
+            _uniqueStorageMode = ResultStorageMode.CountOnly;
+        }
+
         // Ensure materialize modes enforced when visualizing regardless of previous mode's settings
         if (IsVisualized)
         {

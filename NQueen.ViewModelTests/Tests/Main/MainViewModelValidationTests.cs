@@ -8,16 +8,12 @@ public class MainViewModelValidationTests
     public void BoardSizeText_Validation_ShouldHandleAllCases_ForSingleMode(
         string? boardSizeText, bool isValid, string? expectedErrorKey)
     {
-        Console.WriteLine($"Testing BoardSizeText: '{boardSizeText}'");
-        var mockFormatter = new Mock<ISolutionFormatter>().Object;
-        var mainVm = TestHelpers.CreateMainViewModel(solutionFormatter: mockFormatter);
+        var mainVm = TestHelpers.CreateMainViewModel();
         mainVm.BoardSizeText = boardSizeText!;
 
         var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText))
             .Cast<string>()
             .ToList();
-
-        Console.WriteLine($"Errors: {string.Join(", ", errors)}");
 
         if (isValid)
         {
@@ -38,17 +34,45 @@ public class MainViewModelValidationTests
                     nameof(ErrorMessages.InvalidIntegerError) => ErrorMessages.InvalidIntegerError,
                     _ => null
                 };
-                Console.WriteLine($"Expected error: {expectedError}");
                 errors.Should().Contain(expectedError);
             }
         }
     }
 
     [Theory]
+    [InlineData(null,  SolutionMode.Unique, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
+    [InlineData("",    SolutionMode.Unique, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
+    [InlineData("abc", SolutionMode.Unique, nameof(ErrorMessages.InvalidIntegerError))]
+    [InlineData("-1",  SolutionMode.Unique, nameof(ErrorMessages.SizeTooSmallMsg))]
+    [InlineData(null,  SolutionMode.All,    nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
+    [InlineData("",    SolutionMode.All,    nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
+    [InlineData("abc", SolutionMode.All,    nameof(ErrorMessages.InvalidIntegerError))]
+    [InlineData("-1",  SolutionMode.All,    nameof(ErrorMessages.SizeTooSmallMsg))]
+    public void BoardSizeText_Validation_ShouldHandleInvalidInput_ForUniqueAndAllModes(
+        string? boardSizeText, SolutionMode solutionMode, string expectedErrorKey)
+    {
+        var vm = TestHelpers.CreateMainViewModel(solutionMode: solutionMode);
+        vm.BoardSizeText = boardSizeText!;
+
+        var errors = vm.GetErrors(nameof(vm.BoardSizeText)).Cast<string>().ToList();
+
+        errors.Should().NotBeEmpty();
+        vm.HasErrors.Should().BeTrue();
+
+        var expectedError = expectedErrorKey switch
+        {
+            nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg) => ErrorMessages.ValueNullOrWhiteSpaceMsg,
+            nameof(ErrorMessages.InvalidIntegerError)      => ErrorMessages.InvalidIntegerError,
+            nameof(ErrorMessages.SizeTooSmallMsg)          => ErrorMessages.SizeTooSmallMsg,
+            _                                              => null
+        };
+        errors.Should().Contain(expectedError);
+    }
+
+    [Theory]
     [MemberData(nameof(NQueenTestSets.ValidBoardSizes), MemberType = typeof(NQueenTestSets))]
     public void BoardSizeText_Validation_ShouldReportValidCases_WhenValid(int boardSize, SolutionMode solutionMode)
     {
-        var mockFormatter = new Mock<ISolutionFormatter>().Object;
         var mainVm = TestHelpers.CreateMainViewModelWithBoardSizeText(
             boardSize.ToString(), solutionMode);
 
@@ -64,7 +88,6 @@ public class MainViewModelValidationTests
     public void BoardSizeText_Validation_ShouldReportLargeValues_BySolutionMode(
         string boardSizeText, SolutionMode solutionMode, bool isValid, string? expectedErrorKey)
     {
-        var mockFormatter = new Mock<ISolutionFormatter>().Object;
         var mainVm = TestHelpers.CreateMainViewModel();
         mainVm.SolutionMode = solutionMode;
         mainVm.BoardSizeText = boardSizeText;
@@ -103,7 +126,6 @@ public class MainViewModelValidationTests
         SolutionMode originalSolutionMode,
         SolutionMode finalSolutionMode)
     {
-        var mockFormatter = new Mock<ISolutionFormatter>().Object;
         var mainVm = TestHelpers.CreateMainViewModel();
         mainVm.SolutionMode = originalSolutionMode;
         mainVm.BoardSizeText = originalBoardSizeText;
@@ -124,7 +146,6 @@ public class MainViewModelValidationTests
     [Fact]
     public void ValidationError_ShouldClear_WhenInputBecomesValid()
     {
-        var mockFormatter = new Mock<ISolutionFormatter>().Object;
         var mainVm = TestHelpers.CreateMainViewModel();
         mainVm.BoardSizeText = "abc";
 
@@ -144,7 +165,6 @@ public class MainViewModelValidationTests
     public void Chessboard_Updates_WhenSwitchingToValidMode(string boardSizeText,
         SolutionMode invalidMode, SolutionMode validMode, int expectedBoardSize)
     {
-        var mockFormatter = new Mock<ISolutionFormatter>().Object;
         var vm = TestHelpers.CreateMainViewModel();
 
         vm.SolutionMode = invalidMode;
@@ -168,7 +188,6 @@ public class MainViewModelValidationTests
     public void Chessboard_DoesNotUpdate_WhenSwitchingToInvalidMode(
         string boardSizeText, SolutionMode validMode, SolutionMode invalidMode)
     {
-        var mockFormatter = new Mock<ISolutionFormatter>().Object;
         var vm = TestHelpers.CreateMainViewModel();
 
         // Build valid board explicitly

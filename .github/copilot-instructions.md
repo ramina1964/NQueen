@@ -1,0 +1,4 @@
+# Copilot Instructions
+
+## Project Guidelines
+- NQueen refactor/consolidate branch: remaining steps not completed as of last session — (1) Remove static volatile fields + Configure() overloads from SearchOptimizations.cs, (2) Remove duplicate ProgressReporter struct from bottom of BitmaskSearchEngine.cs, (3) Remove dead ReportRootProgress method from BitmaskSearchEngine.cs, (4) Remove duplicate GenerateConstructiveSingleSolution from BitmaskSolver.Single.cs and call GenerateConstructiveSolution instead, (5) Inline EnumerateAllAndReturnCount at its one call-site in HandleModeCommon, (6) Run build to verify. Build was never run — compilation state unknown.

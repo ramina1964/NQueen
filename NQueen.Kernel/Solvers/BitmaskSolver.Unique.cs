@@ -17,7 +17,6 @@ public partial class BitmaskSolver
             prefixMinimality: EnablePrefixMinimalityPruning,
             reflectionPruning: EnablePartialReflectionPruning,
             incrementalCanonicalization: EnableIncrementalCanonicalization);
-
         if (boardSize >= SimulationSettings.LargeBoardSymmetryPruningThreshold)
         {
             if (boardSize >= SimulationSettings.UniqueCountOnlyParallelThresholdN)
@@ -57,6 +56,7 @@ public partial class BitmaskSolver
             _solutionCount = known;
 
             // Enumerate to materialize up to cap unique canonical solutions; never stop early.
+            SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning);
             BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
                 BoardSize: boardSize,
                 RestrictFirstCol: true,            // half-board roots
@@ -100,12 +100,12 @@ public partial class BitmaskSolver
     private void EnumerateUniqueVisualizeAdaptive()
     {
         // Visualization path: enumerate unique solutions while emitting QueenPlaced events with delay.
-        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, EnableIncrementalCanonicalization);
         int N = BoardSize;
         int cap = _maxDisplayedCount;
         int materialized = 0;
         var seen = new HashSet<UInt128>();
 
+        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning);
         BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
             N,
             RestrictFirstCol: false,

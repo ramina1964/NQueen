@@ -1,13 +1,11 @@
 ﻿namespace NQueen.ViewModelTests.Tests.Commands;
 
-public class CommandManagerPositiveTests : IDisposable
+public class CommandManagerPositiveTests
 {
-    public CommandManagerPositiveTests() =>
-        _serviceProvider = TestHelpers.CreateServiceProvider();
-
     [Theory]
     [InlineData("1", SolutionMode.Single, DisplayMode.Hide)]
     [InlineData("4", SolutionMode.Unique, DisplayMode.Visualize)]
+    [InlineData("4", SolutionMode.All,    DisplayMode.Hide)]
     [InlineData("8", SolutionMode.Single, DisplayMode.Visualize)]
     public async Task SimulateCommand_ShouldUpdateSimulationResults(
         string boardSizeText, SolutionMode solutionMode, DisplayMode displayMode)
@@ -53,8 +51,7 @@ public class CommandManagerPositiveTests : IDisposable
         var mainVm = TestHelpers.CreateMainViewModelWithBoardSizeText(
             boardSizeText, solutionMode, displayMode);
 
-        var serviceProvider = TestHelpers.CreateServiceProvider();
-        var solutionFormatter = serviceProvider.GetRequiredService<ISolutionFormatter>();
+        var solutionFormatter = new DefaultSolutionFormatter();
 
         var queenPositions = new int[] { 1, 3, 0, 2 };
         var solution = new Solution(queenPositions, solutionFormatter, 1);
@@ -66,14 +63,6 @@ public class CommandManagerPositiveTests : IDisposable
         mainVm.SaveCommand.Execute(null);
 
         // Assert
-        mainVm.IsIdle.Should().BeTrue();
-    }
-
-    public void Dispose()
-    {
-        _serviceProvider.Dispose();
-        GC.SuppressFinalize(this);
-    }
-
-    private readonly ServiceProvider _serviceProvider;
-}
+            mainVm.IsIdle.Should().BeTrue();
+            }
+        }

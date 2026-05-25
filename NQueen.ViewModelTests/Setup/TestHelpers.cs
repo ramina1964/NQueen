@@ -3,10 +3,10 @@
 public static class TestHelpers
 {
     public static ServiceProvider CreateServiceProvider() =>
-        TestServiceCollectionExtensions.InitializeForTests();
+        TestServiceCollectionExtensions.BuildTestServiceProvider();
 
     public static ServiceProvider CreateServiceProviderWithMock(ISolver mockSolver) =>
-        TestServiceCollectionExtensions.InitializeForTestsWithMock(mockSolver);
+        TestServiceCollectionExtensions.BuildTestServiceProviderWithMock(mockSolver);
 
     public static MainViewModel CreateMainViewModel(
         int boardSize = 8,
@@ -104,55 +104,6 @@ public static class TestHelpers
         vm.SelectedStorageMode = ResultStorageMode.Materialize; // unified property
         // Ensure zero delay also for this path
         vm.DelayInMilliseconds = 0;
-        return vm;
-    }
-
-    public static MainViewModel CreateMainViewModelWithBoardSize(
-        int boardSize,
-        SolutionMode solutionMode = SolutionMode.Single,
-        DisplayMode displayMode = DisplayMode.Hide,
-        ISolutionFormatter? solutionFormatter = null,
-        bool suppressUserDialogs = true) =>
-        CreateMainViewModel(
-            boardSize: boardSize,
-            solutionMode: solutionMode,
-            displayMode: displayMode,
-            solutionFormatter: solutionFormatter,
-            suppressUserDialogs: suppressUserDialogs);
-
-    public static async Task<MainViewModel> MainViewModelCreateMainViewModelWithSimulationResults(
-        int boardSize,
-        SolutionMode solutionMode,
-        DisplayMode displayMode,
-        MockSaveFileDialogService saveFileDialogService,
-        ISolutionFormatter? solutionFormatter = null,
-        bool suppressUserDialogs = true)
-    {
-        var serviceProvider = CreateServiceProvider();
-        var solver = serviceProvider.GetRequiredService<ISolver>();
-        solutionFormatter ??= serviceProvider.GetRequiredService<ISolutionFormatter>();
-
-        var vm = new MainViewModel(
-            solver,
-            new TestDispatcher(),
-            saveFileDialogService,
-            solutionFormatter)
-        {
-            SuppressUserDialogs = suppressUserDialogs,
-            SolutionMode = solutionMode,
-            DisplayMode = displayMode,
-            BoardSizeText = boardSize.ToString(),
-            IsIdle = true
-        };
-
-        // Ensure tests do not wait on visualization delay
-        vm.DelayInMilliseconds = 0;
-
-        var simContext = new SimulationContext(boardSize, solutionMode, displayMode);
-        var simulationResults = await solver.GetSimResultsAsync(simContext);
-
-        vm.SimulationResults = simulationResults;
-        vm.NoOfSolutions = simulationResults.Solutions.LongCount().ToString();
         return vm;
     }
 

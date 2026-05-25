@@ -20,7 +20,7 @@ public class DispatcherTests
     }
 
     [Fact]
-    public Task Dispatcher_ShouldBeginInvokeAction()
+    public void Dispatcher_ShouldBeginInvokeAction()
     {
         // Arrange
         var dispatcher = new Mock<IDispatcher>();
@@ -34,7 +34,5 @@ public class DispatcherTests
 
         // Assert
         actionInvoked.Should().BeTrue();
-
-        return Task.CompletedTask;
     }
 }

@@ -26,15 +26,25 @@ public class SolverSolutionCountSlowTests(SolverBackEndFixture fixture)
     [MemberData(nameof(UniqueBoards))]
     public async Task UniqueMode_CountOnly_LargeBoards_TotalMatches(int n)
     {
-        // Enable count-only to avoid storing solutions
-        _solver.UseCountOnlyUniqueMode = true;
-        _solver.UseCountOnlyAllMode = false;
-        var expected = ExpectedSolutionCounts.GetUnique(n);
-        expected.Should().BeGreaterThan(0UL, "Expected unique count must be positive.");
-        var ctx = new SimulationContext(n, SolutionMode.Unique, DisplayMode.Hide);
-        var res = await _solver.GetSimResultsAsync(ctx);
-        res.Solutions.Should().BeEmpty("Count-only mode should not materialize unique solutions.");
-        res.SolutionsCount.Should().Be(expected, $"Unique count mismatch for N={n}");
+        bool origUnique = _solver.UseCountOnlyUniqueMode;
+        bool origAll = _solver.UseCountOnlyAllMode;
+        try
+        {
+            // Enable count-only to avoid storing solutions
+            _solver.UseCountOnlyUniqueMode = true;
+            _solver.UseCountOnlyAllMode = false;
+            var expected = ExpectedSolutionCounts.GetUnique(n);
+            expected.Should().BeGreaterThan(0UL, "Expected unique count must be positive.");
+            var ctx = new SimulationContext(n, SolutionMode.Unique, DisplayMode.Hide);
+            var res = await _solver.GetSimResultsAsync(ctx);
+            res.Solutions.Should().BeEmpty("Count-only mode should not materialize unique solutions.");
+            res.SolutionsCount.Should().Be(expected, $"Unique count mismatch for N={n}");
+        }
+        finally
+        {
+            _solver.UseCountOnlyUniqueMode = origUnique;
+            _solver.UseCountOnlyAllMode = origAll;
+        }
     }
 
     // All count-only large boards
@@ -42,14 +52,24 @@ public class SolverSolutionCountSlowTests(SolverBackEndFixture fixture)
     [MemberData(nameof(AllBoards))]
     public async Task AllMode_CountOnly_LargeBoards_TotalMatches(int n)
     {
-        _solver.UseCountOnlyAllMode = true;
-        _solver.UseCountOnlyUniqueMode = false;
-        var expected = ExpectedSolutionCounts.GetAll(n);
-        expected.Should().BeGreaterThan(0UL, "Expected all count must be positive.");
-        var ctx = new SimulationContext(n, SolutionMode.All, DisplayMode.Hide);
-        var res = await _solver.GetSimResultsAsync(ctx);
-        res.Solutions.Should().BeEmpty("Count-only mode should not materialize all solutions.");
-        res.SolutionsCount.Should().Be(expected, $"All count mismatch for N={n}");
+        bool origAll = _solver.UseCountOnlyAllMode;
+        bool origUnique = _solver.UseCountOnlyUniqueMode;
+        try
+        {
+            _solver.UseCountOnlyAllMode = true;
+            _solver.UseCountOnlyUniqueMode = false;
+            var expected = ExpectedSolutionCounts.GetAll(n);
+            expected.Should().BeGreaterThan(0UL, "Expected all count must be positive.");
+            var ctx = new SimulationContext(n, SolutionMode.All, DisplayMode.Hide);
+            var res = await _solver.GetSimResultsAsync(ctx);
+            res.Solutions.Should().BeEmpty("Count-only mode should not materialize all solutions.");
+            res.SolutionsCount.Should().Be(expected, $"All count mismatch for N={n}");
+        }
+        finally
+        {
+            _solver.UseCountOnlyAllMode = origAll;
+            _solver.UseCountOnlyUniqueMode = origUnique;
+        }
     }
 
     public static TheoryData<int> SingleBoards => [9, 10, 11, 12, 13];
