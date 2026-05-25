@@ -40,6 +40,36 @@ public class MainViewModelValidationTests
     }
 
     [Theory]
+    [InlineData(null,  SolutionMode.Unique, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
+    [InlineData("",    SolutionMode.Unique, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
+    [InlineData("abc", SolutionMode.Unique, nameof(ErrorMessages.InvalidIntegerError))]
+    [InlineData("-1",  SolutionMode.Unique, nameof(ErrorMessages.SizeTooSmallMsg))]
+    [InlineData(null,  SolutionMode.All,    nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
+    [InlineData("",    SolutionMode.All,    nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
+    [InlineData("abc", SolutionMode.All,    nameof(ErrorMessages.InvalidIntegerError))]
+    [InlineData("-1",  SolutionMode.All,    nameof(ErrorMessages.SizeTooSmallMsg))]
+    public void BoardSizeText_Validation_ShouldHandleInvalidInput_ForUniqueAndAllModes(
+        string? boardSizeText, SolutionMode solutionMode, string expectedErrorKey)
+    {
+        var vm = TestHelpers.CreateMainViewModel(solutionMode: solutionMode);
+        vm.BoardSizeText = boardSizeText!;
+
+        var errors = vm.GetErrors(nameof(vm.BoardSizeText)).Cast<string>().ToList();
+
+        errors.Should().NotBeEmpty();
+        vm.HasErrors.Should().BeTrue();
+
+        var expectedError = expectedErrorKey switch
+        {
+            nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg) => ErrorMessages.ValueNullOrWhiteSpaceMsg,
+            nameof(ErrorMessages.InvalidIntegerError)      => ErrorMessages.InvalidIntegerError,
+            nameof(ErrorMessages.SizeTooSmallMsg)          => ErrorMessages.SizeTooSmallMsg,
+            _                                              => null
+        };
+        errors.Should().Contain(expectedError);
+    }
+
+    [Theory]
     [MemberData(nameof(NQueenTestSets.ValidBoardSizes), MemberType = typeof(NQueenTestSets))]
     public void BoardSizeText_Validation_ShouldReportValidCases_WhenValid(int boardSize, SolutionMode solutionMode)
     {

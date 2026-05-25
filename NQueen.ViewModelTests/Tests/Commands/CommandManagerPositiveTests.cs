@@ -5,6 +5,7 @@ public class CommandManagerPositiveTests
     [Theory]
     [InlineData("1", SolutionMode.Single, DisplayMode.Hide)]
     [InlineData("4", SolutionMode.Unique, DisplayMode.Visualize)]
+    [InlineData("4", SolutionMode.All,    DisplayMode.Hide)]
     [InlineData("8", SolutionMode.Single, DisplayMode.Visualize)]
     public async Task SimulateCommand_ShouldUpdateSimulationResults(
         string boardSizeText, SolutionMode solutionMode, DisplayMode displayMode)
