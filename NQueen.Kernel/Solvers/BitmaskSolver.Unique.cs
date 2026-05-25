@@ -13,6 +13,10 @@ public partial class BitmaskSolver
         List<(UInt128 packed, int boardSize)> packedSample = [];
         int materialized = 0;
 
+        Engines.SearchOptimizations.Configure(
+            prefixMinimality: EnablePrefixMinimalityPruning,
+            reflectionPruning: EnablePartialReflectionPruning,
+            incrementalCanonicalization: EnableIncrementalCanonicalization);
         if (boardSize >= SimulationSettings.LargeBoardSymmetryPruningThreshold)
         {
             if (boardSize >= SimulationSettings.UniqueCountOnlyParallelThresholdN)
@@ -52,6 +56,7 @@ public partial class BitmaskSolver
             _solutionCount = known;
 
             // Enumerate to materialize up to cap unique canonical solutions; never stop early.
+            SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning);
             BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
                 BoardSize: boardSize,
                 RestrictFirstCol: true,            // half-board roots
@@ -84,9 +89,7 @@ public partial class BitmaskSolver
                         }
                     }
                     return false; // continue enumeration until completion
-                },
-                PrefixMinimalityPruning: EnablePrefixMinimalityPruning,
-                ReflectionPruning: EnablePartialReflectionPruning
+                }
             ));
         }
 
@@ -102,6 +105,7 @@ public partial class BitmaskSolver
         int materialized = 0;
         var seen = new HashSet<UInt128>();
 
+        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning);
         BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
             N,
             RestrictFirstCol: false,
@@ -154,9 +158,7 @@ public partial class BitmaskSolver
 
                 // Continue enumeration to discover all unique solutions (do not stop after first)
                 return false;
-            },
-            PrefixMinimalityPruning: EnablePrefixMinimalityPruning,
-            ReflectionPruning: EnablePartialReflectionPruning
+            }
         ));
 
         // Count equals unique keys for small boards; for larger boards (packed==0) we use seen.Count if any,

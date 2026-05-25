@@ -17,6 +17,7 @@ public partial class BitmaskSolver
         // Enforce a hard cap in non-visual materialization, independent of _capEnabled
         int effectiveCap = UseCountOnlyAllMode ? 0 : SimulationSettings.MaxDisplayedCount;
 
+        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning);
         BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
             BoardSize: N,
             RestrictFirstCol: false,
@@ -62,9 +63,7 @@ public partial class BitmaskSolver
                 }
 
                 return false;
-            },
-            PrefixMinimalityPruning: EnablePrefixMinimalityPruning,
-            ReflectionPruning: EnablePartialReflectionPruning
+            }
         ));
 
         _solutionCount = total;

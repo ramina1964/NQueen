@@ -59,7 +59,7 @@ public partial class BitmaskSolver
         // 2. Constructive path for medium/large boards when not visualizing
         if (BoardSize >= SimulationSettings.LargeBoardIntermediateStartSize)
         {
-            var rows = GenerateConstructiveSolution(BoardSize);
+            var rows = GenerateConstructiveSingleSolution(BoardSize);
             if (!ValidateRows(rows)) return;
             _solutionCount = 1;
 
@@ -162,4 +162,30 @@ public partial class BitmaskSolver
             SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
     }
 
+    private static int[] GenerateConstructiveSingleSolution(int n)
+    {
+        var seq = new List<int>(n);
+        if (n % 6 != 2 && n % 6 != 3)
+        {
+            for (int i = 2; i <= n; i += 2) seq.Add(i);
+            for (int i = 1; i <= n; i += 2) seq.Add(i);
+        }
+        else if (n % 6 == 2)
+        {
+            for (int i = 2; i <= n; i += 2) seq.Add(i);
+            for (int i = 1; i <= n; i += 2) seq.Add(i);
+            if (seq.Count >= 4) (seq[0], seq[1]) = (seq[1], seq[0]);
+        }
+        else
+        {
+            for (int i = 2; i <= n - 1; i += 2) seq.Add(i);
+            for (int i = 1; i <= n - 2; i += 2) seq.Add(i);
+            seq.Add(n);
+        }
+
+        var rows = new int[n];
+        for (int col = 0; col < n; col++)
+            rows[col] = seq[col] - 1;
+        return rows;
     }
+}

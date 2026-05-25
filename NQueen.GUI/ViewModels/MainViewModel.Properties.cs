@@ -247,7 +247,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    public bool CanChangeStorageMode => !IsVisualized && IsInInputMode;
+    public bool CanChangeStorageMode => !IsVisualized && IsInInputMode && SolutionMode != SolutionMode.Single;
 
     partial void OnSelectedSolutionChanged(Solution value)
     {

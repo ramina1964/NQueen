@@ -184,6 +184,18 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
         }
         AutoAdjustParallel();
 
+        // Enforce Materialize for Single (no storage choice); restore CountOnly for Unique/All
+        if (value == SolutionMode.Single)
+        {
+            _allStorageMode = ResultStorageMode.Materialize;
+            _uniqueStorageMode = ResultStorageMode.Materialize;
+        }
+        else if (!IsVisualized)
+        {
+            _allStorageMode = ResultStorageMode.CountOnly;
+            _uniqueStorageMode = ResultStorageMode.CountOnly;
+        }
+
         // Ensure materialize modes enforced when visualizing regardless of previous mode's settings
         if (IsVisualized)
         {
@@ -288,5 +300,15 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
     }
 
     private void OnErrorsChanged(string propertyName) =>
-        ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
+fix: resolve build errors and enforce storage mode rules for Single solution mode
+
+- Replace invalid PrefixMinimalityPruning/ReflectionPruning named args on
+  BitmaskSearchEngine.Request with SearchOptimizations.Configure() calls
+  in BitmaskSolver.All.cs and BitmaskSolver.Unique.cs (3 call sites)
+
+- Force SelectedStorageMode to Materialize and disable the Solution Storage
+  Mode ComboBox when SolutionMode is Single; restore both storage modes to
+  CountOnly when switching to Unique or All (unless visualizing)
+
+- Extend CanChangeStorageMode to return false for Single mode        ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
 }
