@@ -6,6 +6,20 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Fixed (NQueen.Console)
+- **`DispatchCommands.cs`** — interactive solver branches now set `EnableEvents = false`
+  (eliminates wasted event firing with no subscribers), `IsSolverCanceled = false` (prevents
+  stale cancellation state on repeated runs), `EnablePrefixMinimalityPruning = true`,
+  `EnablePartialReflectionPruning = true`, and `UseAdaptiveDepth = boardSize >= 14` —
+  matching the GUI's kernel configuration for equivalent performance.
+  Also switched bare `var solver` to `using var solver` to fix a resource leak.
+- **`DispatchCommands.cs`** — All-mode interactive path now sets
+  `EnableHalfBoardRestriction = boardSize >= 15`, consistent with the non-interactive path
+  and the GUI.
+- **`Program.cs`** — non-interactive solver block extended with `IsSolverCanceled = false`,
+  `EnablePrefixMinimalityPruning = true`, `EnablePartialReflectionPruning = true`, and
+  `UseAdaptiveDepth = size >= 14` to match the GUI's optimisation settings.
+
 ### Refactored (NQueen.Benchmarking)
 - **File consolidation** — reduced 14 benchmark source files to 7 thematic files for
   improved readability and SRP compliance:

@@ -79,19 +79,41 @@ public class DispatchCommands
         SimulationResults results;
         if (mode == SolutionMode.Unique)
         {
-            var solver = new BitmaskSolver(context.BoardSize, SolutionMode.Unique, context.DisplayMode, formatter, SimulationSettings.MaxDisplayedCount);
-            solver.UseCountOnlyUniqueMode = useCountOnly;
+            using var solver = new BitmaskSolver(context.BoardSize, SolutionMode.Unique, context.DisplayMode, formatter, SimulationSettings.MaxDisplayedCount)
+            {
+                EnableEvents = false,
+                IsSolverCanceled = false,
+                UseCountOnlyUniqueMode = useCountOnly,
+                EnablePrefixMinimalityPruning = true,
+                EnablePartialReflectionPruning = true,
+                UseAdaptiveDepth = context.BoardSize >= 14,
+            };
             results = solver.Solve();
         }
         else if (mode == SolutionMode.All)
         {
-            var solver = new BitmaskSolver(context.BoardSize, SolutionMode.All, context.DisplayMode, formatter, SimulationSettings.MaxDisplayedCount);
-            solver.UseCountOnlyAllMode = useCountOnly;
+            using var solver = new BitmaskSolver(context.BoardSize, SolutionMode.All, context.DisplayMode, formatter, SimulationSettings.MaxDisplayedCount)
+            {
+                EnableEvents = false,
+                IsSolverCanceled = false,
+                UseCountOnlyAllMode = useCountOnly,
+                EnablePrefixMinimalityPruning = true,
+                EnablePartialReflectionPruning = true,
+                UseAdaptiveDepth = context.BoardSize >= 14,
+                EnableHalfBoardRestriction = context.BoardSize >= 15,
+            };
             results = solver.Solve();
         }
         else
         {
-            var solver = new BitmaskSolver(context.BoardSize, mode, context.DisplayMode, formatter, SimulationSettings.MaxDisplayedCount);
+            using var solver = new BitmaskSolver(context.BoardSize, mode, context.DisplayMode, formatter, SimulationSettings.MaxDisplayedCount)
+            {
+                EnableEvents = false,
+                IsSolverCanceled = false,
+                EnablePrefixMinimalityPruning = true,
+                EnablePartialReflectionPruning = true,
+                UseAdaptiveDepth = context.BoardSize >= 14,
+            };
             results = solver.Solve();
         }
         var sb = new System.Text.StringBuilder();
