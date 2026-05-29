@@ -19,8 +19,7 @@ public class MediumPrefixPruningParallelBenchmark
             ParallelRootSplitDepth = SplitDepth,
             UseCountOnlyAllMode = true,
             EnablePrefixMinimalityPruning = false,
-            EnablePartialReflectionPruning = false,
-            EnableIncrementalCanonicalization = false
+            EnablePartialReflectionPruning = false
         };
         var results = solver.Solve();
         if (results.SolutionsCount == 0)
@@ -38,8 +37,7 @@ public class MediumPrefixPruningParallelBenchmark
             ParallelRootSplitDepth = SplitDepth,
             UseCountOnlyAllMode = true,
             EnablePrefixMinimalityPruning = true,
-            EnablePartialReflectionPruning = true,
-            EnableIncrementalCanonicalization = false
+            EnablePartialReflectionPruning = true
         };
         var results = solver.Solve();
         if (results.SolutionsCount == 0)

@@ -15,15 +15,14 @@ public partial class BitmaskSolver
 
         Engines.SearchOptimizations.Configure(
             prefixMinimality: EnablePrefixMinimalityPruning,
-            reflectionPruning: EnablePartialReflectionPruning,
-            incrementalCanonicalization: EnableIncrementalCanonicalization);
+            reflectionPruning: EnablePartialReflectionPruning);
         if (boardSize >= SimulationSettings.LargeBoardSymmetryPruningThreshold)
         {
             if (boardSize >= SimulationSettings.UniqueCountOnlyParallelThresholdN)
             {
                 // Two-phase approach (mirrors CollectAllSamplesAndCountParallel in All mode):
-                //   Phase 1 — collect up to cap canonical samples via an early-exit DFS (milliseconds).
-                //   Phase 2 — count using CountUniqueFastHalfBoard, the same half-board algorithm
+                //   Phase 1 ï¿½ collect up to cap canonical samples via an early-exit DFS (milliseconds).
+                //   Phase 2 ï¿½ count using CountUniqueFastHalfBoard, the same half-board algorithm
                 //              used by the CountOnly path, cutting the search space by ~half vs.
                 //              SymmetryPrunedUniqueCounter which traverses all N root rows.
                 CollectUniqueSamplesDFS(boardSize, Math.Max(1, cap), packedSample, ref materialized);
@@ -103,6 +102,7 @@ public partial class BitmaskSolver
         int N = BoardSize;
         int cap = _maxDisplayedCount;
         int materialized = 0;
+        ulong rawCount = 0;
         var seen = new HashSet<UInt128>();
 
         SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning);
@@ -129,12 +129,8 @@ public partial class BitmaskSolver
                 // Skip duplicates using canonical key (if computed).
                 if (packed != 0 && !seen.Add(packed))
                     return false;
-                if (packed == 0)
-                {
-                    // For larger boards without canonical keys, conservatively count all (no duplicate filter).
-                    // Optional: add alternative deduping if available.
-                    // seen.Add(0) is not meaningful; keep counting.
-                }
+
+                rawCount++;
 
                 // Materialize up to cap for UI
                 if (materialized < cap)
@@ -161,17 +157,17 @@ public partial class BitmaskSolver
             }
         ));
 
-        // Count equals unique keys for small boards; for larger boards (packed==0) we use seen.Count if any,
-        // otherwise rely on search engine’s coverage via events. If packed was always 0, seen.Count==0;
-        // in that case, we conservatively set solutionCount to materialized or keep observed unique via other counters.
-        _solutionCount = (ulong)(seen.Count > 0 ? seen.Count : Math.Max(materialized, (int)_solutionCount));
+
+
+
+        _solutionCount = rawCount;
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 
     // Phase 1 of the two-phase Unique Materialize path for large boards (N >= 16).
     // Runs a sequential DFS over all N root rows and stops as soon as cap *canonical*
     // solutions are stored.  Canonical identity is verified via IsIdentityCanonical so
-    // every solution stored is a genuine unique representative — not a rotation or
+    // every solution stored is a genuine unique representative ï¿½ not a rotation or
     // reflection of another.  Cost is negligible (milliseconds) because cap is tiny (5).
     private void CollectUniqueSamplesDFS(int N, int cap,
         List<(UInt128 packed, int boardSize)> target, ref int materialized)
@@ -179,7 +175,7 @@ public partial class BitmaskSolver
         ulong mask = N == 64 ? ulong.MaxValue : (1UL << N) - 1UL;
         int[] rows = new int[N];
         Array.Fill(rows, -1);
-        int localMaterialized = materialized; // local copy — ref params can't be captured
+        int localMaterialized = materialized; // local copy ï¿½ ref params can't be captured
 
         DFS(0, 0UL, 0UL, 0UL);
 

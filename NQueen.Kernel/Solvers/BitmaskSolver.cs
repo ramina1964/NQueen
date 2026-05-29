@@ -58,8 +58,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
     public bool EnablePrefixMinimalityPruning { get; set; } = false; // Opt #1
 
-    public bool EnableIncrementalCanonicalization { get; set; } = false; // Opt #3 (driver flag)
-
     public bool EnablePartialReflectionPruning { get; set; } = false; // Opt #14
 
     public bool EnableHalfBoardRestriction { get; set; } = false; // new flag (applies to All mode; materialize + count-only)
@@ -429,7 +427,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
     private void SampleMaterializeUsingLookup(bool isUnique)
     {
-        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, EnableIncrementalCanonicalization);
+        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning);
         int cap = _maxDisplayedCount;
         if (cap <= 0) return;
 

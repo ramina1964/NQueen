@@ -74,13 +74,11 @@ public sealed partial class MainViewModel : ObservableObject
             switch (SolutionMode)
             {
                 case SolutionMode.All:
+                case SolutionMode.Single:
                     if (_allStorageMode != value) { _allStorageMode = value; changed = true; }
                     break;
                 case SolutionMode.Unique:
                     if (_uniqueStorageMode != value) { _uniqueStorageMode = value; changed = true; }
-                    break;
-                case SolutionMode.Single:
-                    if (_allStorageMode != value) { _allStorageMode = value; changed = true; }
                     break;
             }
             if (changed)
