@@ -50,7 +50,7 @@ public class SymmetryHelperIdentityCanonicalTests(SolverBackEndFixture fixture) 
         var collected = new List<int[]>();
 
         // Use the consolidated symmetry-pruned unique counter
-        ulong count = Kernel.Solvers.Engines.SymmetryPrunedUniqueCounter.Count(n, cap, rows => collected.Add(rows));
+        ulong count = NQueen.Kernel.Solvers.Engines.SymmetryPrunedUniqueCounter.Count(n, cap, rows => collected.Add(rows));
 
         count.Should().Be(ExpectedSolutionCounts.GetUnique(n));
         collected.Count.Should().BeLessThanOrEqualTo((int)count);

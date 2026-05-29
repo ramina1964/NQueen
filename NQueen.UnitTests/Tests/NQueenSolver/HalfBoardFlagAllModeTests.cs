@@ -2,6 +2,7 @@ namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 [Collection("SolverBackend")]
 [Trait("Category", "HalfBoardFlag")]
+[Trait("Speed", "Slow")]
 public class HalfBoardFlagAllModeTests(SolverBackEndFixture fixture)
 {
     // Test sizes (ensure enumeration path, below lookup threshold 20)

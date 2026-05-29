@@ -13,4 +13,10 @@
     <ProjectReference Include="..\NQueen.Domain\NQueen.Domain.csproj" />
     <ProjectReference Include="..\NQueen.Shared\NQueen.Shared.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>NQueen.UnitTests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
 </Project>
