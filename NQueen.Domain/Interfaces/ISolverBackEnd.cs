@@ -2,10 +2,12 @@
 
 public interface ISolverBackEnd
 {
-    // Backend control & modes
     bool IsSolverCanceled { get; set; }
 
-    // Count-only mode flags (moved from ISolver to consolidate backend concerns)
+    // When true, skips solution materialization and only tracks the total count.
+    // These flags are the canonical way to request count-only mode; the solver's
+    // ResultStorageMode properties (AllStorageMode / UniqueStorageMode) are kept
+    // in sync by the ViewModel but these flags take precedence inside Solve().
     bool UseCountOnlyUniqueMode { get; set; }
 
     bool UseCountOnlyAllMode { get; set; }

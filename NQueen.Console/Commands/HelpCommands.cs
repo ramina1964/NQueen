@@ -1,46 +1,7 @@
 ﻿namespace NQueen.ConsoleApp.Commands;
 
-// Todo: Extract string constants and add it to CommandConst.
 public static class HelpCommands
 {
-    // Todo: Either use this method or remove it.
-    public static void ProcessHelpCommand(string cmd)
-    {
-        cmd = cmd.Trim().ToUpper();
-        string[] parts = cmd.Split(" ");
-        if (parts.Length != 2)
-        {
-            Console.WriteLine();
-            ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, "Available Subcommands");
-            DumpAllHelp();
-
-            // Show bitmask command in help
-            ConsoleUtils.WriteLineColored(ConsoleColor.Cyan, "Bitmask - Run the high-performance bitmask N-Queens solver");
-        }
-        else
-        {
-            switch (parts[1])
-            {
-                case CommandConst.SolutionMode:
-                    DumpHelpText(NQueen_Solution_Mode);
-                    break;
-
-                case CommandConst.BoardSize:
-                    DumpHelpText(NQueen_Help_Board_Size);
-                    break;
-
-                case "bitmask":
-                    DumpHelpText(Bitmask_Help);
-                    break;
-
-                default:
-                    ShowExitError(
-                        $"Unrecognized command {parts[1]}, try {Valid_Commands}");
-                    break;
-            }
-        }
-    }
-
     public const string Valid_Commands =
         $"{CommandConst.BoardSize}, {CommandConst.SolutionMode}, bitmask";
 

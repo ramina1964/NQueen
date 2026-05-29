@@ -1,6 +1,5 @@
 namespace NQueen.Domain.Models;
 
-// Todo: Use this class instead of creating Position instances in large loops.
 public class LazyPositionList(int[] queenPositions) : IReadOnlyList<Position>
 {
     private readonly int[] _queenPositions = queenPositions ??

@@ -30,7 +30,6 @@ public static class DispatchUtils
         return (new string(option), n);
     }
 
-    // Todo: Change the order of indices here.
     public static string CreateChessBoard(int[] queens)
     {
         var arr = ChessBoardHelper(queens, WhiteQueen);
@@ -50,7 +49,6 @@ public static class DispatchUtils
     {
         var size = queens.Length;
 
-        // Todo: Find a better data structu and variable name below.
         string[,] boardCells = new string[size, size];
 
         for (var columnIndex = 0; columnIndex < size; columnIndex++)

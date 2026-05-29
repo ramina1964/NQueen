@@ -9,17 +9,6 @@ public sealed partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(ProgressLabel))]
     private double _progressValue = 0;
 
-    private void UpdateProgress(double value, string label)
-    {
-        value = Math.Clamp(value, 0, 1);
-        _uiDispatcher.Invoke(() =>
-        {
-            Debug.WriteLine($"[MainViewModel] ProgressValue set to: {value}");
-            ProgressValue = value;
-            ProgressLabel = label;
-        });
-    }
-
     // Disable DisplayMode and Delay editing while simulating
     public bool CanEditDisplayMode => IsInInputMode && !IsSimulating;
     public bool CanEditDelay => IsInInputMode && !IsSimulating;
@@ -161,9 +150,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnIsIdleChanged(bool value) =>
         RefreshCommandStates();
-
-    partial void OnIsSingleRunningChanged(bool value) =>
-        OnPropertyChanged(nameof(IsSingleRunning));
 
     [ObservableProperty]
     private bool _isOutputReady;
