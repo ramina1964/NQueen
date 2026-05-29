@@ -256,9 +256,6 @@ public sealed partial class MainViewModel
         });
     }
 
-    // --- Missing helper implementations ---
-    private void MaybeForceEarlyProgress() => ForceEarlyProgressIfNeeded();
-
     private static int ComputeValidDepth(Span<int> span, int max)
     {
         int depth = 0;

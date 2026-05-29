@@ -32,7 +32,9 @@ internal sealed class BitmaskSearchEngine
         Func<bool> IsCanceled,
         Action<double> ReportProgress,
         Action<Memory<int>> OnQueenPlaced,
-        Func<int[], bool> OnSolution
+        Func<int[], bool> OnSolution,
+        bool PrefixMinimalityPruning = false,
+        bool ReflectionPruning = false
     );
 
     public static void Run(Request request) => ExecuteDepthFirst(request);
@@ -107,8 +109,8 @@ internal sealed class BitmaskSearchEngine
         int[]? solutionBuffer = null;
         bool needsCopy = request.OnSolution != null && !request.CountOnly;
         if (needsCopy) solutionBuffer = new int[N];
-        bool prefixEnabled = SearchOptimizations.PrefixMinimalityPruningEnabled;
-        bool reflectionEnabled = SearchOptimizations.ReflectionPrefixPruningEnabled;
+        bool prefixEnabled = request.PrefixMinimalityPruning;
+        bool reflectionEnabled = request.ReflectionPruning;
         bool symmetryActive = (request.EnhancedSymmetry || request.AggressiveSymmetry) && N >= 14;
         bool isAggressive = request.AggressiveSymmetry && symmetryActive;
 
@@ -240,8 +242,8 @@ internal sealed class BitmaskSearchEngine
     {
         int N = s.N;
         int pruneDepthGate = int.MaxValue;
-        bool prefixEnabled = Engines.SearchOptimizations.PrefixMinimalityPruningEnabled;
-        bool reflectionEnabled = Engines.SearchOptimizations.ReflectionPrefixPruningEnabled;
+        bool prefixEnabled = request.PrefixMinimalityPruning;
+        bool reflectionEnabled = request.ReflectionPruning;
         if (prefixEnabled || reflectionEnabled)
         {
             if (N >= 20) pruneDepthGate = 1;
@@ -317,13 +319,6 @@ internal sealed class BitmaskSearchEngine
         s.Col = col; s.Cols = cols; s.Diag1 = d1; s.Diag2 = d2; s.Remaining = remaining; s.ReflectionEqual = reflectionEqual; s.MinimalityEqual = minimalityEqual;
     }
 
-    private static void ReportRootProgress(ref SearchState s, in Request request)
-    {
-        s.RootPlacements++;
-        double pct = (double)s.RootPlacements / s.RootTotal * 100.0;
-        request.ReportProgress(pct);
-    }
-
     private static void MaybeRaisePlacementEvent(ref SearchState s, in Request request)
     {
         if (!s.Visualize) return;
@@ -361,42 +356,5 @@ internal sealed class BitmaskSearchEngine
     }
 
     private readonly record struct Frame(ulong Cols, ulong D1, ulong D2, ulong Remaining, bool ReflectionEqual, bool MinimalityEqual);
-}
-
-// Simple centralized reporter with bucket/heartbeat throttling (placed in same file for convenience)
-internal readonly struct ProgressReporter
-{
-    private readonly Action<double> _report;
-    private readonly int _bucketSize;
-    private readonly Stopwatch _heartbeat;
-    private readonly int _heartbeatMs;
-
-    public ProgressReporter(Action<double> report, int bucketSize = 1, int heartbeatMs = 1500)
-    {
-        _report = report;
-        _bucketSize = bucketSize;
-        _heartbeat = Stopwatch.StartNew();
-        _heartbeatMs = heartbeatMs;
-    }
-
-    public void ReportBucket(int done, int totalTasks, ref int bucketReported)
-    {
-        double pct = totalTasks == 0 ? 100.0 : (double)done / totalTasks * 100.0;
-        int bucket = (int)pct / _bucketSize * _bucketSize;
-        int observed;
-        while (bucket > (observed = Volatile.Read(ref bucketReported)))
-        {
-            if (Interlocked.CompareExchange(ref bucketReported, bucket, observed) == observed)
-            {
-                _report(bucket);
-                break;
-            }
-        }
-        if (_heartbeat.ElapsedMilliseconds >= _heartbeatMs)
-        {
-            _report(Math.Min(99.0, pct));
-            _heartbeat.Restart();
-        }
-    }
 }
 

@@ -29,7 +29,7 @@ public sealed partial class MainViewModel
             bitmask.ParallelRootSplitDepth = ParallelRootSplitDepth;
             bitmask.AllStorageMode = SolutionMode == SolutionMode.All || SolutionMode == SolutionMode.Single ? SelectedStorageMode : bitmask.AllStorageMode;
             bitmask.UniqueStorageMode = SolutionMode == SolutionMode.Unique ? SelectedStorageMode : bitmask.UniqueStorageMode;
-            bitmask.EnableHalfBoardRestriction = boardSize >= 15;
+            bitmask.EnableHalfBoardRestriction = ComputeHalfBoardRestriction();
             bitmask.EnablePrefixMinimalityPruning = true;
             bitmask.EnablePartialReflectionPruning = true;
             bitmask.UseAdaptiveDepth = boardSize >= 14;

@@ -58,8 +58,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
     public bool EnablePrefixMinimalityPruning { get; set; } = false; // Opt #1
 
-    public bool EnableIncrementalCanonicalization { get; set; } = false; // Opt #3 (driver flag)
-
     public bool EnablePartialReflectionPruning { get; set; } = false; // Opt #14
 
     public bool EnableHalfBoardRestriction { get; set; } = false; // new flag (applies to All mode; materialize + count-only)
@@ -164,10 +162,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                     ParallelRootSplitDepth = 3;
                 }
 
-                if (BoardSize <= NQueen.Domain.Settings.SimulationSettings.ParallelAllAutoEnableThresholdN)
-                    _solutionCount = EnumerateAllAndReturnCount();
-                else
-                    EnumerateAllAdaptive(countOnly: true);
+                EnumerateAllAdaptive(countOnly: true);
             }
             ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
             return;
@@ -193,11 +188,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         bool origReflection = EnablePartialReflectionPruning;
         EnablePrefixMinimalityPruning = true;
         EnablePartialReflectionPruning = true;
-
-        SearchOptimizations.Configure(
-            EnablePrefixMinimalityPruning,
-            EnablePartialReflectionPruning,
-            incrementalCanonicalization: false);
 
         ThreadPool.SetMinThreads(Environment.ProcessorCount, Environment.ProcessorCount);
 
@@ -231,10 +221,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         {
             EnablePrefixMinimalityPruning = origPrefix;
             EnablePartialReflectionPruning = origReflection;
-            SearchOptimizations.Configure(
-                EnablePrefixMinimalityPruning,
-                EnablePartialReflectionPruning,
-                incrementalCanonicalization: false);
         }
     }
 
@@ -247,11 +233,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         bool origReflection = EnablePartialReflectionPruning;
         EnablePrefixMinimalityPruning = true;
         EnablePartialReflectionPruning = true;
-
-        SearchOptimizations.Configure(
-            EnablePrefixMinimalityPruning,
-            EnablePartialReflectionPruning,
-            incrementalCanonicalization: false);
 
         int firstRowLimitExclusive = (n + 1) / 2;
         ulong fullMask = (n == 64) ? ulong.MaxValue : ((1UL << n) - 1UL);
@@ -368,10 +349,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         {
             EnablePrefixMinimalityPruning = origPrefix;
             EnablePartialReflectionPruning = origReflection;
-            SearchOptimizations.Configure(
-                EnablePrefixMinimalityPruning,
-                EnablePartialReflectionPruning,
-                incrementalCanonicalization: false);
         }
 
         return (ulong)total;
@@ -432,7 +409,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
     private void SampleMaterializeUsingLookup(bool isUnique)
     {
-        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning, EnableIncrementalCanonicalization);
         int cap = _maxDisplayedCount;
         if (cap <= 0) return;
 
@@ -541,12 +517,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
             if (EnableEvents && !_eventsSuppressedAfterCap)
                 SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
         }
-    }
-
-    private ulong EnumerateAllAndReturnCount()
-    {
-        EnumerateAllAdaptive(countOnly: true);
-        return _solutionCount;
     }
 
     private bool ValidateRows(int[] rows)

@@ -74,13 +74,11 @@ public sealed partial class MainViewModel : ObservableObject
             switch (SolutionMode)
             {
                 case SolutionMode.All:
+                case SolutionMode.Single:
                     if (_allStorageMode != value) { _allStorageMode = value; changed = true; }
                     break;
                 case SolutionMode.Unique:
                     if (_uniqueStorageMode != value) { _uniqueStorageMode = value; changed = true; }
-                    break;
-                case SolutionMode.Single:
-                    if (_allStorageMode != value) { _allStorageMode = value; changed = true; }
                     break;
             }
             if (changed)
@@ -133,9 +131,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private string _memoryConsumption = "0";
-
-    public string MemoryUsage => MemoryConsumption;
-    partial void OnMemoryConsumptionChanged(string value) => OnPropertyChanged(nameof(MemoryUsage));
 
     [ObservableProperty]
     private string _elapsedTimeInSec = string.Empty;
