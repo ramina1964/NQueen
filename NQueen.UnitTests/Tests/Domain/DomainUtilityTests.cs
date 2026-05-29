@@ -273,4 +273,110 @@ public class DomainUtilityTests
         SimulationSettings.DefaultDisplayMode.Should().Be(DisplayMode.Hide);
         SimulationSettings.MaxVisualizeBoardSize.Should().Be(10);
     }
+
+    // ── ExpectedSolutionCounts ───────────────────────────────────────────────
+
+    [Theory]
+    [InlineData(1, 1UL)]
+    [InlineData(4, 2UL)]
+    [InlineData(5, 10UL)]
+    [InlineData(8, 92UL)]
+    public void ExpectedSolutionCounts_GetAllFast_ReturnsKnownValues(int n, ulong expected) =>
+        ExpectedSolutionCounts.GetAllFast(n).Should().Be(expected);
+
+    [Theory]
+    [InlineData(1, 1UL)]
+    [InlineData(5, 2UL)]
+    [InlineData(8, 12UL)]
+    public void ExpectedSolutionCounts_GetUniqueFast_ReturnsKnownValues(int n, ulong expected) =>
+        ExpectedSolutionCounts.GetUniqueFast(n).Should().Be(expected);
+
+    [Fact]
+    public void ExpectedSolutionCounts_GetAllFast_OutOfRange_ReturnsZero()
+    {
+        ExpectedSolutionCounts.GetAllFast(0).Should().Be(0UL);
+        ExpectedSolutionCounts.GetAllFast(100).Should().Be(0UL);
+    }
+
+    [Fact]
+    public void ExpectedSolutionCounts_GetUniqueFast_OutOfRange_ReturnsZero()
+    {
+        ExpectedSolutionCounts.GetUniqueFast(0).Should().Be(0UL);
+        ExpectedSolutionCounts.GetUniqueFast(100).Should().Be(0UL);
+    }
+
+    [Fact]
+    public void ExpectedSolutionCounts_TryGetAll_KnownN_ReturnsTrueAndCorrectCount()
+    {
+        ExpectedSolutionCounts.TryGetAll(8, out var count).Should().BeTrue();
+        count.Should().Be(92UL);
+    }
+
+    [Fact]
+    public void ExpectedSolutionCounts_TryGetAll_UnknownN_ReturnsFalse() =>
+        ExpectedSolutionCounts.TryGetAll(0, out _).Should().BeFalse();
+
+    [Fact]
+    public void ExpectedSolutionCounts_TryGetUnique_KnownN_ReturnsTrueAndCorrectCount()
+    {
+        ExpectedSolutionCounts.TryGetUnique(8, out var count).Should().BeTrue();
+        count.Should().Be(12UL);
+    }
+
+    [Fact]
+    public void ExpectedSolutionCounts_AllSolutionsSpan_ContainsKnownEntry() =>
+        ExpectedSolutionCounts.AllSolutionsSpan[8].Should().Be(92UL);
+
+    [Fact]
+    public void ExpectedSolutionCounts_UniqueSolutionsSpan_ContainsKnownEntry() =>
+        ExpectedSolutionCounts.UniqueSolutionsSpan[8].Should().Be(12UL);
+
+    [Fact]
+    public void ExpectedSolutionCounts_AllSolutionsDictionary_ContainsN8() =>
+        ExpectedSolutionCounts.AllSolutions.Should().ContainKey(8);
+
+    [Fact]
+    public void ExpectedSolutionCounts_UniqueSolutionsDictionary_ContainsN8() =>
+        ExpectedSolutionCounts.UniqueSolutions.Should().ContainKey(8);
+
+    // ── MemoryIntArrayComparer.Compare ───────────────────────────────────────
+
+    [Fact]
+    public void MemoryIntArrayComparer_Compare_EqualArrays_ReturnsZero()
+    {
+        Memory<int> a = new([1, 2, 3]);
+        Memory<int> b = new([1, 2, 3]);
+        MemoryIntArrayComparer.Instance.Compare(a, b).Should().Be(0);
+    }
+
+    [Fact]
+    public void MemoryIntArrayComparer_Compare_LessThan_ReturnsNegative()
+    {
+        Memory<int> a = new([1, 2, 3]);
+        Memory<int> b = new([1, 2, 4]);
+        MemoryIntArrayComparer.Instance.Compare(a, b).Should().BeNegative();
+    }
+
+    [Fact]
+    public void MemoryIntArrayComparer_Compare_GreaterThan_ReturnsPositive()
+    {
+        Memory<int> a = new([1, 2, 4]);
+        Memory<int> b = new([1, 2, 3]);
+        MemoryIntArrayComparer.Instance.Compare(a, b).Should().BePositive();
+    }
+
+    [Fact]
+    public void MemoryIntArrayComparer_Compare_ShorterLengthFirst_ReturnsNegative()
+    {
+        Memory<int> a = new([1, 2]);
+        Memory<int> b = new([1, 2, 3]);
+        MemoryIntArrayComparer.Instance.Compare(a, b).Should().BeNegative();
+    }
+
+    [Fact]
+    public void MemoryIntArrayComparer_GetHashCode_Empty_ReturnsZero()
+    {
+        Memory<int> empty = new([]);
+        MemoryIntArrayComparer.Instance.GetHashCode(empty).Should().Be(0);
+    }
 }
