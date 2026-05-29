@@ -6,14 +6,6 @@ namespace NQueen.Kernel.Solvers.Engines;
 /// </summary>
 internal static class SearchOptimizations
 {
-    public static volatile bool PrefixMinimalityPruningEnabled;
-    public static volatile bool ReflectionPrefixPruningEnabled;
-
-    public static void Configure(bool prefixMinimality, bool reflectionPruning)
-    {
-        PrefixMinimalityPruningEnabled = prefixMinimality;
-        ReflectionPrefixPruningEnabled = reflectionPruning;
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool ShouldPrunePrefixIncremental(

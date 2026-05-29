@@ -13,9 +13,6 @@ public partial class BitmaskSolver
         List<(UInt128 packed, int boardSize)> packedSample = [];
         int materialized = 0;
 
-        Engines.SearchOptimizations.Configure(
-            prefixMinimality: EnablePrefixMinimalityPruning,
-            reflectionPruning: EnablePartialReflectionPruning);
         if (boardSize >= SimulationSettings.LargeBoardSymmetryPruningThreshold)
         {
             if (boardSize >= SimulationSettings.UniqueCountOnlyParallelThresholdN)
@@ -55,7 +52,6 @@ public partial class BitmaskSolver
             _solutionCount = known;
 
             // Enumerate to materialize up to cap unique canonical solutions; never stop early.
-            SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning);
             BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
                 BoardSize: boardSize,
                 RestrictFirstCol: true,            // half-board roots
@@ -105,7 +101,6 @@ public partial class BitmaskSolver
         ulong rawCount = 0;
         var seen = new HashSet<UInt128>();
 
-        SearchOptimizations.Configure(EnablePrefixMinimalityPruning, EnablePartialReflectionPruning);
         BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
             N,
             RestrictFirstCol: false,

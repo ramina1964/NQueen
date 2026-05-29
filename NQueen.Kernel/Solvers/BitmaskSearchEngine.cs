@@ -32,7 +32,9 @@ internal sealed class BitmaskSearchEngine
         Func<bool> IsCanceled,
         Action<double> ReportProgress,
         Action<Memory<int>> OnQueenPlaced,
-        Func<int[], bool> OnSolution
+        Func<int[], bool> OnSolution,
+        bool PrefixMinimalityPruning = false,
+        bool ReflectionPruning = false
     );
 
     public static void Run(Request request) => ExecuteDepthFirst(request);
@@ -107,8 +109,8 @@ internal sealed class BitmaskSearchEngine
         int[]? solutionBuffer = null;
         bool needsCopy = request.OnSolution != null && !request.CountOnly;
         if (needsCopy) solutionBuffer = new int[N];
-        bool prefixEnabled = SearchOptimizations.PrefixMinimalityPruningEnabled;
-        bool reflectionEnabled = SearchOptimizations.ReflectionPrefixPruningEnabled;
+        bool prefixEnabled = request.PrefixMinimalityPruning;
+        bool reflectionEnabled = request.ReflectionPruning;
         bool symmetryActive = (request.EnhancedSymmetry || request.AggressiveSymmetry) && N >= 14;
         bool isAggressive = request.AggressiveSymmetry && symmetryActive;
 
@@ -240,8 +242,8 @@ internal sealed class BitmaskSearchEngine
     {
         int N = s.N;
         int pruneDepthGate = int.MaxValue;
-        bool prefixEnabled = Engines.SearchOptimizations.PrefixMinimalityPruningEnabled;
-        bool reflectionEnabled = Engines.SearchOptimizations.ReflectionPrefixPruningEnabled;
+        bool prefixEnabled = request.PrefixMinimalityPruning;
+        bool reflectionEnabled = request.ReflectionPruning;
         if (prefixEnabled || reflectionEnabled)
         {
             if (N >= 20) pruneDepthGate = 1;
@@ -315,13 +317,6 @@ internal sealed class BitmaskSearchEngine
         }
 
         s.Col = col; s.Cols = cols; s.Diag1 = d1; s.Diag2 = d2; s.Remaining = remaining; s.ReflectionEqual = reflectionEqual; s.MinimalityEqual = minimalityEqual;
-    }
-
-    private static void ReportRootProgress(ref SearchState s, in Request request)
-    {
-        s.RootPlacements++;
-        double pct = (double)s.RootPlacements / s.RootTotal * 100.0;
-        request.ReportProgress(pct);
     }
 
     private static void MaybeRaisePlacementEvent(ref SearchState s, in Request request)
