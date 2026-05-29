@@ -6,6 +6,19 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Added (NQueen.Benchmarking)
+- **`ConsolePruningImpactBenchmarks.cs`** — two new benchmark classes
+  (`ConsolePruningImpactAllBenchmark`, `ConsolePruningImpactUniqueBenchmark`) that measure
+  the performance difference between the old Console solver configuration (no pruning,
+  events on) and the new one (pruning on, events off, adaptive depth) across N = 12, 14, 16.
+  Measured results on Intel i7-14700K / .NET 10.0.8:
+  - Unique N=12: **−17%** (891 µs vs 1,076 µs)
+  - Unique N=14: **−6%** (13.5 ms vs 14.4 ms)
+  - Unique N=16: flat (within noise — parallel saturation dominates)
+  - All mode N=12–16: flat (half-board restriction already dominates search reduction)
+- **`Program.cs`** — default run updated to `ConsolePruningImpactAllBenchmark` +
+  `ConsolePruningImpactUniqueBenchmark`.
+
 ### Fixed (NQueen.Console)
 - **`DispatchCommands.cs`** — interactive solver branches now set `EnableEvents = false`
   (eliminates wasted event firing with no subscribers), `IsSolverCanceled = false` (prevents

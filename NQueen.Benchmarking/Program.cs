@@ -14,7 +14,8 @@ internal class Program
             return;
         }
 
-        // Default local run: execute the merged Unique + CountOnly high-N benchmark (N=18,19,20).
-        BenchmarkRunner.Run<UniqueHighNBenchmark>();
+        // Default local run: measure Console pruning impact (All + Unique, N=12/14/16).
+        BenchmarkRunner.Run<ConsolePruningImpactAllBenchmark>();
+        BenchmarkRunner.Run<ConsolePruningImpactUniqueBenchmark>();
     }
 }
