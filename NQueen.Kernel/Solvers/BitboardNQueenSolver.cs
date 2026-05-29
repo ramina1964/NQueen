@@ -1,4 +1,4 @@
-namespace NQueen.Kernel;
+namespace NQueen.Kernel.Solvers;
 
 public static class BitboardNQueenSolver
 {
