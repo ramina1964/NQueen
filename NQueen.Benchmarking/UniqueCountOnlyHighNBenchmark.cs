@@ -9,7 +9,7 @@ public class UniqueCountOnlyHighNBenchmark
     [Params(16, 17, 18, 19, 20)]
     public int BoardSize { get; set; }
 
-    private readonly ISolutionFormatter _formatter = new DefaultSolutionFormatter();
+    private readonly SolutionFormatter _formatter = new();
 
     [Benchmark(Baseline = true, Description = "Unique Count-Only")]
     public ulong Unique_CountOnly()

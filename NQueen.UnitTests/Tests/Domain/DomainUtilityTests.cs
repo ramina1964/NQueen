@@ -189,23 +189,23 @@ public class DomainUtilityTests
         ExpectedSolutionCounts.UniqueSolutions.Should().NotBeEmpty();
     }
 
-    // ── DefaultSolutionFormatter ─────────────────────────────────────────────
+    // ── DefaultSolutionFormatter (merged into SolutionFormatter) ─────────────
 
     [Fact]
     public void DefaultSolutionFormatter_FormatSolutions_ProducesCommaSeparatedPositions()
     {
-        var formatter = new NQueen.Domain.Formatters.DefaultSolutionFormatter();
+        var formatter = new SolutionFormatter();
         var positions = new List<Position> { new(0, 1), new(1, 3) };
 
         var result = formatter.FormatSolutions(positions);
 
-        result.Should().Contain("(0, 1)").And.Contain("(1, 3)");
+        result.Should().Contain("(1,2)").And.Contain("(2,4)");
     }
 
     [Fact]
     public void DefaultSolutionFormatter_FormatSolutions_EmptyList_ReturnsEmpty()
     {
-        var formatter = new NQueen.Domain.Formatters.DefaultSolutionFormatter();
+        var formatter = new SolutionFormatter();
         formatter.FormatSolutions([]).Should().BeEmpty();
     }
 
@@ -261,36 +261,6 @@ public class DomainUtilityTests
         var a = new MenuState { ExitRequested = false, BlankInputCount = 1 };
         var b = new MenuState { ExitRequested = false, BlankInputCount = 1 };
         a.Should().Be(b);
-    }
-
-    // ── SolutionUpdateDTO ────────────────────────────────────────────────────
-
-    [Fact]
-    public void SolutionUpdateDTO_Properties_AreAccessible()
-    {
-        var positions = new[] { 0, 4, 7, 5, 2, 6, 1, 3 };
-        var solutions = new HashSet<int[]>(IntArrayStructuralComparer.Instance) { positions };
-        var dto = new SolutionUpdateDTO(8, SolutionMode.All, positions, solutions);
-
-        dto.BoardSize.Should().Be(8);
-        dto.SolutionMode.Should().Be(SolutionMode.All);
-        dto.QueenPositions.Should().BeEquivalentTo(positions);
-        dto.Solutions.Should().HaveCount(1);
-    }
-
-    // ── SolutionUpdateMemoryDTO ──────────────────────────────────────────────
-
-    [Fact]
-    public void SolutionUpdateMemoryDTO_Properties_AreAccessible()
-    {
-        var positions = new Memory<int>([0, 4, 7, 5, 2, 6, 1, 3]);
-        var solutions = new HashSet<Memory<int>>(MemoryIntArrayComparer.Instance) { positions };
-        var dto = new SolutionUpdateMemoryDTO(8, SolutionMode.Unique, positions, solutions);
-
-        dto.BoardSize.Should().Be(8);
-        dto.SolutionMode.Should().Be(SolutionMode.Unique);
-        dto.QueenPositions.Length.Should().Be(8);
-        dto.Solutions.Should().HaveCount(1);
     }
 
     // ── SimulationSettings ───────────────────────────────────────────────────

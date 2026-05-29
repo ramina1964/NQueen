@@ -8,7 +8,8 @@ public class MediumPrefixPruningParallelBenchmark
     [Params(0, 2, 4)]
     public int SplitDepth { get; set; }
 
-    private readonly ISolutionFormatter _formatter = new DefaultSolutionFormatter();
+    private readonly SolutionFormatter _formatter = new();
+
     [Benchmark(Baseline = true)]
     public ulong CountOnly_All_Parallel_Baseline()
     {

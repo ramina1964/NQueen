@@ -111,9 +111,6 @@ public sealed partial class MainViewModel : ObservableObject
     private ObservableCollection<Solution> _observableSolutions = [];
 
     [ObservableProperty]
-    private Solution _selectedSolution = new([0], new DefaultSolutionFormatter());
-
-    [ObservableProperty]
     private SolutionMode _solutionMode;
 
     [ObservableProperty]
@@ -243,18 +240,4 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     public bool CanChangeStorageMode => !IsVisualized && IsInInputMode && SolutionMode != SolutionMode.Single;
-
-    partial void OnSelectedSolutionChanged(Solution value)
-    {
-        if (value == null || ChessboardVm == null) return;
-        // Stop any ongoing visualization timer to avoid overwriting user selection
-        StopVisualizationTimer();
-        // Ensure board squares match the solution's board size
-        var n = value.BoardSize;
-        if (ChessboardVm.Squares.Count == 0 || !ChessboardVm.IsBoardStateUpdatedAndSquaresPopulated(n))
-        {
-            ChessboardVm.CreateSquares(n);
-        }
-        ChessboardVm.PlaceQueens(value.Positions);
-    }
 }

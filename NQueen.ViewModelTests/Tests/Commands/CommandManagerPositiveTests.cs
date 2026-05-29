@@ -51,7 +51,7 @@ public class CommandManagerPositiveTests
         var mainVm = TestHelpers.CreateMainViewModelWithBoardSizeText(
             boardSizeText, solutionMode, displayMode);
 
-        var solutionFormatter = new DefaultSolutionFormatter();
+        var solutionFormatter = new SolutionFormatter();
 
         var queenPositions = new int[] { 1, 3, 0, 2 };
         var solution = new Solution(queenPositions, solutionFormatter, 1);
