@@ -394,7 +394,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     // ------------ private fields and helpers ------------
     private readonly ISolutionFormatter _formatter = solutionFormatter ?? throw new ArgumentNullException(nameof(solutionFormatter));
     private readonly List<(UInt128 packed, int boardSize)> _solutions = [];
-    private readonly List<int[]> _largeBoardRawSolutions = new();
+    private readonly List<int[]> _largeBoardRawSolutions = [];
     private ulong _solutionCount;
     private Guid _currentSimToken = Guid.Empty;
     private readonly bool _capEnabled = true;
@@ -652,7 +652,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         return rows;
     }
 
-    private static IEnumerable<int[]> GenerateSymmetryVariants(int[] rows, int maxVariants)
+    private static List<int[]> GenerateSymmetryVariants(int[] rows, int maxVariants)
     {
         var list = new List<int[]>(Math.Min(maxVariants, 7));
         void AddVariant(int[] r) { if (list.Count < maxVariants) list.Add(r); }
@@ -698,5 +698,5 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         return list;
     }
 
-    private readonly object _sync = new();
+    private readonly Lock _sync = new();
 }

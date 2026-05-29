@@ -2,8 +2,8 @@ namespace NQueen.Kernel.Solvers;
 
 internal sealed class BitmaskSearchEngine
 {
-    private const ulong DeBruijn64 = 0x03F79D71B4CB0A89UL;
-    private static readonly byte[] DeBruijnIndex64 = InitDeBruijn();
+    private const ulong _deBruijn64 = 0x03F79D71B4CB0A89UL;
+    private static readonly byte[] _deBruijnIndex64 = InitDeBruijn();
 
     private static byte[] InitDeBruijn()
     {
@@ -11,14 +11,14 @@ internal sealed class BitmaskSearchEngine
         for (int i = 0; i < 64; i++)
         {
             ulong bit = 1UL << i;
-            int idx = (int)((bit * DeBruijn64) >> 58);
+            int idx = (int)((bit * _deBruijn64) >> 58);
             tbl[idx] = (byte)i;
         }
         return tbl;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int FastTzcnt(ulong bit) => DeBruijnIndex64[(bit * DeBruijn64) >> 58];
+    private static int FastTzcnt(ulong bit) => _deBruijnIndex64[(bit * _deBruijn64) >> 58];
 
     public readonly record struct Request(
         int BoardSize,
@@ -43,7 +43,7 @@ internal sealed class BitmaskSearchEngine
     {
         ValidateBoardSize(request.BoardSize);
         var state = CreateState(request);
-        state.Col = 0;
+        state._Col = 0;
 
         // Initialize progress reporter: 1% buckets, 1500ms heartbeat
         var reporter = new ProgressReporter(request.ReportProgress, bucketSize: 1, heartbeatMs: 1500);
@@ -52,15 +52,15 @@ internal sealed class BitmaskSearchEngine
         // Initial progress
         request.ReportProgress(0.0);
 
-        ulong attacked0 = state.Cols | state.Diag1 | state.Diag2;
-        state.Remaining = (~attacked0) & state.Mask;
+        ulong attacked0 = state._Cols | state._Diag1 | state._Diag2;
+        state._Remaining = (~attacked0) & state._Mask;
         if (request.RestrictFirstCol)
         {
-            int maxRow = (state.N + 1) / 2; if (maxRow < state.N) state.Remaining &= (1UL << maxRow) - 1UL;
+            int maxRow = (state._N + 1) / 2; if (maxRow < state._N) state._Remaining &= (1UL << maxRow) - 1UL;
         }
-        if ((request.EnhancedSymmetry || request.AggressiveSymmetry) && state.N >= 14)
+        if ((request.EnhancedSymmetry || request.AggressiveSymmetry) && state._N >= 14)
         {
-            state.Remaining = SymmetryHelper.ApplyAdvancedSymmetryPruning(state.N, 0, state.QueenRows, state.Remaining);
+            state._Remaining = SymmetryHelper.ApplyAdvancedSymmetryPruning(state._N, 0, state._QueenRows, state._Remaining);
         }
         if (request.CountOnly) MainLoopCountOnly(ref state, request, reporter, ref bucketReported);
         else MainLoop(ref state, request, reporter, ref bucketReported);
@@ -85,27 +85,27 @@ internal sealed class BitmaskSearchEngine
         int sampleRate = N >= SimulationSettings.QueenPlacedSamplingThresholdSize ? SimulationSettings.QueenPlacedLargeBoardSampleRate : 1;
         return new SearchState
         {
-            N = N,
-            QueenRows = queenRows,
-            Mask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL),
-            MaxRow0 = maxRow0,
-            StackFrames = new Frame[N],
-            RootTotal = request.RestrictFirstCol ? maxRow0 : N,
-            LastDepth = -1,
-            Visualize = visualize,
-            Delay = (visualize && request.DelayInMillisec > 0)
+            _N = N,
+            _QueenRows = queenRows,
+            _Mask = (N == 64) ? ulong.MaxValue : ((1UL << N) - 1UL),
+            _MaxRow0 = maxRow0,
+            _StackFrames = new Frame[N],
+            _RootTotal = request.RestrictFirstCol ? maxRow0 : N,
+            _LastDepth = -1,
+            _Visualize = visualize,
+            _Delay = (visualize && request.DelayInMillisec > 0)
                 ? Math.Max(SimulationSettings.MinDelayInMilliseconds, request.DelayInMillisec)
                 : 0,
-            QueenPlacedSampleRate = sampleRate,
-            ReflectionEqual = true,
-            MinimalityEqual = true
+            _QueenPlacedSampleRate = sampleRate,
+            _ReflectionEqual = true,
+            _MinimalityEqual = true
         };
     }
 
     private static void MainLoop(ref SearchState s, in Request request, ProgressReporter reporter, ref int bucketReported)
     {
-        int N = s.N;
-        Span<int> queenRows = s.QueenRows;
+        int N = s._N;
+        Span<int> queenRows = s._QueenRows;
         int[]? solutionBuffer = null;
         bool needsCopy = request.OnSolution != null && !request.CountOnly;
         if (needsCopy) solutionBuffer = new int[N];
@@ -122,13 +122,13 @@ internal sealed class BitmaskSearchEngine
             else if (N >= 15) pruneDepthGate = 3;
         }
 
-        int col = s.Col;
-        ulong cols = s.Cols;
-        ulong d1 = s.Diag1;
-        ulong d2 = s.Diag2;
-        ulong remaining = s.Remaining;
-        bool reflectionEqual = s.ReflectionEqual;
-        bool minimalityEqual = s.MinimalityEqual;
+        int col = s._Col;
+        ulong cols = s._Cols;
+        ulong d1 = s._Diag1;
+        ulong d2 = s._Diag2;
+        ulong remaining = s._Remaining;
+        bool reflectionEqual = s._ReflectionEqual;
+        bool minimalityEqual = s._MinimalityEqual;
 
         while (true)
         {
@@ -140,20 +140,20 @@ internal sealed class BitmaskSearchEngine
                 {
                     if (needsCopy)
                     {
-                        queenRows.Slice(0, N).CopyTo(solutionBuffer!);
+                        queenRows[..N].CopyTo(solutionBuffer!);
                         if (request.OnSolution(solutionBuffer!)) break;
                     }
-                    else if (request.OnSolution(s.QueenRows)) break;
+                    else if (request.OnSolution(s._QueenRows)) break;
                 }
                 col--; if (col < 0) break;
-                var frame = s.StackFrames[col];
+                var frame = s._StackFrames[col];
                 cols = frame.Cols; d1 = frame.D1; d2 = frame.D2; remaining = frame.Remaining;
                 reflectionEqual = frame.ReflectionEqual; minimalityEqual = frame.MinimalityEqual;
                 queenRows[col] = -1;
-                if (s.Visualize)
+                if (s._Visualize)
                 {
-                    request.OnQueenPlaced(new Memory<int>(s.QueenRows));
-                    if (s.Delay > 0) Thread.Sleep(s.Delay);
+                    request.OnQueenPlaced(new Memory<int>(s._QueenRows));
+                    if (s._Delay > 0) Thread.Sleep(s._Delay);
                 }
                 continue;
             }
@@ -161,14 +161,14 @@ internal sealed class BitmaskSearchEngine
             if (remaining == 0)
             {
                 col--; if (col < 0) break;
-                var frame = s.StackFrames[col];
+                var frame = s._StackFrames[col];
                 cols = frame.Cols; d1 = frame.D1; d2 = frame.D2; remaining = frame.Remaining;
                 reflectionEqual = frame.ReflectionEqual; minimalityEqual = frame.MinimalityEqual;
                 queenRows[col] = -1;
-                if (s.Visualize)
+                if (s._Visualize)
                 {
-                    request.OnQueenPlaced(new Memory<int>(s.QueenRows));
-                    if (s.Delay > 0) Thread.Sleep(s.Delay);
+                    request.OnQueenPlaced(new Memory<int>(s._QueenRows));
+                    if (s._Delay > 0) Thread.Sleep(s._Delay);
                 }
                 continue;
             }
@@ -180,14 +180,14 @@ internal sealed class BitmaskSearchEngine
 
             if (col >= pruneDepthGate &&
                 SearchHelpers.ShouldPrunePrefixIncremental(
-                    s.QueenRows, col, N, reflectionEnabled, prefixEnabled,
+                    s._QueenRows, col, N, reflectionEnabled, prefixEnabled,
                     ref reflectionEqual, ref minimalityEqual))
             {
                 queenRows[col] = -1;
-                if (s.Visualize)
+                if (s._Visualize)
                 {
-                    request.OnQueenPlaced(new Memory<int>(s.QueenRows));
-                    if (s.Delay > 0) Thread.Sleep(s.Delay);
+                    request.OnQueenPlaced(new Memory<int>(s._QueenRows));
+                    if (s._Delay > 0) Thread.Sleep(s._Delay);
                 }
                 continue;
             }
@@ -195,12 +195,12 @@ internal sealed class BitmaskSearchEngine
             // Root progress: use bucket/heartbeat throttling
             if (col == 0)
             {
-                s.RootPlacements++;
-                reporter.ReportBucket(s.RootPlacements, s.RootTotal, ref bucketReported);
+                s._RootPlacements++;
+                reporter.ReportBucket(s._RootPlacements, s._RootTotal, ref bucketReported);
             }
 
             if (!request.CountOnly) MaybeRaisePlacementEvent(ref s, request);
-            s.StackFrames[col] = new Frame(cols, d1, d2, remaining, reflectionEqual, minimalityEqual);
+            s._StackFrames[col] = new Frame(cols, d1, d2, remaining, reflectionEqual, minimalityEqual);
             cols |= bit;
             d1 = (d1 | bit) << 1;
             d2 = (d2 | bit) >> 1;
@@ -209,12 +209,12 @@ internal sealed class BitmaskSearchEngine
             if (col == N) continue;
 
             ulong attacked = cols | d1 | d2;
-            remaining = (~attacked) & s.Mask;
+            remaining = (~attacked) & s._Mask;
 
             if (symmetryActive)
             {
                 ulong avail = SymmetryHelper.ApplyAdvancedSymmetryPruning(
-                    N, col, s.QueenRows, remaining);
+                    N, col, s._QueenRows, remaining);
 
                 var isSecondColAggressivePrune =
                     isAggressive && col == 2 &&
@@ -235,12 +235,12 @@ internal sealed class BitmaskSearchEngine
             }
         }
 
-        s.Col = col; s.Cols = cols; s.Diag1 = d1; s.Diag2 = d2; s.Remaining = remaining; s.ReflectionEqual = reflectionEqual; s.MinimalityEqual = minimalityEqual;
+        s._Col = col; s._Cols = cols; s._Diag1 = d1; s._Diag2 = d2; s._Remaining = remaining; s._ReflectionEqual = reflectionEqual; s._MinimalityEqual = minimalityEqual;
     }
 
     private static void MainLoopCountOnly(ref SearchState s, in Request request, ProgressReporter reporter, ref int bucketReported)
     {
-        int N = s.N;
+        int N = s._N;
         int pruneDepthGate = int.MaxValue;
         bool prefixEnabled = request.PrefixMinimalityPruning;
         bool reflectionEnabled = request.ReflectionPruning;
@@ -251,14 +251,14 @@ internal sealed class BitmaskSearchEngine
             else if (N >= 15) pruneDepthGate = 3;
         }
 
-        int col = s.Col;
-        ulong cols = s.Cols;
-        ulong d1 = s.Diag1;
-        ulong d2 = s.Diag2;
-        int[] rows = s.QueenRows;
-        ulong remaining = s.Remaining;
-        bool reflectionEqual = s.ReflectionEqual;
-        bool minimalityEqual = s.MinimalityEqual;
+        int col = s._Col;
+        ulong cols = s._Cols;
+        ulong d1 = s._Diag1;
+        ulong d2 = s._Diag2;
+        int[] rows = s._QueenRows;
+        ulong remaining = s._Remaining;
+        bool reflectionEqual = s._ReflectionEqual;
+        bool minimalityEqual = s._MinimalityEqual;
 
         while (true)
         {
@@ -268,7 +268,7 @@ internal sealed class BitmaskSearchEngine
             {
                 if (request.OnSolution != null && request.OnSolution(rows)) break;
                 col--; if (col < 0) break;
-                var frame = s.StackFrames[col];
+                var frame = s._StackFrames[col];
                 cols = frame.Cols; d1 = frame.D1; d2 = frame.D2; remaining = frame.Remaining; reflectionEqual = frame.ReflectionEqual; minimalityEqual = frame.MinimalityEqual;
                 rows[col] = -1;
                 continue;
@@ -278,7 +278,7 @@ internal sealed class BitmaskSearchEngine
             {
                 col--;
                 if (col < 0) break;
-                var frame = s.StackFrames[col];
+                var frame = s._StackFrames[col];
                 cols = frame.Cols; d1 = frame.D1; d2 = frame.D2; remaining = frame.Remaining; reflectionEqual = frame.ReflectionEqual; minimalityEqual = frame.MinimalityEqual;
                 rows[col] = -1;
                 continue;
@@ -300,11 +300,11 @@ internal sealed class BitmaskSearchEngine
             // Root progress: use bucket/heartbeat throttling
             if (col == 0)
             {
-                s.RootPlacements++;
-                reporter.ReportBucket(s.RootPlacements, s.RootTotal, ref bucketReported);
+                s._RootPlacements++;
+                reporter.ReportBucket(s._RootPlacements, s._RootTotal, ref bucketReported);
             }
 
-            s.StackFrames[col] = new Frame(cols, d1, d2, remaining, reflectionEqual, minimalityEqual);
+            s._StackFrames[col] = new Frame(cols, d1, d2, remaining, reflectionEqual, minimalityEqual);
             cols |= bit;
             d1 = (d1 | bit) << 1;
             d2 = (d2 | bit) >> 1;
@@ -313,46 +313,46 @@ internal sealed class BitmaskSearchEngine
             if (col == N) continue;
 
             ulong attacked = cols | d1 | d2;
-            remaining = (~attacked) & s.Mask;
+            remaining = (~attacked) & s._Mask;
         }
 
-        s.Col = col; s.Cols = cols; s.Diag1 = d1; s.Diag2 = d2; s.Remaining = remaining; s.ReflectionEqual = reflectionEqual; s.MinimalityEqual = minimalityEqual;
+        s._Col = col; s._Cols = cols; s._Diag1 = d1; s._Diag2 = d2; s._Remaining = remaining; s._ReflectionEqual = reflectionEqual; s._MinimalityEqual = minimalityEqual;
     }
 
     private static void MaybeRaisePlacementEvent(ref SearchState s, in Request request)
     {
-        if (!s.Visualize) return;
-        s.QueenPlacedCounter++;
-        bool depthIncreased = s.Col > s.LastDepth;
-        if (depthIncreased || (s.QueenPlacedCounter % s.QueenPlacedSampleRate == 0))
+        if (!s._Visualize) return;
+        s._QueenPlacedCounter++;
+        bool depthIncreased = s._Col > s._LastDepth;
+        if (depthIncreased || (s._QueenPlacedCounter % s._QueenPlacedSampleRate == 0))
         {
-            request.OnQueenPlaced(new Memory<int>(s.QueenRows));
-            s.LastDepth = s.Col;
+            request.OnQueenPlaced(new Memory<int>(s._QueenRows));
+            s._LastDepth = s._Col;
         }
-        if (s.Delay > 0) System.Threading.Thread.Sleep(s.Delay);
+        if (s._Delay > 0) System.Threading.Thread.Sleep(s._Delay);
     }
 
     private sealed class SearchState
     {
-        public int N;
-        public int[] QueenRows = [];
-        public ulong Mask;
-        public ulong Cols;
-        public ulong Diag1;
-        public ulong Diag2;
-        public int MaxRow0;
-        public Frame[] StackFrames = [];
-        public int RootPlacements;
-        public int RootTotal;
-        public int QueenPlacedCounter;
-        public int LastDepth;
-        public int Col;
-        public ulong Remaining;
-        public bool Visualize;
-        public int Delay;
-        public int QueenPlacedSampleRate;
-        public bool ReflectionEqual;
-        public bool MinimalityEqual;
+        public int _N;
+        public int[] _QueenRows = [];
+        public ulong _Mask;
+        public ulong _Cols;
+        public ulong _Diag1;
+        public ulong _Diag2;
+        public int _MaxRow0;
+        public Frame[] _StackFrames = [];
+        public int _RootPlacements;
+        public int _RootTotal;
+        public int _QueenPlacedCounter;
+        public int _LastDepth;
+        public int _Col;
+        public ulong _Remaining;
+        public bool _Visualize;
+        public int _Delay;
+        public int _QueenPlacedSampleRate;
+        public bool _ReflectionEqual;
+        public bool _MinimalityEqual;
     }
 
     private readonly record struct Frame(ulong Cols, ulong D1, ulong D2, ulong Remaining, bool ReflectionEqual, bool MinimalityEqual);
