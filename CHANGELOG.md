@@ -6,6 +6,17 @@ All notable changes to this project are documented here.
 
 ## [Unreleased] — branch `refactor/consolidate`
 
+### Fixed (project configuration)
+- **`NQueen.ConsoleApp.csproj`** — changed `TargetFramework` from `net10.0-windows` to
+  `net10.0`; the Console project has no Windows-specific dependencies (no WPF, no WinForms,
+  no P/Invoke), so the `-windows` suffix was unnecessary and restricted portability.
+
+### Removed (NQueen.Benchmarking dead template artefacts)
+- **`Properties\Resources.resx`** and **`Properties\Resources.Designer.cs`** — deleted;
+  these were left over from the project template and are never referenced by any benchmark.
+- **`NQueen.Benchmarking.csproj`** — removed the dead `<EmbeddedResource>` entry that
+  pointed to the now-deleted `Resources.resx`.
+
 ### Removed (NQueen.Benchmarking dead code)
 - **`Usings.cs`** — removed dead `global using NQueen.Kernel;`; the root namespace has no
   public types after `BitboardNQueenSolver` moved to `NQueen.Kernel.Solvers`.
