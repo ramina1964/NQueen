@@ -22,4 +22,9 @@
 		<ProjectReference Include="..\NQueen.Shared\NQueen.Shared.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Interfaces\" />
+	  <Folder Include="Utils\" />
+	</ItemGroup>
+
 </Project>

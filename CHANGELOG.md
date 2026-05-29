@@ -6,6 +6,32 @@ All notable changes to this project are documented here.
 
 ## [Unreleased] — branch `refactor/consolidate`
 
+### Removed (NQueen.Console dead code)
+- **`CommandConstants.cs`** — entire file deleted; every constant was only referenced from
+  `CommandProcessor` or `HelpCommands`, both of which are also removed.
+- **`ConsoleUtils.cs`** — entire file deleted; `WriteLineColored` was only called from
+  the dead `HelpCommands` class.
+- **`HelpCommands.cs`** — entire file deleted; all members (`ShowHelp`, `ShowExitError`,
+  `DumpAllHelp`, `DumpHelpText`, `Valid_Commands`, `Command_Example`, `NQueen_Help_Board_Size`,
+  `NQueen_Solution_Mode`, `NQUEEN_BOARDSIZE`, `Bitmask_Help`, `Banner`) had zero live call sites.
+- **`ICommandProcessor.cs`** — interface deleted; never resolved from DI at runtime.
+- **`CommandProcessor.cs`** — class deleted; all three methods were deprecation-message stubs
+  with no live callers.
+- **`DispatchUtils.cs`** — entire file deleted; `ParseInput`, `CreateChessBoard`, and
+  `LaunchConsoleMonitor` all had zero call sites.
+- **`DispatchCommands`** — removed dead `RegexSpaces()`, `genRegEx()`, and `_whiteSpacesRegex`;
+  `partial` modifier removed now that no source-generated partial members remain.
+- **`App.cs`** — removed dead `DispatchCommands dispatchCommands` constructor parameter and the
+  `_dispatchCommands` field; `RunInteractiveMenu` is `static` so the instance was never used.
+- **`Program.cs`** — removed stale dotnet-counters installation comment and dead DI
+  registrations for `DispatchCommands` (transient) and `ICommandProcessor`/`CommandProcessor`.
+- **`Using.cs`** — removed three dead global usings: `NQueen.ConsoleApp.Interfaces`,
+  `System.Diagnostics`, `System.Text.RegularExpressions`.
+
+### Renamed
+- **`DispachCommands.cs` → `DispatchCommands.cs`** — corrected long-standing filename typo
+  (missing `t`). Class name was already correct; only the filename was misspelled.
+
 ### Fixed (accessibility)
 - **`ChessboardUserControl.xaml`** — added `AutomationProperties.Name="Chessboard"` to the
   outer `Border` to satisfy the *NameNotNull* rule (Accessibility Checker error at line 16).

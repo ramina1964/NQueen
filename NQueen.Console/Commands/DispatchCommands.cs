@@ -5,7 +5,7 @@
 /// This app always shows both the total count of unique solutions and a few example solutions (up to a cap).
 /// This approach is memory-efficient and informative for all board sizes.
 /// </summary>
-public partial class DispatchCommands
+public class DispatchCommands
 {
     public static void RunInteractiveMenu(IServiceProvider services)
     {
@@ -194,13 +194,6 @@ public partial class DispatchCommands
         return IsExitRequested(val);
     }
 
-    public static Regex RegexSpaces() => _whiteSpacesRegex;
-
-    [GeneratedRegex("\\s+", RegexOptions.Compiled)]
-    private static partial Regex genRegEx();
-
     private static bool IsExitRequested(string val) =>
         val == "exit" || val == "quit" || val == "e" || val == "q" || val == "0";
-
-    private static readonly Regex _whiteSpacesRegex = genRegEx();
 }

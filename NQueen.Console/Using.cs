@@ -1,6 +1,5 @@
 ﻿global using Microsoft.Extensions.DependencyInjection;
 global using NQueen.ConsoleApp.Commands;
-global using NQueen.ConsoleApp.Interfaces;
 global using NQueen.ConsoleApp.Services;
 global using NQueen.Domain.Context;
 global using NQueen.Domain.Enums;
@@ -10,7 +9,5 @@ global using NQueen.Domain.Settings;
 global using NQueen.Kernel.Solvers;
 global using NQueen.Shared.Utils;
 global using System;
-global using System.Diagnostics;
 global using System.Linq;
-global using System.Text.RegularExpressions;
 global using System.Threading.Tasks;
