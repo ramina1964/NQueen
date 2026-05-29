@@ -164,10 +164,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                     ParallelRootSplitDepth = 3;
                 }
 
-                if (BoardSize <= NQueen.Domain.Settings.SimulationSettings.ParallelAllAutoEnableThresholdN)
-                    _solutionCount = EnumerateAllAndReturnCount();
-                else
-                    EnumerateAllAdaptive(countOnly: true);
+                EnumerateAllAdaptive(countOnly: true);
             }
             ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
             return;
@@ -541,12 +538,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
             if (EnableEvents && !_eventsSuppressedAfterCap)
                 SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
         }
-    }
-
-    private ulong EnumerateAllAndReturnCount()
-    {
-        EnumerateAllAdaptive(countOnly: true);
-        return _solutionCount;
     }
 
     private bool ValidateRows(int[] rows)
