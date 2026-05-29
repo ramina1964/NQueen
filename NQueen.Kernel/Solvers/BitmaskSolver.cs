@@ -191,8 +191,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
         SearchOptimizations.Configure(
             EnablePrefixMinimalityPruning,
-            EnablePartialReflectionPruning,
-            incrementalCanonicalization: false);
+            EnablePartialReflectionPruning);
 
         ThreadPool.SetMinThreads(Environment.ProcessorCount, Environment.ProcessorCount);
 
@@ -228,8 +227,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
             EnablePartialReflectionPruning = origReflection;
             SearchOptimizations.Configure(
                 EnablePrefixMinimalityPruning,
-                EnablePartialReflectionPruning,
-                incrementalCanonicalization: false);
+                EnablePartialReflectionPruning);
         }
     }
 
@@ -245,8 +243,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
         SearchOptimizations.Configure(
             EnablePrefixMinimalityPruning,
-            EnablePartialReflectionPruning,
-            incrementalCanonicalization: false);
+            EnablePartialReflectionPruning);
 
         int firstRowLimitExclusive = (n + 1) / 2;
         ulong fullMask = (n == 64) ? ulong.MaxValue : ((1UL << n) - 1UL);
@@ -365,8 +362,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
             EnablePartialReflectionPruning = origReflection;
             SearchOptimizations.Configure(
                 EnablePrefixMinimalityPruning,
-                EnablePartialReflectionPruning,
-                incrementalCanonicalization: false);
+                EnablePartialReflectionPruning);
         }
 
         return (ulong)total;

@@ -132,9 +132,6 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _memoryConsumption = "0";
 
-    public string MemoryUsage => MemoryConsumption;
-    partial void OnMemoryConsumptionChanged(string value) => OnPropertyChanged(nameof(MemoryUsage));
-
     [ObservableProperty]
     private string _elapsedTimeInSec = string.Empty;
 

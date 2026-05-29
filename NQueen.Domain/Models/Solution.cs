@@ -31,7 +31,7 @@ public class Solution
         BoardSize = boardSize;
         _packed = packedRows;
         _formatter = formatter;
-        Positions = new LazyPositionListLazy(this); // lazy until unpack
+        Positions = new PackedPositionList(this); // lazy until unpack
     }
 
     public int? Id { get; }
@@ -46,7 +46,7 @@ public class Solution
             if (_packed.HasValue)
             {
                 _queenPositions = Unpack(_packed.Value, BoardSize);
-                if (Positions is LazyPositionListLazy proxy)
+                if (Positions is PackedPositionList proxy)
                     proxy.Realize(_queenPositions);
                 return _queenPositions;
             }
@@ -78,11 +78,11 @@ public class Solution
     private readonly ISolutionFormatter _formatter;
     private string? _details;
 
-    private sealed class LazyPositionListLazy : IReadOnlyList<Position>
+    private sealed class PackedPositionList : IReadOnlyList<Position>
     {
         private int[]? _rows;
         private readonly Solution _owner;
-        public LazyPositionListLazy(Solution owner) => _owner = owner;
+        public PackedPositionList(Solution owner) => _owner = owner;
         public void Realize(int[] rows) => _rows = rows;
         public Position this[int index]
         {
