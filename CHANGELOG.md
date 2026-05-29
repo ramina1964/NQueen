@@ -4,7 +4,141 @@ All notable changes to this project are documented here.
 
 ---
 
-## [Unreleased] — branch `refactor/consolidate`
+## [Unreleased]
+
+### Added (NQueen.Benchmarking)
+- **`ConsolePruningImpactBenchmarks.cs`** — two new benchmark classes
+  (`ConsolePruningImpactAllBenchmark`, `ConsolePruningImpactUniqueBenchmark`) that measure
+  the performance difference between the old Console solver configuration (no pruning,
+  events on) and the new one (pruning on, events off, adaptive depth) across N = 12, 14, 16.
+  Measured results on Intel i7-14700K / .NET 10.0.8:
+  - Unique N=12: **−17%** (891 µs vs 1,076 µs)
+  - Unique N=14: **−6%** (13.5 ms vs 14.4 ms)
+  - Unique N=16: flat (within noise — parallel saturation dominates)
+  - All mode N=12–16: flat (half-board restriction already dominates search reduction)
+- **`Program.cs`** — default run updated to `ConsolePruningImpactAllBenchmark` +
+  `ConsolePruningImpactUniqueBenchmark`.
+
+### Fixed (NQueen.Console)
+- **`DispatchCommands.cs`** — interactive solver branches now set `EnableEvents = false`
+  (eliminates wasted event firing with no subscribers), `IsSolverCanceled = false` (prevents
+  stale cancellation state on repeated runs), `EnablePrefixMinimalityPruning = true`,
+  `EnablePartialReflectionPruning = true`, and `UseAdaptiveDepth = boardSize >= 14` —
+  matching the GUI's kernel configuration for equivalent performance.
+  Also switched bare `var solver` to `using var solver` to fix a resource leak.
+- **`DispatchCommands.cs`** — All-mode interactive path now sets
+  `EnableHalfBoardRestriction = boardSize >= 15`, consistent with the non-interactive path
+  and the GUI.
+- **`Program.cs`** — non-interactive solver block extended with `IsSolverCanceled = false`,
+  `EnablePrefixMinimalityPruning = true`, `EnablePartialReflectionPruning = true`, and
+  `UseAdaptiveDepth = size >= 14` to match the GUI's optimisation settings.
+
+### Refactored (NQueen.Benchmarking)
+- **File consolidation** — reduced 14 benchmark source files to 7 thematic files for
+  improved readability and SRP compliance:
+  - `SymmetryBenchmarks.cs` — merges `SymmetryHelperCanonicalFormBenchmark`,
+    `SymmetryHelperCanonicalKeyBenchmark`, `SymmetryPackedBenchmarks`,
+    `SymmetryPrunedUniqueCounterBenchmark` (4 old files → 1).
+  - `UniqueModeBenchmarks.cs` — merges `UniqueSolutionCounterPackedBenchmark`,
+    `CountUniqueFastHalfBoardBenchmark`, `CountUniqueHalfBoardBenchmarks`,
+    `UniqueCountOnlyHighNBenchmark` (4 old files → 1).
+  - `AllModeBenchmarks.cs` — merges `AllCountOnlyN18Benchmark`,
+    `CombinedSolverBenchmarks` (All-mode half), `MediumPrefixPruningParallelBenchmark`
+    (3 old files → 1); `AllPrefixPruningBenchmark` replaces
+    `MediumPrefixPruningParallelBenchmark` with cleaner parameterised design.
+  - `UniqueModeVariantsBenchmark.cs` — carries the Unique-mode half of
+    `CombinedSolverBenchmarks` as a standalone file.
+- **11 style/correctness issues resolved** across all benchmark files:
+  - Fixed 3 misaligned closing braces (`SymmetryPackedBenchmarks.cs`,
+    `CountUniqueHalfBoardBenchmarks.cs`, `UniqueCountOnlyHighNBenchmark.cs`).
+  - Fixed `BitmaskSolver` resource leak in `SymmetryAddIfUniquePackedBenchmark`
+    (`GlobalSetup` now uses `using var solver`).
+  - Extracted `NoopFormatter` and replaced 12 `new SolutionFormatter()` instances in
+    count-only benchmarks.
+  - Removed all `SetSimulationToken` calls (redundant when `EnableEvents = false`).
+  - Converted constructor-style solver init to object-initialiser style throughout.
+  - Replaced `new int[…]` scratch allocations with `GetScratchBufferSize()`.
+  - Changed `private int[] field = null!;` declarations to auto-properties.
+  - Renamed `N` → `BoardSize` in `NQueenBench` for naming consistency.
+  - Removed redundant `global using System` and `global using System.Linq` from
+    `Usings.cs` (covered by `<ImplicitUsings>enable</ImplicitUsings>`).
+- **`Program.cs`** — updated default `BenchmarkRunner.Run<>` reference from removed
+  `UniqueCountOnlyHighNBenchmark` to consolidated `UniqueHighNBenchmark`.
+
+---
+
+## [1.0.0] — 2026-05-29  _(branch `refactor/consolidate` merged to `main`)_
+
+### Fixed (NQueen.Console)
+- **`Program.cs`** — `--halfboard` CLI flag no longer silently does nothing when `--mode`
+  is not `all`. A yellow warning is now printed and the flag is cleared before the solver
+  runs, making the ignored intent explicit to the user.
+
+### Added (NQueen.Kernel — XML documentation)
+- **`BitmaskSolver.cs`** — added `<summary>` XML doc comments to all 11 previously
+  undocumented public configuration properties:
+  `EnableEvents`, `AllStorageMode`, `UniqueStorageMode`, `UseCountOnlyUniqueMode`,
+  `UseCountOnlyAllMode`, `UseParallel`, `ParallelRootSplitDepth`, `UseAdaptiveDepth`,
+  `EnablePrefixMinimalityPruning`, `EnablePartialReflectionPruning`,
+  `EnableHalfBoardRestriction`.
+  Each comment describes the property's effect, default value, and any interactions with
+  related properties or mode constraints.
+
+### Fixed (CI)
+- **`.github/workflows/ci.yml`** — rewrote the existing workflow to fix several bugs and
+  improve reliability:
+  - Added missing `: ` separators in `env:` values (`DOTNET_CLI_TELEMETRY_OPTOUT` and
+    `DOTNET_SKIP_FIRST_TIME_EXPERIENCE` were silently ignored before).
+  - Removed `dotnet-quality: 'preview'` — .NET 10 is GA; the flag caused unnecessary
+    pre-release SDK resolution.
+  - Added explicit `dotnet build --configuration Release` step before test so
+    `--no-build` in the test step is valid and faster.
+  - Added `--no-build` and `--configuration Release` to `dotnet test`.
+  - Excluded `NQueen.Benchmarking` from coverage collection (it is an exe, not a test
+    assembly, and caused the test runner to fail trying to discover tests in it).
+  - Extended `push` branch triggers to also cover `refactor/**`, `feature/**`, `fix/**`
+    so CI runs on all active development branches, not just `main`.
+  - Added `pull_request: branches: [main]` filter so PRs into other branches do not
+    trigger unnecessary runs.
+  - Added `retention-days: 14` to the coverage artifact upload.
+  - Renamed workflow from `ci` to `CI` for display clarity.
+
+### Fixed (project configuration)
+- **`NQueen.ConsoleApp.csproj`** — changed `TargetFramework` from `net10.0-windows` to
+  `net10.0`; the Console project has no Windows-specific dependencies (no WPF, no WinForms,
+  no P/Invoke), so the `-windows` suffix was unnecessary and restricted portability.
+
+### Removed (NQueen.Benchmarking dead template artefacts)
+- **`Properties\Resources.resx`** and **`Properties\Resources.Designer.cs`** — deleted;
+  these were left over from the project template and are never referenced by any benchmark.
+- **`NQueen.Benchmarking.csproj`** — removed the dead `<EmbeddedResource>` entry that
+  pointed to the now-deleted `Resources.resx`.
+
+### Removed (NQueen.Benchmarking dead code)
+- **`Usings.cs`** — removed dead `global using NQueen.Kernel;`; the root namespace has no
+  public types after `BitboardNQueenSolver` moved to `NQueen.Kernel.Solvers`.
+- **`AllCountOnlyN18Benchmark.cs`**, **`CountUniqueFastHalfBoardBenchmark.cs`**,
+  **`CountUniqueHalfBoardBenchmarks.cs`** — removed three identical copy-pasted private
+  `NoopFormatter` nested classes, replaced by a single shared top-level class.
+
+### Added (NQueen.Benchmarking)
+- **`NoopFormatter.cs`** — new shared `internal sealed class NoopFormatter` consolidating
+  the three previously duplicated nested formatters.
+- **`NQueenBench.cs`** — extracted `NQueenBench` benchmark class out of `Program.cs` into
+  its own file; each benchmark class now lives in its own file.
+
+### Fixed (NQueen.Benchmarking)
+- **`Program.cs`** — removed `NQueenBench` class (moved to `NQueenBench.cs`); fixed
+  corrupted `…` ellipsis character in the startup console message.
+- **`UniqueSolutionCounterPackedBenchmark.cs`** — added `using var` to `BitmaskSolver`
+  for consistent deterministic disposal, matching every other benchmark.
+- **`SymmetryHelperCanonicalKeyBenchmark.cs`** — changed `int[]?` fields to `int[] = null!`
+  and removed the unreachable null-guard inside `[Benchmark]` (`[GlobalSetup]` always runs
+  before `[Benchmark]` in BenchmarkDotNet).
+- **`CombinedSolverBenchmarks.cs`** — reduced `AllModeVariantsBenchmark` parameter space
+  from 144 combinations (3×3×2×2×4) to 32 (2×2×2×4) by collapsing the two independent
+  pruning booleans into a single `EnablePruning` flag and trimming the size/depth ranges to
+  the two most representative values each.
 
 ### Removed (NQueen.Console dead code)
 - **`CommandConstants.cs`** — entire file deleted; every constant was only referenced from
