@@ -191,7 +191,7 @@ __pycache__/
 # -------------------------
 # Code Coverage
 # Raw intermediate files and most generated assets are NOT tracked.
-# Only the summary page and the 4 main badges are tracked.
+# Only the summary page, the merged Cobertura XML, and the 4 main badges are tracked.
 # TODO (template): If the new repo does not track coverage report files,
 #                  replace the selective un-ignore block below with just:
 #                    CoverageReport/
@@ -208,6 +208,7 @@ CoverageReport/*
 
 # ... then selectively un-ignore what we want to keep
 !CoverageReport/index.html
+!CoverageReport/Cobertura.xml
 !CoverageReport/badge_linecoverage.svg
 !CoverageReport/badge_branchcoverage.svg
 !CoverageReport/badge_methodcoverage.svg
