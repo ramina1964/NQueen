@@ -26,9 +26,4 @@ public class CountUniqueHalfBoardBenchmarks
             throw new InvalidOperationException("Unexpected zero unique solutions.");
         return results.SolutionsCount;
     }
-
-    private sealed class NoopFormatter : ISolutionFormatter
-    {
-        public string FormatSolutions(IReadOnlyList<Position> queenPositions, IndexingType indexingType, int boardSize) => string.Empty;
     }
-}

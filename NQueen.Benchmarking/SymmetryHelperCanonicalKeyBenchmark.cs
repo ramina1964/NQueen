@@ -17,17 +17,15 @@ public class SymmetryHelperCanonicalKeyBenchmark
     [Benchmark]
     public UInt128 GetCanonicalKey()
     {
-        if (_solution == null || _scratch == null)
-            throw new InvalidOperationException("Benchmark not initialized. Call Setup() first.");
         _lastKey = SymmetryHelper.GetCanonicalKey(_solution, _scratch, out _);
 
-        // Guard logic to prevent JIT elision
+        // Guard to prevent JIT elision of the result.
         if (BoardSize > 8 && _lastKey == 0)
             throw new InvalidOperationException();
         return _lastKey;
     }
 
-    private int[]? _solution;
-    private int[]? _scratch;
+    private int[] _solution = null!;
+    private int[] _scratch = null!;
     private UInt128 _lastKey;
 }

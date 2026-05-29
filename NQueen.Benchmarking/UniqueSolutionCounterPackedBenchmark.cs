@@ -7,7 +7,7 @@ public class UniqueSolutionCounterPackedBenchmark
     [Benchmark]
     public ulong CountUniquePacked()
     {
-        var solver = new BitmaskSolver(BoardSize,
+        using var solver = new BitmaskSolver(BoardSize,
             SolutionMode.Unique, DisplayMode.Hide, _formatter)
         {
             EnableEvents = false,

@@ -26,9 +26,4 @@ public class AllCountOnlyN18Benchmark
         solver.SetSimulationToken(Guid.NewGuid());
         return solver.Solve().SolutionsCount;
     }
-
-    private sealed class NoopFormatter : ISolutionFormatter
-    {
-        public string FormatSolutions(IReadOnlyList<Position> queenPositions, IndexingType indexingType, int boardSize) => string.Empty;
     }
-}

@@ -37,18 +37,17 @@ public class UniqueModeVariantsBenchmark
 // Consolidated benchmark suite for All mode variants.
 public class AllModeVariantsBenchmark
 {
-    [Params(12, 14, 16)]
+    // Two representative sizes; N=12 is medium, N=15 is where half-board restriction kicks in.
+    [Params(12, 15)]
     public int BoardSize { get; set; }
 
-    // SplitDepth -1 can be reserved for heuristic later; keep explicit small depths.
-    [Params(1, 2, 3)]
+    // SplitDepth 2 (shallow) vs 3 (recommended default).
+    [Params(2, 3)]
     public int SplitDepth { get; set; }
 
+    // false = no pruning baseline, true = both prefix + reflection pruning enabled.
     [Params(false, true)]
-    public bool EnablePrefixReflection { get; set; }
-
-    [Params(false, true)]
-    public bool EnableHalfBoardRestriction { get; set; }
+    public bool EnablePruning { get; set; }
 
     private readonly ISolutionFormatter _formatter = new SolutionFormatter();
 
@@ -60,9 +59,9 @@ public class AllModeVariantsBenchmark
             EnableEvents = false,
             UseParallel = false,
             UseCountOnlyAllMode = true,
-            EnablePrefixMinimalityPruning = EnablePrefixReflection,
-            EnablePartialReflectionPruning = EnablePrefixReflection,
-            EnableHalfBoardRestriction = EnableHalfBoardRestriction && BoardSize >= 15
+            EnablePrefixMinimalityPruning = EnablePruning,
+            EnablePartialReflectionPruning = EnablePruning,
+            EnableHalfBoardRestriction = EnablePruning && BoardSize >= 15
         };
         return solver.Solve().SolutionsCount;
     }
@@ -75,9 +74,9 @@ public class AllModeVariantsBenchmark
             EnableEvents = false,
             UseParallel = false,
             UseCountOnlyAllMode = false,
-            EnablePrefixMinimalityPruning = EnablePrefixReflection,
-            EnablePartialReflectionPruning = EnablePrefixReflection,
-            EnableHalfBoardRestriction = EnableHalfBoardRestriction && BoardSize >= 15
+            EnablePrefixMinimalityPruning = EnablePruning,
+            EnablePartialReflectionPruning = EnablePruning,
+            EnableHalfBoardRestriction = EnablePruning && BoardSize >= 15
         };
         var results = solver.Solve();
         return (results.Solutions.Count, results.SolutionsCount);
@@ -92,9 +91,9 @@ public class AllModeVariantsBenchmark
             UseParallel = true,
             ParallelRootSplitDepth = SplitDepth,
             UseCountOnlyAllMode = true,
-            EnablePrefixMinimalityPruning = EnablePrefixReflection,
-            EnablePartialReflectionPruning = EnablePrefixReflection,
-            EnableHalfBoardRestriction = EnableHalfBoardRestriction && BoardSize >= 15
+            EnablePrefixMinimalityPruning = EnablePruning,
+            EnablePartialReflectionPruning = EnablePruning,
+            EnableHalfBoardRestriction = EnablePruning && BoardSize >= 15
         };
         return solver.Solve().SolutionsCount;
     }
@@ -108,9 +107,9 @@ public class AllModeVariantsBenchmark
             UseParallel = true,
             ParallelRootSplitDepth = SplitDepth,
             UseCountOnlyAllMode = false,
-            EnablePrefixMinimalityPruning = EnablePrefixReflection,
-            EnablePartialReflectionPruning = EnablePrefixReflection,
-            EnableHalfBoardRestriction = EnableHalfBoardRestriction && BoardSize >= 15
+            EnablePrefixMinimalityPruning = EnablePruning,
+            EnablePartialReflectionPruning = EnablePruning,
+            EnableHalfBoardRestriction = EnablePruning && BoardSize >= 15
         };
         var results = solver.Solve();
         return (results.Solutions.Count, results.SolutionsCount);

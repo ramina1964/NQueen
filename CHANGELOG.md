@@ -6,6 +6,32 @@ All notable changes to this project are documented here.
 
 ## [Unreleased] — branch `refactor/consolidate`
 
+### Removed (NQueen.Benchmarking dead code)
+- **`Usings.cs`** — removed dead `global using NQueen.Kernel;`; the root namespace has no
+  public types after `BitboardNQueenSolver` moved to `NQueen.Kernel.Solvers`.
+- **`AllCountOnlyN18Benchmark.cs`**, **`CountUniqueFastHalfBoardBenchmark.cs`**,
+  **`CountUniqueHalfBoardBenchmarks.cs`** — removed three identical copy-pasted private
+  `NoopFormatter` nested classes, replaced by a single shared top-level class.
+
+### Added (NQueen.Benchmarking)
+- **`NoopFormatter.cs`** — new shared `internal sealed class NoopFormatter` consolidating
+  the three previously duplicated nested formatters.
+- **`NQueenBench.cs`** — extracted `NQueenBench` benchmark class out of `Program.cs` into
+  its own file; each benchmark class now lives in its own file.
+
+### Fixed (NQueen.Benchmarking)
+- **`Program.cs`** — removed `NQueenBench` class (moved to `NQueenBench.cs`); fixed
+  corrupted `…` ellipsis character in the startup console message.
+- **`UniqueSolutionCounterPackedBenchmark.cs`** — added `using var` to `BitmaskSolver`
+  for consistent deterministic disposal, matching every other benchmark.
+- **`SymmetryHelperCanonicalKeyBenchmark.cs`** — changed `int[]?` fields to `int[] = null!`
+  and removed the unreachable null-guard inside `[Benchmark]` (`[GlobalSetup]` always runs
+  before `[Benchmark]` in BenchmarkDotNet).
+- **`CombinedSolverBenchmarks.cs`** — reduced `AllModeVariantsBenchmark` parameter space
+  from 144 combinations (3×3×2×2×4) to 32 (2×2×2×4) by collapsing the two independent
+  pruning booleans into a single `EnablePruning` flag and trimming the size/depth ranges to
+  the two most representative values each.
+
 ### Removed (NQueen.Console dead code)
 - **`CommandConstants.cs`** — entire file deleted; every constant was only referenced from
   `CommandProcessor` or `HelpCommands`, both of which are also removed.

@@ -1,25 +1,10 @@
-namespace NQueen.Benchmarking;
-
-[MemoryDiagnoser]
-[ThreadingDiagnoser]
-[CPUUsageDiagnoser]
-public class NQueenBench
-{
-    [Params(20)]
-    public int N { get; set; }
-
-    [Benchmark]
-    public long CountOnly()
-    {
-        return BitboardNQueenSolver.CountSolutions(N, parallel: true);
-    }
-}
+ï»¿namespace NQueen.Benchmarking;
 
 internal class Program
 {
     private static void Main(string[] args)
     {
-        Console.WriteLine("Running NQueen benchmarks (Release)…");
+        Console.WriteLine("Running NQueen benchmarks (Release)...");
         var benchMode = Environment.GetEnvironmentVariable("BENCHMARK_MODE");
         if ((benchMode == "1") || (args != null && args.Any(a => a.StartsWith("--"))))
         {
