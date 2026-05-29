@@ -4,6 +4,42 @@ All notable changes to this project are documented here.
 
 ---
 
+## [Unreleased]
+
+### Refactored (NQueen.Benchmarking)
+- **File consolidation** — reduced 14 benchmark source files to 7 thematic files for
+  improved readability and SRP compliance:
+  - `SymmetryBenchmarks.cs` — merges `SymmetryHelperCanonicalFormBenchmark`,
+    `SymmetryHelperCanonicalKeyBenchmark`, `SymmetryPackedBenchmarks`,
+    `SymmetryPrunedUniqueCounterBenchmark` (4 old files → 1).
+  - `UniqueModeBenchmarks.cs` — merges `UniqueSolutionCounterPackedBenchmark`,
+    `CountUniqueFastHalfBoardBenchmark`, `CountUniqueHalfBoardBenchmarks`,
+    `UniqueCountOnlyHighNBenchmark` (4 old files → 1).
+  - `AllModeBenchmarks.cs` — merges `AllCountOnlyN18Benchmark`,
+    `CombinedSolverBenchmarks` (All-mode half), `MediumPrefixPruningParallelBenchmark`
+    (3 old files → 1); `AllPrefixPruningBenchmark` replaces
+    `MediumPrefixPruningParallelBenchmark` with cleaner parameterised design.
+  - `UniqueModeVariantsBenchmark.cs` — carries the Unique-mode half of
+    `CombinedSolverBenchmarks` as a standalone file.
+- **11 style/correctness issues resolved** across all benchmark files:
+  - Fixed 3 misaligned closing braces (`SymmetryPackedBenchmarks.cs`,
+    `CountUniqueHalfBoardBenchmarks.cs`, `UniqueCountOnlyHighNBenchmark.cs`).
+  - Fixed `BitmaskSolver` resource leak in `SymmetryAddIfUniquePackedBenchmark`
+    (`GlobalSetup` now uses `using var solver`).
+  - Extracted `NoopFormatter` and replaced 12 `new SolutionFormatter()` instances in
+    count-only benchmarks.
+  - Removed all `SetSimulationToken` calls (redundant when `EnableEvents = false`).
+  - Converted constructor-style solver init to object-initialiser style throughout.
+  - Replaced `new int[…]` scratch allocations with `GetScratchBufferSize()`.
+  - Changed `private int[] field = null!;` declarations to auto-properties.
+  - Renamed `N` → `BoardSize` in `NQueenBench` for naming consistency.
+  - Removed redundant `global using System` and `global using System.Linq` from
+    `Usings.cs` (covered by `<ImplicitUsings>enable</ImplicitUsings>`).
+- **`Program.cs`** — updated default `BenchmarkRunner.Run<>` reference from removed
+  `UniqueCountOnlyHighNBenchmark` to consolidated `UniqueHighNBenchmark`.
+
+---
+
 ## [1.0.0] — 2026-05-29  _(branch `refactor/consolidate` merged to `main`)_
 
 ### Fixed (NQueen.Console)

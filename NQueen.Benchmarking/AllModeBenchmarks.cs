@@ -1,40 +1,38 @@
 namespace NQueen.Benchmarking;
 
-public class UniqueModeVariantsBenchmark
+/// <summary>All-mode count-only at N=18 — single-size focused timing.</summary>
+[Orderer(SummaryOrderPolicy.FastestToSlowest)]
+[RankColumn]
+[CPUUsageDiagnoser]
+public class AllCountOnlyN18Benchmark
 {
-    // Extended range to cover the full CountUniqueFastHalfBoard region (N=16..20)
-    [Params(16, 17, 18, 19, 20)]
+    [Params(18)]
     public int BoardSize { get; set; }
 
-    private readonly ISolutionFormatter _formatter = new SolutionFormatter();
+    private readonly ISolutionFormatter _formatter = new NoopFormatter();
 
-    [Benchmark(Baseline = true, Description = "Unique Count-Only (parallel)")]
-    public ulong Unique_CountOnly()
+    [Benchmark(Baseline = true, Description = "All Parallel Count-Only (N=18)")]
+    public ulong All_Parallel_CountOnly_N18()
     {
-        using var solver = new BitmaskSolver(BoardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter)
+        using var solver = new BitmaskSolver(BoardSize, SolutionMode.All, DisplayMode.Hide, _formatter)
         {
             EnableEvents = false,
-            UseCountOnlyUniqueMode = true,
-            UseParallel = true
+            UseParallel = true,
+            UseCountOnlyAllMode = true,
+            EnablePrefixMinimalityPruning = false,
+            EnablePartialReflectionPruning = false,
+            EnableHalfBoardRestriction = BoardSize >= 15,
+            ParallelRootSplitDepth = 3,
+            UseAdaptiveDepth = true
         };
         return solver.Solve().SolutionsCount;
     }
-
-    [Benchmark(Description = "Unique Materialize (sample, capped)")]
-    public (int materialized, ulong total) Unique_Materialize()
-    {
-        using var solver = new BitmaskSolver(BoardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter)
-        {
-            EnableEvents = false,
-            UseCountOnlyUniqueMode = false,
-            UseParallel = true
-        };
-        var results = solver.Solve();
-        return (results.Solutions.Count, results.SolutionsCount);
-    }
 }
 
-// Consolidated benchmark suite for All mode variants.
+/// <summary>
+/// Compares All-mode strategies across split depths and pruning settings.
+/// 2 sizes × 2 depths × 2 pruning states × 4 methods = 32 combinations.
+/// </summary>
 public class AllModeVariantsBenchmark
 {
     // Two representative sizes; N=12 is medium, N=15 is where half-board restriction kicks in.
@@ -49,7 +47,7 @@ public class AllModeVariantsBenchmark
     [Params(false, true)]
     public bool EnablePruning { get; set; }
 
-    private readonly ISolutionFormatter _formatter = new SolutionFormatter();
+    private readonly ISolutionFormatter _formatter = new NoopFormatter();
 
     [Benchmark(Baseline = true, Description = "All Sequential Count-Only")]
     public ulong All_Sequential_CountOnly()
@@ -113,5 +111,53 @@ public class AllModeVariantsBenchmark
         };
         var results = solver.Solve();
         return (results.Solutions.Count, results.SolutionsCount);
+    }
+}
+
+/// <summary>Compares prefix-pruning impact for All mode across medium board sizes.</summary>
+public class AllPrefixPruningBenchmark
+{
+    [Params(10, 11, 12, 13, 14)]
+    public int BoardSize { get; set; }
+
+    [Params(0, 2, 4)]
+    public int SplitDepth { get; set; }
+
+    private readonly ISolutionFormatter _formatter = new NoopFormatter();
+
+    [Benchmark(Baseline = true)]
+    public ulong CountOnly_Baseline()
+    {
+        using var solver = new BitmaskSolver(BoardSize, SolutionMode.All, DisplayMode.Hide, _formatter, maxSolutionsInOutput: 0)
+        {
+            EnableEvents = false,
+            UseParallel = true,
+            ParallelRootSplitDepth = SplitDepth,
+            UseCountOnlyAllMode = true,
+            EnablePrefixMinimalityPruning = false,
+            EnablePartialReflectionPruning = false
+        };
+        var results = solver.Solve();
+        if (results.SolutionsCount == 0)
+            throw new InvalidOperationException();
+        return results.SolutionsCount;
+    }
+
+    [Benchmark]
+    public ulong CountOnly_WithPrefixReflection()
+    {
+        using var solver = new BitmaskSolver(BoardSize, SolutionMode.All, DisplayMode.Hide, _formatter, maxSolutionsInOutput: 0)
+        {
+            EnableEvents = false,
+            UseParallel = true,
+            ParallelRootSplitDepth = SplitDepth,
+            UseCountOnlyAllMode = true,
+            EnablePrefixMinimalityPruning = true,
+            EnablePartialReflectionPruning = true
+        };
+        var results = solver.Solve();
+        if (results.SolutionsCount == 0)
+            throw new InvalidOperationException();
+        return results.SolutionsCount;
     }
 }

@@ -6,8 +6,8 @@ namespace NQueen.Benchmarking;
 public class NQueenBench
 {
     [Params(20)]
-    public int N { get; set; }
+    public int BoardSize { get; set; }
 
     [Benchmark]
-    public long CountOnly() => BitboardNQueenSolver.CountSolutions(N, parallel: true);
+    public long CountOnly() => BitboardNQueenSolver.CountSolutions(BoardSize, parallel: true);
 }

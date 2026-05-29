@@ -15,6 +15,6 @@ internal class Program
         }
 
         // Default local run: execute the merged Unique + CountOnly high-N benchmark (N=18,19,20).
-        BenchmarkRunner.Run<UniqueCountOnlyHighNBenchmark>();
+        BenchmarkRunner.Run<UniqueHighNBenchmark>();
     }
 }
