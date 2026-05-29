@@ -179,7 +179,7 @@ internal sealed class BitmaskSearchEngine
             queenRows[col] = row;
 
             if (col >= pruneDepthGate &&
-                SearchOptimizations.ShouldPrunePrefixIncremental(
+                SearchHelpers.ShouldPrunePrefixIncremental(
                     s.QueenRows, col, N, reflectionEnabled, prefixEnabled,
                     ref reflectionEqual, ref minimalityEqual))
             {
@@ -290,7 +290,7 @@ internal sealed class BitmaskSearchEngine
             rows[col] = row;
 
             if (col >= pruneDepthGate &&
-                Engines.SearchOptimizations.ShouldPrunePrefixIncremental(
+                SearchHelpers.ShouldPrunePrefixIncremental(
                     rows, col, N, reflectionEnabled, prefixEnabled, ref reflectionEqual, ref minimalityEqual))
             {
                 rows[col] = -1;

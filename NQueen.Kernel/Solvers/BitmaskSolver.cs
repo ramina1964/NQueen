@@ -317,7 +317,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                                 bool savedReflectionEqual = reflectionEqual;
                                 bool savedMinimalityEqual = minimalityEqual;
 
-                                if (SearchOptimizations.ShouldPrunePrefixIncremental(rows, col, n, reflectionEnabled, minimalityEnabled,
+                                if (SearchHelpers.ShouldPrunePrefixIncremental(rows, col, n, reflectionEnabled, minimalityEnabled,
                                     ref reflectionEqual, ref minimalityEqual))
                                 {
                                     reflectionEqual = savedReflectionEqual;

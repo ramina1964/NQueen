@@ -9,7 +9,7 @@ public class SolverTests
         var solver = new Mock<ISolverBackEnd>();
         solver.Setup(s => s.GetSimResultsAsync(It.IsAny<SimulationContext>()))
             .ReturnsAsync(new SimulationResults(
-                [new Solution([0, 1, 2], new DefaultSolutionFormatter(), id: null)],
+                [new Solution([0, 1, 2], new SolutionFormatter(), id: null)],
                 totalSolutions: 1UL,
                 ElapsedTimeInSec: 0.0));
 
@@ -60,7 +60,7 @@ public class SolverTests
             boardSize: 4,
             solutionMode: SolutionMode.Single,
             displayMode: DisplayMode.Visualize,
-            solutionFormatter: new DefaultSolutionFormatter());
+            solutionFormatter: new SolutionFormatter());
 
         solver.EnableEvents = true;
         int solutionFoundEvents = 0;
@@ -83,7 +83,7 @@ public class SolverTests
             boardSize: 17,
             solutionMode: SolutionMode.Single,
             displayMode: DisplayMode.Visualize,
-            solutionFormatter: new DefaultSolutionFormatter());
+            solutionFormatter: new SolutionFormatter());
 
         // Disable events to avoid unnecessary event dispatch overhead for this scenario
         solver.EnableEvents = false;
@@ -104,7 +104,7 @@ public class SolverTests
             boardSize: 8,
             solutionMode: SolutionMode.Single,
             displayMode: DisplayMode.Visualize,
-            solutionFormatter: new DefaultSolutionFormatter())
+            solutionFormatter: new SolutionFormatter())
         {
             EnableEvents = true
         };

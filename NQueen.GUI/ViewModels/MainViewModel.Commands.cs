@@ -313,4 +313,19 @@ public sealed partial class MainViewModel
     }
 
     private Guid _currentSimulationToken = Guid.Empty;
+    private Solution? _selectedSolution;
+    public Solution? SelectedSolution
+    {
+        get => _selectedSolution;
+        set
+        {
+            if (!SetProperty(ref _selectedSolution, value)) return;
+            if (value == null || ChessboardVm == null) return;
+            StopVisualizationTimer();
+            var n = value.BoardSize;
+            if (ChessboardVm.Squares.Count == 0 || !ChessboardVm.IsBoardStateUpdatedAndSquaresPopulated(n))
+                ChessboardVm.CreateSquares(n);
+            ChessboardVm.PlaceQueens(value.Positions);
+        }
+    }
 }

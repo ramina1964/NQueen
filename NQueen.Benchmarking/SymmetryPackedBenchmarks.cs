@@ -11,7 +11,8 @@ public class SymmetryAddIfUniquePackedBenchmark
     [GlobalSetup]
     public void Setup()
     {
-        var solver = new BitmaskSolver(BoardSize, SolutionMode.All, DisplayMode.Hide, new DefaultSolutionFormatter())
+        var formatter = new SolutionFormatter();
+        var solver = new BitmaskSolver(BoardSize, SolutionMode.Unique, DisplayMode.Hide, formatter)
         {
             EnableEvents = false,
             UseParallel = true

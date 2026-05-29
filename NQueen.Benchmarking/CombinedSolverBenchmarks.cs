@@ -6,7 +6,7 @@ public class UniqueModeVariantsBenchmark
     [Params(16, 17, 18, 19, 20)]
     public int BoardSize { get; set; }
 
-    private readonly ISolutionFormatter _formatter = new DefaultSolutionFormatter();
+    private readonly ISolutionFormatter _formatter = new SolutionFormatter();
 
     [Benchmark(Baseline = true, Description = "Unique Count-Only (parallel)")]
     public ulong Unique_CountOnly()
@@ -50,7 +50,7 @@ public class AllModeVariantsBenchmark
     [Params(false, true)]
     public bool EnableHalfBoardRestriction { get; set; }
 
-    private readonly ISolutionFormatter _formatter = new DefaultSolutionFormatter();
+    private readonly ISolutionFormatter _formatter = new SolutionFormatter();
 
     [Benchmark(Baseline = true, Description = "All Sequential Count-Only")]
     public ulong All_Sequential_CountOnly()

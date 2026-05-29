@@ -80,7 +80,7 @@ public class Program
         }
 
         // Formatter
-        ISolutionFormatter formatter = new DefaultSolutionFormatter();
+        var formatter = new SolutionFormatter();
         using var solver = new BitmaskSolver(size, mode, DisplayMode.Hide, formatter, maxSolutionsInOutput: displayedCap)
         {
             EnableEvents = false,
