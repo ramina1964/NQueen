@@ -40,27 +40,64 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
     public bool IsSolverCanceled { get; set; }
 
+    /// <summary>When <see langword="true"/> (default), raises <see cref="QueenPlaced"/>,
+    /// <see cref="SolutionFound"/> and <see cref="ProgressValueChanged"/> during solving.
+    /// Set to <see langword="false"/> in benchmarks or headless runs to eliminate event overhead.</summary>
     public bool EnableEvents { get; set; } = true;
 
+    /// <summary>Controls how All-mode solutions are stored.
+    /// <see cref="ResultStorageMode.Materialize"/> collects sample solutions up to the display cap;
+    /// <see cref="ResultStorageMode.CountOnly"/> skips allocation entirely.
+    /// Overridden at runtime when <see cref="UseCountOnlyAllMode"/> is <see langword="true"/>.</summary>
     public ResultStorageMode AllStorageMode { get; set; } = ResultStorageMode.Materialize;
 
+    /// <summary>Controls how Unique-mode solutions are stored.
+    /// <see cref="ResultStorageMode.Materialize"/> collects sample solutions up to the display cap;
+    /// <see cref="ResultStorageMode.CountOnly"/> skips allocation entirely.
+    /// Overridden at runtime when <see cref="UseCountOnlyUniqueMode"/> is <see langword="true"/>.</summary>
     public ResultStorageMode UniqueStorageMode { get; set; } = ResultStorageMode.Materialize;
 
+    /// <summary>When <see langword="true"/>, Unique mode counts solutions without materialising
+    /// any <see cref="Solution"/> objects. Equivalent to setting
+    /// <see cref="UniqueStorageMode"/> to <see cref="ResultStorageMode.CountOnly"/>.</summary>
     public bool UseCountOnlyUniqueMode { get; set; } = false;
 
+    /// <summary>When <see langword="true"/>, All mode counts solutions without materialising
+    /// any <see cref="Solution"/> objects. Equivalent to setting
+    /// <see cref="AllStorageMode"/> to <see cref="ResultStorageMode.CountOnly"/>.</summary>
     public bool UseCountOnlyAllMode { get; set; } = false;
 
+    /// <summary>When <see langword="true"/> (default), the solver dispatches work across all
+    /// logical cores via <see cref="System.Threading.Tasks.Parallel"/>.
+    /// Set to <see langword="false"/> for reproducible single-threaded measurements.</summary>
     public bool UseParallel { get; set; } = true;
 
+    /// <summary>Number of prefix columns fixed before the work is partitioned across threads.
+    /// Higher values create more (smaller) tasks and typically improve load balancing for
+    /// large N, at the cost of more task-scheduling overhead for small N.
+    /// Ignored when <see cref="UseParallel"/> is <see langword="false"/>.
+    /// Default is 1; recommended value for N ≥ 15 is 3.</summary>
     public int ParallelRootSplitDepth { get; set; } = 1;
 
+    /// <summary>When <see langword="true"/>, the solver overrides <see cref="ParallelRootSplitDepth"/>
+    /// with a value chosen automatically based on board size and available cores.</summary>
     public bool UseAdaptiveDepth { get; set; } = false;
 
-    public bool EnablePrefixMinimalityPruning { get; set; } = false; // Opt #1
+    /// <summary>Opt #1 — When <see langword="true"/>, prunes prefixes whose canonical form
+    /// is lexicographically greater than the current partial solution, eliminating
+    /// symmetry-equivalent sub-trees early in the search.</summary>
+    public bool EnablePrefixMinimalityPruning { get; set; } = false;
 
-    public bool EnablePartialReflectionPruning { get; set; } = false; // Opt #14
+    /// <summary>Opt #14 — When <see langword="true"/>, prunes partial solutions whose
+    /// horizontal reflection has already been (or will be) enumerated, halving the
+    /// effective search space for boards with reflective symmetry.</summary>
+    public bool EnablePartialReflectionPruning { get; set; } = false;
 
-    public bool EnableHalfBoardRestriction { get; set; } = false; // new flag (applies to All mode; materialize + count-only)
+    /// <summary>When <see langword="true"/>, restricts the first-column queen to the top half
+    /// of the board and doubles the count, exploiting vertical symmetry.
+    /// Valid only for All mode (both CountOnly and Materialize); ignored for Unique and Single.
+    /// Recommended for N ≥ 15.</summary>
+    public bool EnableHalfBoardRestriction { get; set; } = false;
 
     public void SetSimulationToken(Guid token) => _currentSimToken = token;
 

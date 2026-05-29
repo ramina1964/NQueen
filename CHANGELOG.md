@@ -6,6 +6,21 @@ All notable changes to this project are documented here.
 
 ## [1.0.0] — 2026-05-29  _(branch `refactor/consolidate` merged to `main`)_
 
+### Fixed (NQueen.Console)
+- **`Program.cs`** — `--halfboard` CLI flag no longer silently does nothing when `--mode`
+  is not `all`. A yellow warning is now printed and the flag is cleared before the solver
+  runs, making the ignored intent explicit to the user.
+
+### Added (NQueen.Kernel — XML documentation)
+- **`BitmaskSolver.cs`** — added `<summary>` XML doc comments to all 11 previously
+  undocumented public configuration properties:
+  `EnableEvents`, `AllStorageMode`, `UniqueStorageMode`, `UseCountOnlyUniqueMode`,
+  `UseCountOnlyAllMode`, `UseParallel`, `ParallelRootSplitDepth`, `UseAdaptiveDepth`,
+  `EnablePrefixMinimalityPruning`, `EnablePartialReflectionPruning`,
+  `EnableHalfBoardRestriction`.
+  Each comment describes the property's effect, default value, and any interactions with
+  related properties or mode constraints.
+
 ### Fixed (CI)
 - **`.github/workflows/ci.yml`** — rewrote the existing workflow to fix several bugs and
   improve reliability:

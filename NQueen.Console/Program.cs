@@ -76,6 +76,14 @@ public class Program
         }
 
         // Formatter
+        if (halfBoard && mode != SolutionMode.All)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"Warning: --halfboard is only supported for --mode all. Flag ignored for mode '{mode}'.");
+            Console.ResetColor();
+            halfBoard = false;
+        }
+
         var formatter = new SolutionFormatter();
         using var solver = new BitmaskSolver(size, mode, DisplayMode.Hide, formatter, maxSolutionsInOutput: displayedCap)
         {
