@@ -4,7 +4,26 @@ All notable changes to this project are documented here.
 
 ---
 
-## [Unreleased] — branch `refactor/consolidate`
+## [1.0.0] — 2026-05-29  _(branch `refactor/consolidate` merged to `main`)_
+
+### Fixed (CI)
+- **`.github/workflows/ci.yml`** — rewrote the existing workflow to fix several bugs and
+  improve reliability:
+  - Added missing `: ` separators in `env:` values (`DOTNET_CLI_TELEMETRY_OPTOUT` and
+    `DOTNET_SKIP_FIRST_TIME_EXPERIENCE` were silently ignored before).
+  - Removed `dotnet-quality: 'preview'` — .NET 10 is GA; the flag caused unnecessary
+    pre-release SDK resolution.
+  - Added explicit `dotnet build --configuration Release` step before test so
+    `--no-build` in the test step is valid and faster.
+  - Added `--no-build` and `--configuration Release` to `dotnet test`.
+  - Excluded `NQueen.Benchmarking` from coverage collection (it is an exe, not a test
+    assembly, and caused the test runner to fail trying to discover tests in it).
+  - Extended `push` branch triggers to also cover `refactor/**`, `feature/**`, `fix/**`
+    so CI runs on all active development branches, not just `main`.
+  - Added `pull_request: branches: [main]` filter so PRs into other branches do not
+    trigger unnecessary runs.
+  - Added `retention-days: 14` to the coverage artifact upload.
+  - Renamed workflow from `ci` to `CI` for display clarity.
 
 ### Fixed (project configuration)
 - **`NQueen.ConsoleApp.csproj`** — changed `TargetFramework` from `net10.0-windows` to
