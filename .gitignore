@@ -20,6 +20,8 @@
 # -------------------------
 BenchmarkDotNet.Artifacts/
 **/Artifacts/
+*.diagsession
+**/Results/
 
 # -------------------------
 # ASP.NET Scaffolding
