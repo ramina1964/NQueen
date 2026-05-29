@@ -6,6 +6,16 @@ All notable changes to this project are documented here.
 
 ## [Unreleased] — branch `refactor/consolidate`
 
+### Fixed (accessibility)
+- **`ChessboardUserControl.xaml`** — added `AutomationProperties.Name="Chessboard"` to the
+  outer `Border` to satisfy the *NameNotNull* rule (Accessibility Checker error at line 16).
+- **`ChessboardUserControl.xaml`** — bound `Width` and `Height` from `SquareViewModel` and
+  added `AutomationProperties.Name="{Binding}"` to each DataTemplate `Border`, giving every
+  chess square a concrete bounding rectangle and resolving the *BoundingRectangleNotNull* rule
+  (Accessibility Checker error at line 36).
+- **`ChessboardUserControl.xaml.cs`** — removed the now-resolved TODO comment block that
+  tracked both accessibility errors.
+
 ### Removed (dead code)
 - **`SimulationSettings`** — deleted 7 unused members:
   `ParallelAllAutoEnableThresholdN`, `LargeBoardProgressThrottleThreshold`,
