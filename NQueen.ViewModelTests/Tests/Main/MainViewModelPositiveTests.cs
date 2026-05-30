@@ -165,6 +165,40 @@ public class MainViewModelPositiveTests
     }
 
 
-    // Todo: Add a test for SaveSimulationResultsCommand when file I/O can be mocked.
+    [Fact]
+    public void SaveSimulationResultsCommand_ShouldWriteContentViaService()
+    {
+        // Arrange
+        var mockSaveService = new MockSaveFileDialogService();
+        var solutionFormatter = new SolutionFormatter();
+        var queenPositions = new int[] { 1, 3, 0, 2 };
+        var solution = new Solution(queenPositions, solutionFormatter, 1);
+
+        var mainVm = new MainViewModel(
+            TestHelpers.CreateMockSolver([solution]).Object,
+            new TestDispatcher(),
+            mockSaveService,
+            solutionFormatter)
+        {
+            BoardSizeText = "4",
+            SolutionMode = SolutionMode.Single,
+            NoOfSolutions = "1",
+            IsIdle = true,
+        };
+
+        // Populate ObservableSolutions and mark output as ready — same state
+        // the VM is in after a completed simulation before the user clicks Save.
+        mainVm.ObservableSolutions.Add(solution);
+        mainVm.IsOutputReady = true;
+
+        // Act
+        mainVm.SaveCommand.Execute(null);
+
+        // Assert
+        mockSaveService.WasCalled.Should().BeTrue("the save service should be invoked");
+        mockSaveService.SavedContent.Should().NotBeNullOrEmpty("saved content must not be empty");
+        mockSaveService.SavedContent.Should().Contain("4", "content should include the board size");
+        mockSaveService.SavedContent.Should().Contain("Single", "content should include the solution mode");
+    }
 }
 
