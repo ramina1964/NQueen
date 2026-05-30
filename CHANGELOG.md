@@ -6,6 +6,34 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Performance (NQueen.Kernel)
+- **`BitmaskSearchEngine.cs`** — replaced 18-line De Bruijn 64-bit lookup table with
+  `BitOperations.TrailingZeroCount` JIT intrinsic (`TZCNT` on x64), eliminating a
+  multiply + shift + array-index on every queen-placement candidate in the hot DFS loop.
+  Also removes the 64-byte static `_deBruijnIndex64` array from the type's static state.
+- **`BitmaskSearchEngine.cs`** — converted `SearchState` from `sealed class` to `struct`.
+  All call sites already passed it via `ref`; the change eliminates one heap allocation
+  per `Run()` call and improves cache locality of the DFS state machine fields.
+- **`BitmaskSolver.cs`** — introduced `EnsureMinThreads()` with an `Interlocked`
+  one-shot guard. `ThreadPool.SetMinThreads` was previously called on every large-board
+  parallel solve (a permanent process-wide write); it now executes at most once per
+  process lifetime.
+
+### Fixed (NQueen.Kernel)
+- **`BitmaskSolver.cs`** — removed redundant outer `lock (_sync)` in `GetSimResultsAsync`;
+  `Solve()` already acquires the same lock, making the outer acquire a no-op reentrant
+  acquisition.
+- **`BitmaskSolver.cs`** — replaced `_scratchBuffer ?? new int[rows.Length * 8]` in
+  `ConstructiveSampleSolutions` with `_scratchBuffer!`; the buffer is guaranteed non-null
+  after `ResetForSolve()`, so the fallback allocation was unnecessary.
+
+### Refactored (NQueen.Kernel)
+- **`Usings.cs`** — removed `global using System;`, `global using System.Collections.Generic;`,
+  and `global using System.Threading.Tasks;`; all three are already injected by
+  `<ImplicitUsings>enable</ImplicitUsings>`.
+
+---
+
 ### Added (NQueen.Benchmarking)
 - **`ConsolePruningImpactBenchmarks.cs`** — two new benchmark classes
   (`ConsolePruningImpactAllBenchmark`, `ConsolePruningImpactUniqueBenchmark`) that measure
