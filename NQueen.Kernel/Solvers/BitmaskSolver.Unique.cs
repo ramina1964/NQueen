@@ -94,13 +94,18 @@ public partial class BitmaskSolver
 
     private void EnumerateUniqueVisualizeAdaptive()
     {
-        // Visualization path: enumerate unique solutions while emitting QueenPlaced events with delay.
+        // Two-phase approach (mirrors CollectAllSamplesAndCountParallel in All mode):
+        //   Phase 1 — full-board animation DFS: emits QueenPlaced/SolutionFound events and
+        //             collects up to cap canonical samples. RestrictFirstCol stays false so
+        //             the GUI animation shows queens placed on any row in column 0.
+        //             Stops early once cap unique representatives are stored.
+        //   Phase 2 — CountUniqueAdaptive for the exact solution count using the half-board
+        //             algorithm (~2x fewer nodes than the full-board pass).
         int N = BoardSize;
-        int cap = _maxDisplayedCount;
+        int cap = Math.Max(1, _maxDisplayedCount);
         int materialized = 0;
-        ulong rawCount = 0;
-        var seen = new HashSet<UInt128>();
 
+        // Phase 1: animation + sample collection
         BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
             N,
             RestrictFirstCol: false,
@@ -116,22 +121,15 @@ public partial class BitmaskSolver
             rowsFound =>
             {
                 if (!ValidateRows(rowsFound)) return false;
+                if (!SymmetryHelper.IsIdentityCanonical(rowsFound, _scratchBuffer!)) return false;
 
-                UInt128 packed = 0;
-                if (rowsFound.Length <= 25)
-                    packed = SymmetryHelper.GetCanonicalKey(rowsFound, _scratchBuffer!, out _);
-
-                // Skip duplicates using canonical key (if computed).
-                if (packed != 0 && !seen.Add(packed))
-                    return false;
-
-                rawCount++;
-
-                // Materialize up to cap for UI
                 if (materialized < cap)
                 {
                     if (rowsFound.Length <= 25)
+                    {
+                        var packed = SymmetryHelper.GetCanonicalKey(rowsFound, _scratchBuffer!, out _);
                         _solutions.Add((packed, rowsFound.Length));
+                    }
                     else
                     {
                         var copy = new int[rowsFound.Length];
@@ -141,21 +139,21 @@ public partial class BitmaskSolver
                     materialized++;
 
                     if (EnableEvents && !_eventsSuppressedAfterCap)
-                        SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rowsFound), BoardSize));
+                        SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rowsFound), N));
 
                     if (materialized >= cap)
-                        _eventsSuppressedAfterCap = true; // continue counting but stop UI events
+                    {
+                        _eventsSuppressedAfterCap = true;
+                        return true; // cap reached — stop Phase 1 early
+                    }
                 }
 
-                // Continue enumeration to discover all unique solutions (do not stop after first)
                 return false;
             }
         ));
 
-
-
-
-        _solutionCount = rawCount;
+        // Phase 2: exact count via half-board algorithm (~2x faster than full-board)
+        _solutionCount = CountUniqueAdaptive(N);
         ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
     }
 
