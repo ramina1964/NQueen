@@ -6,6 +6,19 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Added (NQueen.ViewModelTests)
+- **`MainViewModelPositiveTests.cs`** — added `SaveSimulationResultsCommand_ShouldWriteContentViaService`:
+  verifies that executing `SaveCommand` with a ready view-model invokes `ISaveFileDialogService`,
+  writes non-empty content, and includes the board size and solution mode in the saved text.
+  Uses the existing `MockSaveFileDialogService`; closes the long-standing TODO comment.
+
+### Docs
+- **`README.md`** — replaced the single-line placeholder with a full README covering:
+  features, algorithm overview, project structure, prerequisites, build & run instructions
+  (Console interactive + non-interactive flag reference, WPF GUI), solver options table,
+  known solution counts (OEIS A000170 / A002562), benchmark results, contributing guide,
+  and licence.
+
 ### Fixed (NQueen.Kernel — Unique Visualize path)
 - **`BitmaskSolver.Unique.cs`** — `EnumerateUniqueVisualizeAdaptive` was visiting ~2×
   more nodes than necessary: a single full-board pass was used for both GUI animation
