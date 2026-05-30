@@ -52,11 +52,16 @@ All notable changes to this project are documented here.
   (`ConsolePruningImpactAllBenchmark`, `ConsolePruningImpactUniqueBenchmark`) that measure
   the performance difference between the old Console solver configuration (no pruning,
   events on) and the new one (pruning on, events off, adaptive depth) across N = 12, 14, 16.
-  Measured results on Intel i7-14700K / .NET 10.0.8:
-  - Unique N=12: **−17%** (891 µs vs 1,076 µs)
-  - Unique N=14: **−6%** (13.5 ms vs 14.4 ms)
-  - Unique N=16: flat (within noise — parallel saturation dominates)
-  - All mode N=12–16: flat (half-board restriction already dominates search reduction)
+  Measured results on Intel i7-14700K / .NET 10.0.8 (5 iterations, 2 warmup):
+  - Unique N=12: **−12%** (836 µs vs 955 µs)
+  - Unique N=14: **−7%** (12.9 ms vs 13.8 ms)
+  - Unique N=16: flat (220 ms vs 226 ms, +2.4% within error — both configs take the
+    same `CountUniqueFastHalfBoard` path; `CountUniqueAdaptive` forces pruning flags on
+    regardless of input settings, so `UseAdaptiveDepth` and external flag values are
+    irrelevant here; observed spread is thermal/TurboBoost variance)
+  - All N=12: flat (355 µs vs 360 µs)
+  - All N=14: flat (4.66 ms vs 4.72 ms)
+  - All N=16: flat (197 ms vs 188 ms, within noise)
 - **`Program.cs`** — default run updated to `ConsolePruningImpactAllBenchmark` +
   `ConsolePruningImpactUniqueBenchmark`.
 
