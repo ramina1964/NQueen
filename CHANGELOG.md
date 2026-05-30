@@ -6,6 +6,18 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Refactored (NQueen.Kernel)
+- **`BitmaskSolver.cs`** — split two cohesive method groups out into new partial-class files,
+  reducing the file from 710 lines to 268 lines:
+  - **`BitmaskSolver.CountUnique.cs`** — `CountUniqueAdaptive` and `CountUniqueFastHalfBoard`;
+    the two unique count-only algorithms now live together in one focused file.
+  - **`BitmaskSolver.Materialize.cs`** — `SampleMaterializeUsingLookup`,
+    `ConstructiveSampleSolutions`, `GenerateConstructiveSolution`, `GenerateSymmetryVariants`;
+    all sample-materialisation helpers grouped in one place.
+  - `BitmaskSolver.cs` retains constructors, public API, `Solve`, `HandleModeCommon`,
+    private fields, `ResetForSolve`, `BuildResults`, `ValidateRows`, `Dispose`, `EnsureMinThreads`.
+  No behaviour changes; 430/430 tests pass.
+
 ### Added (NQueen.ViewModelTests)
 - **`MainViewModelPositiveTests.cs`** — added `SaveSimulationResultsCommand_ShouldWriteContentViaService`:
   verifies that executing `SaveCommand` with a ready view-model invokes `ISaveFileDialogService`,
