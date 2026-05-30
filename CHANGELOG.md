@@ -6,6 +6,19 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Fixed (NQueen.Kernel — Unique Visualize path)
+- **`BitmaskSolver.Unique.cs`** — `EnumerateUniqueVisualizeAdaptive` was visiting ~2×
+  more nodes than necessary: a single full-board pass was used for both GUI animation
+  and solution counting. Replaced with a two-phase approach matching the established
+  `CollectAllSamplesAndCountParallel` pattern in All mode:
+  - **Phase 1** — full-board animation DFS (`RestrictFirstCol: false`) so the GUI
+    shows queens placed on any row in column 0; stops as soon as `cap` canonical
+    samples are stored. Uses `IsIdentityCanonical` filter instead of the previous
+    `HashSet<UInt128>` dedup, eliminating per-solution hash allocations.
+  - **Phase 2** — `CountUniqueAdaptive` for the exact solution count via the
+    half-board algorithm (~2× fewer nodes than the old full-board pass).
+  Solution counts are unchanged; verified across N = 8–16.
+
 ### Performance (NQueen.Kernel)
 - **`BitmaskSearchEngine.cs`** — replaced 18-line De Bruijn 64-bit lookup table with
   `BitOperations.TrailingZeroCount` JIT intrinsic (`TZCNT` on x64), eliminating a
