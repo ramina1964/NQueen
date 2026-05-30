@@ -104,13 +104,10 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     public Task<SimulationResults> GetSimResultsAsync(SimulationContext simContext) =>
         Task.Run(() =>
         {
-            lock (_sync)
-            {
-                BoardSize = simContext.BoardSize;
-                SolutionMode = simContext.SolutionMode;
-                DisplayMode = simContext.DisplayMode;
-                return Solve();
-            }
+            BoardSize = simContext.BoardSize;
+            SolutionMode = simContext.SolutionMode;
+            DisplayMode = simContext.DisplayMode;
+            return Solve();
         });
 
     // ---------------- Core Solve ----------------
@@ -226,7 +223,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         EnablePrefixMinimalityPruning = true;
         EnablePartialReflectionPruning = true;
 
-        ThreadPool.SetMinThreads(Environment.ProcessorCount, Environment.ProcessorCount);
+        EnsureMinThreads();
 
         try
         {
@@ -288,10 +285,9 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         var scratchPool = ArrayPool<int>.Shared;
         long total = 0L;
 
+        EnsureMinThreads();
         try
         {
-            ThreadPool.SetMinThreads(cores, cores);
-
             // Larger chunks reduce scheduler overhead on very large N
             int chunk = Math.Max(1, firstRowLimitExclusive / (cores * 2));
             var ranges = Partitioner.Create(0, firstRowLimitExclusive, chunk);
@@ -612,7 +608,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
             if (rows.Length <= 25)
             {
-                var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer ?? new int[rows.Length * 8], out _);
+                var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
                 _solutions.Add((packed, rows.Length));
             }
             else
@@ -699,4 +695,16 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     }
 
     private readonly Lock _sync = new();
+
+    // Ensures the thread-pool minimum is raised to the available core count at most once
+    // per process; repeated calls are no-ops.
+    private static int _minThreadsSet = 0;
+    private static void EnsureMinThreads()
+    {
+        if (Interlocked.CompareExchange(ref _minThreadsSet, 1, 0) == 0)
+        {
+            int cores = Environment.ProcessorCount;
+            ThreadPool.SetMinThreads(cores, cores);
+        }
+    }
 }

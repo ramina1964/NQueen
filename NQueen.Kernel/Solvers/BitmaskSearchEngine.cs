@@ -2,23 +2,8 @@ namespace NQueen.Kernel.Solvers;
 
 internal sealed class BitmaskSearchEngine
 {
-    private const ulong _deBruijn64 = 0x03F79D71B4CB0A89UL;
-    private static readonly byte[] _deBruijnIndex64 = InitDeBruijn();
-
-    private static byte[] InitDeBruijn()
-    {
-        var tbl = new byte[64];
-        for (int i = 0; i < 64; i++)
-        {
-            ulong bit = 1UL << i;
-            int idx = (int)((bit * _deBruijn64) >> 58);
-            tbl[idx] = (byte)i;
-        }
-        return tbl;
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int FastTzcnt(ulong bit) => _deBruijnIndex64[(bit * _deBruijn64) >> 58];
+    private static int FastTzcnt(ulong bit) => BitOperations.TrailingZeroCount(bit);
 
     public readonly record struct Request(
         int BoardSize,
@@ -332,16 +317,16 @@ internal sealed class BitmaskSearchEngine
         if (s._Delay > 0) System.Threading.Thread.Sleep(s._Delay);
     }
 
-    private sealed class SearchState
+    private struct SearchState
     {
         public int _N;
-        public int[] _QueenRows = [];
+        public int[] _QueenRows;
         public ulong _Mask;
         public ulong _Cols;
         public ulong _Diag1;
         public ulong _Diag2;
         public int _MaxRow0;
-        public Frame[] _StackFrames = [];
+        public Frame[] _StackFrames;
         public int _RootPlacements;
         public int _RootTotal;
         public int _QueenPlacedCounter;
