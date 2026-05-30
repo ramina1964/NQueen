@@ -15,8 +15,8 @@ namespace NQueen.Benchmarking;
 [RankColumn]
 [CPUUsageDiagnoser]
 [ShortRunJob]
-[WarmupCount(1)]
-[IterationCount(3)]
+[WarmupCount(2)]
+[IterationCount(5)]
 public class ConsolePruningImpactAllBenchmark
 {
     // N=12: small — pruning has modest effect.
@@ -69,8 +69,8 @@ public class ConsolePruningImpactAllBenchmark
 [RankColumn]
 [CPUUsageDiagnoser]
 [ShortRunJob]
-[WarmupCount(1)]
-[IterationCount(3)]
+[WarmupCount(2)]
+[IterationCount(5)]
 public class ConsolePruningImpactUniqueBenchmark
 {
     [Params(12, 14, 16)]
