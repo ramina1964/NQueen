@@ -6,6 +6,17 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Fixed (NQueen.GUI)
+- **`MainWindow.xaml`** — changed `SizeToContent` from `Width` to `WidthAndHeight` and
+  the main content `RowDefinition` from `Height="*"` to `Height="Auto"` so WPF measures
+  the full content height at startup; bottom panels (Simulation, Solver Settings) are no
+  longer clipped regardless of board size or display mode. Removed the interim `MinHeight`
+  workaround.
+- **`ListOfSolutionsUserControl.xaml`** — added `MaxHeight="130"` to the `ListBox` to
+  cap the solution list at ~5 visible items (scrollbar appears when needed); corrected
+  `Border` and inner `Grid` from `VerticalAlignment="Stretch"` to `VerticalAlignment="Top"`
+  so the list stays top-aligned after the layout change.
+
 ### Refactored (NQueen.Kernel)
 - **`BitmaskSolver.cs`** — split two cohesive method groups out into new partial-class files,
   reducing the file from 710 lines to 268 lines:
