@@ -13,14 +13,14 @@
     ResizeMode="NoResize"
     WindowStartupLocation="CenterScreen"
     WindowState="Normal"
-    SizeToContent="Width"
+    SizeToContent="WidthAndHeight"
     mc:Ignorable="d">
 
     <!--  Main grid layout for the window  -->
     <Grid Margin="10" Background="White" HorizontalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" MinHeight="40" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition x:Name="LeftColumn" Width="150" />

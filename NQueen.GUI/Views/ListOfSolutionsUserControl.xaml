@@ -14,16 +14,17 @@
         Margin="2"
         Padding="0"
         HorizontalAlignment="Stretch"
-        VerticalAlignment="Stretch"
+        VerticalAlignment="Top"
         Background="White"
         BorderBrush="Black"
         BorderThickness="1">
 
         <!--  Grid for future extensibility (single child for now)  -->
-        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Top">
             <ListBox
                 BorderThickness="0"
                 Foreground="Black"
+                MaxHeight="130"
                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                 ItemsSource="{Binding ObservableSolutions}"
                 SelectedItem="{Binding SelectedSolution}">
