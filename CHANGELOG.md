@@ -35,6 +35,16 @@ All notable changes to this project are documented here.
   writes non-empty content, and includes the board size and solution mode in the saved text.
   Uses the existing `MockSaveFileDialogService`; closes the long-standing TODO comment.
 
+### Added (NQueen.UnitTests)
+- **`BitmaskSolverCountUniqueTests.cs`** — 14 fast tests targeting the previously
+  thinly-covered `BitmaskSolver.CountUnique.cs` (15 % line / 3 % branch baseline).
+  Drives `CountUniqueAdaptive` through the public `ISolverBackEnd.GetSimResultsAsync`
+  API with `SolutionMode.Unique` + count-only storage, covering the
+  `BitmaskParallelEngine.RunUnique` branch (N = 1..9), the `CountUniqueFastHalfBoard`
+  branch (N = 16, pruning-flag preservation), the save/restore semantics for
+  `EnablePrefixMinimalityPruning` and `EnablePartialReflectionPruning`, and the
+  `UniqueStorageMode = CountOnly` path. Full class runs in ~1.1 s.
+
 ### Docs
 - **`README.md`** — replaced the single-line placeholder with a full README covering:
   features, algorithm overview, project structure, prerequisites, build & run instructions
