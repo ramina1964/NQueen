@@ -6,6 +6,17 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Fixed (CI)
+- **`.github/workflows/ci.yml`** — the *"Generate HTML coverage report"* step was stuck/failing
+  because the *"Test with coverage"* step used coverlet.msbuild flags
+  (`/p:CollectCoverage=true /p:CoverletOutputFormat=cobertura`) while the test projects only
+  reference `coverlet.collector`; those props were silently ignored, so no
+  `coverage.cobertura.xml` was produced and ReportGenerator matched zero files. Switched the
+  step to the collector driver (`--collect:"XPlat Code Coverage"` + cobertura format via
+  `DataCollectionRunSettings`), added `--results-directory TestResults`, and added
+  `--filter "Category!=Slow"` so the large-board enumeration tests don't hang the runner —
+  mirroring the proven-working local `GenerateCoverage.ps1`.
+
 ### Fixed (NQueen.GUI)
 - **`MainWindow.xaml`** — changed `SizeToContent` from `Width` to `WidthAndHeight` and
   the main content `RowDefinition` from `Height="*"` to `Height="Auto"` so WPF measures
