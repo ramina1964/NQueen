@@ -88,6 +88,34 @@ All notable changes to this project are documented here.
   prune-when-reflection-smaller, no-prune-when-identity-wins, negative-row guard,
   and an explicit regression guard asserting the helper does **not** apply the
   unsound rotate-180 minimality prune that caused the N >= 16 under-count.
+- **`BitmaskSolverMaterializeTests.cs`** — 7 fast tests (10 with Theory expansions)
+  targeting `BitmaskSolver.Materialize.cs`, the last `BitmaskSolver.*.cs` partial
+  without a dedicated class. Drives `SampleMaterializeUsingLookup`,
+  `ConstructiveSampleSolutions`, `GenerateConstructiveSolution`, and
+  `GenerateSymmetryVariants` through the public `ISolverBackEnd.GetSimResultsAsync`
+  API at `N >= LookupThresholdN` (21), where the count is served from the lookup
+  table and samples are built constructively (no DFS). Covers both constructive
+  special-case branches — N = 21 (`n % 6 == 3`) and N = 26 (`n % 6 == 2`) — in All
+  and Unique modes, asserting the curated count and that every materialised sample
+  is a conflict-free placement; the display cap (default and explicit) is honoured;
+  Unique-mode samples are distinct (raw `int[]` storage exercises
+  `GenerateSymmetryVariants`); and solver state resets across consecutive runs.
+
+### Fixed (NQueen.Kernel — invalid constructive placement for n % 6 ∈ {2, 3})
+- **`BitmaskSolver.Materialize.cs`** — rewrote `GenerateConstructiveSolution` to the
+  canonical closed-form explicit construction keyed on `n mod 6`. The previous
+  `n % 6 == 2` and `n % 6 == 3` special-case branches both emitted placements with a
+  diagonal conflict (e.g. N = 15 and N = 20 placed two queens on a shared
+  anti-diagonal). Because `ValidateRows` only checks row-array length — not diagonal
+  legality — the invalid boards were surfaced silently through the constructive
+  Single-mode path (N = 15, 21, 27) and the lookup-materialize sample path
+  (N = 21, 26, 27). The corrected algorithm lists the even rows then the odd rows,
+  moving `2` to the end of the evens and `1, 3` to the end of the odds for
+  `n % 6 == 3`, and swapping `1`/`3` then moving `5` to the end of the odds for
+  `n % 6 == 2`; output for every other remainder is unchanged ("evens then odds").
+  Verified conflict-free for N = 8, 9, 14, 15, 20 and through the public API by the
+  now-strict `SingleMode_ConstructivePath_ReturnsValidSolutionWithoutEnumeration`
+  (N = 15, 16, 17) and the new `BitmaskSolverMaterializeTests` (N = 21, 26).
 
 ### Fixed (NQueen.Kernel — Unique mode count under-report at N >= 16)
 - **`BitmaskSolver.CountUnique.cs` / `Engines/SearchHelpers.cs`** — corrected a

@@ -94,13 +94,15 @@ public class BitmaskSolverSingleModeTests
     // ── Constructive path: N ≥ 15 without curated entry ─────────────────────
 
     [Theory]
+    [InlineData(15)]
     [InlineData(16)]
     [InlineData(17)]
     public async Task SingleMode_ConstructivePath_ReturnsValidSolutionWithoutEnumeration(int n)
     {
-        // N=16, 17 hit GenerateConstructiveSolution's general (n%6 ∉ {2,3}) branch.
-        // N=15 (n%6==3) is intentionally excluded — see
-        // SingleMode_ConstructivePath_N15_RoutesAndReturnsCount1 below for the routing-only check.
+        // N=15 hits GenerateConstructiveSolution's n%6==3 special-case branch; N=16, 17 hit
+        // the general (n%6 ∉ {2,3}) branch. None has a curated entry and all are
+        // ≥ LargeBoardIntermediateStartSize, so each routes through the constructive path
+        // (no DFS) and must yield a conflict-free placement.
         using var solver = MakeSolver();
         var ctx = new SimulationContext(n, SolutionMode.Single, DisplayMode.Hide);
 
@@ -109,23 +111,6 @@ public class BitmaskSolverSingleModeTests
         result.SolutionsCount.Should().Be(1UL);
         result.Solutions.Should().ContainSingle();
         AssertValidPlacement(result.Solutions[0].QueenPositions);
-    }
-
-    [Fact]
-    public async Task SingleMode_ConstructivePath_N15_RoutesAndReturnsCount1()
-    {
-        // Routing-only check: N=15 has no curated entry and is ≥ LargeBoardIntermediateStartSize,
-        // so it exercises the constructive path. Placement validity is not asserted here
-        // because the n%6==3 branch of GenerateConstructiveSolution emits a placement that
-        // contains a diagonal conflict — tracked as a separate production defect.
-        using var solver = MakeSolver();
-        var ctx = new SimulationContext(15, SolutionMode.Single, DisplayMode.Hide);
-
-        var result = await solver.GetSimResultsAsync(ctx);
-
-        result.SolutionsCount.Should().Be(1UL);
-        result.Solutions.Should().ContainSingle();
-        result.Solutions[0].QueenPositions.Should().HaveCount(15);
     }
 
     // ── Visualize path: engine-backed, fires events ─────────────────────────
