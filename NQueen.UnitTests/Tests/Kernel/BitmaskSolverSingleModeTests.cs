@@ -99,11 +99,11 @@ public class BitmaskSolverSingleModeTests
     [InlineData(17)]
     public async Task SingleMode_ConstructivePath_ReturnsValidSolutionWithoutEnumeration(int n)
     {
-        // N=15 hits GenerateConstructiveSolution's n%6==3 special-case branch; N=16, 17 hit
-        // the general (n%6 ∉ {2,3}) branch. None has a curated entry and all are
-        // ≥ LargeBoardIntermediateStartSize, so each routes through the constructive path
-        // (no DFS) and must yield a conflict-free placement.
-        using var solver = MakeSolver();
+// N=15 hits GenerateConstructiveSolution's n%6==3 special-case branch; N=16, 17 hit
+// the general (n%6 ∉ {2,3}) branch. None has a curated entry and all are
+// ≥ LargeBoardIntermediateStartSize, so each routes through the constructive path
+// (no DFS) and must yield a conflict-free placement.
+using var solver = MakeSolver();
         var ctx = new SimulationContext(n, SolutionMode.Single, DisplayMode.Hide);
 
         var result = await solver.GetSimResultsAsync(ctx);
