@@ -6,6 +6,13 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Added (Tooling)
+- **`Fast.runsettings`** — opt-in test run settings that exclude the
+  `[Trait("Category", "Slow")]` enumeration tests (N=13–15 full counts), letting the
+  fast suite (~390 tests) run in a few seconds locally. Select it via *Test → Configure
+  Run Settings* in Visual Studio or `dotnet test --settings Fast.runsettings`. Does not
+  affect CI or unfiltered runs. README updated with usage.
+
 ### Fixed (CI)
 - **`.github/workflows/ci.yml`** — the *"Generate HTML coverage report"* step was stuck/failing
   because the *"Test with coverage"* step used coverlet.msbuild flags

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Fast.runsettings: opt-in run settings that exclude the slow tests.
+
+  The [Trait("Category", "Slow")] tests run full N-Queens enumerations at large N
+  (e.g. N=13 to 15 All/Unique counts) and dominate local test time. This file filters
+  them out so the fast suite (about 390 tests) runs in a few seconds.
+
+  HOW TO USE
+	Visual Studio : Test menu, Configure Run Settings, Select Solution Wide
+					runsettings File, then pick this file. Switch back to
+					"Auto detect runsettings" to undo.
+	CLI           : dotnet test with the settings option pointing at Fast.runsettings.
+
+  This file is OPT-IN; it changes nothing unless explicitly selected, and it never
+  hides the slow tests from anyone who doesn't select it. CI applies the same filter
+  directly in .github/workflows/ci.yml via a "Category not equal Slow" test filter.
+-->
+<RunSettings>
+  <RunConfiguration>
+	<TestCaseFilter>Category!=Slow</TestCaseFilter>
+  </RunConfiguration>
+</RunSettings>
