@@ -77,21 +77,35 @@ All notable changes to this project are documented here.
   N = 2, 3, mid-N branch at `N = LargeBoardSymmetryPruningThreshold` (= 15) routing
   through `Engines.SymmetryPrunedUniqueCounter.Count`, large-N two-phase branch at
   `N = UniqueCountOnlyParallelThresholdN` (= 16) using `CollectUniqueSamplesDFS`
-  + `CountUniqueFastHalfBoard`, `CollectUniqueSamplesDFS` cap-stop semantics,
+  + `CountUniqueFastHalfBoard` (asserting the exact OEIS A002562 count of
+  1 846 955), `CollectUniqueSamplesDFS` cap-stop semantics,
   visualize-path event emission, in-flight cancellation, solver-state reset
   across consecutive runs, and the `enableCap=false` constructor overload. Full
   class runs in ~1.6 s. Count-only Unique routing remains covered by
   `BitmaskSolverCountUniqueTests`.
+- **`SearchHelpersTests.cs`** — 5 new tests for the stateless reflection-only
+  `SearchHelpers.ShouldPrunePrefixFull` helper: reflection-disabled no-op,
+  prune-when-reflection-smaller, no-prune-when-identity-wins, negative-row guard,
+  and an explicit regression guard asserting the helper does **not** apply the
+  unsound rotate-180 minimality prune that caused the N >= 16 under-count.
 
-### Discovered (NQueen.Kernel — Unique mode count discrepancy at N >= 16)
-- **`BitmaskSolver.CountUnique.cs`** — `CountUniqueFastHalfBoard` under-reports for
-  N = 16: returns 692 857 vs the OEIS A002562 value of 1 846 955 (difference
-  −1 154 098). Surfaced by `BitmaskSolverUniqueTests.UniqueMode_Materialize_N16_RoutesThroughTwoPhasePath`,
-  which currently asserts only routing + sample placement validity (count assertion
-  intentionally deferred). Both the Unique Materialize path and the Unique
-  CountOnly path converge on this method, so the defect is invisible to existing
-  N >= 16 tests because none of them assert the exact count value. Tracked under
-  *Backlog — Kernel Correctness* in `docs/ROADMAP.md`.
+### Fixed (NQueen.Kernel — Unique mode count under-report at N >= 16)
+- **`BitmaskSolver.CountUnique.cs` / `Engines/SearchHelpers.cs`** — corrected a
+  silent under-count in `CountUniqueFastHalfBoard` that returned 692 857 instead
+  of the OEIS A002562 value of 1 846 955 for N = 16 (and was wrong for N = 17..20).
+  Root cause: the shared forward-prefix prune applied a rotate-180 "minimality"
+  test that compares `rows[i]` against `N-1-rows[depth-i]` — i.e. against columns
+  not yet fixed at the current depth — which is unsound as a forward-prefix prune
+  and discarded branches that still extend to valid canonical solutions. The
+  defect was previously invisible because the only other consumer
+  (`SymmetryPrunedUniqueCounter`) runs with an effectively disabled prune gate at
+  its sole reachable size (N = 15), and no N >= 16 test asserted the exact count.
+  Fix: `SearchHelpers.ShouldPrunePrefixFull` is now reflection-only (horizontal
+  reflection is the only sound forward-prefix prune; full canonicality across all
+  eight symmetries is still enforced exactly by `IsIdentityCanonical` at the leaf).
+  Both consumers were updated and the dead minimality parameter removed. Verified
+  by the now-exact `UniqueMode_Materialize_N16_RoutesThroughTwoPhasePath`
+  assertion and new `SearchHelpersTests` coverage.
 
 ### Docs
 - **`README.md`** — replaced the single-line placeholder with a full README covering:

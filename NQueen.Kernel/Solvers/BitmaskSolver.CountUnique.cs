@@ -70,6 +70,12 @@ public partial class BitmaskSolver
         var scratchPool = ArrayPool<int>.Shared;
         long total = 0L;
 
+        // Capture the pruning flag as a local so a concurrent Configure() on the global
+        // statics cannot corrupt in-flight pruning decisions for this invocation. Only the
+        // reflection prune is sound for canonical counting (see ShouldPrunePrefixFull); the
+        // minimality flag deliberately plays no part here.
+        bool reflectionEnabled = EnablePartialReflectionPruning;
+
         EnsureMinThreads();
         try
         {
@@ -87,24 +93,13 @@ public partial class BitmaskSolver
                 {
                     ulong localCount = 0UL;
 
-                    for (int rootRow = range.Item1; rootRow < range.Item2; rootRow++)
-                    {
-                        rows[0] = rootRow;
-                        ulong bit0 = 1UL << rootRow;
-
-                        bool reflectionEqual = true;
-                        bool minimalityEqual = true;
-                        DFS(col: 1, cols: bit0, d1: bit0 << 1, d2: bit0 >> 1,
-                            reflectionEnabled: EnablePartialReflectionPruning,
-                            minimalityEnabled: EnablePrefixMinimalityPruning,
-                            pruneDepthGate, ref reflectionEqual, ref minimalityEqual);
-                    }
-
-                    if (localCount != 0)
-                        Interlocked.Add(ref total, (long)localCount);
-
-                    void DFS(int col, ulong cols, ulong d1, ulong d2, bool reflectionEnabled,
-                        bool minimalityEnabled, int pruneGate, ref bool reflectionEqual, ref bool minimalityEqual)
+                    // Stateless reflection-only prefix pruning. ShouldPrunePrefixFull re-scans
+                    // columns 0..col each call, so gating it at col >= pruneDepthGate is safe.
+                    // Only horizontal reflection is a sound forward-prefix prune for canonical
+                    // counting; IsIdentityCanonical at the leaf is the final arbiter across all
+                    // eight symmetries, so the half-board root partition and the delayed gate
+                    // never drop a valid canonical solution.
+                    void DFS(int col, ulong cols, ulong d1, ulong d2)
                     {
                         if ((col & 0xF) == 0 && IsSolverCanceled) return;
                         if (col == n)
@@ -115,9 +110,6 @@ public partial class BitmaskSolver
                         }
 
                         ulong avail = ~(cols | d1 | d2) & fullMask;
-                        bool needSymmetryCheck = col >= pruneGate &&
-                            ((reflectionEnabled && reflectionEqual) || (minimalityEnabled && minimalityEqual));
-
                         while (avail != 0)
                         {
                             ulong bit = avail & (ulong)-(long)avail;
@@ -126,37 +118,28 @@ public partial class BitmaskSolver
 
                             rows[col] = r;
 
-                            if (needSymmetryCheck)
+                            if (col >= pruneDepthGate &&
+                                SearchHelpers.ShouldPrunePrefixFull(rows, col, n, reflectionEnabled))
                             {
-                                bool savedReflectionEqual = reflectionEqual;
-                                bool savedMinimalityEqual = minimalityEqual;
-
-                                if (SearchHelpers.ShouldPrunePrefixIncremental(rows, col, n,
-                                    reflectionEnabled, minimalityEnabled,
-                                    ref reflectionEqual, ref minimalityEqual))
-                                {
-                                    reflectionEqual = savedReflectionEqual;
-                                    minimalityEqual = savedMinimalityEqual;
-                                    rows[col] = -1;
-                                    continue;
-                                }
-
-                                DFS(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1,
-                                    reflectionEnabled, minimalityEnabled, pruneGate,
-                                    ref reflectionEqual, ref minimalityEqual);
-                                reflectionEqual = savedReflectionEqual;
-                                minimalityEqual = savedMinimalityEqual;
+                                rows[col] = -1;
+                                continue;
                             }
-                            else
-                            {
-                                DFS(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1,
-                                    reflectionEnabled, minimalityEnabled, pruneGate,
-                                    ref reflectionEqual, ref minimalityEqual);
-                            }
+
+                            DFS(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1);
 
                             rows[col] = -1;
                         }
                     }
+
+                    for (int rootRow = range.Item1; rootRow < range.Item2; rootRow++)
+                    {
+                        rows[0] = rootRow;
+                        ulong bit0 = 1UL << rootRow;
+                        DFS(1, bit0, bit0 << 1, bit0 >> 1);
+                    }
+
+                    if (localCount != 0)
+                        Interlocked.Add(ref total, (long)localCount);
                 }
                 finally
                 {

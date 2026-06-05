@@ -55,4 +55,31 @@ internal static class SearchHelpers
         }
         return false;
     }
+
+    // Stateless forward-prefix prune for CANONICAL counting (leaf uses IsIdentityCanonical).
+    // Only the horizontal-reflection test is sound here: horizontal reflection (row r -> N-1-r)
+    // is column-preserving, so a prefix that is lexicographically greater than its horizontal
+    // mirror can never extend to the lexicographically-minimal (canonical) representative.
+    //
+    // The rotate-180 "minimality" test is deliberately NOT applied: it would compare rows[i]
+    // against N-1-rows[depth-i], i.e. against columns that are not yet fixed at this depth, so it
+    // is unsound as a forward-prefix prune and silently under-counts (it returned 692,857 instead
+    // of 1,846,955 for N=16). Full canonicality across all 8 symmetries is still enforced exactly
+    // by IsIdentityCanonical at the leaf, so omitting it only costs a little extra traversal.
+    //
+    // Because it carries no cross-depth state, this variant stays correct even when invoked only
+    // at depth >= pruneDepthGate (unlike ShouldPrunePrefixIncremental, which must run from col 0).
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool ShouldPrunePrefixFull(int[] rows, int depth, int N, bool reflectionEnabled)
+    {
+        if (!reflectionEnabled) return false;
+        for (int i = 0; i <= depth; i++)
+        {
+            int r = rows[i]; if (r < 0) return false;
+            int reflected = N - 1 - r;
+            if (r > reflected) return true;
+            if (r < reflected) break;
+        }
+        return false;
+    }
 }

@@ -17,7 +17,7 @@ in the same change that touches `CHANGELOG.md`.
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
 | Active branch | `test/kernel-coverage` |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
-| Test count | **493 / 493 passing** (404 unit + 89 view-model; up from 304 at v1.0.0) |
+| Test count | **498 / 498 passing** (409 unit + 89 view-model; up from 304 at v1.0.0) |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |
 | Build status | 0 errors / 0 warnings |
 
@@ -25,6 +25,10 @@ in the same change that touches `CHANGELOG.md`.
 
 - Kernel performance: `TZCNT` intrinsic, `SearchState` struct, `EnsureMinThreads` one-shot guard.
 - Kernel correctness: two-phase `EnumerateUniqueVisualizeAdaptive` (~2× fewer nodes for Unique Visualize).
+- Kernel correctness: fixed a Unique-mode count under-report at N >= 16
+  (`CountUniqueFastHalfBoard` returned 692 857 instead of 1 846 955 at N = 16); the
+  shared forward-prefix prune `ShouldPrunePrefixFull` is now reflection-only after
+  removing an unsound rotate-180 minimality test.
 - Kernel refactor: `BitmaskSolver.cs` further split into `BitmaskSolver.CountUnique.cs` and `BitmaskSolver.Materialize.cs` (710 → 268 lines in the root file).
 - Test coverage: dedicated tests for `BitmaskSolver.CountUnique.cs` (14 tests),
   `BitmaskSolver.Single.cs` (17 tests), `BitmaskSolver.All.cs` (17 tests —
@@ -59,18 +63,6 @@ baseline column with the new numbers.
 
 ## Backlog — Kernel Correctness
 
-- **`CountUniqueFastHalfBoard` under-reports for N >= 16.** Returns 692 857 for
-  N = 16 versus the OEIS A002562 value of 1 846 955 (difference − 1 154 098).
-  Affects both Unique Materialize and Unique CountOnly paths because they both
-  call this method. Surfaced by
-  `BitmaskSolverUniqueTests.UniqueMode_Materialize_N16_RoutesThroughTwoPhasePath`,
-  which currently asserts only routing + sample placement validity (full count
-  assertion deferred). Source: `NQueen.Kernel/Solvers/BitmaskSolver.CountUnique.cs`
-  (the `Parallel.ForEach` body around line 80–165 — candidate causes include
-  the half-board first-row partition `(n + 1) / 2` interacting with
-  `IsIdentityCanonical`, or the `pruneDepthGate` schedule for `n >= 16`). Fix:
-  diagnose the under-counting, correct it, and tighten the routing test to assert
-  the OEIS value for N = 16.
 - **`GenerateConstructiveSolution` `n % 6 == 3` branch emits an invalid placement.**
   Surfaced via `BitmaskSolverSingleModeTests.SingleMode_ConstructivePath_N15_RoutesAndReturnsCount1`,
   which currently asserts only the routing and count (not placement validity) because
@@ -92,8 +84,8 @@ effort × expected impact.
 
 - **Throttle `IsSolverCanceled` reads** in `CountUniqueFastHalfBoard.__DFS` hot loop
   (don't check on every `while` iteration). Source: `Code Analysis - 02-02.2026.txt`.
-- **Tighten `ShouldPrunePrefixIncremental` gating** so it's only called when both
-  `col >= pruneGate` and the relevant pruning mode is enabled. Source: same.
+- **Tighten `ShouldPrunePrefixFull` gating** so it's only called when `col >= pruneGate`
+  and reflection pruning is enabled. Source: same.
 
 ### Larger wins, scoped risk
 

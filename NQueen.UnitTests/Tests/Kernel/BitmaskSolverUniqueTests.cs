@@ -116,18 +116,17 @@ public class BitmaskSolverUniqueTests
         //   Phase 1: CollectUniqueSamplesDFS — sequential DFS that stops at cap canonical samples.
         //   Phase 2: CountUniqueFastHalfBoard — exact half-board count.
         //
-        // Routing-only check: the count assertion is intentionally omitted here because
-        // CountUniqueFastHalfBoard currently under-reports for N >= 16 (returns 692 857 for N = 16
-        // versus the OEIS A002562 value of 1 846 955) — tracked as a production defect under
-        // "Backlog — Kernel Correctness" in docs/ROADMAP.md. We still verify Phase 1 produces
-        // valid canonical samples and that the count is non-zero.
+        // Phase 2 (CountUniqueFastHalfBoard) must return the exact unique count. The half-board
+        // root partition plus reflection-only prefix pruning is verified against the OEIS A002562
+        // value here; an earlier variant also applied an unsound rotate-180 "minimality" prefix
+        // prune that under-reported (692 857) until it was removed.
         using var solver = MakeSolver();
         var ctx = new SimulationContext(16, SolutionMode.Unique, DisplayMode.Hide);
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().BeGreaterThan(0UL,
-            "Phase 2 CountUniqueFastHalfBoard must return a non-zero count for N=16");
+        result.SolutionsCount.Should().Be(1_846_955UL,
+            "unique count for N=16 is 1 846 955 (OEIS A002562)");
         result.Solutions.Should().NotBeEmpty("Phase 1 DFS must surface canonical samples");
         result.Solutions.Count.Should().BeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount);
         foreach (var s in result.Solutions)
