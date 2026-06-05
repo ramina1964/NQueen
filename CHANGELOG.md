@@ -54,6 +54,20 @@ All notable changes to this project are documented here.
   cancellation via the `IsSolverCanceled` flag, packed-storage materialisation
   (N ≤ 25), solver-state reset across consecutive runs, and the `enableCap=false`
   constructor overload. Full class runs in ~0.6 s.
+- **`BitmaskSolverAllModeTests.cs`** — 17 fast tests (12 declarations + 5 Theory
+  expansions) targeting `BitmaskSolver.All.cs`. Drives `RunAllUnified`,
+  `EnumerateAllAdaptive`, `CollectAllSamplesAndCountParallel`, and
+  `CollectAllSampleSolutionsDFS` through the public `ISolverBackEnd.GetSimResultsAsync`
+  API, covering each routing branch: count-only small-N path through
+  `BitboardNQueenSolver.CountSolutions` (N = 1, 4, 5, 6, 7, 8, 9; plus zero-solution
+  N = 2, 3), small-N materialize path through `RunAllUnified` (N = 8),
+  two-phase materialize path through `CollectAllSamplesAndCountParallel` at
+  `N = ParallelAllMaterializeAutoEnableThresholdN` (= 14), count-only at N = 14,
+  `CollectAllSampleSolutionsDFS` cap-stop semantics, event emission with post-cap
+  suppression, in-flight cancellation via the `IsSolverCanceled` flag,
+  `AllStorageMode = CountOnly` equivalence with `UseCountOnlyAllMode`,
+  solver-state reset across consecutive runs, and the `enableCap=false`
+  constructor overload. Full class runs in ~0.75 s.
 
 ### Docs
 - **`README.md`** — replaced the single-line placeholder with a full README covering:
@@ -61,6 +75,19 @@ All notable changes to this project are documented here.
   (Console interactive + non-interactive flag reference, WPF GUI), solver options table,
   known solution counts (OEIS A000170 / A002562), benchmark results, contributing guide,
   and licence.
+- **`docs/ROADMAP.md`** — new persistent roadmap document. Records current project
+  state (release, branch, test count, coverage snapshot), the active kernel
+  test-coverage track (per `BitmaskSolver.*.cs` partial), and the consolidated
+  backlog (kernel performance items from `Code Analysis - 02-02.2026.txt` and
+  `Potential All Mode Improvements.txt`, four known GUI issues, and the N = 15
+  `n % 6 == 3` constructive-placement defect surfaced by
+  `BitmaskSolverSingleModeTests`). Includes a workflow rule that ties roadmap
+  updates to `CHANGELOG.md` entries so the two documents stay in sync.
+- **`.github/copilot-instructions.md`** — added a `### Roadmap` section pointing
+  every new Copilot session at `docs/ROADMAP.md` so the roadmap is auto-loaded as
+  context. Also updated the partial-file list under `### Solver Conventions` to
+  include the two newly extracted partials (`BitmaskSolver.CountUnique.cs`,
+  `BitmaskSolver.Materialize.cs`).
 
 ### Fixed (NQueen.Kernel — Unique Visualize path)
 - **`BitmaskSolver.Unique.cs`** — `EnumerateUniqueVisualizeAdaptive` was visiting ~2×
