@@ -17,7 +17,7 @@ in the same change that touches `CHANGELOG.md`.
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
 | Active branch | `test/kernel-coverage` |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
-| Test count | **478 / 478 passing** (389 unit + 89 view-model; up from 304 at v1.0.0) |
+| Test count | **493 / 493 passing** (404 unit + 89 view-model; up from 304 at v1.0.0) |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |
 | Build status | 0 errors / 0 warnings |
 
@@ -27,8 +27,9 @@ in the same change that touches `CHANGELOG.md`.
 - Kernel correctness: two-phase `EnumerateUniqueVisualizeAdaptive` (~2× fewer nodes for Unique Visualize).
 - Kernel refactor: `BitmaskSolver.cs` further split into `BitmaskSolver.CountUnique.cs` and `BitmaskSolver.Materialize.cs` (710 → 268 lines in the root file).
 - Test coverage: dedicated tests for `BitmaskSolver.CountUnique.cs` (14 tests),
-  `BitmaskSolver.Single.cs` (17 tests), and `BitmaskSolver.All.cs` (17 tests —
-  12 declarations + 5 Theory expansions).
+  `BitmaskSolver.Single.cs` (17 tests), `BitmaskSolver.All.cs` (17 tests —
+  12 declarations + 5 Theory expansions), and `BitmaskSolver.Unique.cs`
+  (15 tests — 11 declarations + 4 Theory expansions).
 - GUI: `MainWindow.xaml` clipping fix; `ListOfSolutionsUserControl.xaml` height cap.
 - Console: solver config aligned with GUI (pruning on, adaptive depth, half-board for All ≥ 15).
 - Benchmarks: 14 files consolidated to 7; new `ConsolePruningImpactBenchmarks`.
@@ -48,8 +49,8 @@ unit of work.
 | `BitmaskSolver.Single.cs` | `BitmaskSolverSingleModeTests` (17 tests) | **shipped** | was 41 % / 25 % |
 | `BitmaskSolver.CountUnique.cs` | `BitmaskSolverCountUniqueTests` (14 tests) | **shipped** | was 15 % / 3 % |
 | `BitmaskSolver.All.cs` | `BitmaskSolverAllModeTests` (17 tests) | **shipped** | TBD — pending re-collect |
-| `BitmaskSolver.Unique.cs` | _planned_ | **next** | TBD — pending re-collect |
-| `BitmaskSolver.Materialize.cs` | _planned_ | next | TBD — pending re-collect |
+| `BitmaskSolver.Unique.cs` | `BitmaskSolverUniqueTests` (15 tests) | **shipped** | TBD — pending re-collect |
+| `BitmaskSolver.Materialize.cs` | _planned_ | **next** | TBD — pending re-collect |
 
 After every entry above is shipped, regenerate the coverage report and update the
 baseline column with the new numbers.
@@ -58,6 +59,18 @@ baseline column with the new numbers.
 
 ## Backlog — Kernel Correctness
 
+- **`CountUniqueFastHalfBoard` under-reports for N >= 16.** Returns 692 857 for
+  N = 16 versus the OEIS A002562 value of 1 846 955 (difference − 1 154 098).
+  Affects both Unique Materialize and Unique CountOnly paths because they both
+  call this method. Surfaced by
+  `BitmaskSolverUniqueTests.UniqueMode_Materialize_N16_RoutesThroughTwoPhasePath`,
+  which currently asserts only routing + sample placement validity (full count
+  assertion deferred). Source: `NQueen.Kernel/Solvers/BitmaskSolver.CountUnique.cs`
+  (the `Parallel.ForEach` body around line 80–165 — candidate causes include
+  the half-board first-row partition `(n + 1) / 2` interacting with
+  `IsIdentityCanonical`, or the `pruneDepthGate` schedule for `n >= 16`). Fix:
+  diagnose the under-counting, correct it, and tighten the routing test to assert
+  the OEIS value for N = 16.
 - **`GenerateConstructiveSolution` `n % 6 == 3` branch emits an invalid placement.**
   Surfaced via `BitmaskSolverSingleModeTests.SingleMode_ConstructivePath_N15_RoutesAndReturnsCount1`,
   which currently asserts only the routing and count (not placement validity) because

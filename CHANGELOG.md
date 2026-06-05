@@ -68,6 +68,30 @@ All notable changes to this project are documented here.
   `AllStorageMode = CountOnly` equivalence with `UseCountOnlyAllMode`,
   solver-state reset across consecutive runs, and the `enableCap=false`
   constructor overload. Full class runs in ~0.75 s.
+- **`BitmaskSolverUniqueTests.cs`** — 15 fast tests (11 declarations + 4 Theory
+  expansions) targeting the materialize path of `BitmaskSolver.Unique.cs`. Drives
+  `ExecuteUniqueModeUnified` and `EnumerateUniqueVisualizeAdaptive` through the
+  public `ISolverBackEnd.GetSimResultsAsync` API, covering each routing branch:
+  small-N branch (N = 1, 4, 5, 6, 7, 8, 9 — `BitmaskSearchEngine.Run` with
+  `RestrictFirstCol: true` and `IsIdentityCanonical` filter), zero-solution
+  N = 2, 3, mid-N branch at `N = LargeBoardSymmetryPruningThreshold` (= 15) routing
+  through `Engines.SymmetryPrunedUniqueCounter.Count`, large-N two-phase branch at
+  `N = UniqueCountOnlyParallelThresholdN` (= 16) using `CollectUniqueSamplesDFS`
+  + `CountUniqueFastHalfBoard`, `CollectUniqueSamplesDFS` cap-stop semantics,
+  visualize-path event emission, in-flight cancellation, solver-state reset
+  across consecutive runs, and the `enableCap=false` constructor overload. Full
+  class runs in ~1.6 s. Count-only Unique routing remains covered by
+  `BitmaskSolverCountUniqueTests`.
+
+### Discovered (NQueen.Kernel — Unique mode count discrepancy at N >= 16)
+- **`BitmaskSolver.CountUnique.cs`** — `CountUniqueFastHalfBoard` under-reports for
+  N = 16: returns 692 857 vs the OEIS A002562 value of 1 846 955 (difference
+  −1 154 098). Surfaced by `BitmaskSolverUniqueTests.UniqueMode_Materialize_N16_RoutesThroughTwoPhasePath`,
+  which currently asserts only routing + sample placement validity (count assertion
+  intentionally deferred). Both the Unique Materialize path and the Unique
+  CountOnly path converge on this method, so the defect is invisible to existing
+  N >= 16 tests because none of them assert the exact count value. Tracked under
+  *Backlog — Kernel Correctness* in `docs/ROADMAP.md`.
 
 ### Docs
 - **`README.md`** — replaced the single-line placeholder with a full README covering:
