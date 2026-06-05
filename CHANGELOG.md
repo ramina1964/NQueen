@@ -44,6 +44,16 @@ All notable changes to this project are documented here.
   branch (N = 16, pruning-flag preservation), the save/restore semantics for
   `EnablePrefixMinimalityPruning` and `EnablePartialReflectionPruning`, and the
   `UniqueStorageMode = CountOnly` path. Full class runs in ~1.1 s.
+- **`BitmaskSolverSingleModeTests.cs`** — 17 fast tests targeting
+  `BitmaskSolver.Single.cs` (41 % line / 25 % branch baseline). Covers each routing
+  branch in `SolveSingleMode`: curated fast path (N = 1, 4, 5, 8, 11, 13),
+  empty-curated fall-through to fallback enumeration (N = 2, 3 — no solution),
+  fallback enumeration for small N below `LargeBoardIntermediateStartSize`
+  (N = 14), constructive path for N ≥ `LargeBoardIntermediateStartSize`
+  (N = 15, 16, 17), engine-backed visualize branch with events, in-flight
+  cancellation via the `IsSolverCanceled` flag, packed-storage materialisation
+  (N ≤ 25), solver-state reset across consecutive runs, and the `enableCap=false`
+  constructor overload. Full class runs in ~0.6 s.
 
 ### Docs
 - **`README.md`** — replaced the single-line placeholder with a full README covering:
