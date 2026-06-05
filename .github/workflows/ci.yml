@@ -40,10 +40,12 @@ jobs:
           dotnet test
           --no-build
           --configuration Release
-          /p:CollectCoverage=true
-          /p:CoverletOutputFormat=cobertura
-          /p:Exclude="[NQueen.Benchmarking]*%2c[xunit.*]*"
+          --filter "Category!=Slow"
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults
           --verbosity minimal
+          --
+          DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
 
       - name: Install reportgenerator
         run: dotnet tool install --global dotnet-reportgenerator-globaltool

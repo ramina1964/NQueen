@@ -57,7 +57,7 @@ public static class SymmetryPrunedUniqueCounter
                     avail ^= bit;
                     int r = BitOperations.TrailingZeroCount(bit);
                     rows[col] = r;
-                    if (col >= pruneDepthGate && ShouldPrunePrefixFast(rows, col, N, localReflectionPruning, localPrefixMinimality)) { rows[col] = -1; continue; }
+                    if (col >= pruneDepthGate && SearchHelpers.ShouldPrunePrefixFull(rows, col, N, localReflectionPruning)) { rows[col] = -1; continue; }
                     DFS(col + 1, cols | bit, (d1 | bit) << 1, (d2 | bit) >> 1);
                     rows[col] = -1;
                 }
@@ -82,32 +82,5 @@ public static class SymmetryPrunedUniqueCounter
             while (emitted < cap && materializedQueue.TryDequeue(out var sol)) { onMaterialized(sol); emitted++; }
         }
         return totalCount;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool ShouldPrunePrefixFast(int[] rows, int depth, int N,
-        bool reflectionEnabled, bool minimalityEnabled)
-    {
-        if (!reflectionEnabled && !minimalityEnabled) return false;
-        if (reflectionEnabled)
-        {
-            for (int i = 0; i <= depth; i++)
-            {
-                int r = rows[i]; if (r < 0) return false;
-                int reflected = N - 1 - r;
-                if (r > reflected) return true;
-                if (r < reflected) break;
-            }
-        }
-        if (!minimalityEnabled) return false;
-        for (int i = 0; i <= depth; i++)
-        {
-            int a = rows[i]; if (a < 0) return false;
-            int b = rows[depth - i]; if (b < 0) return false;
-            int transformed = N - 1 - b;
-            if (a > transformed) return true;
-            if (a < transformed) break;
-        }
-        return false;
     }
 }

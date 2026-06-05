@@ -6,6 +6,17 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Fixed (CI)
+- **`.github/workflows/ci.yml`** — the *"Generate HTML coverage report"* step was stuck/failing
+  because the *"Test with coverage"* step used coverlet.msbuild flags
+  (`/p:CollectCoverage=true /p:CoverletOutputFormat=cobertura`) while the test projects only
+  reference `coverlet.collector`; those props were silently ignored, so no
+  `coverage.cobertura.xml` was produced and ReportGenerator matched zero files. Switched the
+  step to the collector driver (`--collect:"XPlat Code Coverage"` + cobertura format via
+  `DataCollectionRunSettings`), added `--results-directory TestResults`, and added
+  `--filter "Category!=Slow"` so the large-board enumeration tests don't hang the runner —
+  mirroring the proven-working local `GenerateCoverage.ps1`.
+
 ### Fixed (NQueen.GUI)
 - **`MainWindow.xaml`** — changed `SizeToContent` from `Width` to `WidthAndHeight` and
   the main content `RowDefinition` from `Height="*"` to `Height="Auto"` so WPF measures
@@ -54,6 +65,102 @@ All notable changes to this project are documented here.
   cancellation via the `IsSolverCanceled` flag, packed-storage materialisation
   (N ≤ 25), solver-state reset across consecutive runs, and the `enableCap=false`
   constructor overload. Full class runs in ~0.6 s.
+- **`BitmaskSolverAllModeTests.cs`** — 17 fast tests (12 declarations + 5 Theory
+  expansions) targeting `BitmaskSolver.All.cs`. Drives `RunAllUnified`,
+  `EnumerateAllAdaptive`, `CollectAllSamplesAndCountParallel`, and
+  `CollectAllSampleSolutionsDFS` through the public `ISolverBackEnd.GetSimResultsAsync`
+  API, covering each routing branch: count-only small-N path through
+  `BitboardNQueenSolver.CountSolutions` (N = 1, 4, 5, 6, 7, 8, 9; plus zero-solution
+  N = 2, 3), small-N materialize path through `RunAllUnified` (N = 8),
+  two-phase materialize path through `CollectAllSamplesAndCountParallel` at
+  `N = ParallelAllMaterializeAutoEnableThresholdN` (= 14), count-only at N = 14,
+  `CollectAllSampleSolutionsDFS` cap-stop semantics, event emission with post-cap
+  suppression, in-flight cancellation via the `IsSolverCanceled` flag,
+  `AllStorageMode = CountOnly` equivalence with `UseCountOnlyAllMode`,
+  solver-state reset across consecutive runs, and the `enableCap=false`
+  constructor overload. Full class runs in ~0.75 s.
+- **`BitmaskSolverUniqueTests.cs`** — 15 fast tests (11 declarations + 4 Theory
+  expansions) targeting the materialize path of `BitmaskSolver.Unique.cs`. Drives
+  `ExecuteUniqueModeUnified` and `EnumerateUniqueVisualizeAdaptive` through the
+  public `ISolverBackEnd.GetSimResultsAsync` API, covering each routing branch:
+  small-N branch (N = 1, 4, 5, 6, 7, 8, 9 — `BitmaskSearchEngine.Run` with
+  `RestrictFirstCol: true` and `IsIdentityCanonical` filter), zero-solution
+  N = 2, 3, mid-N branch at `N = LargeBoardSymmetryPruningThreshold` (= 15) routing
+  through `Engines.SymmetryPrunedUniqueCounter.Count`, large-N two-phase branch at
+  `N = UniqueCountOnlyParallelThresholdN` (= 16) using `CollectUniqueSamplesDFS`
+  + `CountUniqueFastHalfBoard` (asserting the exact OEIS A002562 count of
+  1 846 955), `CollectUniqueSamplesDFS` cap-stop semantics,
+  visualize-path event emission, in-flight cancellation, solver-state reset
+  across consecutive runs, and the `enableCap=false` constructor overload. Full
+  class runs in ~1.6 s. Count-only Unique routing remains covered by
+  `BitmaskSolverCountUniqueTests`.
+- **`SearchHelpersTests.cs`** — 5 new tests for the stateless reflection-only
+  `SearchHelpers.ShouldPrunePrefixFull` helper: reflection-disabled no-op,
+  prune-when-reflection-smaller, no-prune-when-identity-wins, negative-row guard,
+  and an explicit regression guard asserting the helper does **not** apply the
+  unsound rotate-180 minimality prune that caused the N >= 16 under-count.
+- **`BitmaskSolverMaterializeTests.cs`** — 7 fast tests (10 with Theory expansions)
+  targeting `BitmaskSolver.Materialize.cs`, the last `BitmaskSolver.*.cs` partial
+  without a dedicated class. Drives `SampleMaterializeUsingLookup`,
+  `ConstructiveSampleSolutions`, `GenerateConstructiveSolution`, and
+  `GenerateSymmetryVariants` through the public `ISolverBackEnd.GetSimResultsAsync`
+  API at `N >= LookupThresholdN` (21), where the count is served from the lookup
+  table and samples are built constructively (no DFS). Covers both constructive
+  special-case branches — N = 21 (`n % 6 == 3`) and N = 26 (`n % 6 == 2`) — in All
+  and Unique modes, asserting the curated count and that every materialised sample
+  is a conflict-free placement; the display cap (default and explicit) is honoured;
+  Unique-mode samples are distinct (raw `int[]` storage exercises
+  `GenerateSymmetryVariants`); and solver state resets across consecutive runs.
+
+### Fixed (NQueen.Kernel — invalid constructive placement for n % 6 ∈ {2, 3})
+- **`BitmaskSolver.Materialize.cs`** — rewrote `GenerateConstructiveSolution` to the
+  canonical closed-form explicit construction keyed on `n mod 6`. The previous
+  `n % 6 == 2` and `n % 6 == 3` special-case branches both emitted placements with a
+  diagonal conflict (e.g. N = 15 and N = 20 placed two queens on a shared
+  anti-diagonal). Because `ValidateRows` only checks row-array length — not diagonal
+  legality — the invalid boards were surfaced silently through the constructive
+  Single-mode path (N = 15, 21, 27) and the lookup-materialize sample path
+  (N = 21, 26, 27). The corrected algorithm lists the even rows then the odd rows,
+  moving `2` to the end of the evens and `1, 3` to the end of the odds for
+  `n % 6 == 3`, and swapping `1`/`3` then moving `5` to the end of the odds for
+  `n % 6 == 2`; output for every other remainder is unchanged ("evens then odds").
+  Verified conflict-free for N = 8, 9, 14, 15, 20 and through the public API by the
+  now-strict `SingleMode_ConstructivePath_ReturnsValidSolutionWithoutEnumeration`
+  (N = 15, 16, 17) and the new `BitmaskSolverMaterializeTests` (N = 21, 26).
+
+### Fixed (NQueen.Kernel — Unique mode count under-report at N >= 16)
+- **`BitmaskSolver.CountUnique.cs` / `Engines/SearchHelpers.cs`** — corrected a
+  silent under-count in `CountUniqueFastHalfBoard` that returned 692 857 instead
+  of the OEIS A002562 value of 1 846 955 for N = 16 (and was wrong for N = 17..20).
+  Root cause: the shared forward-prefix prune applied a rotate-180 "minimality"
+  test that compares `rows[i]` against `N-1-rows[depth-i]` — i.e. against columns
+  not yet fixed at the current depth — which is unsound as a forward-prefix prune
+  and discarded branches that still extend to valid canonical solutions. The
+  defect was previously invisible because the only other consumer
+  (`SymmetryPrunedUniqueCounter`) runs with an effectively disabled prune gate at
+  its sole reachable size (N = 15), and no N >= 16 test asserted the exact count.
+  Fix: `SearchHelpers.ShouldPrunePrefixFull` is now reflection-only (horizontal
+  reflection is the only sound forward-prefix prune; full canonicality across all
+  eight symmetries is still enforced exactly by `IsIdentityCanonical` at the leaf).
+  Both consumers were updated and the dead minimality parameter removed. Verified
+  by the now-exact `UniqueMode_Materialize_N16_RoutesThroughTwoPhasePath`
+  assertion and new `SearchHelpersTests` coverage.
+
+### Performance (NQueen.Kernel — Unique count-only depth-2 parallelisation)
+- **`BitmaskSolver.CountUnique.cs`** — replaced the coarse root-row partitioning in
+  `CountUniqueFastHalfBoard` (which produced only ~(N+1)/2 uneven `Partitioner` ranges,
+  ≈ 8–10 work items, leaving cores idle on tail imbalance) with **depth-2 work items**:
+  one item per valid (column-0, column-1) queen pair, with column 0 restricted to the
+  top half. For N = 20 this yields ~180 fine-grained items instead of ~10, giving far
+  better core saturation and load-balancing. The former closure DFS is extracted to a
+  reusable `CountCanonicalDFS` method driven by `Parallel.ForEach` with
+  `localInit`/`localFinally` per-thread `rows`/`scratch` buffers (rented from
+  `ArrayPool<int>`). The visited leaf set and the `IsIdentityCanonical` leaf filter are
+  unchanged, so the canonical count is provably identical — verified by the exact-count
+  tests at N = 16/17/18 (1 846 955 / 11 977 939 / 83 263 591). Measured wall-clock on a
+  multi-core dev box: N = 16 446 → 271 ms (1.65×), N = 17 3058 → 2152 ms (1.42×),
+  N = 18 20 983 → 13 725 ms (1.53×). Addresses the "CPU utilisation drop at N = 19
+  Unique CountOnly" tail-imbalance investigation in `docs/ROADMAP.md`.
 
 ### Docs
 - **`README.md`** — replaced the single-line placeholder with a full README covering:
@@ -61,6 +168,19 @@ All notable changes to this project are documented here.
   (Console interactive + non-interactive flag reference, WPF GUI), solver options table,
   known solution counts (OEIS A000170 / A002562), benchmark results, contributing guide,
   and licence.
+- **`docs/ROADMAP.md`** — new persistent roadmap document. Records current project
+  state (release, branch, test count, coverage snapshot), the active kernel
+  test-coverage track (per `BitmaskSolver.*.cs` partial), and the consolidated
+  backlog (kernel performance items from `Code Analysis - 02-02.2026.txt` and
+  `Potential All Mode Improvements.txt`, four known GUI issues, and the N = 15
+  `n % 6 == 3` constructive-placement defect surfaced by
+  `BitmaskSolverSingleModeTests`). Includes a workflow rule that ties roadmap
+  updates to `CHANGELOG.md` entries so the two documents stay in sync.
+- **`.github/copilot-instructions.md`** — added a `### Roadmap` section pointing
+  every new Copilot session at `docs/ROADMAP.md` so the roadmap is auto-loaded as
+  context. Also updated the partial-file list under `### Solver Conventions` to
+  include the two newly extracted partials (`BitmaskSolver.CountUnique.cs`,
+  `BitmaskSolver.Materialize.cs`).
 
 ### Fixed (NQueen.Kernel — Unique Visualize path)
 - **`BitmaskSolver.Unique.cs`** — `EnumerateUniqueVisualizeAdaptive` was visiting ~2×

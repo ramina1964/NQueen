@@ -121,4 +121,56 @@ public class SearchHelpersTests
             rows, 0, 4, true, true, ref reflEq, ref minEq)
             .Should().BeFalse();
     }
+
+    // ── ShouldPrunePrefixFull (reflection-only, stateless) ───────────────────
+
+    [Fact]
+    public void ShouldPrunePrefixFull_ReflectionDisabled_ReturnsFalse()
+    {
+        // With reflection off there is no sound forward-prefix prune, so never prune.
+        int[] rows = [7, 1, -1, -1, -1, -1, -1, -1];
+        SearchHelpers.ShouldPrunePrefixFull(rows, 1, 8, reflectionEnabled: false)
+            .Should().BeFalse();
+    }
+
+    [Fact]
+    public void ShouldPrunePrefixFull_FirstRowBelowMirror_PrunesWhenReflectionGreater()
+    {
+        // N=8: row 7 mirrors to 0, so 7 > 0 → the horizontal reflection is lexicographically
+        // smaller, so this prefix can never be the canonical representative → prune.
+        int[] rows = [7, -1, -1, -1, -1, -1, -1, -1];
+        SearchHelpers.ShouldPrunePrefixFull(rows, 0, 8, reflectionEnabled: true)
+            .Should().BeTrue();
+    }
+
+    [Fact]
+    public void ShouldPrunePrefixFull_FirstRowAboveMirror_DoesNotPrune()
+    {
+        // N=8: row 2 mirrors to 5, so 2 < 5 → identity already wins the reflection comparison
+        // at column 0; the scan breaks and does not prune.
+        int[] rows = [2, -1, -1, -1, -1, -1, -1, -1];
+        SearchHelpers.ShouldPrunePrefixFull(rows, 0, 8, reflectionEnabled: true)
+            .Should().BeFalse();
+    }
+
+    [Fact]
+    public void ShouldPrunePrefixFull_NegativeRowValue_ReturnsFalse()
+    {
+        int[] rows = [-1, -1, -1, -1];
+        SearchHelpers.ShouldPrunePrefixFull(rows, 0, 4, reflectionEnabled: true)
+            .Should().BeFalse();
+    }
+
+    [Fact]
+    public void ShouldPrunePrefixFull_DoesNotApplyUnsoundRotate180MinimalityPrune()
+    {
+        // Regression guard for the N>=16 unique under-count (692 857 vs 1 846 955 at N=16).
+        // rows=[2,6] at N=8: reflection at col 0 (2 < 5) clears the comparison, so reflection
+        // never prunes. The old rotate-180 "minimality" prune WOULD have fired here
+        // (rows[0]=2 > N-1-rows[1] = 7-6 = 1), incorrectly discarding a branch that can still
+        // reach a canonical solution. ShouldPrunePrefixFull must NOT prune.
+        int[] rows = [2, 6, -1, -1, -1, -1, -1, -1];
+        SearchHelpers.ShouldPrunePrefixFull(rows, 1, 8, reflectionEnabled: true)
+            .Should().BeFalse("rotate-180 minimality is unsound as a forward-prefix prune and must not be applied");
+    }
 }
