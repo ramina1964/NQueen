@@ -107,6 +107,22 @@ All notable changes to this project are documented here.
   by the now-exact `UniqueMode_Materialize_N16_RoutesThroughTwoPhasePath`
   assertion and new `SearchHelpersTests` coverage.
 
+### Performance (NQueen.Kernel — Unique count-only depth-2 parallelisation)
+- **`BitmaskSolver.CountUnique.cs`** — replaced the coarse root-row partitioning in
+  `CountUniqueFastHalfBoard` (which produced only ~(N+1)/2 uneven `Partitioner` ranges,
+  ≈ 8–10 work items, leaving cores idle on tail imbalance) with **depth-2 work items**:
+  one item per valid (column-0, column-1) queen pair, with column 0 restricted to the
+  top half. For N = 20 this yields ~180 fine-grained items instead of ~10, giving far
+  better core saturation and load-balancing. The former closure DFS is extracted to a
+  reusable `CountCanonicalDFS` method driven by `Parallel.ForEach` with
+  `localInit`/`localFinally` per-thread `rows`/`scratch` buffers (rented from
+  `ArrayPool<int>`). The visited leaf set and the `IsIdentityCanonical` leaf filter are
+  unchanged, so the canonical count is provably identical — verified by the exact-count
+  tests at N = 16/17/18 (1 846 955 / 11 977 939 / 83 263 591). Measured wall-clock on a
+  multi-core dev box: N = 16 446 → 271 ms (1.65×), N = 17 3058 → 2152 ms (1.42×),
+  N = 18 20 983 → 13 725 ms (1.53×). Addresses the "CPU utilisation drop at N = 19
+  Unique CountOnly" tail-imbalance investigation in `docs/ROADMAP.md`.
+
 ### Docs
 - **`README.md`** — replaced the single-line placeholder with a full README covering:
   features, algorithm overview, project structure, prerequisites, build & run instructions

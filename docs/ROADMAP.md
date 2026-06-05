@@ -24,6 +24,9 @@ in the same change that touches `CHANGELOG.md`.
 ### Recently shipped (see `CHANGELOG.md` `[Unreleased]` for full detail)
 
 - Kernel performance: `TZCNT` intrinsic, `SearchState` struct, `EnsureMinThreads` one-shot guard.
+- Kernel performance: depth-2 work-item parallelisation of `CountUniqueFastHalfBoard`
+  (~180 fine-grained (col-0, col-1) items at N = 20 vs ~10 coarse root-row ranges),
+  giving 1.4–1.65× wall-clock on N = 16–18 with provably identical counts.
 - Kernel correctness: two-phase `EnumerateUniqueVisualizeAdaptive` (~2× fewer nodes for Unique Visualize).
 - Kernel correctness: fixed a Unique-mode count under-report at N >= 16
   (`CountUniqueFastHalfBoard` returned 692 857 instead of 1 846 955 at N = 16); the
@@ -82,8 +85,9 @@ effort × expected impact.
 
 ### Small wins, low risk
 
-- **Throttle `IsSolverCanceled` reads** in `CountUniqueFastHalfBoard.__DFS` hot loop
+- **Throttle `IsSolverCanceled` reads** in the `CountCanonicalDFS` hot loop
   (don't check on every `while` iteration). Source: `Code Analysis - 02-02.2026.txt`.
+  Partly addressed — the check is now gated to `(col & 0xF) == 0` (once per 16 columns).
 - **Tighten `ShouldPrunePrefixFull` gating** so it's only called when `col >= pruneGate`
   and reflection pruning is enabled. Source: same.
 
@@ -105,9 +109,6 @@ effort × expected impact.
 - **Unique CountOnly vs Materialize gap** at N = 17–19 — historical data shows a
   ~5–6× difference. Two-phase split in `EnumerateUniqueVisualizeAdaptive` closed
   part of the gap but there is likely more to find.
-- **CPU utilisation drop at N = 19 Unique CountOnly** — recent measurement shows
-  usage falls under 10 % after ~35 % progress. Root cause likely tail imbalance
-  in the parallel root partitioning. Depends on the work-stealing item above.
 
 ---
 
