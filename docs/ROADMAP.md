@@ -10,12 +10,48 @@ in the same change that touches `CHANGELOG.md`.
 
 ---
 
+## Next session — start here
+
+> Added at the close of the `feature/kernel-perf-small-wins` session (2026-06-06).
+
+**Reality check on the last perf branch.** `feature/kernel-perf-small-wins` shipped the
+Item 2 prune-gate tightening (hoisting `reflectionEnabled` ahead of `ShouldPrunePrefixFull`
+in `CountCanonicalDFS`). It is **correctness-neutral and produced no measurable speedup** —
+the change is behaviour-identical on the reflection-on path that production and the
+benchmarks use. Do **not** read that branch as a performance gain; its value is the baseline
+and profiling knowledge below, not faster code.
+
+**What it left behind (use this):**
+
+- A frozen, low-variance baseline benchmark — `UniqueFastHalfBoardEvenOddBenchmark`
+  (full job: 3 warmups, 15 iterations, N=16 even + N=17 odd). Current baseline on the dev
+  machine: **N=16 ≈ 244 ms, N=17 ≈ 2,042 ms** (error bars ≈ ±1 %).
+- Profiler finding: ~97 % of self-CPU is the `CountCanonicalDFS` loop body itself
+  (bit-scan + recursion + diagonal shifts), not the prune gate. The recursion profile is
+  bottom-heavy (deepest two frames carry ~69 % of self-time).
+
+**Where the real wins likely are — pick ONE, A/B against the baseline above, MEASURE first:**
+
+1. **Iterative core for the Unique hot path** — the bottom-heavy recursion hints call/return
+   overhead is significant; port the allocation-free iterative DFS. (Largest change.)
+2. **Cached shifted diagonal masks** — remove repeated `(d1|bit)<<1` / `(d2|bit)>>1` in the
+   hottest loop. *Skeptical:* the shifts depend on a per-iteration `bit`, so capture a
+   line-level CPU trace to confirm there is real redundancy before committing.
+3. **Depth-based work-stealing queue** for All mode at large N (tail-imbalance on >8 cores).
+
+**Process:** branch off the freshly-merged `main` with a name tied to the *specific*
+experiment (e.g. `perf/unique-iterative-core`), not another generic "small-wins" name, so the
+branch can't over-promise. Run `UniqueFastHalfBoardEvenOddBenchmark` to re-establish the
+baseline before touching production code, per the team's MEASURE-first practice.
+
+---
+
 ## Current State
 
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | `test/kernel-coverage` |
+| Active branch | `main` (feature/kernel-perf-small-wins merged via PR #7 and deleted) |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
 | Test count | **505 / 505 passing** (416 unit + 89 view-model; up from 304 at v1.0.0) |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |
