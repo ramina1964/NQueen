@@ -138,23 +138,6 @@ effort × expected impact.
 
 ---
 
-## Backlog — GUI
-
-From `docs/ignored/Archive/Code Analysis - 02-02.2026.txt`. None of these are addressed in
-`[Unreleased]` so far.
-
-1. **Chessboard not refreshed on board-size change without tab-out** — when the user
-   types a new size then clicks Simulation without leaving the field, the board
-   does not redraw.
-2. **Input panel and chessboard not vertically aligned** — outer grid columns 1 and
-   2 are top-misaligned at default window size.
-3. **Gap between outer grid (1,1) and (1,2) grows on resize** — should stay constant
-   from maximised window down through smaller sizes.
-4. **Excess right-margin white space** — window width should be set to the sum of
-   the three column widths plus a conventional margin.
-
----
-
 ## How to keep this document honest
 
 When a tracked item ships, in the **same commit**:
