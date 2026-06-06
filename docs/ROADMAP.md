@@ -80,8 +80,6 @@ effort × expected impact.
 - **Throttle `IsSolverCanceled` reads** in the `CountCanonicalDFS` hot loop
   (don't check on every `while` iteration). Source: `Code Analysis - 02-02.2026.txt`.
   Partly addressed — the check is now gated to `(col & 0xF) == 0` (once per 16 columns).
-- **Tighten `ShouldPrunePrefixFull` gating** so it's only called when `col >= pruneGate`
-  and reflection pruning is enabled. Source: same.
 
 ### Larger wins, scoped risk
 

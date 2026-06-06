@@ -6,6 +6,28 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Performance (NQueen.Kernel)
+- **`BitmaskSolver.CountUnique.cs`** — tightened the prefix-prune gate in the
+  `CountCanonicalDFS` hot loop so `SearchHelpers.ShouldPrunePrefixFull` is only invoked when
+  reflection pruning is enabled. The loop-invariant `reflectionEnabled` flag is now tested
+  first (`reflectionEnabled && col >= pruneDepthGate && …`), short-circuiting the call
+  entirely on the reflection-off path and making the gate self-documenting. Behaviour is
+  unchanged when reflection pruning is on (the production/benchmark configuration), so the
+  unique count-only path is provably identical — verified by the existing exact-count tests
+  (e.g. N=16 = 1 846 955). Measured on an isolated N=16/N=17 CPU benchmark the change is
+  within run-to-run noise (no regression; the hot path remains ~97 % self-CPU in
+  `CountCanonicalDFS`), so this is adopted as a correctness-neutral, low-risk cleanup rather
+  than a speedup.
+
+### Added (NQueen.Benchmarking)
+- **`UniqueFastHalfBoardEvenOddBenchmark`** — isolated CPU benchmark pinned to N=16 (even)
+  and N=17 (odd) that drives the Unique count-only `CountUniqueFastHalfBoard` →
+  `CountCanonicalDFS` hot path directly. Added because the existing
+  `UniqueFastHalfBoardBenchmark` `[Params(15, 16, 17)]` case aborts on N=15 (which routes
+  through the separate `BitmaskParallelEngine.RunUnique` path, not the half-board DFS),
+  producing `NA` and no usable baseline. This harness is the reusable measurement artifact
+  for future kernel hot-loop work on this path.
+
 ### Fixed (NQueen.ViewModelTests)
 - **`ProgressRelayTests.Heartbeat_ShouldSyntheticAdvance_WhenNoRealProgress`** — replaced a
   fixed `await Task.Delay(150)` with `TestHelpers.WaitForConditionAsync(() => vm.IsSimulating, …)`.
