@@ -11,7 +11,7 @@
     mc:Ignorable="d">
 
     <GroupBox Header="Solver Settings" Margin="0" Padding="0" Background="Bisque" BorderBrush="Black" BorderThickness="1">
-        <Grid Margin="6">
+        <Grid Margin="{StaticResource PanelContentMargin}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />

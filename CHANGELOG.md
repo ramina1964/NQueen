@@ -6,6 +6,72 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Fixed (NQueen.GUI)
+- **`ListOfSolutionsUserControl.xaml` / `MainWindow.xaml`** — the solution-list frame no
+  longer "jumps" from a collapsed height to its full height as the first ~5 results arrive.
+  The grouping `Border` previously sized to its content (with the inner `ListBox` capped at
+  `MaxHeight="130"`); it now stretches (`VerticalAlignment="Stretch"`) to fill the
+  board-height area the control is already allocated, and the `ListBox` fills that fixed
+  frame, so the height is stable from the first result. Spacing was moved inside the frame
+  (Border `Padding` token = 4, outer `Margin="0"`). The list also hugs its content width
+  (`HorizontalAlignment="Left"`, `MaxHeight` and `MinWidth` removed) and the left grid
+  column is now `Width="Auto"`, so it no longer reserves surplus horizontal space. The
+  `Border` and `ListBox` widths are
+  now capped (`MaxWidth`) to a hidden sizer `TextBlock` measuring the widest item
+  (`Solution No. 00`) in the selected-item weight (Bold), so the frame is exactly as wide as
+  the solution name — font/DPI-robust, with no hard-coded pixel width.
+
+### Changed (NQueen.GUI)
+- **`MainWindow.xaml` / `MainWindow.xaml.cs`** — the main window is now user-resizable.
+  The root layout is wrapped in a `Viewbox` (`Stretch="Uniform"`) and the window switched
+  from `ResizeMode="NoResize"` + `SizeToContent="WidthAndHeight"` to `ResizeMode="CanResize"`
+  with a base size of `1200x780` and a `820x560` floor. The whole UI now scales uniformly
+  (the chessboard stays square; panels keep their proportions) and the window letterboxes
+  when its aspect ratio differs from the design ratio.
+  The code-behind shrank from 227 to ~107 lines: the monitor-fit board arithmetic, the
+  `OnDpiChanged`/`LocationChanged` re-layout plumbing, and the `user32` P/Invoke
+  (`MonitorFromWindow`/`GetMonitorInfo`) were removed in favour of a single one-time
+  `ApplyDesignLayout` at a fixed `DesignBoardSize` (the Viewbox handles on-screen and DPI
+  scaling). This also removed a latent crash: with `Content` now the `Viewbox`, the former
+  `(Grid)Content` cast would have thrown.
+- **`app.manifest`** — added an application manifest declaring Per-Monitor V2 DPI awareness
+  (`dpiAwareness` = `PerMonitorV2, PerMonitor`, with the legacy `dpiAware` = `true/pm`
+  fallback) and wired it via `<ApplicationManifest>` in `NQueen.GUI.csproj`. The window now
+  re-renders crisply when dragged between monitors with different scale factors (e.g. 100%
+  laptop to 150% external) instead of relying on WPF's System-aware default, which
+  bitmap-stretches on the secondary monitor. Complements the `Viewbox` layout scaling, which
+  is independent of DPI awareness.
+- **Spacing system** — introduced a single source of truth for layout spacing on a 4px grid
+  (`AppStyles.xaml` `Thickness` tokens: `PanelContentMargin` 8, `FramePadding` 4,
+  `ButtonMargin` 8, `PanelStackGap` 0,8,0,0, `FieldRowMargin` 0,4, `LabelCellMargin` 0,4,8,4,
+  `InputCellMargin` 0,4,0,4). The Input, Output, Simulation, Active-solution, Solver-settings
+  and solutions-list panels now reference these tokens instead of ad-hoc literals
+  (previously a mix of 2/3/5/6/8/10). The `MainWindow` right-hand control column was
+  simplified from a 7-row layout with hard-coded 2px spacer rows to a 4-row stack using a
+  consistent `PanelStackGap`.
+
+### Fixed (NQueen.GUI)
+- **`MainWindow.xaml` / `ActiveSolutionUserControl.xaml`** — clicking **Simulate** no longer
+  appears to resize the window. A `Viewbox` measures its child at infinite size, so the root
+  `Grid`'s content-driven natural size determined the uniform scale: when Simulate populated
+  the "Selected Solution" locations text, the canvas grew and the whole UI zoomed (which
+  looks identical to a resize, though the OS window bounds never changed). The Viewbox child
+  now has a fixed design `Width="1240"`, and the header details `TextBlock` uses
+  `TextWrapping="NoWrap"` so long location strings scroll horizontally inside the existing
+  `ScrollViewer` instead of changing the canvas size. The scale is now constant regardless of
+  content.
+- **`MainWindow.xaml` / `ChessboardUserControl.xaml`** — the three middle-row columns
+  (solution list, chessboard, control panels) now align at the top, and the gaps on the left
+  and right of the chessboard are equal. The chessboard `Border` carried a `Margin="2"` that
+  pushed its top/sides 2px in relative to the neighbouring frames, and the right-hand control
+  column carried an extra `Margin="8,0,0,0"` on top of the grid's 10px gap column (making the
+  right gap ~8px wider than the left). Both stray offsets were removed; the grid's two 10px
+  gap columns are now the sole source of horizontal spacing.
+
+### Removed (NQueen.GUI)
+- **`AppStyles.xaml`** — deleted the unused `GroupBoxStyle` (every `GroupBox` set its
+  properties inline, so the style — including a stale `Margin="5,0,0,0"` — never applied).
+
 ### Performance (NQueen.Kernel)
 - **`BitmaskSolver.CountUnique.cs`** — tightened the prefix-prune gate in the
   `CountCanonicalDFS` hot loop so `SearchHelpers.ShouldPrunePrefixFull` is only invoked when

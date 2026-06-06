@@ -3,6 +3,16 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:converters="clr-namespace:NQueen.GUI.Converters">
 
+    <!--  ******************** Spacing tokens (4px grid: 4 / 8 / 12) ********************  -->
+    <!--  Single source of truth for layout spacing; reference these instead of literals.  -->
+    <Thickness x:Key="PanelContentMargin">8</Thickness>
+    <Thickness x:Key="FramePadding">4</Thickness>
+    <Thickness x:Key="ButtonMargin">8</Thickness>
+    <Thickness x:Key="PanelStackGap">0,8,0,0</Thickness>
+    <Thickness x:Key="FieldRowMargin">0,4</Thickness>
+    <Thickness x:Key="LabelCellMargin">0,4,8,4</Thickness>
+    <Thickness x:Key="InputCellMargin">0,4,0,4</Thickness>
+
     <!--  Make the converter available to all styles in this dictionary  -->
     <converters:FirstValidationErrorConverter x:Key="FirstValidationErrorConverter" />
 
@@ -137,17 +147,6 @@
         <Style.Resources>
             <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent" />
         </Style.Resources>
-    </Style>
-
-    <!--  *********************** Based on Containers **********************  -->
-    <Style x:Key="GroupBoxStyle" TargetType="GroupBox">
-        <Setter Property="Width" Value="Auto" />
-        <Setter Property="Height" Value="Auto" />
-        <Setter Property="Margin" Value="5,0,0,0" />
-        <Setter Property="HorizontalAlignment" Value="Left" />
-        <Setter Property="VerticalAlignment" Value="Top" />
-        <Setter Property="HorizontalContentAlignment" Value="Right" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
 
 </ResourceDictionary>

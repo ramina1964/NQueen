@@ -21,7 +21,7 @@
         Header="Solution Summary">
         
         <!-- Main content grid with consistent margin -->
-        <Grid Margin="2">
+        <Grid Margin="{StaticResource PanelContentMargin}">
             <Grid.RowDefinitions>
                 <RowDefinition />
                 <RowDefinition />
@@ -96,7 +96,7 @@
                 Grid.Row="4"
                 Grid.ColumnSpan="2"
                 MinWidth="140"
-                Margin="5"
+                Margin="{StaticResource ButtonMargin}"
                 Command="{Binding SaveCommand}"
                 Content="Save To File"
                 Style="{StaticResource ButtonStyle}" />

@@ -21,7 +21,7 @@
         Header="Selected Solution">
 
         <!--  Main content grid with consistent margin  -->
-        <Grid Margin="2">
+        <Grid Margin="{StaticResource PanelContentMargin}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
@@ -47,7 +47,7 @@
                     VerticalAlignment="Center"
                     Foreground="Black"
                     Text="{Binding SelectedSolution.Details}"
-                    TextWrapping="Wrap" />
+                    TextWrapping="NoWrap" />
             </ScrollViewer>
 
         </Grid>

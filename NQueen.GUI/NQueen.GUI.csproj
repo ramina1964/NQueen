@@ -11,6 +11,9 @@
     <OutputType>WinExe</OutputType>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
     <Platforms>AnyCPU;x64</Platforms>
+
+    <!-- Per-Monitor V2 DPI awareness for crisp rendering across mixed-DPI monitors. -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>

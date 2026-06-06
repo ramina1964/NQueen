@@ -22,7 +22,7 @@
         Header="Simulation">
 
         <!--  Main content grid with consistent margin  -->
-        <Grid Margin="2">
+        <Grid Margin="{StaticResource PanelContentMargin}">
             <Grid.RowDefinitions>
                 <RowDefinition />
                 <RowDefinition />
@@ -34,12 +34,12 @@
                 VerticalAlignment="Center"
                 Orientation="Horizontal">
                 <Button
-                    Margin="10,5"
+                    Margin="{StaticResource ButtonMargin}"
                     Command="{Binding CancelCommand}"
                     Content="Cancel"
                     Style="{StaticResource ButtonStyle}" />
                 <Button
-                    Margin="10,5"
+                    Margin="{StaticResource ButtonMargin}"
                     Command="{Binding SimulateCommand}"
                     Content="Simulate"
                     IsDefault="True"
@@ -49,7 +49,7 @@
             <!--  ProgressBar with overlayed Label  -->
             <Grid
                 Grid.Row="1"
-                Margin="0,2">
+                Margin="{StaticResource FieldRowMargin}">
 
                 <ProgressBar
                     Name="ProgressBar"

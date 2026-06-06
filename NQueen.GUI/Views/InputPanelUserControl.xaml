@@ -37,7 +37,7 @@
             Header="Input">
 
             <!--  Main content grid with consistent margin  -->
-            <Grid Margin="2">
+            <Grid Margin="{StaticResource PanelContentMargin}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -55,7 +55,7 @@
                 <Label
                     Grid.Row="0"
                     Grid.Column="0"
-                    Margin="5,2"
+                    Margin="{StaticResource LabelCellMargin}"
                     Content="Board Size"
                     Style="{StaticResource LabelStyle}" />
 
@@ -64,7 +64,7 @@
                     Grid.Column="1"
                     Width="90"
                     MinWidth="120"
-                    Margin="0,2,5,2"
+                    Margin="{StaticResource InputCellMargin}"
                     HorizontalAlignment="Right"
                     IsEnabled="{Binding IsInInputMode}"
                     Style="{StaticResource TextBoxNumericalStyle}"
@@ -74,7 +74,7 @@
                 <Label
                     Grid.Row="1"
                     Grid.Column="0"
-                    Margin="5,2"
+                    Margin="{StaticResource LabelCellMargin}"
                     Content="Solution Mode"
                     Style="{StaticResource LabelStyle}" />
 
@@ -83,7 +83,7 @@
                     Grid.Column="1"
                     Width="90"
                     MinWidth="120"
-                    Margin="0,2,5,2"
+                    Margin="{StaticResource InputCellMargin}"
                     HorizontalAlignment="Right"
                     IsEnabled="{Binding IsInInputMode}"
                     ItemsSource="{Binding EnumSolutionModes, Mode=TwoWay}"
@@ -94,7 +94,7 @@
                 <Label
                     Grid.Row="2"
                     Grid.Column="0"
-                    Margin="5,2"
+                    Margin="{StaticResource LabelCellMargin}"
                     Content="Display Mode"
                     Style="{StaticResource LabelStyle}" />
 
@@ -104,7 +104,7 @@
                     Grid.Column="1"
                     Width="90"
                     MinWidth="120"
-                    Margin="0,2,5,2"
+                    Margin="{StaticResource InputCellMargin}"
                     HorizontalAlignment="Right"
                     IsEnabled="{Binding IsInInputMode}"
                     ItemsSource="{Binding EnumDisplayModes, Mode=TwoWay}"
@@ -115,7 +115,7 @@
                 <Label
                     Grid.Row="3"
                     Grid.Column="0"
-                    Margin="5,2"
+                    Margin="{StaticResource LabelCellMargin}"
                     Content="Delay in Milisec"
                     Style="{StaticResource LabelStyle}" />
 
@@ -125,7 +125,7 @@
                     Grid.Column="1"
                     Width="90"
                     MinWidth="120"
-                    Margin="0,2,5,2"
+                    Margin="{StaticResource InputCellMargin}"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
                     IsEnabled="{Binding DisplayMode, Converter={StaticResource DisplayModeToEnabledConverter}, ConverterParameter=Visualize}"

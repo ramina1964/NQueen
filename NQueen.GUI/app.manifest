@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <assemblyIdentity version="1.0.0.0" name="NQueen.GUI.app" />
+
+  <!-- Declare the Windows versions this app is designed and tested for. -->
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+	<application>
+	  <!-- Windows 10 and Windows 11 -->
+	  <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
+	</application>
+  </compatibility>
+
+  <!-- Opt in to Per-Monitor V2 DPI awareness so the UI re-renders crisply when
+	   moved between monitors with different scale factors (e.g. 100% laptop -> 150%
+	   external). The legacy 'true/pm' value is the Windows 8.1 fallback; 'PerMonitorV2,
+	   PerMonitor' selects V2 on Windows 10 1607+ and falls back to V1 on older builds. -->
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+	<windowsSettings>
+	  <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true/pm</dpiAware>
+	  <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2, PerMonitor</dpiAwareness>
+	</windowsSettings>
+  </application>
+</assembly>

@@ -8,22 +8,28 @@
     xmlns:view="clr-namespace:NQueen.GUI.Views"
     xmlns:viewmodel="clr-namespace:NQueen.GUI.ViewModels"
     Title="Solutions of NQueen Problem using Symmetry Pruned Backtracking with .NET 10.0"
+    Width="1200"
+    Height="780"
+    MinWidth="820"
+    MinHeight="560"
     Background="White"
     FontSize="14"
-    ResizeMode="NoResize"
+    ResizeMode="CanResize"
     WindowStartupLocation="CenterScreen"
     WindowState="Normal"
-    SizeToContent="WidthAndHeight"
     mc:Ignorable="d">
 
-    <!--  Main grid layout for the window  -->
-    <Grid Margin="10" Background="White" HorizontalAlignment="Stretch">
+    <!--  Viewbox scales the whole layout uniformly; board stays square, panels keep their ratios  -->
+    <Viewbox Stretch="Uniform">
+    <!--  Fixed design width so the Viewbox scale stays constant; content changes (e.g. selected-solution
+          locations after Simulate) scroll within the layout instead of resizing the whole UI.  -->
+    <Grid Width="1240" Margin="10" Background="White" HorizontalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" MinHeight="40" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition x:Name="LeftColumn" Width="150" />
+            <ColumnDefinition x:Name="LeftColumn" Width="Auto" />
             <ColumnDefinition Width="10" />
             <ColumnDefinition x:Name="BoardColumn" Width="Auto" />
             <ColumnDefinition Width="10" />
@@ -50,8 +56,7 @@
             Grid.Row="1"
             Grid.Column="0"
             Margin="0"
-            HorizontalAlignment="Stretch"
-            MinWidth="140"
+            HorizontalAlignment="Left"
             VerticalAlignment="Top" />
 
         <!--  Center: Chessboard  -->
@@ -68,17 +73,14 @@
         <Grid
             Grid.Row="1"
             Grid.Column="4"
-            Margin="2,0,0,0"
+            Margin="0"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Top">
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="2" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="2" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="2" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
@@ -94,23 +96,27 @@
                 HorizontalAlignment="Stretch" />
 
             <view:OutputPanelUserControl
-                Grid.Row="2"
+                Grid.Row="1"
                 Grid.Column="0"
+                Margin="{StaticResource PanelStackGap}"
                 MinWidth="220"
                 HorizontalAlignment="Stretch" />
 
             <ContentControl
                 x:Name="simulationPanelPlaceHolder"
-                Grid.Row="4"
+                Grid.Row="2"
                 Grid.Column="0"
+                Margin="{StaticResource PanelStackGap}"
                 MinWidth="220"
                 HorizontalAlignment="Stretch" />
 
             <view:AdvancedSettingsPanel
-                Grid.Row="6"
+                Grid.Row="3"
                 Grid.Column="0"
+                Margin="{StaticResource PanelStackGap}"
                 MinWidth="220"
                 HorizontalAlignment="Stretch" />
         </Grid>
     </Grid>
+    </Viewbox>
 </Window>

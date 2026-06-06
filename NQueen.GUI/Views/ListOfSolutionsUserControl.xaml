@@ -9,44 +9,62 @@
     Background="Transparent"
     mc:Ignorable="d">
 
-    <!--  Border for visual grouping and margin  -->
-    <Border
-        Margin="2"
-        Padding="0"
-        HorizontalAlignment="Stretch"
-        VerticalAlignment="Top"
-        Background="White"
-        BorderBrush="Black"
-        BorderThickness="1">
+    <!--  Root grid hosts a hidden width-sizer as a sibling (not an ancestor) of the framed
+          list, so binding MaxWidth to its ActualWidth cannot create a layout cycle.  -->
+    <Grid HorizontalAlignment="Left" VerticalAlignment="Stretch">
 
-        <!--  Grid for future extensibility (single child for now)  -->
-        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Top">
-            <ListBox
-                BorderThickness="0"
-                Foreground="Black"
-                MaxHeight="130"
-                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                ItemsSource="{Binding ObservableSolutions}"
-                SelectedItem="{Binding SelectedSolution}">
-                <ListBox.ItemContainerStyle>
-                    <Style TargetType="ListBoxItem">
-                        <Style.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="FontWeight" Value="Bold" />
-                                <Setter Property="Background" Value="Transparent" />
-                                <Setter Property="Foreground" Value="Crimson" />
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </ListBox.ItemContainerStyle>
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel>
-                            <TextBlock Text="{Binding Name}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-        </Grid>
-    </Border>
+        <!--  Invisible reference: the widest item text rendered in the selected-item weight
+              (Bold) plus horizontal padding for ListBox/ListBoxItem chrome. Its ActualWidth
+              caps the frame to exactly the "Solution No. NN" width.  -->
+        <TextBlock
+            x:Name="WidthSizer"
+            Padding="12,0"
+            VerticalAlignment="Top"
+            FontWeight="Bold"
+            IsHitTestVisible="False"
+            Text="Solution No. 00"
+            Visibility="Hidden" />
+
+        <!--  Fixed frame: fills the board-height area, width capped to the solution name, compact inner padding  -->
+        <Border
+            Margin="0"
+            Padding="{StaticResource FramePadding}"
+            MaxWidth="{Binding ActualWidth, ElementName=WidthSizer}"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Background="White"
+            BorderBrush="Black"
+            BorderThickness="1">
+
+            <!--  Grid for future extensibility (single child for now)  -->
+            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <ListBox
+                    MaxWidth="{Binding ActualWidth, ElementName=WidthSizer}"
+                    BorderThickness="0"
+                    Foreground="Black"
+                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                    ItemsSource="{Binding ObservableSolutions}"
+                    SelectedItem="{Binding SelectedSolution}">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="FontWeight" Value="Bold" />
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="Foreground" Value="Crimson" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel>
+                                <TextBlock Text="{Binding Name}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+    </Grid>
 </UserControl>
