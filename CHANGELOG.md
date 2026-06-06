@@ -6,6 +6,14 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Fixed (NQueen.ViewModelTests)
+- **`ProgressRelayTests.Heartbeat_ShouldSyntheticAdvance_WhenNoRealProgress`** — replaced a
+  fixed `await Task.Delay(150)` with `TestHelpers.WaitForConditionAsync(() => vm.IsSimulating, …)`.
+  The hard-coded delay raced with the async `SimulateCommand` start on slow CI runners,
+  intermittently asserting `IsSimulating == true` before the simulation had begun
+  (observed failing the PR gate while passing locally). Polling the actual condition makes
+  the test deterministic.
+
 ### Added (Tooling)
 - **`Fast.runsettings`** — opt-in test run settings that exclude the
   `[Trait("Category", "Slow")]` enumeration tests (N=13–15 full counts), letting the
