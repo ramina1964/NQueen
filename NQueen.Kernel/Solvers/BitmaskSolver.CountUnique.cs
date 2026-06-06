@@ -182,7 +182,12 @@ public partial class BitmaskSolver
 
             rows[col] = r;
 
-            if (col >= pruneDepthGate &&
+            // Item 2 gating: short-circuit on reflectionEnabled before the depth-gate test so the
+            // ShouldPrunePrefixFull call is skipped entirely when reflection pruning is off (it is
+            // the only sound prefix prune here, and the helper returns false immediately in that
+            // case anyway). reflectionEnabled is a loop-invariant local, making this branch cheap
+            // and the gate self-documenting.
+            if (reflectionEnabled && col >= pruneDepthGate &&
                 SearchHelpers.ShouldPrunePrefixFull(rows, col, n, reflectionEnabled))
             {
                 rows[col] = -1;
