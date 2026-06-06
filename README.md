@@ -101,6 +101,21 @@ Run all tests:
 dotnet test --configuration Release --no-build
 ```
 
+### Fast tests (skip the slow enumerations)
+
+A few `[Trait("Category", "Slow")]` tests run full N-Queens enumerations at large N
+(e.g. N=13–15) and dominate local run time. The repo ships a `Fast.runsettings` that
+filters them out so the fast suite (~390 tests) runs in a few seconds:
+
+```bash
+dotnet test --configuration Release --settings Fast.runsettings
+```
+
+In Visual Studio: **Test → Configure Run Settings → Select Solution Wide runsettings
+File**, then pick `Fast.runsettings` (switch back to *Auto detect runsettings* to undo).
+CI runs the same filter automatically. The slow tests still run on a full,
+unfiltered `dotnet test`.
+
 ---
 
 ## Run — Console

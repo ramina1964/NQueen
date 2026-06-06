@@ -6,16 +6,34 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Fixed (NQueen.ViewModelTests)
+- **`ProgressRelayTests.Heartbeat_ShouldSyntheticAdvance_WhenNoRealProgress`** — replaced a
+  fixed `await Task.Delay(150)` with `TestHelpers.WaitForConditionAsync(() => vm.IsSimulating, …)`.
+  The hard-coded delay raced with the async `SimulateCommand` start on slow CI runners,
+  intermittently asserting `IsSimulating == true` before the simulation had begun
+  (observed failing the PR gate while passing locally). Polling the actual condition makes
+  the test deterministic.
+
+### Added (Tooling)
+- **`Fast.runsettings`** — opt-in test run settings that exclude the
+  `[Trait("Category", "Slow")]` enumeration tests (N=13–15 full counts), letting the
+  fast suite (~390 tests) run in a few seconds locally. Select it via *Test → Configure
+  Run Settings* in Visual Studio or `dotnet test --settings Fast.runsettings`. Does not
+  affect CI or unfiltered runs. README updated with usage.
+
 ### Fixed (CI)
-- **`.github/workflows/ci.yml`** — the *"Generate HTML coverage report"* step was stuck/failing
-  because the *"Test with coverage"* step used coverlet.msbuild flags
-  (`/p:CollectCoverage=true /p:CoverletOutputFormat=cobertura`) while the test projects only
-  reference `coverlet.collector`; those props were silently ignored, so no
-  `coverage.cobertura.xml` was produced and ReportGenerator matched zero files. Switched the
-  step to the collector driver (`--collect:"XPlat Code Coverage"` + cobertura format via
-  `DataCollectionRunSettings`), added `--results-directory TestResults`, and added
-  `--filter "Category!=Slow"` so the large-board enumeration tests don't hang the runner —
-  mirroring the proven-working local `GenerateCoverage.ps1`.
+- **`.github/workflows/ci.yml`** — split CI into two jobs so pull requests are no longer
+  blocked by slow coverage instrumentation. Coverlet's line instrumentation over the
+  recursive solver hot paths inflated an ~8s test suite to ~45 min on the 2-core runner,
+  so PR checks were timing out in practice. Now a fast **`build-test`** gate builds and
+  runs the non-Slow tests **without coverage** (PRs go green in a couple of minutes, with a
+  `timeout-minutes: 15` safety net), while a separate, non-blocking **`coverage`** job
+  (runs only on push to `main` or manual `workflow_dispatch`, `continue-on-error: true`)
+  produces the Cobertura + HTML report and uploads the artifact.
+- Earlier fix retained: the coverage step uses the `coverlet.collector` driver
+  (`--collect:"XPlat Code Coverage"` + cobertura via `DataCollectionRunSettings`) instead
+  of the unsupported coverlet.msbuild `/p:` flags, so `coverage.cobertura.xml` is actually
+  produced and ReportGenerator finds it.
 
 ### Fixed (NQueen.GUI)
 - **`MainWindow.xaml`** — changed `SizeToContent` from `Width` to `WidthAndHeight` and

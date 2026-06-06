@@ -28,10 +28,11 @@ public class ProgressRelayTests : IDisposable
         // Act: start simulation (async) but do NOT await completion yet.
         vm.SimulateCommand.Execute(null);
 
-        // Small delay to allow MainViewModel to initialize progress & heartbeat timer.
-        await Task.Delay(150);
+        // Wait until the simulation has actually started instead of assuming a fixed delay;
+        // on slow CI runners a hard-coded delay races with the async command start.
+        await TestHelpers.WaitForConditionAsync(() => vm.IsSimulating, TimeSpan.FromSeconds(5));
         vm.IsSimulating.Should().BeTrue("Simulation should have started.");
-        vm.ProgressPercent.Should().Be(0, "Initial progress percent should be0 before heartbeat fires.");
+        vm.ProgressPercent.Should().Be(0, "Initial progress percent should be 0 before heartbeat fires.");
 
         // Force internal state to appear silent past the heartbeat threshold.
         var lastUpdateField = vm.GetType().GetField("_lastProgressUpdateUtc", BindingFlags.NonPublic | BindingFlags.Instance);

@@ -5,13 +5,61 @@ on:
     branches: [main, "refactor/**", "feature/**", "fix/**"]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
 
 jobs:
+  # Fast merge gate: build + run the non-Slow tests WITHOUT coverage instrumentation.
+  # Coverage collection (coverlet) instruments every line of the recursive solver hot
+  # paths, which turns an ~8s local suite into ~45 min on a 2-core runner. Keeping
+  # coverage out of this job lets PRs go green in a couple of minutes.
   build-test:
+    name: Build & Test (fast gate)
     runs-on: windows-latest
-    env:
-      DOTNET_CLI_TELEMETRY_OPTOUT: 1
-      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test (no coverage)
+        run: >-
+          dotnet test
+          --no-build
+          --configuration Release
+          --filter "Category!=Slow"
+          --verbosity minimal
+
+  # Non-blocking coverage report. Runs only on pushes to main (e.g. after a PR merge)
+  # or when triggered manually, so it never gates a pull request. continue-on-error
+  # ensures a slow/failed coverage run cannot fail the workflow.
+  coverage:
+    name: Coverage report (non-blocking)
+    runs-on: windows-latest
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    continue-on-error: true
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -56,6 +104,7 @@ jobs:
           -reports:"**/coverage.cobertura.xml"
           -targetdir:CoverageReport
           -reporttypes:Html
+          -assemblyfilters:+NQueen.Domain;+NQueen.Kernel;+NQueen.Shared
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
