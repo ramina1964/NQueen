@@ -6,7 +6,79 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Added (NQueen.GUI)
+- **`AppStyles.xaml` `PanelCardStyle`** — a re-templated `GroupBox` that replaces the Win32
+  etched frame with a flat, square card: a bold header band (with a 1px bottom separator)
+  over a content row, content padding owned by the template (`Padding` setter =
+  `PanelContentMargin`), and predictable sizing (no header notch). It stays a `GroupBox` so
+  the `Header` still labels the group for UI Automation / screen readers. A small brush
+  palette (`PanelBackgroundBrush`, `PanelBorderBrush`, `AccentBrush`, `ProgressBrush`,
+  `SliderTrackBrush`) was added as the single source of truth for colour, and the existing
+  `ButtonStyle` / `ProgressBarStyle` / `SliderStyle` were wired to it (appearance-neutral).
+- **`NumericUtils.FormatWithSpaceSeparator(ulong)`** — a `ulong` overload mirroring the
+  existing `long` one, so the (unsigned) solution count can be formatted with space
+  thousands-separators without a lossy cast.
+
+### Changed (NQueen.GUI)
+- **Panel rollout to `PanelCardStyle`** — `InputPanelUserControl`, `OutputPanelUserControl`,
+  `SimulationPanelUserControl`, `AdvancedSettingsPanel` and the `ActiveSolutionUserControl`
+  header all moved from inline GroupBox chrome (`Background`/`BorderBrush`/`BorderThickness`/
+  `Padding` literals + an inner `Grid Margin`) to the shared card style. `ActiveSolution`
+  keeps its White/Gray look via local instance values; the now-redundant rounded
+  `WhiteSmoke` header `Border` in `MainWindow.xaml` was made layout-only. `AdvancedSettingsPanel`
+  was also normalised to the `LabelCellMargin` / `InputCellMargin` spacing tokens.
+- **Solution-count formatting** — the three `NoOfSolutions` assignment sites
+  (`MainViewModel.Commands.cs` ×2, `MainViewModel.cs`) now use
+  `NumericUtils.FormatWithSpaceSeparator` (space groups) instead of `:N0` (culture comma),
+  matching `MemoryConsumption`.
+- **`OutputPanelUserControl.xaml` (Solution Summary)** — both the descriptive labels and
+  their values are now right-justified: the label column stretches (`*`, right-aligned) so
+  each caption sits directly left of its value, and the value column is `Auto`/right-aligned
+  flush to the panel edge. A hidden width-sizer `Label` holding the largest representable
+  count (`18 446 744 073 709 551 615`) pins the value column wide enough that no count clips,
+  even for All-mode at high N.
+- **`MainWindow.xaml` right control column** — widened from `300` to `420` (design canvas
+  `1140` → `1260`) so the Solution Summary no longer clips at high N. The four panels share
+  one grid column, so they expand together with right edges aligned. The column was
+  restructured into a space-between grid (`Auto` panel rows separated by `*` gap rows) and
+  `MainWindow.xaml.cs` `ApplyDesignLayout` now sets `controlColumn.MinHeight` to
+  `DesignBoardSize` (mirroring `solutionList.Height`), so the panels plus the inter-panel
+  gaps total at least the chessboard height with tops and bottoms aligned, and the column
+  grows rather than clipping when content overflows.
+
 ### Fixed (NQueen.GUI)
+- **`MainWindow.xaml` header overflow at high N** — for long selected-solution strings
+  (e.g. N > 25 in Single mode) the header `GroupBox` used to stretch and clip every panel.
+  The header (`ActiveSolutionUserControl`) previously sat in row 0 spanning all five body
+  columns (`Grid.ColumnSpan="5"`), so its content's desired width inflated the shared `Auto`
+  board / solution-list columns. The layout is now an outer two-row grid: the header alone in
+  row 0 at the fixed canvas width, and the five-column body nested in row 1 — so the header
+  can no longer affect the body columns.
+- **`ActiveSolutionUserControl.xaml` long-detail scrolling** — with the header width now
+  fixed, a solution string wider than the header surfaces a horizontal scrollbar at the
+  bottom of the card (the `ScrollViewer` is `HorizontalScrollBarVisibility="Auto"` over
+  `NoWrap` text, switched to `VerticalAlignment="Stretch"` so the bar sits at the bottom
+  edge) instead of widening the window.
+- **`SimulationPanelUserControl.xaml` / Solver Settings clipping** — the Simulation card's
+  `MinHeight="100"` forced it taller than its content (the progress bar is hidden when idle),
+  which starved the Solver Settings card below it and clipped its bottom. Removing the
+  `MinHeight` lets the Simulation card shrink to its content; the control column's
+  space-between `*` rows redistribute the freed height so Solver Settings is no longer clipped.
+- **Solver Settings clipping (true root cause) + reclaimed Simulation height** — two issues
+  the `MinHeight` removal above did not fully resolve. (1) `ApplyDesignLayout` pinned
+  `controlColumn.Height` to an **exact** `DesignBoardSize` (640), so when the four panels'
+  natural height exceeded 640 — most notably when the over-max board-size error label
+  appears — the bottom Solver Settings card was clipped, and because the `Viewbox` merely
+  scales whatever it is given, maximizing/resizing could not recover the clipped content.
+  The pin is now `controlColumn.MinHeight = DesignBoardSize`, so the column **grows** to fit
+  its content (still bottom-aligning to the board when it fits, via the `*` gap rows) and the
+  `Viewbox` scales the full, unclipped composition. (2) The Simulation card was still taller
+  than its visible content because the progress bar/label bound to `Visibility.Hidden` when
+  idle, which **reserves** layout space. All idle-state assignments of `ProgressVisibility` /
+  `ProgressLabelVisibility` (their defaults in `MainViewModel.Properties.cs` plus the sites in
+  `MainViewModel.Commands.cs`, `MainViewModel.cs`, and `MainViewModel.Events.cs`) were
+  switched from `Hidden` to `Collapsed`, so the progress row consumes no height when idle and
+  the freed space is given to Solver Settings (the active-run `Visible` state is unchanged).
 - **`ListOfSolutionsUserControl.xaml` / `MainWindow.xaml`** — the solution-list frame no
   longer "jumps" from a collapsed height to its full height as the first ~5 results arrive.
   The grouping `Border` previously sized to its content (with the inner `ListBox` capped at
@@ -20,6 +92,40 @@ All notable changes to this project are documented here.
   now capped (`MaxWidth`) to a hidden sizer `TextBlock` measuring the widest item
   (`Solution No. 00`) in the selected-item weight (Bold), so the frame is exactly as wide as
   the solution name — font/DPI-robust, with no hard-coded pixel width.
+- **`MainWindow.xaml` constant right-column gaps during simulation** — the four right-column
+  cards previously used `*` (space-between) spacer rows that distributed surplus into even
+  gaps when idle but collapsed to zero while simulating (the panels grew to fill the column),
+  so the cards touched with no gap during a run. The three spacers are now fixed `8px` rows
+  (matching the app's standard spacing unit), so each card keeps its natural `Auto` height
+  plus a constant gap at all times; the column's `MinHeight` still lets it grow when content
+  overflows.
+
+### Fixed (NQueen.Kernel — duplicate lookup-materialize samples for All & Unique, N >= 21)
+- For N >= 21 in **All** or **Unique** mode with **Materialize** storage, the total count was
+  correctly served from the `ExpectedSolutionCounts` lookup table, but the displayed sample
+  solutions were wrong. `SampleMaterializeUsingLookup` unconditionally routed N >= 21 (always
+  >= `ConstructiveSampleThresholdN` = 20) into `ConstructiveSampleSolutions`, which built a
+  single base placement plus its rotations/reflections. In **All** mode those symmetry
+  variants share one canonical key, so `GetCanonicalKey` collapsed them to **5 identical
+  boards**; in **Unique** mode the variants were all orientations of the **same fundamental
+  solution**. The dead `else` branch below the constructive guard (a capped
+  `BitmaskSearchEngine.Run`) was unreachable because `LookupThresholdN` (21) >
+  `ConstructiveSampleThresholdN` (20).
+- `SampleMaterializeUsingLookup` now runs an **early-exit DFS** that collects up to the
+  display cap of *genuinely distinct* solutions then stops — exactly the requested behaviour:
+  search until the cap is reached, save those samples, stop, and report the total via the
+  lookup table. It reuses the proven collectors already used on the N = 14..20 materialize
+  paths: `CollectAllSampleSolutionsDFS` (All) and the canonical `CollectUniqueSamplesDFS`
+  (Unique). The now-dead `ConstructiveSampleSolutions` and `GenerateSymmetryVariants` helpers
+  were removed (`GenerateConstructiveSolution` is kept — Single mode still uses it).
+- `CollectUniqueSamplesDFS` now stores raw rows in `_largeBoardRawSolutions` for N > 25
+  (mirroring `CollectAllSampleSolutionsDFS`); previously it only stored a packed canonical key,
+  which is 0 for N > 25 and is skipped by `BuildResults`, so Unique samples for N = 26..29
+  would not surface.
+- Tests: `BitmaskSolverMaterializeTests.Materialize_DistinctSamples_AreReturned` was widened to
+  a `[Theory]` asserting distinct samples for **both** All and Unique at N = 21 (it previously
+  exercised only Unique and documented the All-mode collapse as expected). All
+  `BitmaskSolverMaterializeTests` (8) and the high-board / large-board count suites pass.
 
 ### Changed (NQueen.GUI)
 - **`MainWindow.xaml` / `MainWindow.xaml.cs`** — the main window is now user-resizable.

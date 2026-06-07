@@ -43,6 +43,17 @@ public class NumericUtils
         return value.ToString("N0", numberFormat);
     }
 
+    public static string FormatWithSpaceSeparator(ulong value)
+    {
+        var numberFormat = new NumberFormatInfo
+        {
+            NumberGroupSeparator = _thousandSeparator,
+            NumberDecimalDigits = 0
+        };
+
+        return value.ToString("N0", numberFormat);
+    }
+
     public static string FormatWithSpaceSeparator(double value, int decimalPlaces = 2)
     {
         var numberFormat = new NumberFormatInfo

@@ -28,16 +28,10 @@
             Visibility="{Binding BoardSizeError, Converter={StaticResource StringNotEmptyToVisibilityConverter}}" />
 
         <!--  GroupBox for input controls  -->
-        <GroupBox
-            Margin="0"
-            Padding="0"
-            Background="Bisque"
-            BorderBrush="Black"
-            BorderThickness="1"
-            Header="Input">
+        <GroupBox Header="Input" Style="{StaticResource PanelCardStyle}">
 
-            <!--  Main content grid with consistent margin  -->
-            <Grid Margin="{StaticResource PanelContentMargin}">
+            <!--  Content grid; padding owned by the card template  -->
+            <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -62,7 +56,6 @@
                 <TextBox
                     Grid.Row="0"
                     Grid.Column="1"
-                    Width="90"
                     MinWidth="120"
                     Margin="{StaticResource InputCellMargin}"
                     HorizontalAlignment="Right"
@@ -81,7 +74,6 @@
                 <ComboBox
                     Grid.Row="1"
                     Grid.Column="1"
-                    Width="90"
                     MinWidth="120"
                     Margin="{StaticResource InputCellMargin}"
                     HorizontalAlignment="Right"
@@ -102,7 +94,6 @@
                     x:Name="CmbDisplayMode"
                     Grid.Row="2"
                     Grid.Column="1"
-                    Width="90"
                     MinWidth="120"
                     Margin="{StaticResource InputCellMargin}"
                     HorizontalAlignment="Right"
@@ -123,7 +114,6 @@
                     x:Name="DelaySlider"
                     Grid.Row="3"
                     Grid.Column="1"
-                    Width="90"
                     MinWidth="120"
                     Margin="{StaticResource InputCellMargin}"
                     HorizontalAlignment="Right"

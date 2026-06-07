@@ -13,16 +13,11 @@
 
     <!--  GroupBox for simulation controls  -->
     <GroupBox
-        MinHeight="100"
-        Margin="0"
-        Padding="0"
-        Background="Bisque"
-        BorderBrush="Black"
-        BorderThickness="1"
-        Header="Simulation">
+        Header="Simulation"
+        Style="{StaticResource PanelCardStyle}">
 
-        <!--  Main content grid with consistent margin  -->
-        <Grid Margin="{StaticResource PanelContentMargin}">
+        <!--  Content grid; padding owned by the card template  -->
+        <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition />
                 <RowDefinition />

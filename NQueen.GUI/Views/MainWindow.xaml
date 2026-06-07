@@ -23,99 +23,106 @@
     <Viewbox Stretch="Uniform">
     <!--  Fixed design width so the Viewbox scale stays constant; content changes (e.g. selected-solution
           locations after Simulate) scroll within the layout instead of resizing the whole UI.  -->
-    <Grid Width="1140" Margin="10" Background="White" HorizontalAlignment="Stretch">
+    <Grid Width="1260" Margin="10" Background="White" HorizontalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" MinHeight="40" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition x:Name="LeftColumn" Width="Auto" />
-            <ColumnDefinition Width="10" />
-            <ColumnDefinition x:Name="BoardColumn" Width="Auto" />
-            <ColumnDefinition Width="10" />
-            <ColumnDefinition Width="300" />
-        </Grid.ColumnDefinitions>
 
-        <!--  Top header row  -->
+        <!--  Top header row: spans the full canvas width and is independent of the body
+              columns below, so a long selected-solution string scrolls inside the header
+              (see the ScrollViewer in ActiveSolutionUserControl) instead of stretching the
+              Auto board / solution-list columns and clipping the panels.  -->
         <Border x:Name="HeaderBorder"
             Grid.Row="0"
-            Grid.Column="0"
-            Grid.ColumnSpan="5"
             Margin="0,0,0,10"
             Padding="0"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Top"
-            Background="WhiteSmoke"
-            CornerRadius="8">
+            Background="Transparent">
             <view:ActiveSolutionUserControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
         </Border>
 
-        <!--  Left: Solution List  -->
-        <view:ListOfSolutionsUserControl
-            x:Name="solutionList"
-            Grid.Row="1"
-            Grid.Column="0"
-            Margin="0"
-            HorizontalAlignment="Left"
-            VerticalAlignment="Top" />
-
-        <!--  Center: Chessboard  -->
-        <ContentControl
-            x:Name="chessboardPlaceholder"
-            Grid.Row="1"
-            Grid.Column="2"
-            Margin="0"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Top"
-            MinWidth="200" />
-
-        <!--  Right: Controls (anchored to top) -->
-        <Grid
-            Grid.Row="1"
-            Grid.Column="4"
-            Margin="0"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Top">
-
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-
+        <!--  Body row: the five-column layout. Nested so the header above cannot inflate
+              the Auto columns.  -->
+        <Grid Grid.Row="1" HorizontalAlignment="Stretch">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" MinWidth="220" />
+                <ColumnDefinition x:Name="LeftColumn" Width="Auto" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition x:Name="BoardColumn" Width="Auto" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="420" />
             </Grid.ColumnDefinitions>
 
+            <!--  Left: Solution List  -->
+            <view:ListOfSolutionsUserControl
+                x:Name="solutionList"
+                Grid.Column="0"
+                Margin="0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top" />
+
+            <!--  Center: Chessboard  -->
             <ContentControl
-                x:Name="inputPanelPlaceHolder"
-                Grid.Row="0"
-                Grid.Column="0"
-                MinWidth="220"
-                HorizontalAlignment="Stretch" />
+                x:Name="chessboardPlaceholder"
+                Grid.Column="2"
+                Margin="0"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Top"
+                MinWidth="200" />
 
-            <view:OutputPanelUserControl
-                Grid.Row="1"
-                Grid.Column="0"
-                Margin="{StaticResource PanelStackGap}"
-                MinWidth="220"
-                HorizontalAlignment="Stretch" />
+            <!--  Right: Controls (fills board height; gaps distribute evenly) -->
+            <Grid
+                x:Name="controlColumn"
+                Grid.Column="4"
+                Margin="0"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Top">
 
-            <ContentControl
-                x:Name="simulationPanelPlaceHolder"
-                Grid.Row="2"
-                Grid.Column="0"
-                Margin="{StaticResource PanelStackGap}"
-                MinWidth="220"
-                HorizontalAlignment="Stretch" />
+                <!--  Panels size to their natural height (Auto); the fixed 8px spacer rows keep a
+                      constant gap between cards at all times — including while simulating, when the
+                      old '*' space-between rows used to collapse to zero as the panels grew. The
+                      column's MinHeight (set in code-behind) lets it grow rather than clip.  -->
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="8" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="8" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="8" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-            <view:AdvancedSettingsPanel
-                Grid.Row="3"
-                Grid.Column="0"
-                Margin="{StaticResource PanelStackGap}"
-                MinWidth="220"
-                HorizontalAlignment="Stretch" />
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="220" />
+                </Grid.ColumnDefinitions>
+
+                <ContentControl
+                    x:Name="inputPanelPlaceHolder"
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    MinWidth="220"
+                    HorizontalAlignment="Stretch" />
+
+                <view:OutputPanelUserControl
+                    Grid.Row="2"
+                    Grid.Column="0"
+                    MinWidth="220"
+                    HorizontalAlignment="Stretch" />
+
+                <ContentControl
+                    x:Name="simulationPanelPlaceHolder"
+                    Grid.Row="4"
+                    Grid.Column="0"
+                    MinWidth="220"
+                    HorizontalAlignment="Stretch" />
+
+                <view:AdvancedSettingsPanel
+                    Grid.Row="6"
+                    Grid.Column="0"
+                    MinWidth="220"
+                    HorizontalAlignment="Stretch" />
+            </Grid>
         </Grid>
     </Grid>
     </Viewbox>

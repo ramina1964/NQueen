@@ -1,7 +1,6 @@
 ﻿<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:converters="clr-namespace:NQueen.GUI.Converters">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!--  ******************** Spacing tokens (4px grid: 4 / 8 / 12) ********************  -->
     <!--  Single source of truth for layout spacing; reference these instead of literals.  -->
@@ -13,23 +12,58 @@
     <Thickness x:Key="LabelCellMargin">0,4,8,4</Thickness>
     <Thickness x:Key="InputCellMargin">0,4,0,4</Thickness>
 
-    <!--  Make the converter available to all styles in this dictionary  -->
-    <converters:FirstValidationErrorConverter x:Key="FirstValidationErrorConverter" />
+    <!--  ******************** Brush palette (single source of truth for colour) ********************  -->
+    <!--  Reference these instead of literal colours so the theme can change in one place.  -->
+    <SolidColorBrush x:Key="PanelBackgroundBrush" Color="Bisque" />
+    <SolidColorBrush x:Key="PanelBorderBrush" Color="Black" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#95E3E2" />
+    <SolidColorBrush x:Key="ProgressBrush" Color="Green" />
+    <SolidColorBrush x:Key="SliderTrackBrush" Color="DarkOrchid" />
 
-    <!--  Validation Error Template  -->
-    <ControlTemplate x:Key="ValidationErrorTemplate">
-        <StackPanel Orientation="Horizontal">
-            <AdornedElementPlaceholder />
-            <Label
-                Margin="10,0,0,0"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Center"
-                HorizontalContentAlignment="Left"
-                VerticalContentAlignment="Center"
-                Content="{Binding [0].ErrorContent}"
-                Foreground="Red" />
-        </StackPanel>
-    </ControlTemplate>
+    <!--  ******************** Panel card (re-templated GroupBox) ********************  -->
+    <!--  Flat, square "card" replacement for the GroupBox etched frame: a bold header band
+          over a content row, with predictable sizing (no header notch) and content padding
+          owned by the template via the Padding setter. Square top edge so the card aligns
+          with the chessboard. Stays a GroupBox so Header still labels the group for UI
+          Automation / screen readers.  -->
+    <Style x:Key="PanelCardStyle" TargetType="{x:Type GroupBox}">
+        <Setter Property="Background" Value="{StaticResource PanelBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource PanelBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="{StaticResource PanelContentMargin}" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type GroupBox}">
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        SnapsToDevicePixels="True">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <!--  Header band with a bottom separator  -->
+                            <Border
+                                Grid.Row="0"
+                                Padding="8,4"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="0,0,0,1"
+                                TextElement.FontWeight="Bold">
+                                <ContentPresenter ContentSource="Header" />
+                            </Border>
+
+                            <!--  Content area; padding owned by the template  -->
+                            <ContentPresenter Grid.Row="1" Margin="{TemplateBinding Padding}" />
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
     <!--  ************************* Based on Label *************************  -->
     <Style x:Key="LabelStyle" TargetType="Label">
@@ -70,15 +104,6 @@
     </Style>
 
     <!--  ************************ Based on TextBox ************************  -->
-    <Style x:Key="TextBoxStyle" TargetType="TextBox">
-        <Setter Property="Height" Value="30" />
-        <Setter Property="Width" Value="Auto" />
-        <Setter Property="HorizontalAlignment" Value="Right" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="HorizontalContentAlignment" Value="Right" />
-        <Setter Property="VerticalContentAlignment" Value="Stretch" />
-    </Style>
-
     <Style x:Key="TextBoxNumericalStyle" TargetType="{x:Type TextBox}">
         <Setter Property="Height" Value="30" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -102,8 +127,8 @@
         <Setter Property="Height" Value="30" />
         <Setter Property="Width" Value="Auto" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Background" Value="DarkOrchid" />
-        <Setter Property="BorderBrush" Value="Black" />
+        <Setter Property="Background" Value="{StaticResource SliderTrackBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource PanelBorderBrush}" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="VerticalAlignment" Value="Stretch" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -112,7 +137,7 @@
 
     <!--  ************************ Based on Button ************************  -->
     <Style x:Key="ButtonStyle" TargetType="Button">
-        <Setter Property="Background" Value="#95E3E2" />
+        <Setter Property="Background" Value="{StaticResource AccentBrush}" />
         <Setter Property="FontStyle" Value="Italic" />
         <Setter Property="Width" Value="80" />
         <Setter Property="Height" Value="25" />
@@ -125,7 +150,7 @@
     <!--  ************************ Based on ProgressBar ************************  -->
     <Style x:Key="ProgressBarStyle" TargetType="ProgressBar">
         <Setter Property="Height" Value="30" />
-        <Setter Property="Foreground" Value="Green" />
+        <Setter Property="Foreground" Value="{StaticResource ProgressBrush}" />
         <Setter Property="Margin" Value="5,5,5,5" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="VerticalAlignment" Value="Stretch" />
@@ -134,18 +159,4 @@
         <Setter Property="FlowDirection" Value="LeftToRight" />
     </Style>
 
-    <!--  *********************** Based on ListBox **********************  -->
-    <Style x:Key="ListBoxStyle" TargetType="ListBox">
-        <Style.Triggers>
-            <Trigger Property="IsSelected" Value="True">
-                <Setter Property="FontWeight" Value="Bold" />
-                <Setter Property="Background" Value="Transparent" />
-                <Setter Property="Foreground" Value="Crimson" />
-            </Trigger>
-        </Style.Triggers>
-        <Style.Resources>
-            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent" />
-        </Style.Resources>
-    </Style>
-
-</ResourceDictionary>
+    </ResourceDictionary>

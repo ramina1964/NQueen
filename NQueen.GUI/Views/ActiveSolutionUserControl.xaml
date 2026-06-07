@@ -11,17 +11,13 @@
 
     <!--  GroupBox for selected solution details  -->
     <GroupBox
-        Margin="0"
-        Padding="0"
-        HorizontalAlignment="Stretch"
-        VerticalContentAlignment="Stretch"
+        Header="Selected Solution"
         Background="White"
         BorderBrush="Gray"
-        BorderThickness="1"
-        Header="Selected Solution">
+        Style="{StaticResource PanelCardStyle}">
 
-        <!--  Main content grid with consistent margin  -->
-        <Grid Margin="{StaticResource PanelContentMargin}">
+        <!--  Content grid; padding owned by the card template  -->
+        <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
@@ -36,13 +32,14 @@
                 Foreground="Black"
                 Style="{StaticResource LabelStyle}" />
 
-            <!--  Scrollable text for solution details  -->
+            <!--  Scrollable text for solution details: long strings overflow horizontally and
+                  surface a scrollbar at the bottom instead of widening the card.  -->
             <ScrollViewer
                 Grid.Column="1"
                 MinWidth="120"
-                VerticalAlignment="Center"
+                VerticalAlignment="Stretch"
                 HorizontalScrollBarVisibility="Auto"
-                VerticalScrollBarVisibility="Hidden">
+                VerticalScrollBarVisibility="Disabled">
                 <TextBlock
                     VerticalAlignment="Center"
                     Foreground="Black"

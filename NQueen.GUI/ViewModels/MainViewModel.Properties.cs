@@ -17,13 +17,13 @@ public sealed partial class MainViewModel : ObservableObject
     private string _progressLabel = string.Empty;
 
     [ObservableProperty]
-    private Visibility _progressVisibility = Visibility.Hidden;
+    private Visibility _progressVisibility = Visibility.Collapsed;
 
     partial void OnProgressVisibilityChanged(Visibility value) =>
         IsProgressBarOffscreen = value != Visibility.Visible;
 
     [ObservableProperty]
-    private Visibility _progressLabelVisibility;
+    private Visibility _progressLabelVisibility = Visibility.Collapsed;
 
     partial void OnProgressLabelVisibilityChanged(Visibility value) =>
         IsProgressLabelOffscreen = value != Visibility.Visible;
