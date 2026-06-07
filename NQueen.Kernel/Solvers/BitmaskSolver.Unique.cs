@@ -182,8 +182,21 @@ public partial class BitmaskSolver
                 if (!SymmetryHelper.IsIdentityCanonical(rows, _scratchBuffer!))
                     return;
 
-                var packed = N <= 25 ? SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _) : 0UL;
-                target.Add(((UInt128)packed, N));
+                // N <= 25: store the packed canonical key in `target` (rendered by BuildResults).
+                // N > 25 (lookup range up to 29): the packed key would be 0 and BuildResults skips
+                // such entries, so store the raw rows in _largeBoardRawSolutions instead — exactly
+                // as CollectAllSampleSolutionsDFS does.
+                if (N <= 25)
+                {
+                    var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
+                    target.Add(((UInt128)packed, N));
+                }
+                else
+                {
+                    var copy = new int[N];
+                    Array.Copy(rows, copy, N);
+                    _largeBoardRawSolutions.Add(copy);
+                }
                 if (EnableEvents && !_eventsSuppressedAfterCap)
                     SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), N));
                 localMaterialized++;

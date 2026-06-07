@@ -2,20 +2,21 @@ namespace NQueen.UnitTests.Tests.Kernel;
 
 /// <summary>
 /// Coverage-focused tests for <c>BitmaskSolver.Materialize.cs</c>.
-/// Drives <c>SampleMaterializeUsingLookup</c>, <c>ConstructiveSampleSolutions</c>,
-/// <c>GenerateConstructiveSolution</c> and <c>GenerateSymmetryVariants</c> through the
-/// public <see cref="ISolverBackEnd.GetSimResultsAsync"/> API, exercising each path:
+/// Drives <c>SampleMaterializeUsingLookup</c> through the public
+/// <see cref="ISolverBackEnd.GetSimResultsAsync"/> API, exercising each path:
 /// <list type="bullet">
 ///   <item>Lookup-materialize routing: <c>BoardSize &gt;= LookupThresholdN</c> (21) returns the
-///   curated count and materialises sample solutions instead of enumerating.</item>
-///   <item>Constructive sampling: <c>BoardSize &gt;= ConstructiveSampleThresholdN</c> (20) builds
-///   samples from <c>GenerateConstructiveSolution</c> + symmetry variants (no DFS).</item>
-///   <item>Both constructive special-case branches: N = 21 (n%6==3) and N = 26 (n%6==2).</item>
+///   curated count and materialises sample solutions instead of fully enumerating.</item>
+///   <item>Early-exit DFS sampling: an early-exit DFS collects up to the display cap of
+///   <em>genuinely distinct</em> solutions then stops (All mode via
+///   <c>CollectAllSampleSolutionsDFS</c>, Unique mode via canonical <c>CollectUniqueSamplesDFS</c>).</item>
+///   <item>Representative sizes: N = 21 (n%6==3) and N = 26 (n%6==2, &gt; 25 so raw-row storage).</item>
 ///   <item>Sample cap honoured (<c>MaxDisplayedCount</c> / explicit cap).</item>
 ///   <item>Every materialised sample is a conflict-free placement.</item>
 ///   <item>All and Unique modes both route through the materialize path.</item>
 /// </list>
-/// All sizes use the lookup/constructive path (no enumeration), so the suite stays fast.
+/// All sizes use the lookup count plus an early-exit DFS sample (no full enumeration), so the
+/// suite stays fast.
 /// </summary>
 [Collection("SolverBackend")]
 [Trait("Category", "Materialize")]
@@ -46,9 +47,9 @@ public class BitmaskSolverMaterializeTests
     public async Task AllMode_Materialize_LookupBoard_ReturnsCuratedCountWithValidSamples(int n)
     {
         // BoardSize >= LookupThresholdN (21): HandleModeCommon serves the count from the
-        // lookup table and calls SampleMaterializeUsingLookup. Because N >= 20
-        // (ConstructiveSampleThresholdN), samples come from ConstructiveSampleSolutions
-        // (GenerateConstructiveSolution + GenerateSymmetryVariants) with no DFS.
+        // lookup table and calls SampleMaterializeUsingLookup, which runs an early-exit DFS
+        // (CollectAllSampleSolutionsDFS) that stops once the display cap of distinct samples
+        // is reached — never a full enumeration.
         using var solver = MakeSolver();
         var ctx = new SimulationContext(n, SolutionMode.All, DisplayMode.Hide);
 
@@ -71,9 +72,10 @@ public class BitmaskSolverMaterializeTests
     [InlineData(26)] // n % 6 == 2
     public async Task UniqueMode_Materialize_LookupBoard_ReturnsCuratedCountWithValidSamples(int n)
     {
-        // Same routing as All but with isUnique: true; ConstructiveSampleSolutions stores
-        // every sample in _largeBoardRawSolutions (raw int[]), so the boards are surfaced
-        // directly and must still be conflict-free.
+        // Same routing as All but with isUnique: true; CollectUniqueSamplesDFS gathers up to
+        // the cap of distinct *canonical* representatives. For N > 25 the samples are stored as
+        // raw int[] (the packed key would be 0), so the boards are surfaced directly and must
+        // still be conflict-free.
         using var solver = MakeSolver();
         var ctx = new SimulationContext(n, SolutionMode.Unique, DisplayMode.Hide);
 
@@ -94,8 +96,8 @@ public class BitmaskSolverMaterializeTests
     [Fact]
     public async Task Materialize_RespectsExplicitDisplayCap()
     {
-        // A display cap of 3 must clamp the number of materialised samples regardless of how
-        // many symmetry variants the constructive sampler could otherwise produce.
+        // A display cap of 3 must clamp the number of materialised samples: the early-exit DFS
+        // must stop after storing exactly `cap` distinct solutions.
         const int cap = 3;
         using var solver = MakeSolver(maxDisplayedCount: cap);
         var ctx = new SimulationContext(21, SolutionMode.All, DisplayMode.Hide);
@@ -109,21 +111,23 @@ public class BitmaskSolverMaterializeTests
             AssertValidPlacement(sol.QueenPositions);
     }
 
-    [Fact]
-    public async Task Materialize_DistinctSamples_AreReturned()
+    [Theory]
+    [InlineData(SolutionMode.All)]
+    [InlineData(SolutionMode.Unique)]
+    public async Task Materialize_DistinctSamples_AreReturned(SolutionMode mode)
     {
-        // The constructive base plus its symmetry variants should yield more than one distinct
-        // sample, exercising GenerateSymmetryVariants. Unique mode stores each sample as a raw
-        // int[] (no canonical de-duplication), so the variant boards remain distinct — unlike
-        // All mode, where samples are keyed by canonical form and the symmetry variants of a
-        // single base collapse to one representative.
+        // The early-exit DFS sampler must surface several GENUINELY DISTINCT solutions for both
+        // modes. This guards the regression where the old constructive sampler returned a single
+        // base plus its symmetry variants: in All mode those variants collapsed to one canonical
+        // representative (5 identical boards), and in Unique mode they were all orientations of a
+        // single fundamental solution.
         using var solver = MakeSolver();
-        var ctx = new SimulationContext(21, SolutionMode.Unique, DisplayMode.Hide);
+        var ctx = new SimulationContext(21, mode, DisplayMode.Hide);
 
         var result = await solver.GetSimResultsAsync(ctx);
 
         result.Solutions.Count.Should().BeGreaterThan(1,
-            "constructive base + symmetry variants should surface multiple samples");
+            "the early-exit DFS should surface multiple samples");
 
         var distinct = result.Solutions
             .Select(s => string.Join(',', s.QueenPositions))
