@@ -12,18 +12,28 @@ in the same change that touches `CHANGELOG.md`.
 
 ## Next session — start here
 
-> Updated at the close of the `refactor/gui` session (2026-06-07).
+> Updated after merging the `refactor/gui` PR into `main` (2026-06-07).
 
-**Most recent session — GUI refactor (`refactor/gui`).** This branch reworked the WPF
-front-end: `MainWindow` is now wrapped in a `Viewbox` so the window is user-resizable with
-uniform scaling (the chessboard stays square), the monitor-fit `user32` P/Invoke was deleted
-(code-behind 227 → ~107 lines), Per-Monitor V2 DPI awareness was added via a new
+> 📌 **Design docs awaiting execution (read if picking up that track):**
+> - [`docs/EVENT-MIGRATION-PLAN.md`](EVENT-MIGRATION-PLAN.md) — staged plan to replace the
+>   solver's `event` surface (`QueenPlaced` / `SolutionFound` / `ProgressValueChanged` +
+>   `SetSimulationToken` + `IsSolverCanceled`) with per-call push sinks (`IProgress<T>` +
+>   conflating `Channel<T>` + `CancellationToken`). Begins with a behaviour-preserving Stage 0
+>   seam extraction. **Do this on its own branch (`refactor/solver-sinks`), after the
+>   `test/suite-review` Fact→Theory consolidation merges.**
+
+**Most recent session — GUI refactor (`refactor/gui`), now MERGED (PR #10, squash `8f41b7a`).**
+The WPF front-end was reworked: `MainWindow` is wrapped in a `Viewbox` for a user-resizable,
+uniformly-scaling window (the chessboard stays square), the monitor-fit `user32` P/Invoke was
+deleted (code-behind 227 → ~107 lines), Per-Monitor V2 DPI awareness was added via a new
 `app.manifest`, a 4px-grid spacing-token system landed in `AppStyles.xaml`, and the
-solution-list "height jump" and Simulate "phantom resize" glitches were fixed. A follow-up
-commit narrowed the right control column (400 → 300, canvas 1240 → 1140) and switched panel
-value columns to `Auto`. All of this is committed and pushed to `origin/refactor/gui`; the
-**next step for this track is to open a PR into `main`**. The kernel was untouched, so the
-perf baseline and findings below are unchanged.
+solution-list "height jump" and Simulate "phantom resize" glitches were fixed. A follow-up pass
+narrowed the right control column (400 → 300) and switched panel value columns to `Auto`, then
+an appearance-neutral cleanup tokenised every literal colour/caption `FontSize` and purged dead
+code (5 unused types, the `Messaging/` + `MessagePruning/` folders, the dead `App.xaml`
+converter resource, the `PanelStackGap` token). The kernel hot path was untouched, so the perf
+baseline and findings below are unchanged. **This track is complete; the next experiment is the
+deferred perf track below.**
 
 **Deferred perf track — still the recommended next experiment.** The notes below pre-date
 the GUI session. Pick ONE candidate, A/B against the frozen baseline, MEASURE first.
@@ -65,9 +75,9 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | `refactor/gui` (WPF resizable-Viewbox refactor; ahead of `main`, pending PR). `main` sits at the post-`feature/kernel-perf-small-wins` merge (PRs #7–#9). |
+| Active branch | `test/suite-review` (Fact→Theory test consolidation; not yet merged). `main` at `8f41b7a` (post-`refactor/gui` merge, PR #10). |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
-| Test count | **505 / 505 passing** (416 unit + 89 view-model; up from 304 at v1.0.0) |
+| Test count | **513 / 513 passing** (424 unit + 89 view-model; up from 304 at v1.0.0). The `test/suite-review` Fact→Theory consolidation reduced *method* count but kept every scenario as a visible `[InlineData]` case — net +2 vs the prior 511 because two Facts that looped internally over `{2, 3}` now report each input as its own case. |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |
 | Build status | 0 errors / 0 warnings |
 
@@ -84,7 +94,7 @@ baseline before touching production code, per the team's MEASURE-first practice.
   (code-behind 227 → ~107 lines); Per-Monitor V2 DPI awareness added via new `app.manifest`;
   4px-grid spacing-token system in `AppStyles.xaml`; solution-list "height jump" and Simulate
   "phantom resize" fixes; control column narrowed 400 → 300 with panel value columns switched
-  to `Auto`. (On `refactor/gui`, pending PR into `main`.)
+  to `Auto`. (Merged to `main` via PR #10, squash `8f41b7a`.)
 - Kernel performance: `TZCNT` intrinsic, `SearchState` struct, `EnsureMinThreads` one-shot guard.
 - Kernel performance: depth-2 work-item parallelisation of `CountUniqueFastHalfBoard`
   (~180 fine-grained (col-0, col-1) items at N = 20 vs ~10 coarse root-row ranges),

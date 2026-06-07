@@ -44,6 +44,8 @@ public class BitmaskSolverAllModeTests
 
     [Theory]
     [InlineData(1,   1UL)]
+    [InlineData(2,   0UL)]   // no valid all-mode placement exists
+    [InlineData(3,   0UL)]   // no valid all-mode placement exists
     [InlineData(4,   2UL)]
     [InlineData(5,  10UL)]
     [InlineData(6,   4UL)]
@@ -54,7 +56,7 @@ public class BitmaskSolverAllModeTests
     {
         // N < ParallelAllMaterializeAutoEnableThresholdN (14) so EnumerateAllAdaptive(countOnly: true)
         // routes through BitboardNQueenSolver.CountSolutions. UseCountOnlyAllMode bypasses any
-        // materialization.
+        // materialization. N=2,3 have no solution (count 0).
         using var solver = MakeSolver();
         solver.UseCountOnlyAllMode = true;
         var ctx = new SimulationContext(n, SolutionMode.All, DisplayMode.Hide);
@@ -63,22 +65,6 @@ public class BitmaskSolverAllModeTests
 
         result.SolutionsCount.Should().Be(expected, $"all count-only must equal expected for N={n}");
         result.Solutions.Should().BeEmpty("count-only must not materialise solutions");
-    }
-
-    [Fact]
-    public async Task AllMode_CountOnly_NoSolutionExists_ReturnsZero()
-    {
-        using var solver = MakeSolver();
-        solver.UseCountOnlyAllMode = true;
-
-        foreach (int n in new[] { 2, 3 })
-        {
-            var ctx = new SimulationContext(n, SolutionMode.All, DisplayMode.Hide);
-            var result = await solver.GetSimResultsAsync(ctx);
-
-            result.SolutionsCount.Should().Be(0UL, $"N={n} has no valid all-mode placements");
-            result.Solutions.Should().BeEmpty();
-        }
     }
 
     // -- RunAllUnified materialize branch (small N) ---------------------------

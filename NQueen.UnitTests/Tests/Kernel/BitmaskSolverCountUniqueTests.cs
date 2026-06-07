@@ -57,53 +57,24 @@ public class BitmaskSolverCountUniqueTests
 
     // ── Pruning-flag save/restore semantics ─────────────────────────────────
 
-    [Fact]
-    public async Task CountUniqueAdaptive_PreservesPruningFlags_WhenInitiallyFalse()
+    [Theory]
+    [InlineData(6,  false)]  // parallel-canonical branch, flags initially false
+    [InlineData(6,  true)]   // parallel-canonical branch, flags initially true
+    [InlineData(16, false)]  // half-board branch (CountUniqueFastHalfBoard), flags initially false
+    public async Task CountUniqueAdaptive_PreservesPruningFlags(int n, bool initialFlags)
     {
         using var solver = MakeSolver();
         solver.UseCountOnlyUniqueMode = true;
-        solver.EnablePrefixMinimalityPruning = false;
-        solver.EnablePartialReflectionPruning = false;
-        var ctx = new SimulationContext(6, SolutionMode.Unique, DisplayMode.Hide);
+        solver.EnablePrefixMinimalityPruning = initialFlags;
+        solver.EnablePartialReflectionPruning = initialFlags;
+        var ctx = new SimulationContext(n, SolutionMode.Unique, DisplayMode.Hide);
 
         await solver.GetSimResultsAsync(ctx);
 
-        solver.EnablePrefixMinimalityPruning.Should().BeFalse(
-            "CountUniqueAdaptive must restore EnablePrefixMinimalityPruning to its caller-supplied value");
-        solver.EnablePartialReflectionPruning.Should().BeFalse(
-            "CountUniqueAdaptive must restore EnablePartialReflectionPruning to its caller-supplied value");
-    }
-
-    [Fact]
-    public async Task CountUniqueAdaptive_PreservesPruningFlags_WhenInitiallyTrue()
-    {
-        using var solver = MakeSolver();
-        solver.UseCountOnlyUniqueMode = true;
-        solver.EnablePrefixMinimalityPruning = true;
-        solver.EnablePartialReflectionPruning = true;
-        var ctx = new SimulationContext(6, SolutionMode.Unique, DisplayMode.Hide);
-
-        await solver.GetSimResultsAsync(ctx);
-
-        solver.EnablePrefixMinimalityPruning.Should().BeTrue();
-        solver.EnablePartialReflectionPruning.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task CountUniqueAdaptive_HalfBoardBranch_PreservesPruningFlags()
-    {
-        using var solver = MakeSolver();
-        solver.UseCountOnlyUniqueMode = true;
-        solver.EnablePrefixMinimalityPruning = false;
-        solver.EnablePartialReflectionPruning = false;
-        var ctx = new SimulationContext(16, SolutionMode.Unique, DisplayMode.Hide);
-
-        await solver.GetSimResultsAsync(ctx);
-
-        solver.EnablePrefixMinimalityPruning.Should().BeFalse(
-            "CountUniqueFastHalfBoard must restore EnablePrefixMinimalityPruning after running");
-        solver.EnablePartialReflectionPruning.Should().BeFalse(
-            "CountUniqueFastHalfBoard must restore EnablePartialReflectionPruning after running");
+        solver.EnablePrefixMinimalityPruning.Should().Be(initialFlags,
+            "count-only Unique must restore EnablePrefixMinimalityPruning to its caller-supplied value");
+        solver.EnablePartialReflectionPruning.Should().Be(initialFlags,
+            "count-only Unique must restore EnablePartialReflectionPruning to its caller-supplied value");
     }
 
     // ── Storage-mode equivalence (UseCountOnlyUniqueMode vs UniqueStorageMode) ─

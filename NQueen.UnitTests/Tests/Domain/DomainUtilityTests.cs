@@ -34,22 +34,13 @@ public class DomainUtilityTests
         IntArrayStructuralComparer.Instance.Equals(arr, arr).Should().BeTrue();
     }
 
-    [Fact]
-    public void IntArrayStructuralComparer_EqualContent_ReturnsTrue()
+    [Theory]
+    [InlineData(new[] { 1, 2, 3 }, new[] { 1, 2, 3 }, true)]   // equal content
+    [InlineData(new[] { 1, 2, 3 }, new[] { 1, 2, 4 }, false)]  // different content
+    [InlineData(new[] { 1, 2 }, new[] { 1, 2, 3 }, false)]     // different length
+    public void IntArrayStructuralComparer_Equals_MatchesContent(int[] left, int[] right, bool expected)
     {
-        IntArrayStructuralComparer.Instance.Equals([1, 2, 3], [1, 2, 3]).Should().BeTrue();
-    }
-
-    [Fact]
-    public void IntArrayStructuralComparer_DifferentContent_ReturnsFalse()
-    {
-        IntArrayStructuralComparer.Instance.Equals([1, 2, 3], [1, 2, 4]).Should().BeFalse();
-    }
-
-    [Fact]
-    public void IntArrayStructuralComparer_DifferentLength_ReturnsFalse()
-    {
-        IntArrayStructuralComparer.Instance.Equals([1, 2], [1, 2, 3]).Should().BeFalse();
+        IntArrayStructuralComparer.Instance.Equals(left, right).Should().Be(expected);
     }
 
     [Fact]
@@ -76,32 +67,15 @@ public class DomainUtilityTests
 
     // ── MemoryIntArrayComparer (Compare) ────────────────────────────────────
 
-    [Fact]
-    public void MemoryIntArrayComparer_Compare_Equal_ReturnsZero()
+    [Theory]
+    [InlineData(new[] { 1, 2, 3 }, new[] { 1, 2, 3 }, 0)]   // equal → zero
+    [InlineData(new[] { 1, 2, 2 }, new[] { 1, 2, 3 }, -1)]  // less than → negative
+    [InlineData(new[] { 1, 2, 4 }, new[] { 1, 2, 3 }, 1)]   // greater than → positive
+    [InlineData(new[] { 1, 2 }, new[] { 1, 2, 3 }, -1)]     // shorter is less → negative
+    public void MemoryIntArrayComparer_Compare_ReturnsExpectedSign(int[] left, int[] right, int expectedSign)
     {
-        var c = MemoryIntArrayComparer.Instance;
-        c.Compare(new Memory<int>([1, 2, 3]), new Memory<int>([1, 2, 3])).Should().Be(0);
-    }
-
-    [Fact]
-    public void MemoryIntArrayComparer_Compare_LessThan_ReturnsNegative()
-    {
-        var c = MemoryIntArrayComparer.Instance;
-        c.Compare(new Memory<int>([1, 2, 2]), new Memory<int>([1, 2, 3])).Should().BeNegative();
-    }
-
-    [Fact]
-    public void MemoryIntArrayComparer_Compare_GreaterThan_ReturnsPositive()
-    {
-        var c = MemoryIntArrayComparer.Instance;
-        c.Compare(new Memory<int>([1, 2, 4]), new Memory<int>([1, 2, 3])).Should().BePositive();
-    }
-
-    [Fact]
-    public void MemoryIntArrayComparer_Compare_ShorterIsLess()
-    {
-        var c = MemoryIntArrayComparer.Instance;
-        c.Compare(new Memory<int>([1, 2]), new Memory<int>([1, 2, 3])).Should().BeNegative();
+        var result = MemoryIntArrayComparer.Instance.Compare(new Memory<int>(left), new Memory<int>(right));
+        Math.Sign(result).Should().Be(expectedSign);
     }
 
     [Fact]
@@ -142,21 +116,20 @@ public class DomainUtilityTests
     [Theory]
     [InlineData(1, 1UL)]
     [InlineData(4, 2UL)]
+    [InlineData(5, 10UL)]
+    [InlineData(7, 40UL)]
     [InlineData(8, 92UL)]
+    [InlineData(0, 0UL)]    // out of range → zero
+    [InlineData(999, 0UL)]  // out of range → zero
     public void ExpectedSolutionCounts_GetAllFast_ReturnsKnownValues(int n, ulong expected)
     {
         ExpectedSolutionCounts.GetAllFast(n).Should().Be(expected);
     }
 
-    [Fact]
-    public void ExpectedSolutionCounts_GetAllFast_OutOfRange_ReturnsZero()
-    {
-        ExpectedSolutionCounts.GetAllFast(0).Should().Be(0UL);
-        ExpectedSolutionCounts.GetAllFast(999).Should().Be(0UL);
-    }
-
     [Theory]
     [InlineData(1, 1UL)]
+    [InlineData(5, 2UL)]
+    [InlineData(7, 6UL)]
     [InlineData(8, 12UL)]
     public void ExpectedSolutionCounts_GetUniqueFast_ReturnsKnownValues(int n, ulong expected)
     {
@@ -276,18 +249,6 @@ public class DomainUtilityTests
 
     // ── ExpectedSolutionCounts — additional coverage ─────────────────────────
 
-    [Theory]
-    [InlineData(5,  10UL)]
-    [InlineData(7,  40UL)]
-    public void ExpectedSolutionCounts_GetAllFast_AdditionalValues(int n, ulong expected) =>
-        ExpectedSolutionCounts.GetAllFast(n).Should().Be(expected);
-
-    [Theory]
-    [InlineData(5, 2UL)]
-    [InlineData(7, 6UL)]
-    public void ExpectedSolutionCounts_GetUniqueFast_AdditionalValues(int n, ulong expected) =>
-        ExpectedSolutionCounts.GetUniqueFast(n).Should().Be(expected);
-
     [Fact]
     public void ExpectedSolutionCounts_TryGetAll_UnknownN_ReturnsFalse() =>
         ExpectedSolutionCounts.TryGetAll(0, out _).Should().BeFalse();
@@ -299,14 +260,4 @@ public class DomainUtilityTests
     [Fact]
     public void ExpectedSolutionCounts_UniqueSolutionsSpan_ContainsKnownEntry() =>
         ExpectedSolutionCounts.UniqueSolutionsSpan[8].Should().Be(12UL);
-
-    // ── MemoryIntArrayComparer — additional coverage ──────────────────────────
-
-    [Fact]
-    public void MemoryIntArrayComparer_Compare_EqualArrays_ReturnsZero()
-    {
-        Memory<int> a = new([1, 2, 3]);
-        Memory<int> b = new([1, 2, 3]);
-        MemoryIntArrayComparer.Instance.Compare(a, b).Should().Be(0);
-    }
 }
