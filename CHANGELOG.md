@@ -6,6 +6,20 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Docs
+- **`docs/EVENT-MIGRATION-PLAN.md`** — new design document specifying a staged migration of the
+  solver's `event` surface (`QueenPlaced` / `SolutionFound` / `ProgressValueChanged` +
+  `SetSimulationToken` + `IsSolverCanceled`) to per-call push sinks (`IProgress<T>` + a conflating
+  `Channel<T>` for the high-frequency animation stream + `CancellationToken`). Includes an as-built
+  inventory, a behaviour-preserving **Stage 0** notification-seam extraction (which also resolves
+  an `EnableEvents` gate inconsistency on the terminal 100% progress raises), a six-stage rollout,
+  a risk table, a worth-it analysis, and a **§1a pre-work audit** to verify whether the existing
+  manual leak mitigation (symmetric unsubscribe + nulling + `IDisposable`) removes the
+  lapsed-listener leak correctly and completely before the migration begins.
+- **`docs/ROADMAP.md`** — added a "Design docs awaiting execution" pointer under *Next session —
+  start here* linking `EVENT-MIGRATION-PLAN.md`, noting it belongs on its own `refactor/solver-sinks`
+  branch after the `test/suite-review` Fact→Theory consolidation merges.
+
 ### Added (NQueen.GUI)
 - **`AppStyles.xaml` `PanelCardStyle`** — a re-templated `GroupBox` that replaces the Win32
   etched frame with a flat, square card: a bold header band (with a 1px bottom separator)

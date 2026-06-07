@@ -14,6 +14,14 @@ in the same change that touches `CHANGELOG.md`.
 
 > Updated after merging the `refactor/gui` PR into `main` (2026-06-07).
 
+> 📌 **Design docs awaiting execution (read if picking up that track):**
+> - [`docs/EVENT-MIGRATION-PLAN.md`](EVENT-MIGRATION-PLAN.md) — staged plan to replace the
+>   solver's `event` surface (`QueenPlaced` / `SolutionFound` / `ProgressValueChanged` +
+>   `SetSimulationToken` + `IsSolverCanceled`) with per-call push sinks (`IProgress<T>` +
+>   conflating `Channel<T>` + `CancellationToken`). Begins with a behaviour-preserving Stage 0
+>   seam extraction. **Do this on its own branch (`refactor/solver-sinks`), after the
+>   `test/suite-review` Fact→Theory consolidation merges.**
+
 **Most recent session — GUI refactor (`refactor/gui`), now MERGED (PR #10, squash `8f41b7a`).**
 The WPF front-end was reworked: `MainWindow` is wrapped in a `Viewbox` for a user-resizable,
 uniformly-scaling window (the chessboard stays square), the monitor-fit `user32` P/Invoke was
