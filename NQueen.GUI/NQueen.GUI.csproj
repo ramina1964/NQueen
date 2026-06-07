@@ -38,10 +38,4 @@
     </Resource>
   </ItemGroup>
 
-  <!-- Exclude legacy/duplicate messaging code -->
-  <ItemGroup>
-    <Compile Remove="Messaging\**\*.cs" />
-    <Compile Remove="MessagePruning\**\*.cs" />
-  </ItemGroup>
-
 </Project>

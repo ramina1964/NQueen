@@ -18,8 +18,22 @@ All notable changes to this project are documented here.
 - **`NumericUtils.FormatWithSpaceSeparator(ulong)`** — a `ulong` overload mirroring the
   existing `long` one, so the (unsigned) solution count can be formatted with space
   thousands-separators without a lossy cast.
+- **`AppStyles.xaml` colour/typography tokens** — the brush palette gained `SurfaceBrush`
+  (White), `TextPrimaryBrush` (Black), `TextMutedBrush` (Gray), `TextSubtleBrush`
+  (DarkSlateGray), `SelectionForegroundBrush` (Crimson), and the error trio
+  `ErrorBorderBrush` / `ErrorBackgroundBrush` / `ErrorForegroundBrush` (the exact literals
+  previously inlined in `LabelErrorStyle`), plus a `CaptionFontSize` (`sys:Double` = 11)
+  typography token. These are now the single source of truth for the per-view colours and
+  caption sizes that used to be hard-coded.
 
 ### Changed (NQueen.GUI)
+- **XAML magic-constant cleanup (appearance-neutral)** — every literal colour and caption
+  `FontSize` across the seven view XAMLs was routed through the new `AppStyles.xaml`
+  brushes / `CaptionFontSize` token (e.g. `Background="White"` → `{StaticResource
+  SurfaceBrush}`, `Foreground="Black"` → `{StaticResource TextPrimaryBrush}`, the list
+  selection `Crimson` → `{StaticResource SelectionForegroundBrush}`, the two `FontSize="11"`
+  captions → `{StaticResource CaptionFontSize}`), and `LabelErrorStyle` was rewired onto the
+  error brushes. All values are byte-identical, so rendering is unchanged.
 - **Panel rollout to `PanelCardStyle`** — `InputPanelUserControl`, `OutputPanelUserControl`,
   `SimulationPanelUserControl`, `AdvancedSettingsPanel` and the `ActiveSolutionUserControl`
   header all moved from inline GroupBox chrome (`Background`/`BorderBrush`/`BorderThickness`/
@@ -99,6 +113,22 @@ All notable changes to this project are documented here.
   (matching the app's standard spacing unit), so each card keeps its natural `Auto` height
   plus a constant gap at all times; the column's `MinHeight` still lets it grow when content
   overflows.
+
+### Removed (NQueen.GUI)
+- **Dead code purge** — deleted five never-referenced types (`Utils/LayoutUtils.cs`, the
+  custom `Converters/BooleanToVisibilityConverter.cs`, `EnumDescriptionConverter.cs`,
+  `FirstValidationErrorConverter.cs`, `RatioConverter.cs`), each verified unused solution-wide
+  including XAML `{StaticResource}` usage and the test projects. The three live converters
+  (`DisplayModeToEnabledConverter`, `NullImageConverter`, `StringNotEmptyToVisibilityConverter`)
+  are retained.
+- **Legacy messaging folders** — removed the build-excluded `Messaging/` and `MessagePruning/`
+  folders (6 stale `.cs` files) and the now-orphaned `<Compile Remove="…/**/*.cs" />` item
+  group from `NQueen.GUI.csproj`.
+- **`App.xaml`** — dropped the dead `BooleanToVisibilityConverter` resource (its
+  `StaticResource` key was never consumed; the entry resolved to the built-in WPF type) and
+  the now-unused `xmlns:converters` namespace declaration.
+- **`AppStyles.xaml`** — removed the unused `PanelStackGap` spacing token (defined but never
+  referenced).
 
 ### Fixed (NQueen.Kernel — duplicate lookup-materialize samples for All & Unique, N >= 21)
 - For N >= 21 in **All** or **Unique** mode with **Materialize** storage, the total count was

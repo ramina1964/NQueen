@@ -6,14 +6,14 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
-    Background="White"
+    Background="{StaticResource SurfaceBrush}"
     mc:Ignorable="d">
 
     <!--  GroupBox for selected solution details  -->
     <GroupBox
         Header="Selected Solution"
-        Background="White"
-        BorderBrush="Gray"
+        Background="{StaticResource SurfaceBrush}"
+        BorderBrush="{StaticResource TextMutedBrush}"
         Style="{StaticResource PanelCardStyle}">
 
         <!--  Content grid; padding owned by the card template  -->
@@ -29,7 +29,7 @@
                 Margin="0,0,8,0"
                 VerticalAlignment="Center"
                 Content="Locations"
-                Foreground="Black"
+                Foreground="{StaticResource TextPrimaryBrush}"
                 Style="{StaticResource LabelStyle}" />
 
             <!--  Scrollable text for solution details: long strings overflow horizontally and
@@ -42,7 +42,7 @@
                 VerticalScrollBarVisibility="Disabled">
                 <TextBlock
                     VerticalAlignment="Center"
-                    Foreground="Black"
+                    Foreground="{StaticResource TextPrimaryBrush}"
                     Text="{Binding SelectedSolution.Details}"
                     TextWrapping="NoWrap" />
             </ScrollViewer>

@@ -20,8 +20,8 @@
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         AutomationProperties.Name="Chessboard"
-        Background="White"
-        BorderBrush="Black"
+        Background="{StaticResource SurfaceBrush}"
+        BorderBrush="{StaticResource PanelBorderBrush}"
         BorderThickness="1">
 
         <!--  Grid for content alignment  -->

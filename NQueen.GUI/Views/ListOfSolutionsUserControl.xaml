@@ -32,8 +32,8 @@
             MaxWidth="{Binding ActualWidth, ElementName=WidthSizer}"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
-            Background="White"
-            BorderBrush="Black"
+            Background="{StaticResource SurfaceBrush}"
+            BorderBrush="{StaticResource PanelBorderBrush}"
             BorderThickness="1">
 
             <!--  Grid for future extensibility (single child for now)  -->
@@ -41,7 +41,7 @@
                 <ListBox
                     MaxWidth="{Binding ActualWidth, ElementName=WidthSizer}"
                     BorderThickness="0"
-                    Foreground="Black"
+                    Foreground="{StaticResource TextPrimaryBrush}"
                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                     ItemsSource="{Binding ObservableSolutions}"
                     SelectedItem="{Binding SelectedSolution}">
@@ -51,7 +51,7 @@
                                 <Trigger Property="IsSelected" Value="True">
                                     <Setter Property="FontWeight" Value="Bold" />
                                     <Setter Property="Background" Value="Transparent" />
-                                    <Setter Property="Foreground" Value="Crimson" />
+                                    <Setter Property="Foreground" Value="{StaticResource SelectionForegroundBrush}" />
                                 </Trigger>
                             </Style.Triggers>
                         </Style>

@@ -130,8 +130,8 @@
                     Grid.Column="1"
                     Margin="0,0,5,2"
                     HorizontalAlignment="Right"
-                    Foreground="DarkSlateGray"
-                    FontSize="11"
+                    Foreground="{StaticResource TextSubtleBrush}"
+                    FontSize="{StaticResource CaptionFontSize}"
                     Text="{Binding DelayInMilliseconds}" />
             </Grid>
         </GroupBox>

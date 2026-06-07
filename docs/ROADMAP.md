@@ -73,6 +73,12 @@ baseline before touching production code, per the team's MEASURE-first practice.
 
 ### Recently shipped (see `CHANGELOG.md` `[Unreleased]` for full detail)
 
+- GUI cleanup (`refactor/gui`): appearance-neutral XAML magic-constant purge — every literal
+  colour and caption `FontSize` across the seven view XAMLs routed through new `AppStyles.xaml`
+  brushes (`SurfaceBrush`, `TextPrimaryBrush`, `TextMutedBrush`, `TextSubtleBrush`,
+  `SelectionForegroundBrush`, error trio) and a `CaptionFontSize` token; plus a dead-code purge
+  (5 unused converter/utility types, the build-excluded `Messaging/` + `MessagePruning/` folders,
+  the dead `App.xaml` converter resource, and the unused `PanelStackGap` token).
 - GUI refactor (`refactor/gui`): `MainWindow` wrapped in a `Viewbox` for a user-resizable,
   uniformly-scaling window (chessboard stays square); monitor-fit `user32` P/Invoke removed
   (code-behind 227 → ~107 lines); Per-Monitor V2 DPI awareness added via new `app.manifest`;
