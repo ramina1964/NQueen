@@ -4,29 +4,21 @@ public class SymmetryHelperExtendedTests
 {
     // ── ApplyAdvancedSymmetryPruning ─────────────────────────────────────────
 
-    [Fact]
-    public void ApplyAdvancedSymmetryPruning_BoardSizeOne_ReturnsMaskUnchanged()
+    [Theory]
+    [InlineData(1, 0, 0b1111UL)]   // board size one → mask unchanged
+    [InlineData(5, 2, 0b11111UL)]  // column >= 2 → mask unchanged
+    public void ApplyAdvancedSymmetryPruning_ReturnsMaskUnchanged(int boardSize, int col, ulong mask)
     {
-        ulong mask = 0b1111UL;
-        SymmetryHelper.ApplyAdvancedSymmetryPruning(1, 0, [0], mask).Should().Be(mask);
+        SymmetryHelper.ApplyAdvancedSymmetryPruning(boardSize, col, new int[boardSize], mask).Should().Be(mask);
     }
 
-    [Fact]
-    public void ApplyAdvancedSymmetryPruning_Column0_EvenBoard_CutsToHalf()
+    [Theory]
+    [InlineData(8, 0xFFUL, 0b00001111UL)]  // even board N=8: maxRow=4, bits 0..3
+    [InlineData(5, 0b11111UL, 0b00111UL)]  // odd board N=5: maxRow=(5+1)/2=3, bits 0..2
+    public void ApplyAdvancedSymmetryPruning_Column0_CutsToHalf(int boardSize, ulong fullMask, ulong expected)
     {
-        // N=8: maxRow=4, so bits 0..3 only
-        ulong fullMask = 0xFFUL;
-        var result = SymmetryHelper.ApplyAdvancedSymmetryPruning(8, 0, new int[8], fullMask);
-        result.Should().Be(0b00001111UL);
-    }
-
-    [Fact]
-    public void ApplyAdvancedSymmetryPruning_Column0_OddBoard_CutsToHalfPlusOne()
-    {
-        // N=5: maxRow=(5+1)/2=3, bits 0..2
-        ulong fullMask = 0b11111UL;
-        var result = SymmetryHelper.ApplyAdvancedSymmetryPruning(5, 0, new int[5], fullMask);
-        result.Should().Be(0b00111UL);
+        var result = SymmetryHelper.ApplyAdvancedSymmetryPruning(boardSize, 0, new int[boardSize], fullMask);
+        result.Should().Be(expected);
     }
 
     [Fact]
@@ -59,13 +51,6 @@ public class SymmetryHelperExtendedTests
         ulong fullMask = 0b11111UL;
         var result = SymmetryHelper.ApplyAdvancedSymmetryPruning(5, 1, queenRows, fullMask);
         result.Should().Be(fullMask);
-    }
-
-    [Fact]
-    public void ApplyAdvancedSymmetryPruning_Column2_ReturnsMaskUnchanged()
-    {
-        ulong mask = 0b11111UL;
-        SymmetryHelper.ApplyAdvancedSymmetryPruning(5, 2, new int[5], mask).Should().Be(mask);
     }
 
     [Fact]

@@ -4,22 +4,16 @@ public class SolutionFormatterTests
 {
     private readonly SolutionFormatter _formatter = new();
 
-    // ── IndexingType.ZeroBased ───────────────────────────────────────────────
+    // ── IndexingType origin ──────────────────────────────────────────────────
 
-    [Fact]
-    public void FormatSolutions_ZeroBased_FormatsWithZeroOrigin()
+    [Theory]
+    [InlineData(IndexingType.ZeroBased, "(0,1)", "(1,3)")]  // zero-origin
+    [InlineData(IndexingType.OneBased,  "(1,2)", "(2,4)")]  // one-origin (each coordinate +1)
+    public void FormatSolutions_FormatsWithExpectedOrigin(IndexingType indexing, string first, string second)
     {
         var positions = new List<Position> { new(0, 1), new(1, 3) };
-        var result = _formatter.FormatSolutions(positions, IndexingType.ZeroBased);
-        result.Should().Contain("(0,1)").And.Contain("(1,3)");
-    }
-
-    [Fact]
-    public void FormatSolutions_OneBased_FormatsWithOneOrigin()
-    {
-        var positions = new List<Position> { new(0, 1), new(1, 3) };
-        var result = _formatter.FormatSolutions(positions, IndexingType.OneBased);
-        result.Should().Contain("(1,2)").And.Contain("(2,4)");
+        var result = _formatter.FormatSolutions(positions, indexing);
+        result.Should().Contain(first).And.Contain(second);
     }
 
     // ── Line-wrapping ────────────────────────────────────────────────────────

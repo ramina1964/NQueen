@@ -49,13 +49,10 @@ public class BitboardNQueenSolverTests
     public void CountSolutions_N1_Returns1() =>
         BitboardNQueenSolver.CountSolutions(1).Should().Be(1L);
 
-    [Fact]
-    public void CountSolutions_TooSmall_Throws() =>
-        FluentActions.Invoking(() => BitboardNQueenSolver.CountSolutions(0))
-            .Should().Throw<ArgumentOutOfRangeException>();
-
-    [Fact]
-    public void CountSolutions_TooLarge_Throws() =>
-        FluentActions.Invoking(() => BitboardNQueenSolver.CountSolutions(33))
+    [Theory]
+    [InlineData(0)]   // below the minimum board size
+    [InlineData(33)]  // above the maximum supported board size
+    public void CountSolutions_OutOfRange_Throws(int n) =>
+        FluentActions.Invoking(() => BitboardNQueenSolver.CountSolutions(n))
             .Should().Throw<ArgumentOutOfRangeException>();
 }

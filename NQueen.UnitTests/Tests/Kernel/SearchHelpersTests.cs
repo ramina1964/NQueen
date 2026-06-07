@@ -124,41 +124,20 @@ public class SearchHelpersTests
 
     // ── ShouldPrunePrefixFull (reflection-only, stateless) ───────────────────
 
-    [Fact]
-    public void ShouldPrunePrefixFull_ReflectionDisabled_ReturnsFalse()
+    [Theory]
+    // With reflection off there is no sound forward-prefix prune, so never prune.
+    [InlineData(new[] { 7, 1, -1, -1, -1, -1, -1, -1 }, 1, 8, false, false)]
+    // N=8: row 7 mirrors to 0, so 7 > 0 → the horizontal reflection is lexicographically
+    // smaller, so this prefix can never be the canonical representative → prune.
+    [InlineData(new[] { 7, -1, -1, -1, -1, -1, -1, -1 }, 0, 8, true, true)]
+    // N=8: row 2 mirrors to 5, so 2 < 5 → identity already wins the reflection comparison
+    // at column 0; the scan breaks and does not prune.
+    [InlineData(new[] { 2, -1, -1, -1, -1, -1, -1, -1 }, 0, 8, true, false)]
+    // Negative (unfixed) row value → never prune.
+    [InlineData(new[] { -1, -1, -1, -1 }, 0, 4, true, false)]
+    public void ShouldPrunePrefixFull_ReturnsExpected(int[] rows, int depth, int n, bool reflectionEnabled, bool expected)
     {
-        // With reflection off there is no sound forward-prefix prune, so never prune.
-        int[] rows = [7, 1, -1, -1, -1, -1, -1, -1];
-        SearchHelpers.ShouldPrunePrefixFull(rows, 1, 8, reflectionEnabled: false)
-            .Should().BeFalse();
-    }
-
-    [Fact]
-    public void ShouldPrunePrefixFull_FirstRowBelowMirror_PrunesWhenReflectionGreater()
-    {
-        // N=8: row 7 mirrors to 0, so 7 > 0 → the horizontal reflection is lexicographically
-        // smaller, so this prefix can never be the canonical representative → prune.
-        int[] rows = [7, -1, -1, -1, -1, -1, -1, -1];
-        SearchHelpers.ShouldPrunePrefixFull(rows, 0, 8, reflectionEnabled: true)
-            .Should().BeTrue();
-    }
-
-    [Fact]
-    public void ShouldPrunePrefixFull_FirstRowAboveMirror_DoesNotPrune()
-    {
-        // N=8: row 2 mirrors to 5, so 2 < 5 → identity already wins the reflection comparison
-        // at column 0; the scan breaks and does not prune.
-        int[] rows = [2, -1, -1, -1, -1, -1, -1, -1];
-        SearchHelpers.ShouldPrunePrefixFull(rows, 0, 8, reflectionEnabled: true)
-            .Should().BeFalse();
-    }
-
-    [Fact]
-    public void ShouldPrunePrefixFull_NegativeRowValue_ReturnsFalse()
-    {
-        int[] rows = [-1, -1, -1, -1];
-        SearchHelpers.ShouldPrunePrefixFull(rows, 0, 4, reflectionEnabled: true)
-            .Should().BeFalse();
+        SearchHelpers.ShouldPrunePrefixFull(rows, depth, n, reflectionEnabled).Should().Be(expected);
     }
 
     [Fact]

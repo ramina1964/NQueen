@@ -20,6 +20,25 @@ All notable changes to this project are documented here.
   start here* linking `EVENT-MIGRATION-PLAN.md`, noting it belongs on its own `refactor/solver-sinks`
   branch after the `test/suite-review` Fact→Theory consolidation merges.
 
+### Changed (NQueen.UnitTests)
+- **Fact→Theory test consolidation (coverage-preserving)** — merged near-identical `[Fact]`
+  methods (and `[Fact]` methods that looped internally over inputs) into parameterised
+  `[Theory]` + `[InlineData]` cases across six files, reducing test-method count while keeping
+  every input scenario as a visible, individually-reported case:
+  - `DomainUtilityTests.cs` — `IntArrayStructuralComparer.Equals` (3→1), `MemoryIntArrayComparer.Compare`
+    (4→1 via `Math.Sign`, plus a literal duplicate removed), `GetAllFast`/`GetUniqueFast` count lookups (Theory-merged).
+  - `SymmetryHelperExtendedTests.cs` — `ApplyAdvancedSymmetryPruning` "mask unchanged" (2→1) and
+    "Column 0 cuts to half" (2→1).
+  - `SearchHelpersTests.cs` — `ShouldPrunePrefixFull` (4→1; rotate-180 regression guard kept separate).
+  - `BitmaskSolverAllModeTests.cs` — folded the internal `foreach {2,3}` zero-solution Fact into the
+    existing `AllMode_CountOnly_SmallN` Theory.
+  - `BitmaskSolverUniqueTests.cs` — `UniqueMode_NoSolutionExists` internal-`foreach` Fact → Theory(2,3).
+  - `BitmaskSolverCountUniqueTests.cs` — three `PreservesPruningFlags` Facts → one Theory.
+  - `SolutionFormatterTests.cs` — zero-/one-based formatting (2→1).
+  - `BitboardNQueenSolverTests.cs` — out-of-range throw cases (2→1).
+  - Heterogeneous-assertion and distinct-routing-branch Facts were intentionally left as Facts.
+    Fast suite stays green: 424 unit + 89 view-model tests pass.
+
 ### Added (NQueen.GUI)
 - **`AppStyles.xaml` `PanelCardStyle`** — a re-templated `GroupBox` that replaces the Win32
   etched frame with a flat, square card: a bold header band (with a 1px bottom separator)

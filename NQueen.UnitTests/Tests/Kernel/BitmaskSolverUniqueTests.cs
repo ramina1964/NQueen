@@ -66,19 +66,18 @@ public class BitmaskSolverUniqueTests
             AssertValidPlacement(s.QueenPositions);
     }
 
-    [Fact]
-    public async Task UniqueMode_NoSolutionExists_ReturnsZero()
+    [Theory]
+    [InlineData(2)]
+    [InlineData(3)]
+    public async Task UniqueMode_NoSolutionExists_ReturnsZero(int n)
     {
         using var solver = MakeSolver();
 
-        foreach (int n in new[] { 2, 3 })
-        {
-            var ctx = new SimulationContext(n, SolutionMode.Unique, DisplayMode.Hide);
-            var result = await solver.GetSimResultsAsync(ctx);
+        var ctx = new SimulationContext(n, SolutionMode.Unique, DisplayMode.Hide);
+        var result = await solver.GetSimResultsAsync(ctx);
 
-            result.SolutionsCount.Should().Be(0UL, $"N={n} has no valid placements");
-            result.Solutions.Should().BeEmpty();
-        }
+        result.SolutionsCount.Should().Be(0UL, $"N={n} has no valid placements");
+        result.Solutions.Should().BeEmpty();
     }
 
     // -- Mid-N branch: N == 15 -> SymmetryPrunedUniqueCounter -----------------

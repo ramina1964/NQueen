@@ -75,9 +75,9 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | `main` at `8f41b7a` (post-`refactor/gui` merge, PR #10). No feature branch in flight. |
+| Active branch | `test/suite-review` (Fact→Theory test consolidation; not yet merged). `main` at `8f41b7a` (post-`refactor/gui` merge, PR #10). |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
-| Test count | **511 / 511 passing** (422 unit + 89 view-model; up from 304 at v1.0.0) |
+| Test count | **513 / 513 passing** (424 unit + 89 view-model; up from 304 at v1.0.0). The `test/suite-review` Fact→Theory consolidation reduced *method* count but kept every scenario as a visible `[InlineData]` case — net +2 vs the prior 511 because two Facts that looped internally over `{2, 3}` now report each input as its own case. |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |
 | Build status | 0 errors / 0 warnings |
 
