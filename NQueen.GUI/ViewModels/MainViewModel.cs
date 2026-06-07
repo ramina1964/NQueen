@@ -141,11 +141,11 @@ public sealed partial class MainViewModel :
         IsInInputMode = true;
         IsSimulating = false;
         IsOutputReady = false;
-        NoOfSolutions = $"{ObservableSolutions.Count,0:N0}";
+        NoOfSolutions = NumericUtils.FormatWithSpaceSeparator(ObservableSolutions.Count);
 
         DelayInMilliseconds = SimulationSettings.DefaultDelayInMilliseconds;
-        ProgressVisibility = Visibility.Hidden;
-        ProgressLabelVisibility = Visibility.Hidden;
+        ProgressVisibility = Visibility.Collapsed;
+        ProgressLabelVisibility = Visibility.Collapsed;
 
         // Set default storage modes (GUI favors CountOnly for initial memory footprint)
         _allStorageMode = ResultStorageMode.CountOnly;

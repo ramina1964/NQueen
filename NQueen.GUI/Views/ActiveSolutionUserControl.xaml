@@ -6,22 +6,18 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewmodels="clr-namespace:NQueen.GUI.ViewModels"
     d:DataContext="{d:DesignInstance Type=viewmodels:MainViewModel}"
-    Background="White"
+    Background="{StaticResource SurfaceBrush}"
     mc:Ignorable="d">
 
     <!--  GroupBox for selected solution details  -->
     <GroupBox
-        Margin="0"
-        Padding="0"
-        HorizontalAlignment="Stretch"
-        VerticalContentAlignment="Stretch"
-        Background="White"
-        BorderBrush="Gray"
-        BorderThickness="1"
-        Header="Selected Solution">
+        Header="Selected Solution"
+        Background="{StaticResource SurfaceBrush}"
+        BorderBrush="{StaticResource TextMutedBrush}"
+        Style="{StaticResource PanelCardStyle}">
 
-        <!--  Main content grid with consistent margin  -->
-        <Grid Margin="2">
+        <!--  Content grid; padding owned by the card template  -->
+        <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
@@ -33,21 +29,22 @@
                 Margin="0,0,8,0"
                 VerticalAlignment="Center"
                 Content="Locations"
-                Foreground="Black"
+                Foreground="{StaticResource TextPrimaryBrush}"
                 Style="{StaticResource LabelStyle}" />
 
-            <!--  Scrollable text for solution details  -->
+            <!--  Scrollable text for solution details: long strings overflow horizontally and
+                  surface a scrollbar at the bottom instead of widening the card.  -->
             <ScrollViewer
                 Grid.Column="1"
                 MinWidth="120"
-                VerticalAlignment="Center"
+                VerticalAlignment="Stretch"
                 HorizontalScrollBarVisibility="Auto"
-                VerticalScrollBarVisibility="Hidden">
+                VerticalScrollBarVisibility="Disabled">
                 <TextBlock
                     VerticalAlignment="Center"
-                    Foreground="Black"
+                    Foreground="{StaticResource TextPrimaryBrush}"
                     Text="{Binding SelectedSolution.Details}"
-                    TextWrapping="Wrap" />
+                    TextWrapping="NoWrap" />
             </ScrollViewer>
 
         </Grid>

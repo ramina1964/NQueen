@@ -160,7 +160,10 @@ public class MainViewModelPositiveTests
         progressDuringSimulation.Should().NotBeNull("ProgressValue should update during simulation.");
         progressDuringSimulation.Should().BeGreaterThan(0, "Progress should advance above 0.");
         mainVm.ProgressValue.Should().BeInRange(0, 1);
-        mainVm.ProgressVisibility.Should().Be(Visibility.Hidden);
+        // After a completed simulation the progress bar is Collapsed (not Hidden): Collapsed frees
+        // the layout row so the Simulation panel shrinks to its content and no longer reserves
+        // space that would clip the Solver Settings card below it.
+        mainVm.ProgressVisibility.Should().Be(Visibility.Collapsed);
         mainVm.ObservableSolutions.Count.Should().Be(expectedSolutionCount);
     }
 

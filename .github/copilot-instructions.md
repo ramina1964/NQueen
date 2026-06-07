@@ -49,3 +49,6 @@
 - When a tracked item ships, update `docs/ROADMAP.md` in the **same commit** as the
   `CHANGELOG.md` entry: move the item out of the roadmap, then refresh the
   “Current State” table (test count, coverage, branch) if those numbers changed.
+
+### Performance Optimization
+- Engage profiler/measurement workflow only for explicit performance tasks.

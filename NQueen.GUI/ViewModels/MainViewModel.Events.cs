@@ -247,7 +247,7 @@ public sealed partial class MainViewModel
             if (SolutionMode == SolutionMode.Single && DisplayMode == DisplayMode.Visualize)
             {
                 ProgressVisibility = Visibility.Visible;
-                ProgressLabelVisibility = Visibility.Hidden;
+                ProgressLabelVisibility = Visibility.Collapsed;
                 ProgressLabel = string.Empty;
                 return;
             }

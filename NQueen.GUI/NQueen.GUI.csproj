@@ -11,6 +11,9 @@
     <OutputType>WinExe</OutputType>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
     <Platforms>AnyCPU;x64</Platforms>
+
+    <!-- Per-Monitor V2 DPI awareness for crisp rendering across mixed-DPI monitors. -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>
@@ -33,12 +36,6 @@
     <Resource Include="Images\WhiteQueen.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
-  </ItemGroup>
-
-  <!-- Exclude legacy/duplicate messaging code -->
-  <ItemGroup>
-    <Compile Remove="Messaging\**\*.cs" />
-    <Compile Remove="MessagePruning\**\*.cs" />
   </ItemGroup>
 
 </Project>
