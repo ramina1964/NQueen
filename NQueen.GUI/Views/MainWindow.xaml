@@ -23,7 +23,7 @@
     <Viewbox Stretch="Uniform">
     <!--  Fixed design width so the Viewbox scale stays constant; content changes (e.g. selected-solution
           locations after Simulate) scroll within the layout instead of resizing the whole UI.  -->
-    <Grid Width="1240" Margin="10" Background="White" HorizontalAlignment="Stretch">
+    <Grid Width="1140" Margin="10" Background="White" HorizontalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" MinHeight="40" />
             <RowDefinition Height="Auto" />
@@ -33,7 +33,7 @@
             <ColumnDefinition Width="10" />
             <ColumnDefinition x:Name="BoardColumn" Width="Auto" />
             <ColumnDefinition Width="10" />
-            <ColumnDefinition Width="400" />
+            <ColumnDefinition Width="300" />
         </Grid.ColumnDefinitions>
 
         <!--  Top header row  -->

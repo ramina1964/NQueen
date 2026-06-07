@@ -49,6 +49,13 @@ All notable changes to this project are documented here.
   (previously a mix of 2/3/5/6/8/10). The `MainWindow` right-hand control column was
   simplified from a 7-row layout with hard-coded 2px spacer rows to a 4-row stack using a
   consistent `PanelStackGap`.
+- **Right control column width** — narrowed the `MainWindow` control column from `400` to
+  `300` and reduced the Viewbox design canvas from `1240` to `1140` to absorb the freed space
+  (no empty right band; the Simulate-resize fix is preserved). The Input, Output and
+  Solver-settings panels switched their input/value columns from `*` (stretch) to `Auto`, so
+  controls now sit one standard `LabelCellMargin` gap after their labels instead of being
+  pushed to the far panel edge. The `ProgressBarStyle` lost its hard-coded `Width="310"` and
+  now stretches to the (narrower) panel. All four GroupBoxes remain equal width.
 
 ### Fixed (NQueen.GUI)
 - **`MainWindow.xaml` / `ActiveSolutionUserControl.xaml`** — clicking **Simulate** no longer
