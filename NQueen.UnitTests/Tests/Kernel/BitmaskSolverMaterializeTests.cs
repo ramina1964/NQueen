@@ -39,6 +39,21 @@ public class BitmaskSolverMaterializeTests
                     $"queens at columns {i} and {j} must not share a diagonal");
     }
 
+    // -- Helper: canonical signature of a placement ---------------------------
+    // Returns the lexicographically-minimal of the 8 symmetry transforms (rotations +
+    // reflections) as a comma-joined string. Two boards that are rotations/reflections of one
+    // another share the same canonical signature — so this is the correct way to test whether
+    // two Unique samples are genuinely DIFFERENT fundamental solutions, not just different
+    // orientations of the same one (the exact bug class fixed in the lookup-materialize path).
+    // Uses GetCanonicalForm (sequence-based, size-agnostic) rather than the packed 5-bit key,
+    // which is only valid for N <= 25.
+    private static string CanonicalSignature(int[] rows)
+    {
+        var scratch = new int[rows.Length * 8];
+        var canonical = SymmetryHelper.GetCanonicalForm(rows, scratch);
+        return string.Join(',', canonical);
+    }
+
     // -- All-mode lookup-materialize -----------------------------------------
 
     [Theory]
@@ -63,6 +78,14 @@ public class BitmaskSolverMaterializeTests
 
         foreach (var sol in result.Solutions)
             AssertValidPlacement(sol.QueenPositions);
+
+        // Regression guard: the old constructive sampler collapsed All-mode samples to a single
+        // canonical key (5 identical boards). The displayed boards must be distinct placements.
+        result.Solutions
+            .Select(s => string.Join(',', s.QueenPositions))
+            .Distinct()
+            .Count()
+            .Should().Be(result.Solutions.Count, $"All-mode samples for N={n} must be distinct boards");
     }
 
     // -- Unique-mode lookup-materialize --------------------------------------
@@ -89,6 +112,48 @@ public class BitmaskSolverMaterializeTests
 
         foreach (var sol in result.Solutions)
             AssertValidPlacement(sol.QueenPositions);
+    }
+
+    // -- Unique-mode sample correctness (regression guard) -------------------
+
+    [Theory]
+    [InlineData(21)]
+    [InlineData(22)]
+    [InlineData(23)]
+    [InlineData(24)]
+    [InlineData(25)]
+    public async Task UniqueMode_Materialize_SamplesAreCanonicalAndFundamentallyDistinct(int n)
+    {
+        // Regression guard for the lookup-materialize bug across the whole GUI Unique range
+        // (N = 21..25, all >= LookupThresholdN). For each board the samples must be:
+        //   (1) valid, conflict-free placements,
+        //   (2) canonical representatives (IsIdentityCanonical), and
+        //   (3) pairwise NOT symmetry-equivalent — i.e. genuinely different fundamental
+        //       solutions, not rotations/reflections of one another.
+        // The old constructive sampler violated (3) by emitting one base plus its symmetry
+        // variants; this test would have caught that directly.
+        using var solver = MakeSolver();
+        var ctx = new SimulationContext(n, SolutionMode.Unique, DisplayMode.Hide);
+
+        var result = await solver.GetSimResultsAsync(ctx);
+
+        result.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetUnique(n),
+            $"Unique count for N={n} must equal the curated lookup value");
+        result.Solutions.Should().NotBeEmpty("the materialize path must surface sample solutions");
+
+        var scratch = new int[n * 8];
+        foreach (var sol in result.Solutions)
+        {
+            AssertValidPlacement(sol.QueenPositions);
+            SymmetryHelper.IsIdentityCanonical(sol.QueenPositions, scratch)
+                .Should().BeTrue($"every Unique sample for N={n} must be its own canonical representative");
+        }
+
+        var canonicalSignatures = result.Solutions
+            .Select(s => CanonicalSignature(s.QueenPositions))
+            .ToList();
+        canonicalSignatures.Distinct().Count().Should().Be(result.Solutions.Count,
+            $"the {result.Solutions.Count} Unique samples for N={n} must be fundamentally distinct (no symmetry duplicates)");
     }
 
     // -- Cap behaviour --------------------------------------------------------
@@ -134,6 +199,25 @@ public class BitmaskSolverMaterializeTests
             .Distinct()
             .Count();
         distinct.Should().Be(result.Solutions.Count, "materialised samples should be distinct");
+
+        if (mode == SolutionMode.Unique)
+        {
+            // Stronger guarantee for Unique mode: string-distinctness alone is NOT enough — two
+            // boards can differ as strings yet still be rotations/reflections of the same
+            // fundamental solution. Assert every sample is a canonical representative AND that
+            // no two share a canonical signature, so each is a genuinely different fundamental
+            // solution.
+            var scratch = new int[21 * 8];
+            foreach (var sol in result.Solutions)
+                SymmetryHelper.IsIdentityCanonical(sol.QueenPositions, scratch)
+                    .Should().BeTrue("each Unique sample must be its own canonical representative");
+
+            var canonicalSignatures = result.Solutions
+                .Select(s => CanonicalSignature(s.QueenPositions))
+                .ToList();
+            canonicalSignatures.Distinct().Count().Should().Be(result.Solutions.Count,
+                "no two Unique samples may be symmetry-equivalent (rotations/reflections of one another)");
+        }
     }
 
     // -- Solver-state reset across consecutive runs --------------------------

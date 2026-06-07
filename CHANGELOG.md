@@ -126,6 +126,15 @@ All notable changes to this project are documented here.
   a `[Theory]` asserting distinct samples for **both** All and Unique at N = 21 (it previously
   exercised only Unique and documented the All-mode collapse as expected). All
   `BitmaskSolverMaterializeTests` (8) and the high-board / large-board count suites pass.
+- Tests (correctness guard): added rigorous Unique-mode coverage. A new
+  `UniqueMode_Materialize_SamplesAreCanonicalAndFundamentallyDistinct` `[Theory]` (N = 21..25,
+  the whole GUI Unique range) asserts every sample is a canonical representative
+  (`SymmetryHelper.IsIdentityCanonical`) **and** that no two samples share a canonical
+  signature (`GetCanonicalForm`) — i.e. they are genuinely different fundamental solutions, not
+  rotations/reflections of one another (the precise failure mode of the old sampler).
+  `Materialize_DistinctSamples_AreReturned(Unique)` now also checks canonical-distinctness, and
+  the All-mode test guards against the 5-identical-boards regression. Suite grew from 8 to 13
+  cases, all green.
 
 ### Changed (NQueen.GUI)
 - **`MainWindow.xaml` / `MainWindow.xaml.cs`** — the main window is now user-resizable.
