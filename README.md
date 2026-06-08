@@ -172,7 +172,9 @@ The GUI provides:
 
 ## Solver Options
 
-The following properties on `BitmaskSolver` control the solver behaviour (set before calling `Solve()`):
+The following properties on `BitmaskSolver` control the solver behaviour (set before
+calling `GetSimResultsAsync(SimulationContext)`; per-call sinks and a `CancellationToken`
+flow through `SimulationContext`):
 
 | Property | Default | Description |
 |---|---|---|

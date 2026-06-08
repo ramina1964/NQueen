@@ -7,6 +7,16 @@ All notable changes to this project are documented here.
 ## [Unreleased]
 
 ### Docs
+- **Stage 6 docs sweep — `README.md` Solver-Options preface and `docs/ROADMAP.md` backlog
+  refreshed for the post-migration cancellation surface.** README "Solver Options" preface
+  now points at the post-migration entry point — properties on `BitmaskSolver` are set before
+  calling `GetSimResultsAsync(SimulationContext)` (not the legacy `Solve()`), with per-call
+  sinks and a `CancellationToken` flowing through `SimulationContext`; the property table is
+  unchanged. ROADMAP *Backlog → Small wins, low risk* drops the stale "Throttle
+  `IsSolverCanceled` reads" entry — the field was deleted in Stage 6 and the equivalent
+  throttle on the cancellation-token poll (`(col & 0xF) == 0 && IsCancellationRequested` in
+  `BitmaskSolver.CountUnique.cs::CountCanonicalDFS`) is already in place, so the subsection
+  is now empty by intent rather than by oversight.
 - **Post-event-migration sweep — `README.md` + `.github/copilot-instructions.md` updated.**
   Refreshed the now-stale terminology that referenced the deleted event surface: the project-tree
   caption in both files calls the Domain types `context records` (not `event-args`), the
@@ -296,8 +306,9 @@ All notable changes to this project are documented here.
     token actually reaches the kernel; the impossible-under-the-new-model
     `IsSolverCanceled.Should().BeFalse()` assertion is dropped.
 - Verified by build (0 errors / 0 warnings) and the fast suite (**489 / 489 green** — 400 unit +
-  89 view-model). The post-migration docs sweep (`README.md` Solver-Options table,
-  `.github/copilot-instructions.md` event-args note) is deferred to a separate follow-up commit.
+  89 view-model). The post-migration docs sweep (`README.md` Solver-Options preface,
+  `.github/copilot-instructions.md` event-args note, `docs/ROADMAP.md` stale backlog bullet) ships
+  alongside this entry — see *Docs* above.
 
 ### Changed (NQueen.Kernel)
 - **Unified the two Visualize materialize paths into one method.**

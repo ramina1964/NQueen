@@ -64,9 +64,13 @@ in the same change that touches `CHANGELOG.md`.
 >   `CancellationTokenSource`s (the last one renamed to
 >   `BitmaskSolver_SingleMode_HonorsPreCancelledToken_ReturnsWithoutThrowing` and switched from
 >   `Solve()` to `await GetSimResultsAsync(ctx)` so the token actually reaches the kernel). Build
->   0/0; fast suite **489 / 489** (400 unit + 89 view-model). **Next:** post-migration docs sweep —
->   `README.md` Solver-Options table + `.github/copilot-instructions.md` event-args note (small,
->   separate commit on its own branch). See `CHANGELOG.md` `[Unreleased]`.
+>   0/0; fast suite **489 / 489** (400 unit + 89 view-model). **Stage 6 docs sweep — DONE:**
+>   `README.md` Solver-Options preface re-pointed at `GetSimResultsAsync(SimulationContext)`,
+>   `.github/copilot-instructions.md` event-args note rewritten for the post-migration sink
+>   surface, and the stale `IsSolverCanceled`-throttle entry pulled out of *Backlog → Small wins,
+>   low risk* (the equivalent token-poll throttle is already in
+>   `BitmaskSolver.CountUnique.cs::CountCanonicalDFS`). The whole `refactor/event-migration` track
+>   is ready for PR merge. See `CHANGELOG.md` `[Unreleased]`.
 > - **§1a pre-work audit — DONE (finding: _preventive_, not corrective).** No live
 >   lapsed-listener leak exists. A workspace-wide search found exactly six subscription sites
 >   (all named-method `+=`/`-=` pairs in `MainViewModel.Events.cs`, zero lambdas), backed by an
@@ -203,9 +207,10 @@ effort × expected impact.
 
 ### Small wins, low risk
 
-- **Throttle `IsSolverCanceled` reads** in the `CountCanonicalDFS` hot loop
-  (don't check on every `while` iteration). Source: `Code Analysis - 02-02.2026.txt`.
-  Partly addressed — the check is now gated to `(col & 0xF) == 0` (once per 16 columns).
+- _(none currently — the Unique-mode count throttle previously listed here was for
+  the deleted `IsSolverCanceled` field; the equivalent throttle on the cancellation-token
+  poll is already in place: the `(col & 0xF) == 0` gate on `IsCancellationRequested` in
+  `BitmaskSolver.CountUnique.cs::CountCanonicalDFS` keeps the read off the hottest path.)_
 
 ### Larger wins, scoped risk
 
