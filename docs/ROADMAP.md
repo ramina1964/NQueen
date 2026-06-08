@@ -20,39 +20,56 @@ event-migration track is shipped (Stages 0–6 + Stage 4 follow-up + the
 `CHANGELOG.md` `[Unreleased]`. The *deferred perf track* below is now active: pick **one**
 candidate per branch, MEASURE first, A/B against the frozen baseline.
 
-> 🎯 **This session's experiment — Iterative core for the Unique hot path.**
-> Picked because the profiler captured on `feature/kernel-perf-small-wins` shows ~97 % of
-> self-CPU in `CountCanonicalDFS` with a **bottom-heavy** recursion profile (deepest two
-> frames = ~69 % of self-time). The bottom-heavy shape strongly suggests per-frame
-> call/return + register-spill overhead is a real cost; an allocation-free iterative DFS
-> (the same approach already used in `BitboardNQueenSolver`) targets that overhead head-on.
-> The other two candidates (cached shifted diagonal masks, depth-based work-stealing) are
-> deferred — masks because the ROADMAP itself flags them as *skeptical* without a
-> line-level CPU trace, and work-stealing because it only helps the >8-core tail-imbalance
-> case rather than the dominant loop body.
+> 🎯 **This session's experiment — Profile-first investigation of `CountCanonicalDFS`.**
+> The branch was originally opened to port `CountCanonicalDFS` to an iterative DFS, on the
+> theory that the bottom-heavy recursion profile (~97 % of self-CPU in the loop body,
+> deepest two frames carrying ~69 % of self-time) implied real call/ret overhead. Reviewing
+> the archive in `docs/ignored/` before writing any code surfaced a counter-signal that
+> downgraded the experiment from "high confidence" to "needs evidence":
+>
+> > _The most recent perf round (`feature/kernel-perf-small-wins`) explicitly tried to
+> > reduce per-recursion work — saving/restoring ref state around the recursive call to
+> > eliminate per-branch flag copies — and produced **no measurable speedup**. That
+> > finding is closely adjacent to "remove call/ret overhead", and it strongly suggests
+> > the recursion is **not** the dominant cost the profile shape would naïvely imply._
+>
+> What the archive **does not** contain: any record of an iterative-core port of
+> `CountCanonicalDFS` itself (the "iterative" mentions in
+> `docs/ignored/Archive/Potential All Mode Improvements.txt` refer to the earlier,
+> superseded `CanonicalUniqueSearchEngine` and to the still-pending **All-mode** port,
+> not to the current Unique count path). So the experiment is novel, but the evidence
+> for the win is weaker than first claimed.
+>
+> **Pivot — Option C (profile-first), no production-code changes this session.** Capture
+> a fresh line-level / instruction-level CPU trace on `CountCanonicalDFS` before deciding
+> whether to ship an iterative port. The trace either confirms call/ret + register
+> save/restore is a measurable share of self-CPU (→ proceed with the port on its own
+> branch with high confidence), or refutes it (→ close `perf/unique-iterative-core`
+> without code changes, record the negative finding here, pick a different candidate).
 >
 > **Plan of work (in order):**
 > 1. **MEASURE first** — run `UniqueFastHalfBoardEvenOddBenchmark` on this freshly-merged
->    `main` to re-establish the baseline. Target to beat: **N=16 ≈ 244 ms, N=17 ≈ 2,042 ms**
->    (±1 % on the dev machine).
-> 2. **Port `CountCanonicalDFS` to an iterative core** — replace recursion with an
->    explicit per-depth state stack (column / diagonal masks + remaining-bits register).
->    Allocation-free: stack lives on a fixed-size `Span<>` sized to N. Preserve every
->    existing prune (reflection-only `ShouldPrunePrefixFull`, the depth-2 work-item
->    parallelisation, the half-board restriction, the `(col & 0xF) == 0` cancellation
->    throttle).
-> 3. **Verify correctness** — full test suite (513 / 513 expected) plus the OEIS-pinned
->    counts in `BitmaskSolverUniqueTests` for N=4…16. Any deviation aborts the experiment.
-> 4. **A/B benchmark** — run `UniqueFastHalfBoardEvenOddBenchmark` again; report
->    wall-clock delta and confidence interval. Target: a **measurable** speedup outside
->    the ±1 % noise band on both N=16 and N=17.
-> 5. **Decide** — ship if it wins; revert (and record the negative finding here) if it
->    doesn't, the same way `feature/kernel-perf-small-wins` was honestly recorded as
->    "correctness-neutral, no measurable speedup".
+>    `main` to re-establish the baseline. Target to verify or update: **N=16 ≈ 244 ms,
+>    N=17 ≈ 2,042 ms** (±1 % on the dev machine).
+> 2. **Capture a line-level / instruction-level CPU profile** of `CountCanonicalDFS`
+>    (e.g. VS Performance Profiler "CPU Usage" with line-level attribution + the
+>    Hot Path view, or `dotnet-trace` with line-resolution sampling). The question to
+>    answer: of the ~97 % self-CPU in the loop body, what fraction is **(a)** the bit-scan
+>    + arithmetic + diagonal shifts at line 181-185 / 201-203, vs **(b)** the
+>    function-prologue / call / ret / epilogue, vs **(c)** the prune-guard branch at
+>    line 194-199, vs **(d)** the cancellation-throttle branch at line 171-172?
+> 3. **Decide based on (b)** — if call/ret + prologue/epilogue is, say, **≥ 8 %** of
+>    self-CPU, the iterative port is worth a separate `perf/unique-iterative-dfs` branch;
+>    if it's a few percent or less, close this branch with the negative finding recorded
+>    here and pivot to the strongest remaining candidate (most likely **work-stealing**
+>    for All mode, given the documented tail-imbalance evidence in
+>    `docs/ignored/Archive/Potential All Mode Improvements.txt:1-20`).
+> 4. **No production-code changes on this branch.** The branch carries only docs +
+>    profiling artefacts. The eventual implementation, if any, ships on its own branch.
 >
-> **Out of scope for this branch:** the All-mode iterative core port (separate experiment
-> if Unique wins clearly), MRV ordering, `ArrayPool<T>` for stacks, and the cached-mask
-> experiment. Each gets its own `perf/<specific-name>` branch per the rule below.
+> **Out of scope for this branch:** writing the iterative port, the All-mode iterative
+> core port, MRV ordering, `ArrayPool<T>` for stacks, and the cached-mask experiment.
+> Each gets its own `perf/<specific-name>` branch per the rule below.
 
 **Deferred perf track — context.** The notes below are the authoritative profiling
 record from `feature/kernel-perf-small-wins`. They guide candidate selection across
@@ -76,9 +93,13 @@ and profiling knowledge below, not faster code.
 
 **Candidate queue (pick ONE per branch, MEASURE first):**
 
-1. **Iterative core for the Unique hot path** — _**ACTIVE this session**_ on
-   `perf/unique-iterative-core`. The bottom-heavy recursion hints call/return overhead is
-   significant; port the allocation-free iterative DFS. (Largest change.)
+1. **Iterative core for the Unique hot path** — _**UNDER INVESTIGATION this session**_ on
+   `perf/unique-iterative-core` (Option C: profile-first, no production-code changes).
+   The bottom-heavy recursion shape suggests per-frame call/ret overhead, but the
+   `feature/kernel-perf-small-wins` round already reduced per-recursion work and saw no
+   measurable speedup, so the win is not yet evidence-backed. A line-level CPU trace
+   decides whether the port is worth a separate implementation branch. (Largest change
+   if it ships.)
 2. **Cached shifted diagonal masks** — remove repeated `(d1|bit)<<1` / `(d2|bit)>>1` in the
    hottest loop. *Skeptical:* the shifts depend on a per-iteration `bit`, so capture a
    line-level CPU trace to confirm there is real redundancy before committing.
@@ -96,7 +117,7 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | `perf/unique-iterative-core` (deferred-perf candidate #1: port `CountCanonicalDFS` to an allocation-free iterative DFS; targeting the bottom-heavy recursion overhead from the `feature/kernel-perf-small-wins` profiling round). `main` at `f75c5ea` (PR #13 `refactor/event-migration` event→push-sink migration squash-merged). |
+| Active branch | `perf/unique-iterative-core` (deferred-perf candidate #1, **profile-first investigation** rather than implementation: archive review surfaced a counter-signal — the prior `feature/kernel-perf-small-wins` round reduced per-recursion work and got no measurable speedup, so a line-level CPU trace decides whether the iterative port is worth a separate implementation branch). `main` at `f75c5ea` (PR #13 `refactor/event-migration` event→push-sink migration squash-merged). |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
 | Test count | **489 / 489 passing** (400 unit + 89 view-model). Down from 513 pre-Stage-6 because Stage 6 deleted one obsolete `ShouldIgnorePreSetCancellationFlag` test and consolidated the cancellation tests onto `CancellationTokenSource`s; net coverage of the cancellation surface is unchanged or improved. |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |
