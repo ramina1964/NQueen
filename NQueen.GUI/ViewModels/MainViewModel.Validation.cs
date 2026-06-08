@@ -248,7 +248,6 @@ public sealed partial class MainViewModel : ObservableObject, INotifyDataErrorIn
     private void ResetAndValidateSimulationState(string? boardSizeText = null, SolutionMode? solutionMode = null)
     {
         Cancel();
-        SubscribeToSimulationEvents();
         ResetSimulationState();
         if (solutionMode.HasValue)
         {

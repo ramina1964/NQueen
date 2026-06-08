@@ -2,7 +2,6 @@
 global using Microsoft.Extensions.DependencyInjection.Extensions;
 global using NQueen.Domain.Context;
 global using NQueen.Domain.Enums;
-global using NQueen.Domain.EventArgs;
 global using NQueen.Domain.Interfaces;
 global using NQueen.Domain.Models;
 global using NQueen.Domain.Settings;
@@ -14,3 +13,4 @@ global using System.Collections.Concurrent;
 global using System.Diagnostics;
 global using System.Numerics;
 global using System.Runtime.CompilerServices;
+global using System.Threading.Channels;

@@ -31,7 +31,6 @@ public sealed partial class MainViewModel :
         CancelCommand = new RelayCommand(Cancel, CanCancel);
 
         Initialize();
-        SubscribeToSimulationEvents();
     }
 
     // --- Public Properties ---
@@ -113,7 +112,6 @@ public sealed partial class MainViewModel :
             CancellationTokenSource?.Dispose();
             ObservableSolutions.Clear();
             ChessboardVm?.Squares.Clear();
-            UnsubscribeFromSimulationEvents();
 
             // Marking large objects for garbage collection
             CancellationTokenSource = null!;

@@ -82,7 +82,6 @@ public class DispatchCommands
             using var solver = new BitmaskSolver(context.BoardSize, SolutionMode.Unique, context.DisplayMode, formatter, SimulationSettings.MaxDisplayedCount)
             {
                 EnableEvents = false,
-                IsSolverCanceled = false,
                 UseCountOnlyUniqueMode = useCountOnly,
                 EnablePrefixMinimalityPruning = true,
                 EnablePartialReflectionPruning = true,
@@ -95,7 +94,6 @@ public class DispatchCommands
             using var solver = new BitmaskSolver(context.BoardSize, SolutionMode.All, context.DisplayMode, formatter, SimulationSettings.MaxDisplayedCount)
             {
                 EnableEvents = false,
-                IsSolverCanceled = false,
                 UseCountOnlyAllMode = useCountOnly,
                 EnablePrefixMinimalityPruning = true,
                 EnablePartialReflectionPruning = true,
@@ -109,7 +107,6 @@ public class DispatchCommands
             using var solver = new BitmaskSolver(context.BoardSize, mode, context.DisplayMode, formatter, SimulationSettings.MaxDisplayedCount)
             {
                 EnableEvents = false,
-                IsSolverCanceled = false,
                 EnablePrefixMinimalityPruning = true,
                 EnablePartialReflectionPruning = true,
                 UseAdaptiveDepth = context.BoardSize >= 14,

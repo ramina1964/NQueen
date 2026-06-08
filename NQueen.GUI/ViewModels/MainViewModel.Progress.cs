@@ -32,7 +32,7 @@ public sealed partial class MainViewModel
 
     private void SetProgressPercent(int rawPercent)
     {
-        if (_solver.IsSolverCanceled || _progressFinalized) return;
+        if (CancellationTokenSource?.IsCancellationRequested == true || _progressFinalized) return;
 
         rawPercent = Math.Clamp(rawPercent, 0, 100);
 
@@ -119,7 +119,7 @@ public sealed partial class MainViewModel
 
     private void ProgressHeartbeatTimer_Tick(object? sender, EventArgs e)
     {
-        if (!IsSimulating || _progressFinalized || _solver.IsSolverCanceled)
+        if (!IsSimulating || _progressFinalized || CancellationTokenSource?.IsCancellationRequested == true)
         {
             StopProgressHeartbeat();
             return;

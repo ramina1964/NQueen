@@ -53,52 +53,63 @@ public class SolverTests
     }
 
     [Fact]
-    public void BitmaskSolver_SingleMode_ShouldReturnExactlyOneSolution()
+    public async Task BitmaskSolver_SingleMode_ShouldReturnExactlyOneSolution()
     {
         // Arrange
         var solver = new BitmaskSolver(
             boardSize: 4,
             solutionMode: SolutionMode.Single,
             displayMode: DisplayMode.Visualize,
-            solutionFormatter: new SolutionFormatter());
+            solutionFormatter: new SolutionFormatter())
+        {
+            EnableEvents = true
+        };
+        int solutionFoundNotifications = 0;
+        var solutionSink = new SynchronousProgress<SolutionFoundInfo>(_ => solutionFoundNotifications++);
 
-        solver.EnableEvents = true;
-        int solutionFoundEvents = 0;
-        solver.SolutionFound += (_, _) => solutionFoundEvents++;
+        var ctx = new SimulationContext(4, SolutionMode.Single, DisplayMode.Visualize,
+            OnSolutionFound: solutionSink);
 
         // Act
-        var results = solver.Solve();
+        var results = await solver.GetSimResultsAsync(ctx);
 
         // Assert
         results.SolutionsCount.Should().Be(1);
-        solutionFoundEvents.Should().BeGreaterThanOrEqualTo(0);
+        solutionFoundNotifications.Should().BeGreaterThanOrEqualTo(0);
     }
 
     [Fact]
     [Trait("Category", "SingleMode")]
-    public void BitmaskSolver_SingleMode_ShouldIgnorePreSetCancellationFlag()
+    public async Task BitmaskSolver_SingleMode_HonorsPreCancelledToken_ReturnsWithoutThrowing()
     {
-        // Arrange
+        // Stage 6: cancellation is signalled exclusively through the CancellationToken on
+        // SimulationContext. With a pre-cancelled token the kernel must observe cancellation
+        // at its first gated `IsCancellationRequested` read and bail without throwing — even
+        // for a board size (N=17) that would otherwise take measurable time to enumerate.
         var solver = new BitmaskSolver(
             boardSize: 17,
             solutionMode: SolutionMode.Single,
             displayMode: DisplayMode.Visualize,
-            solutionFormatter: new SolutionFormatter());
+            solutionFormatter: new SolutionFormatter())
+        {
+            EnableEvents = false,
+        };
 
-        // Disable events to avoid unnecessary event dispatch overhead for this scenario
-        solver.EnableEvents = false;
-        solver.IsSolverCanceled = true; // Will be reset by Solve()
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        var ctx = new SimulationContext(17, SolutionMode.Single, DisplayMode.Visualize,
+            Cancellation: cts.Token);
 
         // Act
-        var results = solver.Solve();
+        var results = await solver.GetSimResultsAsync(ctx);
 
         // Assert
-        solver.IsSolverCanceled.Should().BeFalse(); // ResetForSolve clears it
+        results.Should().NotBeNull();
         results.SolutionsCount.Should().BeGreaterThanOrEqualTo(0);
     }
 
     [Fact]
-    public void BitmaskSolver_SingleMode_ShouldEmitQueenPlacedEvents()
+    public async Task BitmaskSolver_SingleMode_ShouldPushQueenPlacedNotifications()
     {
         var solver = new BitmaskSolver(
             boardSize: 8,
@@ -108,18 +119,20 @@ public class SolverTests
         {
             EnableEvents = true
         };
-        int queenEvents = 0;
+        int queenNotifications = 0;
         int lastDepth = 0;
-
-        solver.QueenPlaced += (_, e) =>
+        var queenWriter = new CallbackChannelWriter<QueenPlacedInfo>(info =>
         {
-            queenEvents++;
-            lastDepth = e.Solution.Length;
-        };
+            queenNotifications++;
+            lastDepth = info.Solution.Length;
+        });
 
-        _ = solver.Solve();
+        var ctx = new SimulationContext(8, SolutionMode.Single, DisplayMode.Visualize,
+            OnQueenPlaced: queenWriter);
 
-        queenEvents.Should().BeGreaterThanOrEqualTo(8);
+        _ = await solver.GetSimResultsAsync(ctx);
+
+        queenNotifications.Should().BeGreaterThanOrEqualTo(8);
         lastDepth.Should().Be(8);
     }
 }

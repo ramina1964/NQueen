@@ -35,6 +35,269 @@ All notable changes to this project are documented here.
   no-leak guarantee **structural** (impossible to reintroduce if DI lifetimes later change to
   per-run or multi-window), not fixing a live defect.
 
+### Changed (NQueen.Kernel)
+- **Event migration Stage 0 — notification-seam extraction (behaviour-preserving).** Collapsed the
+  ~25 inlined solver event-raise sites scattered across `BitmaskSolver.Single.cs` / `.Unique.cs` /
+  `.All.cs` / `.Materialize.cs` / `.cs` behind three private `[MethodImpl(AggressiveInlining)]`
+  helpers on `BitmaskSolver` — `RaiseProgress(double)`, `RaiseQueenPlaced(Memory<int>, int)`,
+  `RaiseSolutionFound(int[], int)` — so every notification now flows through a single chokepoint
+  (the only three `event?.Invoke(...)` calls left in the kernel). This turns each later
+  sink-migration stage into a one-helper-body change instead of a multi-file raise-site hunt.
+- **Resolved the `EnableEvents` gate inconsistency (the one deliberate behaviour change).** The
+  terminal `100.0` progress raises in `.Single.cs` / `.Unique.cs` / `.All.cs` / `.Materialize.cs`
+  were previously **ungated** while the intermediate raises were gated, so a consumer with
+  `EnableEvents = false` still received one final 100% callback. The gate now lives once in
+  `RaiseProgress` and applies **uniformly**: a disabled progress sink reports nothing, terminal
+  100% included. Harmless for current consumers (the GUI runs `EnableEvents = true` and finalises
+  its progress bar via `ManageSimulationStatus(Finished)`; headless/count-only paths ignore
+  progress), and verified by the full kernel + view-model suite (84 affected tests green,
+  including the `*VisualizePath_FiresQueenPlacedAndSolutionFoundEvents` and progress-heartbeat
+  tests).
+
+### Changed (Event migration — Stage 1)
+- **Progress → `IProgress<ProgressInfo>`; the `Guid` simulation token is deleted.** The solver's
+  `ProgressValueChanged` event and its run-correlation plumbing are replaced by a per-call push
+  sink carried on `SimulationContext`:
+  - **`NQueen.Domain`** — new `ProgressInfo(double Percent)` record struct (in
+    `NQueen.Domain.Context`); `SimulationContext` gains an optional
+    `IProgress<ProgressInfo>? OnProgress = null` parameter (null = "don't report", replacing the
+    `EnableEvents = false` idiom for progress); `ISolverFrontEnd` drops
+    `event ... ProgressValueChanged` and `SetSimulationToken(Guid)`; the now-orphaned
+    `ProgressUpdateEventArgs` is removed.
+  - **`NQueen.Kernel`** — `BitmaskSolver` captures `simContext.OnProgress` into a private
+    `_onProgress` field in `GetSimResultsAsync`; `RaiseProgress` now forwards to
+    `_onProgress?.Report(new ProgressInfo(percent))` (still gated by `EnableEvents`). The
+    `_currentSimToken` field, `SetSimulationToken`, the event, and its `Dispose` null-out are
+    gone. The dead `Guid SimulationToken` parameter is also removed from the internal
+    `BitmaskSearchEngine.Request` record and its five construction sites (it was never read).
+  - **`NQueen.GUI`** — `SimulateAsync` builds a fresh `new Progress<ProgressInfo>(OnProgressReported)`
+    per run and passes it via `SimulationContext`; the `_currentSimulationToken` field, the
+    `SetSimulationToken` call, the `Guid.Empty` completion guard, and the token reset in `Cancel`
+    are deleted. The former `OnProgressValueChangedEvent` handler becomes `OnProgressReported`
+    (the token guard disappears; the `IsSolverCanceled` guard and the Single+Visualize
+    progress-visibility special-case are preserved).
+- **Run correlation is structurally unnecessary now.** Because a new `Progress<T>` sink is created
+  per `SimulateAsync` call, a previous run's callbacks can no longer reach the current view-model —
+  the Guid token that the old `OnProgressValueChangedEvent` guard compared against is obsolete.
+  Verified by the full suite (**513 / 513 green**), including the `ProgressBar_ShouldUpdate` test
+  re-pointed to drive the `OnProgress` sink and the `ProgressRelayTests` heartbeat.
+
+### Changed (Event migration — Stage 2)
+- **Cancellation → `CancellationToken` threaded through `SimulationContext`.** The view-model's
+  `CancellationTokenSource` was previously vestigial (cancellation reached the kernel only via the
+  `IsSolverCanceled` bool). It now carries a real signal end-to-end:
+  - **`NQueen.Domain`** — `SimulationContext` gains an optional `CancellationToken Cancellation = default`
+    parameter (a default token is never "cancellation requested", so direct `Solve()` callers and
+    3-/4-arg construction sites are unaffected).
+  - **`NQueen.Kernel`** — `BitmaskSolver` captures `simContext.Cancellation` into a private
+    `_cancellation` field in `GetSimResultsAsync` and exposes a single internal
+    `IsCancellationRequested => IsSolverCanceled || _cancellation.IsCancellationRequested`. Every
+    hot-loop cancellation read and every engine `IsCanceled` callback in `.All.cs` / `.Single.cs` /
+    `.Unique.cs` / `.CountUnique.cs` now reads through that one property (the `(col & 0xF) == 0`
+    throttle on the count-unique read is preserved).
+  - **`NQueen.GUI`** — `SimulateAsync` captures `CancellationTokenSource.Token` up front (so a
+    `Cancel()` that disposes/recreates the CTS cannot swap the source mid-run) and passes it via
+    `SimulationContext`.
+- **`IsSolverCanceled` is kept as a thin shim this stage** (per the migration plan): the kernel
+  honours both the bool and the token by OR-ing them, so the existing in-flight cancellation tests
+  (which toggle the bool from event callbacks) stay green. The bool, the explicit
+  `CancellationTokenSource` lifecycle, and the VM cancel guards collapse onto the
+  `IAsyncRelayCommand` token as the single source of truth in **Stage 5**. Verified by the full
+  suite (**513 / 513 green**).
+
+### Changed (Event migration — Stage 3)
+- **`SolutionFound` → `IProgress<SolutionFoundInfo>` (synchronous, dual-emit).** The view-model now
+  receives materialised solutions through a per-call sink on `SimulationContext` instead of the
+  `SolutionFound` event:
+  - **`NQueen.Domain`** — new `SolutionFoundInfo(Memory<int> Solution, int BoardSize, UInt128 PackedCanonical)`
+    record struct (in `NQueen.Domain.Context`); `SimulationContext` gains an optional
+    `IProgress<SolutionFoundInfo>? OnSolutionFound = null` parameter.
+  - **`NQueen.GUI`** — new `SynchronousProgress<T>` adapter whose `Report` runs the handler
+    **inline on the calling thread** (unlike `System.Progress<T>`, which posts asynchronously).
+    This is required because the solver reports from a reused depth-first-search buffer that is
+    overwritten as the search continues, so the handler must copy the payload (`Memory<int>.ToArray()`)
+    before control returns to the solver — exactly the synchronous semantics the event had. The
+    former `OnSolutionFoundEvent` becomes `OnSolutionFoundReported(SolutionFoundInfo)` with an
+    identical body (synchronous batch add; `ObservableSolutions` mutations still marshalled through
+    `IDispatcher`). `SimulateAsync` builds the sink and passes it via `SimulationContext`; the VM no
+    longer subscribes to `SolutionFound`.
+  - **`NQueen.Kernel`** — `BitmaskSolver` captures `simContext.OnSolutionFound` into a private
+    `_onSolutionFound` field; `RaiseSolutionFound` now **dual-emits** — it still raises the
+    `SolutionFound` event *and* reports to the sink, under the same
+    `EnableEvents && !_eventsSuppressedAfterCap` gate.
+- **The event is retained as a thin shim this stage** (per the migration plan): five kernel unit
+  tests subscribe to `BitmaskSolver.SolutionFound` directly, so dual-emit keeps them green; the
+  event and `SubscribeToSimulationEvents` plumbing are deleted in **Stage 5**.
+
+### Changed (Event migration — Stage 4)
+- **`QueenPlaced` → conflating `Channel<QueenPlacedInfo>` (drop-oldest, dual-emit).** The
+  high-frequency partial-prefix stream that drives board animation now flows through a bounded,
+  keep-latest channel drained by the existing visualization `DispatcherTimer`, instead of the
+  `QueenPlaced` event. At large N with zero delay the solver can fire this notification extremely
+  fast; an `IProgress<T>.Report` per placement would `Post` to the dispatcher on every call and
+  flood it, so this one stream is modelled as a channel while progress and solutions stay on
+  `IProgress<T>`:
+  - **`NQueen.Domain`** — new `QueenPlacedInfo(Memory<int> Solution, int BoardSize, UInt128 PackedCanonical)`
+    record struct (in `NQueen.Domain.Context`); `SimulationContext` gains an optional
+    `ChannelWriter<QueenPlacedInfo>? OnQueenPlaced = null` parameter (null = "don't animate", used by
+    Hide / count-only runs). `System.Threading.Channels` is added to the Domain/Kernel/GUI global
+    usings (it is not part of implicit usings).
+  - **`NQueen.Kernel`** — `BitmaskSolver` captures `simContext.OnQueenPlaced` into a private
+    `_onQueenPlaced` field; `RaiseQueenPlaced` now **dual-emits** — it still raises the `QueenPlaced`
+    event *and* `TryWrite`s a `QueenPlacedInfo` to the channel, under the same
+    `EnableEvents && !_eventsSuppressedAfterCap` gate. Because the channel drain is deferred to the
+    UI timer, the prefix is **copied** (`rows.ToArray()`) before the write; the `_onQueenPlaced?.`
+    null-conditional short-circuits that copy entirely when no channel is wired (Hide / benchmark /
+    headless), so those paths pay zero extra cost.
+  - **`NQueen.GUI`** — `SimulateAsync` creates the channel only in Visualize mode via
+    `Channel.CreateBounded<QueenPlacedInfo>(new BoundedChannelOptions(1) { FullMode = BoundedChannelFullMode.DropOldest })`,
+    passes `channel.Writer` through `SimulationContext`, starts the drain (`StartQueenPlacedDrain`),
+    and completes the writer in `finally`. The former `OnQueenPlacedEvent` handler is replaced by
+    `DrainQueenPlacedChannel`, invoked from each `VisualizationTimer_Tick` on the UI thread: it reads
+    to the most recent prefix (keep-latest), stages it into `_pendingPrefixRows`/`_pendingDepth`, and
+    the render logic preserves both animation paths — **one column per tick** when a delay is set and
+    the **full latest prefix** at zero delay (the timer throttles to ~1 ms). The VM no longer
+    subscribes to `QueenPlaced`; `_uiDispatcher.Invoke` marshalling is no longer needed since the
+    drain already runs on the dispatcher.
+- **The event is retained as a thin shim this stage** (per the migration plan): three kernel/
+  view-model tests subscribe to `BitmaskSolver.QueenPlaced` directly, so dual-emit keeps them green;
+  the event and the visualization-timer subscription plumbing are deleted in **Stage 5**.
+
+### Changed (Event migration — Stage 5)
+- **The solver event scaffolding is removed.** With every consumer migrated to push sinks in
+  Stages 1–4, the two remaining notification `event`s and their payload types are deleted:
+  - **`NQueen.Domain`** — `ISolverFrontEnd` drops `event ... QueenPlaced` and
+    `event ... SolutionFound` (it now exposes only `DelayInMillisec` / `ProgressValue`); the
+    `QueenPlacedEventArgs` and `SolutionFoundEventArgs` types are deleted along with the now-dead
+    `global using NQueen.Domain.EventArgs;` in Domain / Kernel / GUI / ViewModelTests. The
+    `QueenPlacedInfo` / `SolutionFoundInfo` XML docs drop their "mirrors the legacy EventArgs /
+    retained until Stage 5" notes.
+  - **`NQueen.Kernel`** — `BitmaskSolver` removes both `event` declarations; `RaiseQueenPlaced` and
+    `RaiseSolutionFound` become **sink-only** (`_onQueenPlaced?.TryWrite(...)` /
+    `_onSolutionFound?.Report(...)`) under the same `EnableEvents && !_eventsSuppressedAfterCap`
+    gate, and `Dispose` no longer nulls the events. `EnableEvents` is retained as the notification
+    master-switch (it now gates the sinks rather than events).
+  - **`NQueen.GUI`** — the vestigial `SubscribeToSimulationEvents` / `UnsubscribeFromSimulationEvents`
+    methods (no-ops after Stage 4) and all seven call sites are deleted from `MainViewModel` and its
+    `Commands` / `Validation` partials; the `_hasProgressTick` reset they performed is already done
+    by `ResetProgress()` at simulation start.
+- **Tests migrated off the events.** A shared synchronous `SynchronousProgress<T>` and a
+  `CallbackChannelWriter<T>` are added to `NQueen.TestShared` so kernel/view-model tests observe the
+  `OnSolutionFound` and `OnQueenPlaced` sinks deterministically on the producing thread. Six tests in
+  `BitmaskSolverSingleModeTests`, `BitmaskSolverUniqueTests`, `BitmaskSolverAllModeTests`, and
+  `SolverTests` are rewritten to pass the sinks via `SimulationContext` (the in-flight cancellation
+  cases now flip `IsSolverCanceled` from the first sink callback); the `Fires*Events` names become
+  `Pushes*Notifications`.
+- **`IsSolverCanceled` is retained this stage** as the cancellation shim (it still backs the
+  in-flight-cancellation tests and the Console / Benchmarks call sites); collapsing it onto the
+  `CancellationToken` is a separate follow-up.
+
+### Fixed (Event migration — Stage 4 follow-up: Visualize animation regressions)
+- **Build-up animation halted after the first solution in Visualize mode** (most visible for
+  N = 5 Unique, but it affected every Visualize run). Symptom: the queen-placement animation
+  played until the first solution was found, then froze — subsequent solutions still streamed into
+  the list, but the board never moved again. The `SelectedSolution` setter
+  (`MainViewModel.Commands.cs`) unconditionally calls `StopVisualizationTimer()`, which since
+  Stage 4 also **nulls `_queenPlacedReader`** and disposes the `DispatcherTimer`. Because
+  `OnSolutionFoundReported` auto-selects every solution it finds (`SelectedSolution = sol`), the
+  first solution tore down the animation pipeline; the keep-latest channel drain then short-circuited
+  (`reader == null`) for the rest of the run. Pre-Stage-4 this was masked because the old
+  `QueenPlaced` **event** re-rendered directly on the next placement; the channel drain has no such
+  re-arm. **Fix:** the `SelectedSolution` setter now leaves the board to the animation timer while a
+  Visualize run is live (`IsSimulating && DisplayMode == Visualize`) — it still tracks the selection
+  but no longer stops the timer or statically repaints mid-run. The final solution is rendered at
+  end-of-run by `ManageSimulationStatus(Finished)` exactly as before.
+- **`SimulationCompleted` now fires *after* the final board render.** The completion event was
+  raised before the end-of-run `ChessboardVm.PlaceQueens(first.Positions)` paint, so subscribers
+  (and tests awaiting completion) could observe an unrendered board. Moving the
+  `SimulationCompleted?.Invoke(...)` to the end of the `Finished` transition makes the fully-painted
+  final state observable on completion — this latent ordering bug was surfaced (not caused) by the
+  animation fix above. Full fast suite stays green: 424 unit + 89 view-model tests pass.
+- **All-mode Visualize never animated (all solutions appeared at once).** Unlike Unique mode —
+  which `HandleModeCommon` routes to `EnumerateUniqueVisualizeAdaptive()` when
+  `DisplayMode == Visualize` — All mode always went through `EnumerateAllAdaptive(countOnly: false)`
+  → `RunAllUnified()`, which **hardcodes** `DisplayMode.Hide`, `DelayInMillisec: 0`, and a **no-op
+  `OnQueenPlaced`**, so it never streamed queen placements to the animation channel; only the
+  `SolutionFound` sink fired, dumping every sample into the list instantly. **Fix:** added
+  `EnumerateAllVisualizeAdaptive()` (in `BitmaskSolver.All.cs`), a two-phase path mirroring the
+  Unique one — **Phase 1** runs the animated full-board DFS (streams `QueenPlaced` /
+  `SolutionFound`, collects up to `MaxDisplayedCount` samples, then stops early at the
+  cap); **Phase 2** computes the exact total via the fast half-board
+  `BitboardNQueenSolver.CountSolutions`. `HandleModeCommon` now routes All+Visualize to it. Stopping
+  Phase 1 at the cap is required because the engine sleeps `DelayInMillisec` between every placement
+  while visualizing; visualization is capped at `MaxVisualizeBoardSize` (N ≤ 10) so the silent
+  Phase-2 count is effectively instant. Full fast suite stays green: 424 unit + 89 view-model tests
+  pass.
+- **All-mode list selection rendered the wrong board for every non-first solution.** After an
+  All-mode run finished, `SimulateAsync` rebuilds the list via `ExtractCorrectNoOfSols()`, which
+  clears `ObservableSolutions` (the distinct boards streamed during the run) and repopulates it from
+  `SimulationResults.Solutions`. Those come from `BuildResults`, which unpacks whatever key the
+  solver stored in `_solutions`. All-mode stored `SymmetryHelper.GetCanonicalKey(rowsFound)` — the
+  **canonical** (lexicographically-minimal) symmetry transform — at all three All-mode materialize
+  sites (`RunAllUnified`, `EnumerateAllVisualizeAdaptive`, `CollectAllSampleSolutionsDFS`). Because
+  All mode surfaces *every* variant, multiple distinct boards collapse onto the same canonical key,
+  so clicking any list entry after the first re-rendered an identical placement. (Unique mode is
+  unaffected: it pre-filters to `IsIdentityCanonical` boards, so each stored key already *is* the
+  distinct board.) **Fix:** the three All-mode sites now store the **actual** board via
+  `SymmetryHelper.PackRows(rowsFound)` (the exact inverse of `Solution.Unpack`), so each list entry
+  renders its own placement. Full fast suite stays green: 424 unit + 89 view-model tests pass,
+  including the All-mode distinctness regression guards.
+
+### Changed (Event migration — Stage 6)
+- **`IsSolverCanceled` collapsed onto the `CancellationToken`.** With every consumer now threading
+  a real token through `SimulationContext.Cancellation` (Stages 1–5), the legacy `IsSolverCanceled`
+  bool is removed as a redundant second source of truth for cancellation:
+  - **`NQueen.Domain`** — `ISolverBackEnd` no longer exposes `IsSolverCanceled` (`UseCountOnlyAllMode`,
+    `UseCountOnlyUniqueMode`, and `GetSimResultsAsync` are the only members that remain).
+  - **`NQueen.Kernel`** — `BitmaskSolver` deletes the `IsSolverCanceled` field; the internal
+    `IsCancellationRequested` property now reads `_cancellation.IsCancellationRequested` directly
+    (no longer OR-ed with the bool). Every hot-loop check and every `BitmaskSearchEngine`
+    `IsCanceled` callback in `.All.cs` / `.Single.cs` / `.Unique.cs` / `.CountUnique.cs` reads
+    through that single property (the `(col & 0xF) == 0` throttle on the count-unique read is
+    preserved).
+  - **`NQueen.GUI`** — `SimulateAsync` continues to capture `CancellationTokenSource.Token` up front
+    so a `Cancel()` that disposes/recreates the CTS cannot swap the source mid-run; the post-await
+    guard, the catch-block guard, and the `finally`-block guard now read the captured local. The two
+    `_solver.IsSolverCanceled = …` write sites in `Commands.cs` and the four `_solver.IsSolverCanceled`
+    reads in `Events.cs` / `Progress.cs` are gone (the latter now read
+    `CancellationTokenSource?.IsCancellationRequested == true`).
+  - **Headless callers** — the dead `IsSolverCanceled = false` initialiser lines are removed from
+    `NQueen.Console/Program.cs`, `NQueen.Console/Commands/DispatchCommands.cs` (three branches), and
+    `NQueen.Benchmarking/ConsolePruningImpactBenchmarks.cs` (four benchmarks). With the flag gone
+    they had no purpose — a default `CancellationToken` is never cancelled.
+- **Tests migrated.** Five tests are rewritten to drive cancellation through a local
+  `CancellationTokenSource` instead of toggling the deleted bool:
+  - `BitmaskSolverSingleModeTests.SingleMode_VisualizePath_HonorsInFlightCancellation` —
+    `cts.Cancel()` from the first `QueenPlaced` sink callback.
+  - `BitmaskSolverUniqueTests.UniqueMode_VisualizePath_HonorsInFlightCancellation` — same pattern
+    (N=8, Unique).
+  - `BitmaskSolverAllModeTests.AllMode_Materialize_HonorsInFlightCancellation` — `cts.Cancel()` from
+    the first `SolutionFound` sink callback.
+  - `BitmaskSolverModeTests.GetSimResults_CancelledBeforeRun_ReturnsEmptyOrZero` — pre-cancelled
+    token; the redundant `try/finally` reset is gone.
+  - `SolverTests.BitmaskSolver_SingleMode_ShouldIgnorePreSetCancellationFlag` is **rewritten and
+    renamed** to `BitmaskSolver_SingleMode_HonorsPreCancelledToken_ReturnsWithoutThrowing`,
+    switching from synchronous `solver.Solve()` to `await solver.GetSimResultsAsync(ctx)` so the
+    token actually reaches the kernel; the impossible-under-the-new-model
+    `IsSolverCanceled.Should().BeFalse()` assertion is dropped.
+- Verified by build (0 errors / 0 warnings) and the fast suite (**489 / 489 green** — 400 unit +
+  89 view-model). The post-migration docs sweep (`README.md` Solver-Options table,
+  `.github/copilot-instructions.md` event-args note) is deferred to a separate follow-up commit.
+
+### Changed (NQueen.Kernel)
+- **Unified the two Visualize materialize paths into one method.**
+  (`BitmaskSolver.All.cs`) and `EnumerateUniqueVisualizeAdaptive` (`BitmaskSolver.Unique.cs`) were
+  byte-for-byte identical except for two mode-specific points, so they are now a single
+  `EnumerateVisualizeAdaptive(bool isUnique)` in `BitmaskSolver.cs`. The two real differences are
+  parameterised: Phase 1 applies the `IsIdentityCanonical` filter only when `isUnique` (All keeps
+  every variant), and Phase 2 counts via `CountUniqueAdaptive` for Unique vs the symmetry-reduced
+  `BitboardNQueenSolver.CountSolutions` for All. Sample storage is now uniformly
+  `SymmetryHelper.PackRows` — correct for both modes because a Unique sample has already passed
+  `IsIdentityCanonical`, so its raw packing equals its canonical key. This also dropped the
+  unreachable `> 25` packed/raw branch from the old Unique path (Visualize is capped at
+  `MaxVisualizeBoardSize` = 10). `HandleModeCommon` now routes both modes' Visualize runs to the
+  shared method. Behaviour-preserving: full suite stays green (424 unit + 89 view-model).
+
 ### Changed (NQueen.UnitTests)
 - **Fact→Theory test consolidation (coverage-preserving)** — merged near-identical `[Fact]`
   methods (and `[Fact]` methods that looped internally over inputs) into parameterised

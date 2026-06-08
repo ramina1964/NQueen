@@ -34,7 +34,6 @@ public class ConsolePruningImpactAllBenchmark
         using var solver = new BitmaskSolver(BoardSize, SolutionMode.All, DisplayMode.Hide, _formatter)
         {
             EnableEvents = true,
-            IsSolverCanceled = false,
             UseParallel = true,
             UseCountOnlyAllMode = true,
             EnablePrefixMinimalityPruning = false,
@@ -52,7 +51,6 @@ public class ConsolePruningImpactAllBenchmark
         using var solver = new BitmaskSolver(BoardSize, SolutionMode.All, DisplayMode.Hide, _formatter)
         {
             EnableEvents = false,
-            IsSolverCanceled = false,
             UseParallel = true,
             UseCountOnlyAllMode = true,
             EnablePrefixMinimalityPruning = true,
@@ -85,7 +83,6 @@ public class ConsolePruningImpactUniqueBenchmark
         using var solver = new BitmaskSolver(BoardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter)
         {
             EnableEvents = true,
-            IsSolverCanceled = false,
             UseParallel = true,
             UseCountOnlyUniqueMode = true,
             EnablePrefixMinimalityPruning = false,
@@ -102,7 +99,6 @@ public class ConsolePruningImpactUniqueBenchmark
         using var solver = new BitmaskSolver(BoardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter)
         {
             EnableEvents = false,
-            IsSolverCanceled = false,
             UseParallel = true,
             UseCountOnlyUniqueMode = true,
             EnablePrefixMinimalityPruning = true,

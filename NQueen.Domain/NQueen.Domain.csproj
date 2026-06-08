@@ -10,6 +10,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Folder Include="EventArgs\" />
 	  <Folder Include="Formatters\" />
 	</ItemGroup>
 

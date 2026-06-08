@@ -100,16 +100,13 @@ public class BitmaskSolverModeTests(SolverBackEndFixture fixture)
     [Fact]
     public async Task GetSimResults_CancelledBeforeRun_ReturnsEmptyOrZero()
     {
-        var ctx = new SimulationContext(8, SolutionMode.All, DisplayMode.Hide);
-        _solver.IsSolverCanceled = true;
-        try
-        {
-            var result = await _solver.GetSimResultsAsync(ctx);
-            result.Should().NotBeNull();
-        }
-        finally
-        {
-            _solver.IsSolverCanceled = false;
-        }
+        // Stage 6: pre-cancellation is signalled via a CancellationToken on SimulationContext.
+        // The solver should observe the cancelled token and return without throwing.
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        var ctx = new SimulationContext(8, SolutionMode.All, DisplayMode.Hide, Cancellation: cts.Token);
+
+        var result = await _solver.GetSimResultsAsync(ctx);
+        result.Should().NotBeNull();
     }
 }

@@ -29,7 +29,7 @@ public partial class BitmaskSolver
             CollectAllSampleSolutionsDFS(BoardSize, Math.Max(1, cap));
         }
 
-        ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+        RaiseProgress(100.0);
     }
 
     // Explicit construction: produces one valid N-queens placement without backtracking,
