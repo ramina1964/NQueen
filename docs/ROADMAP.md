@@ -12,89 +12,51 @@ in the same change that touches `CHANGELOG.md`.
 
 ## Next session — start here
 
-> Updated after merging the `refactor/gui` PR into `main` (2026-06-07).
+> Updated after merging the `refactor/event-migration` PR into `main` (2026-06-08, squash `f75c5ea`).
 
-> 📌 **Design docs awaiting execution (read if picking up that track):**
-> - [`docs/EVENT-MIGRATION-PLAN.md`](EVENT-MIGRATION-PLAN.md) — staged plan to replace the
->   solver's `event` surface (`QueenPlaced` / `SolutionFound` / `ProgressValueChanged` +
->   `SetSimulationToken` + `IsSolverCanceled`) with per-call push sinks (`IProgress<T>` +
->   conflating `Channel<T>` + `CancellationToken`). **In progress on branch
->   `refactor/event-migration`.** **Stage 0 — DONE:** the behaviour-preserving notification-seam
->   extraction shipped (all ~25 raise sites collapsed behind `RaiseProgress` / `RaiseQueenPlaced` /
->   `RaiseSolutionFound`; the ungated terminal-100% progress quirk fixed so the `EnableEvents` gate
->   is uniform). **Stage 1 — DONE:** progress migrated to `IProgress<ProgressInfo>` (new
->   `ProgressInfo` record + `SimulationContext.OnProgress` sink); the `ProgressValueChanged` event,
->   `SetSimulationToken`, the `Guid` simulation token (VM + solver + engine `Request`), and
->   `ProgressUpdateEventArgs` are all deleted; the VM builds a per-run `Progress<ProgressInfo>`.
->   **Stage 2 — DONE:** a real `CancellationToken` is threaded VM → `SimulationContext.Cancellation`
->   → solver hot loops via one internal `IsCancellationRequested` (OR of the legacy bool + token);
->   `IsSolverCanceled` stays as a thin shim until Stage 5. **Stage 3 — DONE:** `SolutionFound`
->   migrated to a synchronous `IProgress<SolutionFoundInfo>` sink (new `SolutionFoundInfo` record +
->   `SimulationContext.OnSolutionFound` + a `SynchronousProgress<T>` adapter that preserves the
->   solver-thread buffer-copy semantics); `RaiseSolutionFound` dual-emits (event + sink) so the
->   kernel event tests stay green until the event is deleted in Stage 5. **Stage 4 — DONE:**
->   `QueenPlaced` migrated to a conflating, keep-latest `Channel<QueenPlacedInfo>` (new
->   `QueenPlacedInfo` record + `SimulationContext.OnQueenPlaced` `ChannelWriter`) drained by the
->   existing visualization `DispatcherTimer`; `RaiseQueenPlaced` dual-emits (event +
->   `TryWrite` of a copied prefix), the channel is wired only in Visualize mode, and both animation
->   paths are preserved (one column per tick with a delay, full latest prefix at zero delay).
->   **Stage 5 — DONE:** the event scaffolding is removed — the `QueenPlaced` / `SolutionFound`
->   events drop off `ISolverFrontEnd` and `BitmaskSolver` (the `Raise*` helpers are now sink-only),
->   the `QueenPlacedEventArgs` / `SolutionFoundEventArgs` types and their dead global usings are
->   deleted, and the vestigial `Subscribe/UnsubscribeFromSimulationEvents` plumbing (no-op after
->   Stage 4) is removed from the view-model. Six kernel/view-model tests are rewritten onto the
->   sinks via shared `SynchronousProgress<T>` / `CallbackChannelWriter<T>` test helpers.
->   `EnableEvents` (now a sink master-switch) and the `IsSolverCanceled` bool are intentionally
->   retained. **Stage 4 follow-up fixes — DONE:** smoke testing surfaced three Visualize
->   regressions. (1) The build-up animation stopped after the first solution — the
->   `SelectedSolution` setter's `StopVisualizationTimer()` tore down the channel-drain timer that
->   Stage 4 introduced; the setter now leaves the board to the timer during a live Visualize run, and
->   `SimulationCompleted` is raised after the final board render. (2) All-mode Visualize never
->   animated (all solutions appeared at once) because `RunAllUnified` hardcodes `Hide` + a no-op
->   `OnQueenPlaced`; added `EnumerateAllVisualizeAdaptive()` (two-phase: animated Phase 1 capped at
->   `MaxDisplayedCount`, then a fast silent half-board count) and routed All+Visualize to it in
->   `HandleModeCommon`. (3) All-mode list selection rendered the wrong board for every non-first
->   entry — the three All-mode materialize sites stored each board's *canonical* key, collapsing
->   distinct boards onto one placement; they now store the actual board via `SymmetryHelper.PackRows`
->   (inverse of `Solution.Unpack`). **Stage 6 — DONE:** the `IsSolverCanceled` bool is collapsed
->   onto the `CancellationToken` — `ISolverBackEnd` / `BitmaskSolver` / GUI VM
->   (`Commands.cs` / `Events.cs` / `Progress.cs`) / Console / Benchmarks all migrated to read
->   token-based cancellation, and five cancellation tests across `BitmaskSolverSingleModeTests` /
->   `…UniqueTests` / `…AllModeTests` / `…ModeTests` / `SolverTests` are rewritten onto local
->   `CancellationTokenSource`s (the last one renamed to
->   `BitmaskSolver_SingleMode_HonorsPreCancelledToken_ReturnsWithoutThrowing` and switched from
->   `Solve()` to `await GetSimResultsAsync(ctx)` so the token actually reaches the kernel). Build
->   0/0; fast suite **489 / 489** (400 unit + 89 view-model). **Stage 6 docs sweep — DONE:**
->   `README.md` Solver-Options preface re-pointed at `GetSimResultsAsync(SimulationContext)`,
->   `.github/copilot-instructions.md` event-args note rewritten for the post-migration sink
->   surface, and the stale `IsSolverCanceled`-throttle entry pulled out of *Backlog → Small wins,
->   low risk* (the equivalent token-poll throttle is already in
->   `BitmaskSolver.CountUnique.cs::CountCanonicalDFS`). The whole `refactor/event-migration` track
->   is ready for PR merge. See `CHANGELOG.md` `[Unreleased]`.
-> - **§1a pre-work audit — DONE (finding: _preventive_, not corrective).** No live
->   lapsed-listener leak exists. A workspace-wide search found exactly six subscription sites
->   (all named-method `+=`/`-=` pairs in `MainViewModel.Events.cs`, zero lambdas), backed by an
->   idempotent subscribe, a per-run subscribe/unsubscribe cycle, a dispose chain, and a DI
->   lifetime graph where the solver never outlives the VM. The migration is therefore
->   *preventive* — it makes the no-leak guarantee **structural** (regression-proof against future
->   per-run / multi-window lifetime changes), not a fix for a live defect. See `CHANGELOG.md`
->   `[Unreleased]` for the full evidence.
+**Active branch — `perf/unique-iterative-core`.** Off freshly-merged `main` (`f75c5ea`). The
+event-migration track is shipped (Stages 0–6 + Stage 4 follow-up + the
+`EnumerateVisualizeAdaptive` consolidation + the post-migration docs sweep) — see
+`CHANGELOG.md` `[Unreleased]`. The *deferred perf track* below is now active: pick **one**
+candidate per branch, MEASURE first, A/B against the frozen baseline.
 
-**Most recent session — GUI refactor (`refactor/gui`), now MERGED (PR #10, squash `8f41b7a`).**
-The WPF front-end was reworked: `MainWindow` is wrapped in a `Viewbox` for a user-resizable,
-uniformly-scaling window (the chessboard stays square), the monitor-fit `user32` P/Invoke was
-deleted (code-behind 227 → ~107 lines), Per-Monitor V2 DPI awareness was added via a new
-`app.manifest`, a 4px-grid spacing-token system landed in `AppStyles.xaml`, and the
-solution-list "height jump" and Simulate "phantom resize" glitches were fixed. A follow-up pass
-narrowed the right control column (400 → 300) and switched panel value columns to `Auto`, then
-an appearance-neutral cleanup tokenised every literal colour/caption `FontSize` and purged dead
-code (5 unused types, the `Messaging/` + `MessagePruning/` folders, the dead `App.xaml`
-converter resource, the `PanelStackGap` token). The kernel hot path was untouched, so the perf
-baseline and findings below are unchanged. **This track is complete; the next experiment is the
-deferred perf track below.**
+> 🎯 **This session's experiment — Iterative core for the Unique hot path.**
+> Picked because the profiler captured on `feature/kernel-perf-small-wins` shows ~97 % of
+> self-CPU in `CountCanonicalDFS` with a **bottom-heavy** recursion profile (deepest two
+> frames = ~69 % of self-time). The bottom-heavy shape strongly suggests per-frame
+> call/return + register-spill overhead is a real cost; an allocation-free iterative DFS
+> (the same approach already used in `BitboardNQueenSolver`) targets that overhead head-on.
+> The other two candidates (cached shifted diagonal masks, depth-based work-stealing) are
+> deferred — masks because the ROADMAP itself flags them as *skeptical* without a
+> line-level CPU trace, and work-stealing because it only helps the >8-core tail-imbalance
+> case rather than the dominant loop body.
+>
+> **Plan of work (in order):**
+> 1. **MEASURE first** — run `UniqueFastHalfBoardEvenOddBenchmark` on this freshly-merged
+>    `main` to re-establish the baseline. Target to beat: **N=16 ≈ 244 ms, N=17 ≈ 2,042 ms**
+>    (±1 % on the dev machine).
+> 2. **Port `CountCanonicalDFS` to an iterative core** — replace recursion with an
+>    explicit per-depth state stack (column / diagonal masks + remaining-bits register).
+>    Allocation-free: stack lives on a fixed-size `Span<>` sized to N. Preserve every
+>    existing prune (reflection-only `ShouldPrunePrefixFull`, the depth-2 work-item
+>    parallelisation, the half-board restriction, the `(col & 0xF) == 0` cancellation
+>    throttle).
+> 3. **Verify correctness** — full test suite (513 / 513 expected) plus the OEIS-pinned
+>    counts in `BitmaskSolverUniqueTests` for N=4…16. Any deviation aborts the experiment.
+> 4. **A/B benchmark** — run `UniqueFastHalfBoardEvenOddBenchmark` again; report
+>    wall-clock delta and confidence interval. Target: a **measurable** speedup outside
+>    the ±1 % noise band on both N=16 and N=17.
+> 5. **Decide** — ship if it wins; revert (and record the negative finding here) if it
+>    doesn't, the same way `feature/kernel-perf-small-wins` was honestly recorded as
+>    "correctness-neutral, no measurable speedup".
+>
+> **Out of scope for this branch:** the All-mode iterative core port (separate experiment
+> if Unique wins clearly), MRV ordering, `ArrayPool<T>` for stacks, and the cached-mask
+> experiment. Each gets its own `perf/<specific-name>` branch per the rule below.
 
-**Deferred perf track — still the recommended next experiment.** The notes below pre-date
-the GUI session. Pick ONE candidate, A/B against the frozen baseline, MEASURE first.
+**Deferred perf track — context.** The notes below are the authoritative profiling
+record from `feature/kernel-perf-small-wins`. They guide candidate selection across
+multiple future perf branches.
 
 **Reality check on the last perf branch.** `feature/kernel-perf-small-wins` shipped the
 Item 2 prune-gate tightening (hoisting `reflectionEnabled` ahead of `ShouldPrunePrefixFull`
@@ -112,17 +74,18 @@ and profiling knowledge below, not faster code.
   (bit-scan + recursion + diagonal shifts), not the prune gate. The recursion profile is
   bottom-heavy (deepest two frames carry ~69 % of self-time).
 
-**Where the real wins likely are — pick ONE, A/B against the baseline above, MEASURE first:**
+**Candidate queue (pick ONE per branch, MEASURE first):**
 
-1. **Iterative core for the Unique hot path** — the bottom-heavy recursion hints call/return
-   overhead is significant; port the allocation-free iterative DFS. (Largest change.)
+1. **Iterative core for the Unique hot path** — _**ACTIVE this session**_ on
+   `perf/unique-iterative-core`. The bottom-heavy recursion hints call/return overhead is
+   significant; port the allocation-free iterative DFS. (Largest change.)
 2. **Cached shifted diagonal masks** — remove repeated `(d1|bit)<<1` / `(d2|bit)>>1` in the
    hottest loop. *Skeptical:* the shifts depend on a per-iteration `bit`, so capture a
    line-level CPU trace to confirm there is real redundancy before committing.
 3. **Depth-based work-stealing queue** for All mode at large N (tail-imbalance on >8 cores).
 
-**Process:** branch off the freshly-merged `main` with a name tied to the *specific*
-experiment (e.g. `perf/unique-iterative-core`), not another generic "small-wins" name, so the
+**Process (rule).** Branch off freshly-merged `main` with a name tied to the *specific*
+experiment (e.g. `perf/unique-iterative-core`, not a generic "small-wins" name) so the
 branch can't over-promise. Run `UniqueFastHalfBoardEvenOddBenchmark` to re-establish the
 baseline before touching production code, per the team's MEASURE-first practice.
 
@@ -133,14 +96,25 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | `refactor/event-migration` (event→push-sink migration; §1a leak audit done — _preventive_; **Stage 0 seam extraction + Stage 1 progress-sink / Guid-token deletion + Stage 2 CancellationToken threading + Stage 3 SolutionFound sink + Stage 4 QueenPlaced conflating-channel + Stage 5 event-scaffolding removal + Stage 6 IsSolverCanceled→CancellationToken collapse shipped**). `main` at `42d2530` (PRs #11 test consolidation, #12 ROADMAP sync — both merged). |
+| Active branch | `perf/unique-iterative-core` (deferred-perf candidate #1: port `CountCanonicalDFS` to an allocation-free iterative DFS; targeting the bottom-heavy recursion overhead from the `feature/kernel-perf-small-wins` profiling round). `main` at `f75c5ea` (PR #13 `refactor/event-migration` event→push-sink migration squash-merged). |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
-| Test count | **513 / 513 passing** (424 unit + 89 view-model; up from 304 at v1.0.0). The Fact→Theory consolidation (PR #11) reduced *method* count but kept every scenario as a visible `[InlineData]` case — net +2 vs the prior 511 because two Facts that looped internally over `{2, 3}` now report each input as its own case. |
+| Test count | **489 / 489 passing** (400 unit + 89 view-model). Down from 513 pre-Stage-6 because Stage 6 deleted one obsolete `ShouldIgnorePreSetCancellationFlag` test and consolidated the cancellation tests onto `CancellationTokenSource`s; net coverage of the cancellation surface is unchanged or improved. |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |
 | Build status | 0 errors / 0 warnings |
 
 ### Recently shipped (see `CHANGELOG.md` `[Unreleased]` for full detail)
 
+- Event migration (`refactor/event-migration`, PR #13, squash `f75c5ea`): replaced the
+  `BitmaskSolver` `event` surface (`QueenPlaced` / `SolutionFound` / `ProgressValueChanged` +
+  `SetSimulationToken` + `IsSolverCanceled`) with per-call push sinks on `SimulationContext` —
+  `IProgress<ProgressInfo>` (progress), `IProgress<SolutionFoundInfo>` (solutions, synchronous
+  via `SynchronousProgress<T>`), `ChannelWriter<QueenPlacedInfo>` (animation, conflating
+  bounded channel with `DropOldest`), and a real `CancellationToken`. Stages 0–6 + the §1a
+  pre-work leak audit (preventive finding, no live leak) + the Stage 4 follow-up Visualize
+  bug fixes (build-up-halt, All-mode-no-animate, list-selection-wrong-board) + the
+  `EnumerateAllVisualizeAdaptive`/`EnumerateUniqueVisualizeAdaptive` consolidation into a
+  single `EnumerateVisualizeAdaptive(bool isUnique)` + the post-migration docs sweep all
+  ship in this PR. Net diff +900 / -447 across 44 files.
 - GUI cleanup (`refactor/gui`): appearance-neutral XAML magic-constant purge — every literal
   colour and caption `FontSize` across the seven view XAMLs routed through new `AppStyles.xaml`
   brushes (`SurfaceBrush`, `TextPrimaryBrush`, `TextMutedBrush`, `TextSubtleBrush`,
@@ -213,6 +187,13 @@ effort × expected impact.
   `BitmaskSolver.CountUnique.cs::CountCanonicalDFS` keeps the read off the hottest path.)_
 
 ### Larger wins, scoped risk
+
+> _Three of the items below — **Iterative core for the Unique hot path**, **Cached shifted
+> diagonal masks**, and **Depth-based work-stealing queue (All mode)** — are also tracked
+> in the **Candidate queue** under *Next session — start here* with selection rationale,
+> a "MEASURE first" baseline, and an "ACTIVE this session" marker for whichever is currently
+> being experimented on. Treat the *Next session* block as the live picker and this list as
+> the wider perf inventory._
 
 - **Depth-based work-stealing queue** for All mode at large N — replace root-only
   scheduling with a `ConcurrentQueue<PartialState>` consumed by worker threads to
