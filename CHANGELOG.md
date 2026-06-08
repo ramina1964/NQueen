@@ -7,6 +7,21 @@ All notable changes to this project are documented here.
 ## [Unreleased]
 
 ### Docs
+- **Post-event-migration sweep — `README.md` + `.github/copilot-instructions.md` updated.**
+  Refreshed the now-stale terminology that referenced the deleted event surface: the project-tree
+  caption in both files calls the Domain types `context records` (not `event-args`), the
+  `copilot-instructions.md` types-bullet documents the three sink payload records
+  (`ProgressInfo`, `SolutionFoundInfo`, `QueenPlacedInfo` in `NQueen.Domain.Context`) instead of
+  the deleted `*EventArgs` types in the deleted `NQueen.Domain.EventArgs`, and the
+  *Interface Conventions* block describes the post-Stage-6 surface — `ISolverFrontEnd` exposes
+  only `DelayInMillisec` + `ProgressValue`; `ISolverBackEnd` exposes `UseCountOnlyAllMode` /
+  `UseCountOnlyUniqueMode` / `GetSimResultsAsync(SimulationContext)`; notifications and
+  cancellation flow per-call via `SimulationContext` (`IProgress<ProgressInfo>`,
+  `IProgress<SolutionFoundInfo>` synchronous via `SynchronousProgress<T>`,
+  `ChannelWriter<QueenPlacedInfo>` (conflating bounded channel with `DropOldest`), and a
+  `CancellationToken`). Also fixed five U+FFFD replacement-character glyphs in
+  `copilot-instructions.md` (left over from a prior bad encoding round-trip) — em-dashes and
+  smart quotes are now the intended Unicode characters.
 - **`docs/EVENT-MIGRATION-PLAN.md`** — new design document specifying a staged migration of the
   solver's `event` surface (`QueenPlaced` / `SolutionFound` / `ProgressValueChanged` +
   `SetSimulationToken` + `IsSolverCanceled`) to per-call push sinks (`IProgress<T>` + a conflating
