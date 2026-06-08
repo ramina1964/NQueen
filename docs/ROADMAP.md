@@ -19,8 +19,15 @@ in the same change that touches `CHANGELOG.md`.
 >   solver's `event` surface (`QueenPlaced` / `SolutionFound` / `ProgressValueChanged` +
 >   `SetSimulationToken` + `IsSolverCanceled`) with per-call push sinks (`IProgress<T>` +
 >   conflating `Channel<T>` + `CancellationToken`). Begins with a behaviour-preserving Stage 0
->   seam extraction. **Do this on its own branch (`refactor/solver-sinks`), after the
->   `test/suite-review` Fact→Theory consolidation merges.**
+>   seam extraction. **In progress on branch `refactor/event-migration`.**
+> - **§1a pre-work audit — DONE (finding: _preventive_, not corrective).** No live
+>   lapsed-listener leak exists. A workspace-wide search found exactly six subscription sites
+>   (all named-method `+=`/`-=` pairs in `MainViewModel.Events.cs`, zero lambdas), backed by an
+>   idempotent subscribe, a per-run subscribe/unsubscribe cycle, a dispose chain, and a DI
+>   lifetime graph where the solver never outlives the VM. The migration is therefore
+>   *preventive* — it makes the no-leak guarantee **structural** (regression-proof against future
+>   per-run / multi-window lifetime changes), not a fix for a live defect. See `CHANGELOG.md`
+>   `[Unreleased]` for the full evidence.
 
 **Most recent session — GUI refactor (`refactor/gui`), now MERGED (PR #10, squash `8f41b7a`).**
 The WPF front-end was reworked: `MainWindow` is wrapped in a `Viewbox` for a user-resizable,
@@ -75,7 +82,7 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | `main` at `c5a70cc` (Fact→Theory test consolidation merged via PR #11, squash). No feature branch in flight. |
+| Active branch | `refactor/event-migration` (event→push-sink migration; §1a leak audit done — _preventive_). `main` at `42d2530` (PRs #11 test consolidation, #12 ROADMAP sync — both merged). |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
 | Test count | **513 / 513 passing** (424 unit + 89 view-model; up from 304 at v1.0.0). The Fact→Theory consolidation (PR #11) reduced *method* count but kept every scenario as a visible `[InlineData]` case — net +2 vs the prior 511 because two Facts that looped internally over `{2, 3}` now report each input as its own case. |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |

@@ -19,6 +19,21 @@ All notable changes to this project are documented here.
 - **`docs/ROADMAP.md`** — added a "Design docs awaiting execution" pointer under *Next session —
   start here* linking `EVENT-MIGRATION-PLAN.md`, noting it belongs on its own `refactor/solver-sinks`
   branch after the `test/suite-review` Fact→Theory consolidation merges.
+- **Event migration §1a pre-work audit — finding: _preventive_, not corrective (no live leak).**
+  Audited whether the existing manual lapsed-listener mitigation removes the leak correctly and
+  completely (per `EVENT-MIGRATION-PLAN.md` §1a) before starting the migration. A workspace-wide
+  search found **exactly six** subscription sites for the three solver events — all in
+  `MainViewModel.Events.cs` (`+=` lines 38–40, matching `-=` lines 46–48) — and **zero lambda/
+  `delegate` subscriptions** (the silent-leak pattern). The mitigation is sound on every axis:
+  symmetric named-method subscribe/unsubscribe; an idempotent `SubscribeToSimulationEvents()` that
+  unsubscribes first (cannot accumulate duplicates); a per-run subscribe/unsubscribe cycle driven
+  by `ManageSimulationStatus(Started/Finished)`; and a disposal chain
+  (`MainWindow.OnClosing` → `MainViewModel.Dispose()` → `UnsubscribeFromSimulationEvents()`). The
+  DI lifetime graph (singleton `MainWindow` → transient `MainViewModel` → transient `ISolver`,
+  each resolved exactly once) means the solver never outlives the VM, so the lapsed-listener
+  condition is unreachable. **Conclusion:** the migration is *preventive* — its value is making the
+  no-leak guarantee **structural** (impossible to reintroduce if DI lifetimes later change to
+  per-run or multi-window), not fixing a live defect.
 
 ### Changed (NQueen.UnitTests)
 - **Fact→Theory test consolidation (coverage-preserving)** — merged near-identical `[Fact]`
