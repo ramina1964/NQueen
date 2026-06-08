@@ -121,18 +121,16 @@ public class MainViewModelPositiveTests
 
         mockSolver
             .Setup(s => s.GetSimResultsAsync(It.IsAny<SimulationContext>()))
-            .ReturnsAsync(new SimulationResults(solutions, ElapsedTimeInSec: 1.0));
-
-        mockSolver
-            .SetupAdd(s => s.ProgressValueChanged += It.IsAny<EventHandler<ProgressUpdateEventArgs>>())
-            .Callback<EventHandler<ProgressUpdateEventArgs>>(handler =>
+            .Returns<SimulationContext>(async ctx =>
             {
+                // Drive progress through the per-call IProgress<ProgressInfo> sink the VM supplies,
+                // exactly as the real solver does (replaces the former ProgressValueChanged event).
                 for (var progress = 0.1; progress <= 1.0; progress += 0.1)
                 {
-                    handler?.Invoke(mockSolver.Object,
-                        new ProgressUpdateEventArgs(progress * 100, Guid.NewGuid()));
-                    Task.Delay(10).Wait();
+                    ctx.OnProgress?.Report(new ProgressInfo(progress * 100));
+                    await Task.Delay(10);
                 }
+                return new SimulationResults(solutions, ElapsedTimeInSec: 1.0);
             });
 
         var mainVm = TestHelpers.CreateMainViewModelWithMock(

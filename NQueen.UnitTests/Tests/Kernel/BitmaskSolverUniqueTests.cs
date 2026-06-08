@@ -158,9 +158,9 @@ public class BitmaskSolverUniqueTests
     // -- Visualize path: EnumerateUniqueVisualizeAdaptive --------------------
 
     [Fact]
-    public async Task UniqueMode_VisualizePath_FiresQueenPlacedAndSolutionFoundEvents()
+    public async Task UniqueMode_VisualizePath_PushesQueenPlacedAndSolutionFoundNotifications()
     {
-        // DisplayMode.Visualize routes through EnumerateUniqueVisualizeAdaptive which raises
+        // DisplayMode.Visualize routes through EnumerateUniqueVisualizeAdaptive which pushes
         // QueenPlaced for every placement and SolutionFound for each canonical sample up to cap.
         // N=8 has 12 canonical solutions; cap (= MaxDisplayedCount = 5) bounds SolutionFound.
         using var solver = new BitmaskSolver(new SolutionFormatter())
@@ -170,16 +170,17 @@ public class BitmaskSolverUniqueTests
         };
         int queenPlaced = 0;
         int solutionFound = 0;
-        solver.QueenPlaced += (_, _) => Interlocked.Increment(ref queenPlaced);
-        solver.SolutionFound += (_, _) => Interlocked.Increment(ref solutionFound);
+        var queenWriter = new CallbackChannelWriter<QueenPlacedInfo>(_ => Interlocked.Increment(ref queenPlaced));
+        var solutionSink = new SynchronousProgress<SolutionFoundInfo>(_ => Interlocked.Increment(ref solutionFound));
 
-        var ctx = new SimulationContext(8, SolutionMode.Unique, DisplayMode.Visualize);
+        var ctx = new SimulationContext(8, SolutionMode.Unique, DisplayMode.Visualize,
+            OnSolutionFound: solutionSink, OnQueenPlaced: queenWriter);
         var result = await solver.GetSimResultsAsync(ctx);
 
         result.SolutionsCount.Should().Be(12UL, "unique count for N=8 is 12 (OEIS A002562)");
         queenPlaced.Should().BeGreaterThan(0,
-            "visualize path must emit QueenPlaced for each placement");
-        solutionFound.Should().BeGreaterThan(0, "visualize path must emit SolutionFound");
+            "visualize path must push QueenPlaced for each placement");
+        solutionFound.Should().BeGreaterThan(0, "visualize path must push SolutionFound");
         solutionFound.Should().BeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount,
             "SolutionFound must be capped at MaxDisplayedCount");
     }
@@ -187,27 +188,29 @@ public class BitmaskSolverUniqueTests
     [Fact]
     public async Task UniqueMode_VisualizePath_HonorsInFlightCancellation()
     {
-        // ResetForSolve() clears IsSolverCanceled at Solve() entry, so a pre-cancelled flag
-        // has no effect. To exercise cancellation the flag must flip during the run; we toggle
-        // it from the first QueenPlaced callback.
+        // Stage 6: cancellation is signalled through the CancellationToken on SimulationContext.
+        // Cancel from the first QueenPlaced notification so the solver's gated
+        // `IsCancellationRequested` read trips during enumeration.
         using var solver = new BitmaskSolver(new SolutionFormatter())
         {
             EnableEvents = true,
             DelayInMillisec = 0,
         };
+        using var cts = new CancellationTokenSource();
         int placedSeen = 0;
-        solver.QueenPlaced += (_, _) =>
+        var queenWriter = new CallbackChannelWriter<QueenPlacedInfo>(_ =>
         {
             if (Interlocked.Increment(ref placedSeen) == 1)
-                solver.IsSolverCanceled = true;
-        };
+                cts.Cancel();
+        });
 
-        var ctx = new SimulationContext(8, SolutionMode.Unique, DisplayMode.Visualize);
+        var ctx = new SimulationContext(8, SolutionMode.Unique, DisplayMode.Visualize,
+            Cancellation: cts.Token, OnQueenPlaced: queenWriter);
         var result = await solver.GetSimResultsAsync(ctx);
 
         result.Should().NotBeNull();
         placedSeen.Should().BeGreaterThan(0,
-            "cancellation toggles after the first QueenPlaced event");
+            "cancellation toggles after the first QueenPlaced notification");
     }
 
     // -- Idempotency across consecutive runs ---------------------------------

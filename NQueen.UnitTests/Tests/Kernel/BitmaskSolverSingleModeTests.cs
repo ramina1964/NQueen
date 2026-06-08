@@ -113,10 +113,10 @@ using var solver = MakeSolver();
         AssertValidPlacement(result.Solutions[0].QueenPositions);
     }
 
-    // ── Visualize path: engine-backed, fires events ─────────────────────────
+    // ── Visualize path: engine-backed, pushes sink notifications ────────────
 
     [Fact]
-    public async Task SingleMode_VisualizePath_FiresQueenPlacedAndSolutionFoundEvents()
+    public async Task SingleMode_VisualizePath_PushesQueenPlacedAndSolutionFoundNotifications()
     {
         using var solver = new BitmaskSolver(new SolutionFormatter())
         {
@@ -125,48 +125,52 @@ using var solver = MakeSolver();
         };
         int queenPlaced = 0;
         int solutionFound = 0;
-        solver.QueenPlaced += (_, _) => Interlocked.Increment(ref queenPlaced);
-        solver.SolutionFound += (_, _) => Interlocked.Increment(ref solutionFound);
+        var queenWriter = new CallbackChannelWriter<QueenPlacedInfo>(_ => Interlocked.Increment(ref queenPlaced));
+        var solutionSink = new SynchronousProgress<SolutionFoundInfo>(_ => Interlocked.Increment(ref solutionFound));
 
-        var ctx = new SimulationContext(6, SolutionMode.Single, DisplayMode.Visualize);
+        var ctx = new SimulationContext(6, SolutionMode.Single, DisplayMode.Visualize,
+            OnSolutionFound: solutionSink, OnQueenPlaced: queenWriter);
         var result = await solver.GetSimResultsAsync(ctx);
 
         result.SolutionsCount.Should().Be(1UL);
         result.Solutions.Should().ContainSingle();
         queenPlaced.Should().BeGreaterThan(0,
-            "engine-backed Visualize path must emit QueenPlaced for each placement");
+            "engine-backed Visualize path must push QueenPlaced for each placement");
         // Note: the visualize-engine callback currently fires SolutionFound twice for Single mode
         // (once via MaterializeSingle, once at the call site). The duplicate is a known production
         // discrepancy tracked separately — assert ≥ 1 here to keep this coverage test green.
         solutionFound.Should().BeGreaterThanOrEqualTo(1,
-            "engine-backed Visualize path must emit SolutionFound at least once for Single mode");
+            "engine-backed Visualize path must push SolutionFound at least once for Single mode");
     }
 
-    // ── Cancellation: visualize path bails when IsSolverCanceled flips ──────
+    // ── Cancellation: visualize path bails when the token is cancelled in flight ──
 
     [Fact]
     public async Task SingleMode_VisualizePath_HonorsInFlightCancellation()
     {
-        // Note: ResetForSolve() clears IsSolverCanceled at Solve() entry, so a
-        // pre-cancelled flag has no effect. To exercise the cancellation path the flag
-        // must be flipped during the run — here, on the first QueenPlaced event.
+        // Stage 6: cancellation is now signalled exclusively through the CancellationToken
+        // threaded via SimulationContext. Cancel on the first QueenPlaced notification so the
+        // solver's gated `IsCancellationRequested` read inside the engine loop trips and the
+        // visualize path bails out.
         using var solver = new BitmaskSolver(new SolutionFormatter())
         {
             EnableEvents = true,
             DelayInMillisec = 0,
         };
+        using var cts = new CancellationTokenSource();
         int placedSeen = 0;
-        solver.QueenPlaced += (_, _) =>
+        var queenWriter = new CallbackChannelWriter<QueenPlacedInfo>(_ =>
         {
             if (Interlocked.Increment(ref placedSeen) == 1)
-                solver.IsSolverCanceled = true;
-        };
+                cts.Cancel();
+        });
 
-        var ctx = new SimulationContext(6, SolutionMode.Single, DisplayMode.Visualize);
+        var ctx = new SimulationContext(6, SolutionMode.Single, DisplayMode.Visualize,
+            Cancellation: cts.Token, OnQueenPlaced: queenWriter);
         var result = await solver.GetSimResultsAsync(ctx);
 
         result.Should().NotBeNull();
-        placedSeen.Should().BeGreaterThan(0, "cancellation toggles after the first QueenPlaced event");
+        placedSeen.Should().BeGreaterThan(0, "cancellation toggles after the first QueenPlaced notification");
     }
 
     // ── MaterializeSingle: packed storage path (N ≤ 25) ─────────────────────

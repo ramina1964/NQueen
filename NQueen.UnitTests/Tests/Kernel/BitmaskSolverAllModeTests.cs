@@ -148,29 +148,30 @@ public class BitmaskSolverAllModeTests
             AssertValidPlacement(s.QueenPositions);
     }
 
-    // -- Event emission and post-cap suppression on the materialize path ------
+    // -- Notification emission and post-cap suppression on the materialize path ------
 
     [Fact]
-    public async Task AllMode_Materialize_FiresSolutionFoundUpToCap()
+    public async Task AllMode_Materialize_PushesSolutionFoundUpToCap()
     {
-        // RunAllUnified materialize branch raises SolutionFound for each materialised sample
-        // until the cap is reached, then sets _eventsSuppressedAfterCap and stops raising
-        // further SolutionFound events (counting continues).
+        // RunAllUnified materialize branch pushes SolutionFound for each materialised sample
+        // until the cap is reached, then sets _eventsSuppressedAfterCap and stops pushing
+        // further SolutionFound notifications (counting continues).
         using var solver = new BitmaskSolver(new SolutionFormatter())
         {
             EnableEvents = true,
             DelayInMillisec = 0,
         };
         int solutionFound = 0;
-        solver.SolutionFound += (_, _) => Interlocked.Increment(ref solutionFound);
+        var solutionSink = new SynchronousProgress<SolutionFoundInfo>(_ => Interlocked.Increment(ref solutionFound));
 
-        var ctx = new SimulationContext(8, SolutionMode.All, DisplayMode.Hide);
+        var ctx = new SimulationContext(8, SolutionMode.All, DisplayMode.Hide,
+            OnSolutionFound: solutionSink);
         var result = await solver.GetSimResultsAsync(ctx);
 
         result.SolutionsCount.Should().Be(92UL);
-        solutionFound.Should().BeGreaterThan(0, "materialize path must emit SolutionFound");
+        solutionFound.Should().BeGreaterThan(0, "materialize path must push SolutionFound");
         solutionFound.Should().BeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount,
-            "events must be suppressed after the materialisation cap is reached");
+            "notifications must be suppressed after the materialisation cap is reached");
     }
 
     // -- In-flight cancellation observed by RunAllUnified ---------------------
@@ -178,27 +179,29 @@ public class BitmaskSolverAllModeTests
     [Fact]
     public async Task AllMode_Materialize_HonorsInFlightCancellation()
     {
-        // RunAllUnified's BitmaskSearchEngine.Run honors IsSolverCanceled via the IsCanceled
-        // callback. Flipping the flag from the first SolutionFound event interrupts the run;
-        // ResetForSolve() at Solve() entry guarantees a pre-cancelled flag has no effect,
-        // so cancellation must happen in-flight.
+        // Stage 6: RunAllUnified's BitmaskSearchEngine.Run honours cancellation through its
+        // IsCanceled callback, which now reads `IsCancellationRequested` (backed by the
+        // CancellationToken on SimulationContext). Cancelling the token from the first
+        // SolutionFound notification interrupts the run mid-enumeration.
         using var solver = new BitmaskSolver(new SolutionFormatter())
         {
             EnableEvents = true,
             DelayInMillisec = 0,
         };
+        using var cts = new CancellationTokenSource();
         int eventsSeen = 0;
-        solver.SolutionFound += (_, _) =>
+        var solutionSink = new SynchronousProgress<SolutionFoundInfo>(_ =>
         {
             if (Interlocked.Increment(ref eventsSeen) == 1)
-                solver.IsSolverCanceled = true;
-        };
+                cts.Cancel();
+        });
 
-        var ctx = new SimulationContext(8, SolutionMode.All, DisplayMode.Hide);
+        var ctx = new SimulationContext(8, SolutionMode.All, DisplayMode.Hide,
+            Cancellation: cts.Token, OnSolutionFound: solutionSink);
         var result = await solver.GetSimResultsAsync(ctx);
 
         result.Should().NotBeNull();
-        eventsSeen.Should().BeGreaterThan(0, "cancellation toggles after the first SolutionFound event");
+        eventsSeen.Should().BeGreaterThan(0, "cancellation toggles after the first SolutionFound notification");
     }
 
     // -- Storage-mode equivalence: AllStorageMode = CountOnly vs UseCountOnlyAllMode --

@@ -25,9 +25,8 @@ public partial class BitmaskSolver
             CountOnly: UseCountOnlyAllMode,
             DisplayMode: DisplayMode.Hide,
             DelayInMillisec: 0,
-            SimulationToken: _currentSimToken,
-            IsCanceled: () => IsSolverCanceled,
-            ReportProgress: p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
+            IsCanceled: () => IsCancellationRequested,
+            ReportProgress: RaiseProgress,
             OnQueenPlaced: _ => { /* no-op in non-visual path */ },
             OnSolution: rowsFound =>
             {
@@ -38,7 +37,10 @@ public partial class BitmaskSolver
                 {
                     if (rowsFound.Length <= 25)
                     {
-                        var packed = SymmetryHelper.GetCanonicalKey(rowsFound, _scratchBuffer!, out _);
+                        // All mode shows every variant, so store the ACTUAL board (raw packing).
+                        // Canonicalising here would collapse distinct boards onto one key and make
+                        // the displayed/clicked samples render identical placements.
+                        var packed = SymmetryHelper.PackRows(rowsFound);
                         _solutions.Add((packed, rowsFound.Length));
                     }
                     else
@@ -50,8 +52,7 @@ public partial class BitmaskSolver
 
                     materializedCount++;
 
-                    if (EnableEvents && !_eventsSuppressedAfterCap)
-                        SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rowsFound), N));
+                    RaiseSolutionFound(rowsFound, N);
 
                     if (materializedCount >= effectiveCap)
                     {
@@ -66,7 +67,7 @@ public partial class BitmaskSolver
         ));
 
         _solutionCount = total;
-        ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+        RaiseProgress(100.0);
     }
 
     // Wrapper used by HandleModeCommon to select parallel mode and split depth.
@@ -76,7 +77,7 @@ public partial class BitmaskSolver
         {
             // Optimized All count-only: symmetry-reduced bitboard with parallel top-level split
             _solutionCount = (ulong)BitboardNQueenSolver.CountSolutions(BoardSize, parallel: true);
-            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+            RaiseProgress(100.0);
             return;
         }
 
@@ -108,7 +109,7 @@ public partial class BitmaskSolver
         CollectAllSampleSolutionsDFS(N, cap);
 
         _solutionCount = (ulong)BitboardNQueenSolver.CountSolutions(N, parallel: UseParallel);
-        ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+        RaiseProgress(100.0);
     }
 
     // Runs a minimal DFS that stops as soon as cap solutions are stored.
@@ -123,12 +124,14 @@ public partial class BitmaskSolver
 
         void DFS(int col, ulong cols, ulong d1, ulong d2)
         {
-            if (materialized >= cap || IsSolverCanceled) return;
+            if (materialized >= cap || IsCancellationRequested) return;
             if (col == N)
             {
                 if (N <= 25)
                 {
-                    var packed = SymmetryHelper.GetCanonicalKey(rows, _scratchBuffer!, out _);
+                    // Store the ACTUAL board (raw packing); All-mode samples must stay distinct,
+                    // whereas a canonical key would collapse different boards onto one placement.
+                    var packed = SymmetryHelper.PackRows(rows);
                     _solutions.Add((packed, N));
                 }
                 else
@@ -137,15 +140,14 @@ public partial class BitmaskSolver
                     Array.Copy(rows, copy, N);
                     _largeBoardRawSolutions.Add(copy);
                 }
-                if (EnableEvents && !_eventsSuppressedAfterCap)
-                    SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), N));
+                RaiseSolutionFound(rows, N);
                 materialized++;
                 if (materialized >= cap)
                     _eventsSuppressedAfterCap = true;
                 return;
             }
             ulong avail = ~(cols | d1 | d2) & mask;
-            while (avail != 0 && materialized < cap && !IsSolverCanceled)
+            while (avail != 0 && materialized < cap && !IsCancellationRequested)
             {
                 ulong bit = avail & (ulong)-(long)avail;
                 avail ^= bit;

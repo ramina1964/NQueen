@@ -2,8 +2,6 @@
 
 public interface ISolverBackEnd
 {
-    bool IsSolverCanceled { get; set; }
-
     // When true, skips solution materialization and only tracks the total count.
     // These flags are the canonical way to request count-only mode; the solver's
     // ResultStorageMode properties (AllStorageMode / UniqueStorageMode) are kept

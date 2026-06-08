@@ -4,6 +4,7 @@ public sealed partial class MainViewModel
 {
     // --- Missing private fields (added) ---
     private DispatcherTimer? _visualizeTimer;
+    private ChannelReader<QueenPlacedInfo>? _queenPlacedReader;
     private int[]? _pendingPrefixRows;
     private int _pendingDepth;
     private int[]? _displayedPrefixRows;
@@ -29,25 +30,6 @@ public sealed partial class MainViewModel
             _visualizeTimer.Interval = TimeSpan.FromMilliseconds(clamped > 0 ? clamped : 1);
     }
 
-    // --- Event subscriptions ---
-    private void SubscribeToSimulationEvents()
-    {
-        UnsubscribeFromSimulationEvents();
-        if (_solver == null) return;
-        _hasProgressTick = false;
-        _solver.QueenPlaced += OnQueenPlacedEvent;
-        _solver.SolutionFound += OnSolutionFoundEvent;
-        _solver.ProgressValueChanged += OnProgressValueChangedEvent;
-    }
-
-    private void UnsubscribeFromSimulationEvents()
-    {
-        if (_solver == null) return;
-        _solver.QueenPlaced -= OnQueenPlacedEvent;
-        _solver.SolutionFound -= OnSolutionFoundEvent;
-        _solver.ProgressValueChanged -= OnProgressValueChangedEvent;
-    }
-
     // --- Visualization timer helpers ---
     private void EnsureVisualizationTimer()
     {
@@ -71,9 +53,15 @@ public sealed partial class MainViewModel
             StopVisualizationTimer();
             return;
         }
+
+        // Pull the most recent prefix the solver produced since the last tick (keep-latest).
+        DrainQueenPlacedChannel();
+
         if (_pendingPrefixRows == null || _pendingDepth <= 0)
         {
-            StopVisualizationTimer();
+            // Nothing to show yet; keep the timer alive for the rest of the run so later
+            // placements are still drained and rendered.
+            SyncTimerInterval();
             return;
         }
 
@@ -83,27 +71,31 @@ public sealed partial class MainViewModel
             _displayedDepth = 0;
         }
 
-        if (_displayedDepth < _pendingDepth)
+        if (DelayInMilliseconds > 0)
         {
-            int nextDepth = _displayedDepth + 1;
-            RenderPrefix(_pendingPrefixRows, nextDepth);
-            _displayedPrefixRows = _pendingPrefixRows;
-            _displayedDepth = nextDepth;
+            // Animated path: advance one column per tick for a smooth placement effect.
+            if (_displayedDepth < _pendingDepth)
+            {
+                int nextDepth = _displayedDepth + 1;
+                RenderPrefix(_pendingPrefixRows, nextDepth);
+                _displayedPrefixRows = _pendingPrefixRows;
+                _displayedDepth = nextDepth;
+            }
+            else if (_displayedPrefixRows == null ||
+                     !RowsEqual(_displayedPrefixRows, _pendingPrefixRows, _pendingDepth))
+            {
+                RenderPrefix(_pendingPrefixRows, _pendingDepth);
+            }
         }
         else if (_displayedPrefixRows == null ||
+                 _displayedDepth != _pendingDepth ||
                  !RowsEqual(_displayedPrefixRows, _pendingPrefixRows, _pendingDepth))
         {
+            // No-delay path: render the full latest prefix immediately (timer throttles to ~1ms).
             RenderPrefix(_pendingPrefixRows, _pendingDepth);
         }
 
-        // Keep timer interval in sync with clamped delay
-        if (_visualizeTimer != null)
-        {
-            int clamped = DelayInMilliseconds <= 0
-                ? 0
-                : Math.Max(SimulationSettings.MinDelayInMilliseconds, DelayInMilliseconds);
-            _visualizeTimer.Interval = TimeSpan.FromMilliseconds(clamped > 0 ? clamped : 1);
-        }
+        SyncTimerInterval();
     }
 
     private static bool RowsEqual(int[] a, int[] b, int depth)
@@ -146,23 +138,49 @@ public sealed partial class MainViewModel
             _visualizeTimer.Tick -= VisualizationTimer_Tick;
             _visualizeTimer = null;
         }
+        _queenPlacedReader = null;
         _pendingPrefixRows = null;
         _displayedPrefixRows = null;
         _pendingDepth = 0;
         _displayedDepth = 0;
     }
 
-    // --- QueenPlaced event (uses helpers above) ---
-    private void OnQueenPlacedEvent(object? sender, QueenPlacedEventArgs e)
+    // --- QueenPlaced channel drain (replaces the former QueenPlaced event handler) ---
+    // The solver writes the latest partial prefix to a conflating Channel<QueenPlacedInfo>
+    // (capacity 1, drop-oldest). StartQueenPlacedDrain wires the reader and starts the timer;
+    // DrainQueenPlacedChannel runs on the UI thread from each timer tick, reads to the most recent
+    // value, and stages it into _pendingPrefixRows/_pendingDepth for the render logic above.
+    private void StartQueenPlacedDrain(ChannelReader<QueenPlacedInfo> reader)
     {
+        _queenPlacedReader = reader;
+        EnsureVisualizationTimer();
+        if (_visualizeTimer != null && !_visualizeTimer.IsEnabled)
+            _visualizeTimer.Start();
+    }
+
+    private void DrainQueenPlacedChannel()
+    {
+        var reader = _queenPlacedReader;
+        if (reader == null) return;
+
+        bool drainedAny = false;
+        QueenPlacedInfo latest = default;
+        while (reader.TryRead(out var info))
+        {
+            latest = info;
+            drainedAny = true;
+        }
+
+        if (!drainedAny) return;
+
         ForceEarlyProgressIfNeeded();
 
         if (ChessboardVm == null || DisplayMode == DisplayMode.Hide) return;
         EnsureBoardSized();
 
-        var span = e.Solution.Span;
-        int boardSize = e.BoardSize > 0
-            ? e.BoardSize
+        var span = latest.Solution.Span;
+        int boardSize = latest.BoardSize > 0
+            ? latest.BoardSize
             : (ParsingUtils.TryParseInt(BoardSizeText, out var parsed) ? parsed : span.Length);
 
         int max = Math.Min(boardSize, span.Length);
@@ -170,58 +188,43 @@ public sealed partial class MainViewModel
 
         if (validDepth <= 0)
         {
-            _uiDispatcher.Invoke(() =>
-            {
-                ChessboardVm.ClearImages();
-                _displayedDepth = 0;
-                _displayedPrefixRows = null;
-            });
+            ChessboardVm.ClearImages();
+            _displayedDepth = 0;
+            _displayedPrefixRows = null;
+            _pendingPrefixRows = null;
+            _pendingDepth = 0;
             return;
         }
 
-        bool useTimer = DelayInMilliseconds > 0;
-
-        if (!useTimer)
-        {
-            int[] snapshot = new int[validDepth];
-            for (int i = 0; i < validDepth; i++)
-                snapshot[i] = span[i];
-
-            var positions = new List<Position>(validDepth);
-            for (int c = 0; c < validDepth; c++)
-                positions.Add(new Position(c, snapshot[c]));
-
-            _uiDispatcher.Invoke(() =>
-            {
-                ChessboardVm.PlaceQueens(positions);
-                _displayedDepth = validDepth;
-                _displayedPrefixRows = snapshot;
-            });
-            return;
-        }
-
-        int[] throttled = new int[validDepth];
+        int[] snapshot = new int[validDepth];
         for (int i = 0; i < validDepth; i++)
-            throttled[i] = span[i];
+            snapshot[i] = span[i];
 
-        _uiDispatcher.Invoke(() =>
-        {
-            EnsureVisualizationTimer();
-            _pendingPrefixRows = throttled;
-            _pendingDepth = validDepth;
-            if (_visualizeTimer != null && !_visualizeTimer.IsEnabled)
-                _visualizeTimer.Start();
-        });
+        _pendingPrefixRows = snapshot;
+        _pendingDepth = validDepth;
     }
 
-    // --- Additional events (stubs retained) ---
-    private void OnSolutionFoundEvent(object? sender, SolutionFoundEventArgs e)
+    private void SyncTimerInterval()
     {
-        if (_solver?.IsSolverCanceled == true || !IsSimulating) return;
-        if (e.Solution.Length == 0) return;
+        if (_visualizeTimer == null) return;
+        int clamped = DelayInMilliseconds <= 0
+            ? 0
+            : Math.Max(SimulationSettings.MinDelayInMilliseconds, DelayInMilliseconds);
+        _visualizeTimer.Interval = TimeSpan.FromMilliseconds(clamped > 0 ? clamped : 1);
+    }
+
+    // --- Solution sink callback (replaces the former SolutionFound event handler) ---
+    // Invoked synchronously on the solver thread through the per-run SynchronousProgress<T> built in
+    // SimulateAsync. Synchronous-by-design: info.Solution wraps a reused DFS buffer, so it must be
+    // copied (ToArray) before control returns to the solver. UI-collection mutations are marshalled
+    // through _uiDispatcher exactly as the event handler did.
+    private void OnSolutionFoundReported(SolutionFoundInfo info)
+    {
+        if (CancellationTokenSource?.IsCancellationRequested == true || !IsSimulating) return;
+        if (info.Solution.Length == 0) return;
 
         int id = _batchedSolutions.Count + 1;
-        var arr = e.Solution.ToArray();
+        var arr = info.Solution.ToArray();
         var sol = new Solution(arr, _solutionFormatter, id);
         _batchedSolutions.Add(sol);
 
@@ -237,9 +240,13 @@ public sealed partial class MainViewModel
         }
     }
 
-    private void OnProgressValueChangedEvent(object? sender, ProgressUpdateEventArgs e)
+    // --- Progress sink callback (replaces the former ProgressValueChanged event handler) ---
+    // Invoked through the per-run Progress<ProgressInfo> built in SimulateAsync. The Guid
+    // run-correlation token is gone: a fresh sink is created per simulation, so a previous
+    // run's callbacks can no longer reach this instance.
+    private void OnProgressReported(ProgressInfo info)
     {
-        if (e.SimulationToken != _currentSimulationToken || _solver?.IsSolverCanceled == true)
+        if (CancellationTokenSource?.IsCancellationRequested == true)
             return;
 
         _uiDispatcher.Invoke(() =>
@@ -251,7 +258,7 @@ public sealed partial class MainViewModel
                 ProgressLabel = string.Empty;
                 return;
             }
-            int raw = (int)Math.Round(e.Value);
+            int raw = (int)Math.Round(info.Percent);
             SetProgressPercent(raw);
         });
     }

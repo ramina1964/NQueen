@@ -17,14 +17,9 @@ public partial class BitmaskSolver
                 CountOnly: false,
                 DisplayMode,
                 DelayInMillisec: Math.Max(0, DelayInMillisec),
-                _currentSimToken,
-                () => IsSolverCanceled,
-                p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-                m =>
-                {
-                    if (EnableEvents && !_eventsSuppressedAfterCap)
-                        QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize));
-                },
+                () => IsCancellationRequested,
+                RaiseProgress,
+                m => RaiseQueenPlaced(m, BoardSize),
                 rows =>
                 {
                     if (!ValidateRows(rows)) return false;
@@ -32,8 +27,7 @@ public partial class BitmaskSolver
                     {
                         _solutionCount = 1;
                         MaterializeSingle(rows);
-                        if (EnableEvents && !_eventsSuppressedAfterCap)
-                            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
+                        RaiseSolutionFound(rows, BoardSize);
                         return true;
                     }
                     return false;
@@ -52,7 +46,7 @@ public partial class BitmaskSolver
 
             EmitSingleVisualization(rows);
             MaterializeSingle(rows);
-            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+            RaiseProgress(100.0);
             return;
         }
 
@@ -65,7 +59,7 @@ public partial class BitmaskSolver
 
             EmitSingleVisualization(rows);
             MaterializeSingle(rows);
-            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+            RaiseProgress(100.0);
             return;
         }
 
@@ -78,14 +72,9 @@ public partial class BitmaskSolver
             CountOnly: false,
             DisplayMode,
             DelayInMillisec: 0,
-            _currentSimToken,
-            () => IsSolverCanceled,
-            p => ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)),
-            m =>
-            {
-                if (EnableEvents && !_eventsSuppressedAfterCap)
-                    QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, BoardSize));
-            },
+            () => IsCancellationRequested,
+            RaiseProgress,
+            m => RaiseQueenPlaced(m, BoardSize),
             rows =>
             {
                 if (!ValidateRows(rows)) return false;
@@ -93,8 +82,7 @@ public partial class BitmaskSolver
                 {
                     _solutionCount = 1;
                     MaterializeSingle(rows);
-                    if (EnableEvents && !_eventsSuppressedAfterCap)
-                        SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
+                    RaiseSolutionFound(rows, BoardSize);
                     return true;
                 }
                 return false;
@@ -116,27 +104,27 @@ public partial class BitmaskSolver
 
         for (int depth = 1; depth <= n; depth++)
         {
-            if (IsSolverCanceled) break;
+            if (IsCancellationRequested) break;
             prefix[depth - 1] = rows[depth - 1];
 
             // Snapshot copy (avoid mutation between events)
             var snapshot = new int[n];
             Array.Copy(prefix, snapshot, n);
 
-            QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(new Memory<int>(snapshot), BoardSize));
+            RaiseQueenPlaced(new Memory<int>(snapshot), BoardSize);
 
             if (DelayInMillisec > 0)
             {
                 var slept = 0;
                 // Responsive sleep with cancellation check every 10ms; cap max total wait per depth
                 int maxPerDepth = Math.Min(DelayInMillisec, 25);
-                while (slept < maxPerDepth && !IsSolverCanceled)
+                while (slept < maxPerDepth && !IsCancellationRequested)
                 {
                     var step = Math.Min(10, maxPerDepth - slept);
                     Thread.Sleep(step);
                     slept += step;
                 }
-                if (IsSolverCanceled) break;
+                if (IsCancellationRequested) break;
             }
         }
     }
@@ -158,8 +146,7 @@ public partial class BitmaskSolver
             _largeBoardRawSolutions.Add(copy);
         }
 
-        if (EnableEvents && !_eventsSuppressedAfterCap)
-            SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), BoardSize));
+        RaiseSolutionFound(rows, BoardSize);
     }
 
     }

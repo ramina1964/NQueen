@@ -60,7 +60,7 @@ The core algorithm is a **bitmask backtracking DFS**:
 
 ```
 NQueen/
-├── NQueen.Domain/          Interfaces, models, enums, event-args, settings, utilities
+├── NQueen.Domain/          Interfaces, models, enums, context records, settings, utilities
 ├── NQueen.Kernel/          BitmaskSolver (partial), engines, symmetry helpers
 │   └── Solvers/            BitmaskSolver.cs · .All · .Single · .Unique
 ├── NQueen.Shared/          Cross-cutting helpers (parsing, numerics)
@@ -172,7 +172,9 @@ The GUI provides:
 
 ## Solver Options
 
-The following properties on `BitmaskSolver` control the solver behaviour (set before calling `Solve()`):
+The following properties on `BitmaskSolver` control the solver behaviour (set before
+calling `GetSimResultsAsync(SimulationContext)`; per-call sinks and a `CancellationToken`
+flow through `SimulationContext`):
 
 | Property | Default | Description |
 |---|---|---|

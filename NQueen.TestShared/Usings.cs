@@ -4,4 +4,8 @@ global using NQueen.Domain.Interfaces;
 global using NQueen.Domain.Models;
 global using NQueen.Domain.Settings;
 global using NQueen.Domain.Utils;
+global using System;
+global using System.Threading;
+global using System.Threading.Channels;
+global using System.Threading.Tasks;
 global using Xunit;

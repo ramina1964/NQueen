@@ -60,8 +60,7 @@ public partial class BitmaskSolver
                 CountOnly: false,                  // need solutions to filter canonical representatives
                 DisplayMode: DisplayMode.Hide,
                 DelayInMillisec: 0,
-                SimulationToken: _currentSimToken,
-                IsCanceled: () => IsSolverCanceled,
+                IsCanceled: () => IsCancellationRequested,
                 ReportProgress: _ => { },
                 OnQueenPlaced: _ => { },
                 OnSolution: rows =>
@@ -89,72 +88,7 @@ public partial class BitmaskSolver
         }
 
         _solutions.AddRange(packedSample);
-        ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
-    }
-
-    private void EnumerateUniqueVisualizeAdaptive()
-    {
-        // Two-phase approach (mirrors CollectAllSamplesAndCountParallel in All mode):
-        //   Phase 1 — full-board animation DFS: emits QueenPlaced/SolutionFound events and
-        //             collects up to cap canonical samples. RestrictFirstCol stays false so
-        //             the GUI animation shows queens placed on any row in column 0.
-        //             Stops early once cap unique representatives are stored.
-        //   Phase 2 — CountUniqueAdaptive for the exact solution count using the half-board
-        //             algorithm (~2x fewer nodes than the full-board pass).
-        int N = BoardSize;
-        int cap = Math.Max(1, _maxDisplayedCount);
-        int materialized = 0;
-
-        // Phase 1: animation + sample collection
-        BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
-            N,
-            RestrictFirstCol: false,
-            EnhancedSymmetry: false,
-            AggressiveSymmetry: false,
-            CountOnly: false,
-            DisplayMode,
-            DelayInMillisec: DelayInMillisec,
-            _currentSimToken,
-            () => IsSolverCanceled,
-            p => { if (EnableEvents) ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(p, _currentSimToken)); },
-            m => { if (EnableEvents) QueenPlaced?.Invoke(this, new QueenPlacedEventArgs(m, N)); },
-            rowsFound =>
-            {
-                if (!ValidateRows(rowsFound)) return false;
-                if (!SymmetryHelper.IsIdentityCanonical(rowsFound, _scratchBuffer!)) return false;
-
-                if (materialized < cap)
-                {
-                    if (rowsFound.Length <= 25)
-                    {
-                        var packed = SymmetryHelper.GetCanonicalKey(rowsFound, _scratchBuffer!, out _);
-                        _solutions.Add((packed, rowsFound.Length));
-                    }
-                    else
-                    {
-                        var copy = new int[rowsFound.Length];
-                        Array.Copy(rowsFound, copy, rowsFound.Length);
-                        _largeBoardRawSolutions.Add(copy);
-                    }
-                    materialized++;
-
-                    if (EnableEvents && !_eventsSuppressedAfterCap)
-                        SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rowsFound), N));
-
-                    if (materialized >= cap)
-                    {
-                        _eventsSuppressedAfterCap = true;
-                        return true; // cap reached — stop Phase 1 early
-                    }
-                }
-
-                return false;
-            }
-        ));
-
-        // Phase 2: exact count via half-board algorithm (~2x faster than full-board)
-        _solutionCount = CountUniqueAdaptive(N);
-        ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+        RaiseProgress(100.0);
     }
 
     // Phase 1 of the two-phase Unique Materialize path for large boards (N >= 16).
@@ -176,7 +110,7 @@ public partial class BitmaskSolver
 
         void DFS(int col, ulong cols, ulong d1, ulong d2)
         {
-            if (localMaterialized >= cap || IsSolverCanceled) return;
+            if (localMaterialized >= cap || IsCancellationRequested) return;
             if (col == N)
             {
                 if (!SymmetryHelper.IsIdentityCanonical(rows, _scratchBuffer!))
@@ -197,15 +131,14 @@ public partial class BitmaskSolver
                     Array.Copy(rows, copy, N);
                     _largeBoardRawSolutions.Add(copy);
                 }
-                if (EnableEvents && !_eventsSuppressedAfterCap)
-                    SolutionFound?.Invoke(this, new SolutionFoundEventArgs(new Memory<int>(rows), N));
+                RaiseSolutionFound(rows, N);
                 localMaterialized++;
                 if (localMaterialized >= cap)
                     _eventsSuppressedAfterCap = true;
                 return;
             }
             ulong avail = ~(cols | d1 | d2) & mask;
-            while (avail != 0 && localMaterialized < cap && !IsSolverCanceled)
+            while (avail != 0 && localMaterialized < cap && !IsCancellationRequested)
             {
                 ulong bit = avail & (ulong)-(long)avail;
                 avail ^= bit;

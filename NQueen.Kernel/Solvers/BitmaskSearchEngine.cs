@@ -13,7 +13,6 @@ internal sealed class BitmaskSearchEngine
         bool CountOnly,
         DisplayMode DisplayMode,
         int DelayInMillisec,
-        Guid SimulationToken,
         Func<bool> IsCanceled,
         Action<double> ReportProgress,
         Action<Memory<int>> OnQueenPlaced,

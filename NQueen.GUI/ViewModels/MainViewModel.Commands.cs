@@ -37,9 +37,17 @@ public sealed partial class MainViewModel
             bitmask.UseCountOnlyUniqueMode = bitmask.UniqueStorageMode == ResultStorageMode.CountOnly;
         }
 
-        _solver.IsSolverCanceled = false;
-        _currentSimulationToken = Guid.NewGuid();
-        _solver.SetSimulationToken(_currentSimulationToken);
+        // Capture the token up front: Cancel() disposes and replaces the CTS, so reading
+        // CancellationTokenSource.Token after the await could observe a fresh, uncancelled source.
+        // The captured token is the single cancellation source of truth for the run — the solver
+        // reads it via SimulationContext.Cancellation, and every post-await guard below reads the
+        // same local so a mid-await Cancel() (which replaces the CTS) is still observed.
+        var cancellationToken = CancellationTokenSource.Token;
+
+        // High-frequency QueenPlaced stream (Stage 4): a conflating, keep-latest channel drained by
+        // the visualization DispatcherTimer. Only wired in Visualize mode; Hide/CountOnly runs leave
+        // it null so the solver pays no copy cost. Declared here so it can be completed in finally.
+        Channel<QueenPlacedInfo>? queenChannel = null;
 
         try
         {
@@ -47,12 +55,24 @@ public sealed partial class MainViewModel
             ManageSimulationStatus(SimulationStatus.Started);
             UpdateUiState();
 
-            var simContext = new SimulationContext(boardSize, SolutionMode, DisplayMode);
+            var progress = new Progress<ProgressInfo>(OnProgressReported);
+            var solutionSink = new SynchronousProgress<SolutionFoundInfo>(OnSolutionFoundReported);
+
+            if (DisplayMode == DisplayMode.Visualize)
+            {
+                queenChannel = Channel.CreateBounded<QueenPlacedInfo>(
+                    new BoundedChannelOptions(1) { FullMode = BoundedChannelFullMode.DropOldest });
+                StartQueenPlacedDrain(queenChannel.Reader);
+            }
+
+            var simContext = new SimulationContext(
+                boardSize, SolutionMode, DisplayMode, progress, cancellationToken, solutionSink,
+                queenChannel?.Writer);
             _solver.DelayInMillisec = DelayInMilliseconds;
 
             SimulationResults = await _solver.GetSimResultsAsync(simContext);
 
-            if (_solver.IsSolverCanceled || _currentSimulationToken == Guid.Empty)
+            if (cancellationToken.IsCancellationRequested)
                 return;
 
             if (SimulationResults == null)
@@ -70,7 +90,7 @@ public sealed partial class MainViewModel
         }
         catch (Exception ex)
         {
-            if (_solver.IsSolverCanceled)
+            if (cancellationToken.IsCancellationRequested)
             {
                 Debug.WriteLine($"[SimulateAsync] Suppressed exception after cancel: {ex.Message}");
             }
@@ -83,13 +103,16 @@ public sealed partial class MainViewModel
         }
         finally
         {
-            if (_solver.IsSolverCanceled)
+            // Signal no more placements will be written; the drain timer is stopped via
+            // StopVisualizationTimer in the status transitions below / cancel path.
+            queenChannel?.Writer.TryComplete();
+
+            if (cancellationToken.IsCancellationRequested)
             {
                 IsSimulating = false;
                 IsSingleRunning = false;
                 ProgressVisibility = Visibility.Collapsed;
                 ProgressLabelVisibility = Visibility.Collapsed;
-                UnsubscribeFromSimulationEvents();
                 RefreshCommandStates();
             }
             else
@@ -129,12 +152,11 @@ public sealed partial class MainViewModel
         if (IsSimulating == false)
             return;
 
-        _solver.IsSolverCanceled = true;
-        _currentSimulationToken = Guid.Empty;
-
+        // CancellationTokenSource.Cancel() is the single cancellation signal: the solver observes
+        // it via the token captured in SimulateAsync (threaded through SimulationContext.Cancellation),
+        // and the VM's post-cancel guards read CancellationTokenSource?.IsCancellationRequested.
         try { CancellationTokenSource?.Cancel(); } catch (Exception ex) { Debug.WriteLine($"[Cancel] CTS cancel exception: {ex}"); }
 
-        UnsubscribeFromSimulationEvents();
         StopVisualizationTimer();
 
         _uiDispatcher.Invoke(() =>
@@ -170,7 +192,6 @@ public sealed partial class MainViewModel
         switch (simulationStatus)
         {
             case SimulationStatus.Started:
-                SubscribeToSimulationEvents();
                 ResetProgress();
                 StopVisualizationTimer();
                 IsIdle = false;
@@ -182,7 +203,6 @@ public sealed partial class MainViewModel
                 break;
 
             case SimulationStatus.Finished:
-                UnsubscribeFromSimulationEvents();
                 StopVisualizationTimer();
                 IsIdle = true;
                 IsInInputMode = true;
@@ -196,7 +216,6 @@ public sealed partial class MainViewModel
                 ProgressVisibility = Visibility.Collapsed;
                 ProgressLabelVisibility = Visibility.Collapsed;
 
-                SimulationCompleted?.Invoke(this, EventArgs.Empty);
                 bool hideMode = DisplayMode == DisplayMode.Hide;
                 bool anyMaterialized = _batchedSolutions.Count > 0;
 
@@ -232,6 +251,11 @@ public sealed partial class MainViewModel
                 _batchedSolutions.Clear();
                 StopVisualizationTimer();
                 RefreshCommandStates();
+
+                // Signal completion only after the final board has been rendered above. Subscribers
+                // (and tests awaiting this event) must observe the fully-painted final solution, not
+                // a board still mid-animation.
+                SimulationCompleted?.Invoke(this, EventArgs.Empty);
                 break;
         }
     }
@@ -312,7 +336,6 @@ public sealed partial class MainViewModel
         SaveCommand?.NotifyCanExecuteChanged();
     }
 
-    private Guid _currentSimulationToken = Guid.Empty;
     private Solution? _selectedSolution;
     public Solution? SelectedSolution
     {
@@ -321,6 +344,16 @@ public sealed partial class MainViewModel
         {
             if (!SetProperty(ref _selectedSolution, value)) return;
             if (value == null || ChessboardVm == null) return;
+
+            // During a live Visualize run the chessboard is owned by the animation timer
+            // (it drains the QueenPlaced channel and renders the search build-up). The solver
+            // auto-selects every solution it finds, so stopping the timer / statically painting
+            // the board here would halt the animation after the first solution. Keep tracking the
+            // selection (SetProperty above) but leave the board to the timer; the final solution is
+            // rendered when the run finishes (ManageSimulationStatus.Finished).
+            if (IsSimulating && DisplayMode == DisplayMode.Visualize)
+                return;
+
             StopVisualizationTimer();
             var n = value.BoardSize;
             if (ChessboardVm.Squares.Count == 0 || !ChessboardVm.IsBoardStateUpdatedAndSquaresPopulated(n))

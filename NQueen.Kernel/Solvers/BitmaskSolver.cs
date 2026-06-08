@@ -19,11 +19,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
     private int _delayInMillisec; // enforce min delay via setter below
 
-    // ---------------- Public properties / events ----------------
-    public event EventHandler<QueenPlacedEventArgs>? QueenPlaced;
-    public event EventHandler<SolutionFoundEventArgs>? SolutionFound;
-    public event EventHandler<ProgressUpdateEventArgs>? ProgressValueChanged;
-
+    // ---------------- Public properties ----------------
     public int DelayInMillisec
     {
         get => _delayInMillisec;
@@ -38,11 +34,15 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
     public DisplayMode DisplayMode { get; private set; }
 
-    public bool IsSolverCanceled { get; set; }
+    // Single internal cancellation source of truth for the solve loops: the per-call
+    // CancellationToken threaded through SimulationContext. A default token is never
+    // "cancellation requested", so direct Solve() callers and benchmarks that omit it
+    // are unaffected.
+    private bool IsCancellationRequested => _cancellation.IsCancellationRequested;
 
-    /// <summary>When <see langword="true"/> (default), raises <see cref="QueenPlaced"/>,
-    /// <see cref="SolutionFound"/> and <see cref="ProgressValueChanged"/> during solving.
-    /// Set to <see langword="false"/> in benchmarks or headless runs to eliminate event overhead.</summary>
+    /// <summary>When <see langword="true"/> (default), pushes queen-placement, solution-found, and
+    /// progress notifications through the <see cref="SimulationContext"/> sinks during solving.
+    /// Set to <see langword="false"/> in benchmarks or headless runs to eliminate notification overhead.</summary>
     public bool EnableEvents { get; set; } = true;
 
     /// <summary>Controls how All-mode solutions are stored.
@@ -99,14 +99,16 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     /// Recommended for N ≥ 15.</summary>
     public bool EnableHalfBoardRestriction { get; set; } = false;
 
-    public void SetSimulationToken(Guid token) => _currentSimToken = token;
-
     public Task<SimulationResults> GetSimResultsAsync(SimulationContext simContext) =>
         Task.Run(() =>
         {
             BoardSize = simContext.BoardSize;
             SolutionMode = simContext.SolutionMode;
             DisplayMode = simContext.DisplayMode;
+            _onProgress = simContext.OnProgress;
+            _cancellation = simContext.Cancellation;
+            _onSolutionFound = simContext.OnSolutionFound;
+            _onQueenPlaced = simContext.OnQueenPlaced;
             return Solve();
         });
 
@@ -169,7 +171,7 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
                 usedLookup = true;
                 if (countOnly)
                 {
-                    ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+                    RaiseProgress(100.0);
                     return; // done
                 }
                 // Materialize sample solutions using lookup (fast path)
@@ -198,22 +200,85 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
 
                 EnumerateAllAdaptive(countOnly: true);
             }
-            ProgressValueChanged?.Invoke(this, new ProgressUpdateEventArgs(100.0, _currentSimToken));
+            RaiseProgress(100.0);
             return;
         }
 
-        // Materialization path: adaptive enumeration per mode
-        if (isUnique)
-        {
-            if (DisplayMode == DisplayMode.Visualize)
-                EnumerateUniqueVisualizeAdaptive();
-            else
-                ExecuteUniqueModeUnified();
-        }
+        // Materialization path: adaptive enumeration per mode. The animated Visualize path is
+        // mode-agnostic (one shared two-phase method); only the non-visual materialize differs.
+        if (DisplayMode == DisplayMode.Visualize)
+            EnumerateVisualizeAdaptive(isUnique);
+        else if (isUnique)
+            ExecuteUniqueModeUnified();
         else
-        {
             EnumerateAllAdaptive(countOnly: false);
-        }
+    }
+
+    // Two-phase animated Visualize path shared by All and Unique modes.
+    //   Phase 1 — animated full-board DFS: streams QueenPlaced/SolutionFound and collects up to
+    //             `cap` display samples, then stops early once the cap is reached. In Unique mode
+    //             only identity-canonical boards (fundamental solutions) are kept.
+    //   Phase 2 — exact total via the fast mode-specific counter (no animation).
+    // Stopping Phase 1 at the cap is essential: while visualizing, the engine sleeps
+    // DelayInMillisec between every placement (including backtracks), so continuing the animated
+    // pass past the cap would make the run unusably slow. Visualization is capped at
+    // MaxVisualizeBoardSize (N <= 10), so the silent Phase-2 count is effectively instant.
+    private void EnumerateVisualizeAdaptive(bool isUnique)
+    {
+        int N = BoardSize;
+        int cap = Math.Max(1, _maxDisplayedCount);
+        int materialized = 0;
+
+        _solutions.Clear();
+        _eventsSuppressedAfterCap = false;
+        _solutionCount = 0;
+
+        // Phase 1: animation + sample collection
+        BitmaskSearchEngine.Run(new BitmaskSearchEngine.Request(
+            BoardSize: N,
+            RestrictFirstCol: false,
+            EnhancedSymmetry: false,
+            AggressiveSymmetry: false,
+            CountOnly: false,
+            DisplayMode,
+            DelayInMillisec: DelayInMillisec,
+            IsCanceled: () => IsCancellationRequested,
+            ReportProgress: RaiseProgress,
+            OnQueenPlaced: m => RaiseQueenPlaced(m, N),
+            OnSolution: rowsFound =>
+            {
+                if (!ValidateRows(rowsFound)) return false;
+                // Unique mode shows fundamental solutions only — skip rotations/reflections.
+                if (isUnique && !SymmetryHelper.IsIdentityCanonical(rowsFound, _scratchBuffer!)) return false;
+
+                if (materialized < cap)
+                {
+                    // Store the ACTUAL board (raw packing) so each listbox sample renders its own
+                    // placement. For All this preserves the distinct variants; for Unique the board
+                    // is already identity-canonical, so PackRows equals its canonical key.
+                    var packed = SymmetryHelper.PackRows(rowsFound);
+                    _solutions.Add((packed, rowsFound.Length));
+                    materialized++;
+
+                    RaiseSolutionFound(rowsFound, N);
+
+                    if (materialized >= cap)
+                    {
+                        _eventsSuppressedAfterCap = true;
+                        return true; // cap reached — stop Phase 1 early
+                    }
+                }
+
+                return false;
+            }
+        ));
+
+        // Phase 2: exact total via the fast mode-specific counter (no animation). Unique uses the
+        // half-board CountUniqueAdaptive (~2x fewer nodes); All uses the symmetry-reduced bitboard.
+        _solutionCount = isUnique
+            ? CountUniqueAdaptive(N)
+            : (ulong)BitboardNQueenSolver.CountSolutions(N, parallel: UseParallel);
+        RaiseProgress(100.0);
     }
 
     // ------------ private fields and helpers ------------
@@ -221,7 +286,10 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
     private readonly List<(UInt128 packed, int boardSize)> _solutions = [];
     private readonly List<int[]> _largeBoardRawSolutions = [];
     private ulong _solutionCount;
-    private Guid _currentSimToken = Guid.Empty;
+    private IProgress<ProgressInfo>? _onProgress;
+    private IProgress<SolutionFoundInfo>? _onSolutionFound;
+    private ChannelWriter<QueenPlacedInfo>? _onQueenPlaced;
+    private CancellationToken _cancellation;
     private readonly bool _capEnabled = true;
     private readonly int _maxDisplayedCount = maxDisplayedCount;
     private volatile bool _eventsSuppressedAfterCap;
@@ -233,7 +301,6 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         _solutions.Clear();
         _largeBoardRawSolutions.Clear();
         _solutionCount = 0;
-        IsSolverCanceled = false;
         _eventsSuppressedAfterCap = false;
         _scratchBuffer = (_scratchBuffer == null || _scratchBuffer.Length < BoardSize * 8)
             ? new int[BoardSize * 8]
@@ -276,6 +343,34 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         return ok;
     }
 
+    // ---------------- Notification seam (Stage 0) ----------------
+    // Single chokepoint for every solver notification. Centralising the gate here makes the
+    // EnableEvents policy uniform (a disabled progress sink reports nothing, terminal 100%
+    // included) and turns every later sink-migration stage into a one-helper-body change.
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void RaiseProgress(double percent)
+    {
+        if (EnableEvents)
+            _onProgress?.Report(new ProgressInfo(percent));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void RaiseQueenPlaced(Memory<int> rows, int boardSize)
+    {
+        if (EnableEvents && !_eventsSuppressedAfterCap)
+            // The channel drain is deferred to the UI DispatcherTimer, so the prefix MUST be copied;
+            // rows wraps a reused DFS buffer that the solver mutates immediately after this returns.
+            _onQueenPlaced?.TryWrite(new QueenPlacedInfo(new Memory<int>(rows.ToArray()), boardSize, 0));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void RaiseSolutionFound(int[] rows, int boardSize)
+    {
+        if (EnableEvents && !_eventsSuppressedAfterCap)
+            _onSolutionFound?.Report(new SolutionFoundInfo(new Memory<int>(rows), boardSize, 0));
+    }
+
     public void Dispose()
     {
         Dispose(true);
@@ -289,9 +384,9 @@ public partial class BitmaskSolver(ISolutionFormatter solutionFormatter,
         {
             _solutions.Clear();
             _largeBoardRawSolutions.Clear();
-            QueenPlaced = null;
-            SolutionFound = null;
-            ProgressValueChanged = null;
+            _onProgress = null;
+            _onSolutionFound = null;
+            _onQueenPlaced = null;
         }
         _disposed = true;
     }

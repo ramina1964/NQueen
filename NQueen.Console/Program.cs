@@ -88,7 +88,6 @@ public class Program
         using var solver = new BitmaskSolver(size, mode, DisplayMode.Hide, formatter, maxSolutionsInOutput: displayedCap)
         {
             EnableEvents = false,
-            IsSolverCanceled = false,
             UseCountOnlyAllMode = countOnly && mode == SolutionMode.All,
             UseCountOnlyUniqueMode = countOnly && mode == SolutionMode.Unique,
             EnableHalfBoardRestriction = halfBoard && mode == SolutionMode.All,

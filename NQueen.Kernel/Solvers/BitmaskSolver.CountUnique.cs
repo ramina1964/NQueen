@@ -168,9 +168,13 @@ public partial class BitmaskSolver
         int n, ulong fullMask, int pruneDepthGate, bool reflectionEnabled,
         int[] rows, int[] scratch)
     {
-        if ((col & 0xF) == 0 && IsSolverCanceled) return 0UL;
+        if ((col & 0xF) == 0 && IsCancellationRequested)
+            return 0UL;
+
         if (col == n)
-            return SymmetryHelper.IsIdentityCanonical(rows, scratch) ? 1UL : 0UL;
+            return SymmetryHelper.IsIdentityCanonical(rows, scratch)
+                ? 1UL
+                : 0UL;
 
         ulong count = 0UL;
         ulong avail = ~(cols | d1 | d2) & fullMask;

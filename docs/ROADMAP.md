@@ -18,9 +18,67 @@ in the same change that touches `CHANGELOG.md`.
 > - [`docs/EVENT-MIGRATION-PLAN.md`](EVENT-MIGRATION-PLAN.md) — staged plan to replace the
 >   solver's `event` surface (`QueenPlaced` / `SolutionFound` / `ProgressValueChanged` +
 >   `SetSimulationToken` + `IsSolverCanceled`) with per-call push sinks (`IProgress<T>` +
->   conflating `Channel<T>` + `CancellationToken`). Begins with a behaviour-preserving Stage 0
->   seam extraction. **Do this on its own branch (`refactor/solver-sinks`), after the
->   `test/suite-review` Fact→Theory consolidation merges.**
+>   conflating `Channel<T>` + `CancellationToken`). **In progress on branch
+>   `refactor/event-migration`.** **Stage 0 — DONE:** the behaviour-preserving notification-seam
+>   extraction shipped (all ~25 raise sites collapsed behind `RaiseProgress` / `RaiseQueenPlaced` /
+>   `RaiseSolutionFound`; the ungated terminal-100% progress quirk fixed so the `EnableEvents` gate
+>   is uniform). **Stage 1 — DONE:** progress migrated to `IProgress<ProgressInfo>` (new
+>   `ProgressInfo` record + `SimulationContext.OnProgress` sink); the `ProgressValueChanged` event,
+>   `SetSimulationToken`, the `Guid` simulation token (VM + solver + engine `Request`), and
+>   `ProgressUpdateEventArgs` are all deleted; the VM builds a per-run `Progress<ProgressInfo>`.
+>   **Stage 2 — DONE:** a real `CancellationToken` is threaded VM → `SimulationContext.Cancellation`
+>   → solver hot loops via one internal `IsCancellationRequested` (OR of the legacy bool + token);
+>   `IsSolverCanceled` stays as a thin shim until Stage 5. **Stage 3 — DONE:** `SolutionFound`
+>   migrated to a synchronous `IProgress<SolutionFoundInfo>` sink (new `SolutionFoundInfo` record +
+>   `SimulationContext.OnSolutionFound` + a `SynchronousProgress<T>` adapter that preserves the
+>   solver-thread buffer-copy semantics); `RaiseSolutionFound` dual-emits (event + sink) so the
+>   kernel event tests stay green until the event is deleted in Stage 5. **Stage 4 — DONE:**
+>   `QueenPlaced` migrated to a conflating, keep-latest `Channel<QueenPlacedInfo>` (new
+>   `QueenPlacedInfo` record + `SimulationContext.OnQueenPlaced` `ChannelWriter`) drained by the
+>   existing visualization `DispatcherTimer`; `RaiseQueenPlaced` dual-emits (event +
+>   `TryWrite` of a copied prefix), the channel is wired only in Visualize mode, and both animation
+>   paths are preserved (one column per tick with a delay, full latest prefix at zero delay).
+>   **Stage 5 — DONE:** the event scaffolding is removed — the `QueenPlaced` / `SolutionFound`
+>   events drop off `ISolverFrontEnd` and `BitmaskSolver` (the `Raise*` helpers are now sink-only),
+>   the `QueenPlacedEventArgs` / `SolutionFoundEventArgs` types and their dead global usings are
+>   deleted, and the vestigial `Subscribe/UnsubscribeFromSimulationEvents` plumbing (no-op after
+>   Stage 4) is removed from the view-model. Six kernel/view-model tests are rewritten onto the
+>   sinks via shared `SynchronousProgress<T>` / `CallbackChannelWriter<T>` test helpers.
+>   `EnableEvents` (now a sink master-switch) and the `IsSolverCanceled` bool are intentionally
+>   retained. **Stage 4 follow-up fixes — DONE:** smoke testing surfaced three Visualize
+>   regressions. (1) The build-up animation stopped after the first solution — the
+>   `SelectedSolution` setter's `StopVisualizationTimer()` tore down the channel-drain timer that
+>   Stage 4 introduced; the setter now leaves the board to the timer during a live Visualize run, and
+>   `SimulationCompleted` is raised after the final board render. (2) All-mode Visualize never
+>   animated (all solutions appeared at once) because `RunAllUnified` hardcodes `Hide` + a no-op
+>   `OnQueenPlaced`; added `EnumerateAllVisualizeAdaptive()` (two-phase: animated Phase 1 capped at
+>   `MaxDisplayedCount`, then a fast silent half-board count) and routed All+Visualize to it in
+>   `HandleModeCommon`. (3) All-mode list selection rendered the wrong board for every non-first
+>   entry — the three All-mode materialize sites stored each board's *canonical* key, collapsing
+>   distinct boards onto one placement; they now store the actual board via `SymmetryHelper.PackRows`
+>   (inverse of `Solution.Unpack`). **Stage 6 — DONE:** the `IsSolverCanceled` bool is collapsed
+>   onto the `CancellationToken` — `ISolverBackEnd` / `BitmaskSolver` / GUI VM
+>   (`Commands.cs` / `Events.cs` / `Progress.cs`) / Console / Benchmarks all migrated to read
+>   token-based cancellation, and five cancellation tests across `BitmaskSolverSingleModeTests` /
+>   `…UniqueTests` / `…AllModeTests` / `…ModeTests` / `SolverTests` are rewritten onto local
+>   `CancellationTokenSource`s (the last one renamed to
+>   `BitmaskSolver_SingleMode_HonorsPreCancelledToken_ReturnsWithoutThrowing` and switched from
+>   `Solve()` to `await GetSimResultsAsync(ctx)` so the token actually reaches the kernel). Build
+>   0/0; fast suite **489 / 489** (400 unit + 89 view-model). **Stage 6 docs sweep — DONE:**
+>   `README.md` Solver-Options preface re-pointed at `GetSimResultsAsync(SimulationContext)`,
+>   `.github/copilot-instructions.md` event-args note rewritten for the post-migration sink
+>   surface, and the stale `IsSolverCanceled`-throttle entry pulled out of *Backlog → Small wins,
+>   low risk* (the equivalent token-poll throttle is already in
+>   `BitmaskSolver.CountUnique.cs::CountCanonicalDFS`). The whole `refactor/event-migration` track
+>   is ready for PR merge. See `CHANGELOG.md` `[Unreleased]`.
+> - **§1a pre-work audit — DONE (finding: _preventive_, not corrective).** No live
+>   lapsed-listener leak exists. A workspace-wide search found exactly six subscription sites
+>   (all named-method `+=`/`-=` pairs in `MainViewModel.Events.cs`, zero lambdas), backed by an
+>   idempotent subscribe, a per-run subscribe/unsubscribe cycle, a dispose chain, and a DI
+>   lifetime graph where the solver never outlives the VM. The migration is therefore
+>   *preventive* — it makes the no-leak guarantee **structural** (regression-proof against future
+>   per-run / multi-window lifetime changes), not a fix for a live defect. See `CHANGELOG.md`
+>   `[Unreleased]` for the full evidence.
 
 **Most recent session — GUI refactor (`refactor/gui`), now MERGED (PR #10, squash `8f41b7a`).**
 The WPF front-end was reworked: `MainWindow` is wrapped in a `Viewbox` for a user-resizable,
@@ -75,7 +133,7 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | `main` at `c5a70cc` (Fact→Theory test consolidation merged via PR #11, squash). No feature branch in flight. |
+| Active branch | `refactor/event-migration` (event→push-sink migration; §1a leak audit done — _preventive_; **Stage 0 seam extraction + Stage 1 progress-sink / Guid-token deletion + Stage 2 CancellationToken threading + Stage 3 SolutionFound sink + Stage 4 QueenPlaced conflating-channel + Stage 5 event-scaffolding removal + Stage 6 IsSolverCanceled→CancellationToken collapse shipped**). `main` at `42d2530` (PRs #11 test consolidation, #12 ROADMAP sync — both merged). |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
 | Test count | **513 / 513 passing** (424 unit + 89 view-model; up from 304 at v1.0.0). The Fact→Theory consolidation (PR #11) reduced *method* count but kept every scenario as a visible `[InlineData]` case — net +2 vs the prior 511 because two Facts that looped internally over `{2, 3}` now report each input as its own case. |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |
@@ -149,9 +207,10 @@ effort × expected impact.
 
 ### Small wins, low risk
 
-- **Throttle `IsSolverCanceled` reads** in the `CountCanonicalDFS` hot loop
-  (don't check on every `while` iteration). Source: `Code Analysis - 02-02.2026.txt`.
-  Partly addressed — the check is now gated to `(col & 0xF) == 0` (once per 16 columns).
+- _(none currently — the Unique-mode count throttle previously listed here was for
+  the deleted `IsSolverCanceled` field; the equivalent throttle on the cancellation-token
+  poll is already in place: the `(col & 0xF) == 0` gate on `IsCancellationRequested` in
+  `BitmaskSolver.CountUnique.cs::CountCanonicalDFS` keeps the read off the hottest path.)_
 
 ### Larger wins, scoped risk
 
