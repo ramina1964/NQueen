@@ -7,6 +7,37 @@ All notable changes to this project are documented here.
 ## [Unreleased]
 
 ### Docs
+- **`perf/unique-iterative-core` — Option C profile-first investigation closed with a
+  negative finding (no production-code changes shipped).** Branch was opened off
+  freshly-merged `main` (`f75c5ea`) with the explicit scope of *deciding* whether
+  `CountCanonicalDFS` (`NQueen.Kernel/Solvers/BitmaskSolver.CountUnique.cs:165-209`)
+  should be ported to an iterative DFS, **before** writing the port. Re-ran
+  `UniqueFastHalfBoardEvenOddBenchmark` under the full job (3 warmups, 15 iterations) on
+  this `main` build to re-establish a baseline — **N=16 ≈ 254.8 ms ±1.25 %, N=17 ≈
+  2,103.0 ms ±0.93 %** on the dev machine (i7-14700K, .NET 10.0.8); the pre-event-migration
+  reference of **244 ms / 2,042 ms** is retired in favour of these figures (the ~3–4 % delta
+  is within natural cross-build drift). The same benchmark was re-run with
+  `[CPUUsageDiagnoser]` to drop a CPU-sampling ETL at
+  `NQueen.Benchmarking/BenchmarkDotNet.Artifacts/BenchmarkDotNet_UniqueFastHalfBoardEvenOddBenchmark_20260608_213732/1804E697-BC82-40D3-95F7-7D72D3B9E9D5/sc.user_aux.etl(x)`.
+  `analyze_perf_trace` returned no findings against the raw ETL, so the line-level
+  attribution was completed via `profile_unit_test` against
+  `BitmaskSolverCountUniqueTests.CountUniqueAdaptive_PreservesPruningFlags(n: 16, …)`.
+  Result: ~90 % Total inside the `Parallel.ForEach` body → `CountCanonicalDFS` recursion,
+  with the deepest two frames (cols 13–14) carrying 16–19 % Self each, cols 10–12
+  carrying 6–17 % Self each. **No call/ret/prologue/epilogue bucket appeared as a
+  separate sample group** — the original ≥ 8 % gate cannot fire, so the iterative-DFS
+  hypothesis is empirically refuted. The only non-trivial leaf in the trace was
+  `BitOperations.TrailingZeroCount` at **5.01 % Self** (out-of-line despite its
+  `[AggressiveInlining]` attribute); a one-line pre-experiment (Option C-2) routed it
+  through a hand-inlined `Bmi1.X64.TrailingZeroCount` helper. The re-profile confirmed
+  RyuJIT inlined the helper and the leaf physically vanished, but **wall-clock did not
+  move** — N = 16 = 256.557 ms ±1.11 % vs baseline 254.8 ms ±1.25 % (+0.7 %, fully inside
+  both noise bands). The 5 % attribution was sampling noise around the call site, not
+  recoverable wall-clock work, so the C-2 change was reverted. **Outcome:** the
+  iterative-DFS port is abandoned, `perf/unique-iterative-core` ships docs-only, and the
+  next perf branch picks up Candidate queue #3 (**work-stealing for All mode**, source
+  `docs/ignored/Archive/Potential All Mode Improvements.txt:1-20`). ROADMAP "Plan of
+  work", "Current State → Active branch", and "Candidate queue" are updated to match.
 - **Stage 6 docs sweep — `README.md` Solver-Options preface and `docs/ROADMAP.md` backlog
   refreshed for the post-migration cancellation surface.** README "Solver Options" preface
   now points at the post-migration entry point — properties on `BitmaskSolver` are set before

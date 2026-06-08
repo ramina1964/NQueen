@@ -48,24 +48,46 @@ candidate per branch, MEASURE first, A/B against the frozen baseline.
 > without code changes, record the negative finding here, pick a different candidate).
 >
 > **Plan of work (in order):**
-> 1. **MEASURE first** — run `UniqueFastHalfBoardEvenOddBenchmark` on this freshly-merged
->    `main` to re-establish the baseline. Target to verify or update: **N=16 ≈ 244 ms,
->    N=17 ≈ 2,042 ms** (±1 % on the dev machine).
-> 2. **Capture a line-level / instruction-level CPU profile** of `CountCanonicalDFS`
->    (e.g. VS Performance Profiler "CPU Usage" with line-level attribution + the
->    Hot Path view, or `dotnet-trace` with line-resolution sampling). The question to
->    answer: of the ~97 % self-CPU in the loop body, what fraction is **(a)** the bit-scan
->    + arithmetic + diagonal shifts at line 181-185 / 201-203, vs **(b)** the
->    function-prologue / call / ret / epilogue, vs **(c)** the prune-guard branch at
->    line 194-199, vs **(d)** the cancellation-throttle branch at line 171-172?
-> 3. **Decide based on (b)** — if call/ret + prologue/epilogue is, say, **≥ 8 %** of
->    self-CPU, the iterative port is worth a separate `perf/unique-iterative-dfs` branch;
->    if it's a few percent or less, close this branch with the negative finding recorded
->    here and pivot to the strongest remaining candidate (most likely **work-stealing**
->    for All mode, given the documented tail-imbalance evidence in
->    `docs/ignored/Archive/Potential All Mode Improvements.txt:1-20`).
+> 1. **MEASURE first ✅ done (2026-06-08).** Re-ran `UniqueFastHalfBoardEvenOddBenchmark`
+>    on freshly-merged `main` (`f75c5ea`) under the full job (3 warmups, 15 iterations).
+>    New authoritative baseline on the dev machine (i7-14700K, 28 logical / 20 physical):
+>    **N=16 ≈ 254.8 ms ±1.25 %, N=17 ≈ 2,103.0 ms ±0.93 %**. About 3–4 % slower than the
+>    pre-event-migration target (244 / 2,042 ms) — small but outside the previous ±1 %
+>    band, so the table-of-record numbers are updated below to match what re-runs on
+>    `main` will see.
+> 2. **Capture a line-level / instruction-level CPU profile ✅ trace captured (2026-06-08).**
+>    The same benchmark was re-run with `[CPUUsageDiagnoser]` to drop a CPU sampling ETL
+>    next to the results at
+>    `NQueen.Benchmarking/BenchmarkDotNet.Artifacts/BenchmarkDotNet_UniqueFastHalfBoardEvenOddBenchmark_20260608_213732/1804E697-BC82-40D3-95F7-7D72D3B9E9D5/sc.user_aux.etl(x)`.
+>    `analyze_perf_trace` returned no findings against the raw ETL, so we pivoted to
+>    `profile_unit_test` against `BitmaskSolverCountUniqueTests.CountUniqueAdaptive_PreservesPruningFlags(n: 16, …)`
+>    for line-level attribution. Result: ~90 % Total inside the `Parallel.ForEach` body →
+>    `CountCanonicalDFS` recursion, with the deepest two frames (cols 13–14) carrying
+>    16–19 % Self each, cols 10–12 carrying 6–17 % Self each. The single non-trivial leaf
+>    that surfaced was `BitOperations.TrailingZeroCount` at **5.01 % Self** — out-of-line
+>    despite its `[AggressiveInlining]` attribute. No call/ret/prologue/epilogue bucket
+>    was visible as a separate sample group at all (bucket **(b)** was empirically near
+>    zero).
+> 3. **Decide ✅ done — negative finding (2026-06-08).** Bucket **(b)** never materialised
+>    in the trace, so the original ≥ 8 % gate cannot trigger. To rule out the only
+>    candidate that *did* show up — the 5 % TZCNT leaf — we ran a one-line pre-experiment
+>    (Option C-2): replaced the `BitOperations.TrailingZeroCount` call in the hot loop
+>    with a hand-routed `Bmi1.X64.TrailingZeroCount` intrinsic via a `[AggressiveInlining]`
+>    `Tzcnt64` helper. Re-profile confirmed the leaf physically disappeared (RyuJIT
+>    inlined the helper) and the recovered cycles redistributed cleanly into the
+>    surrounding cols-10..14 frames. **Wall-clock did not move** —
+>    N = 16 = 256.557 ms ±1.11 % vs baseline 254.8 ms ±1.25 % (+0.7 %, fully inside both
+>    noise bands); N = 17 short run produced 2.1253 s and 2.0979 s before the diagnoser
+>    hung, both inside baseline 2,103.0 ms ±0.93 %. The 5 % attribution was sampling
+>    noise around the call site, not real wall-clock work the JIT could remove. The C-2
+>    change was reverted (no production code shipped on this branch); the iterative-DFS
+>    port is **abandoned** because the bucket it would target does not exist on this
+>    workload.
 > 4. **No production-code changes on this branch.** The branch carries only docs +
->    profiling artefacts. The eventual implementation, if any, ships on its own branch.
+>    profiling artefacts (`BenchmarkDotNet.Artifacts/`). Closing `perf/unique-iterative-core`
+>    with the negative finding above; the next branch picks up **work-stealing for All mode**
+>    (Candidate queue #3 below) per the documented tail-imbalance evidence in
+>    `docs/ignored/Archive/Potential All Mode Improvements.txt:1-20`.
 >
 > **Out of scope for this branch:** writing the iterative port, the All-mode iterative
 > core port, MRV ordering, `ArrayPool<T>` for stacks, and the cached-mask experiment.
@@ -86,24 +108,33 @@ and profiling knowledge below, not faster code.
 
 - A frozen, low-variance baseline benchmark — `UniqueFastHalfBoardEvenOddBenchmark`
   (full job: 3 warmups, 15 iterations, N=16 even + N=17 odd). Current baseline on the dev
-  machine: **N=16 ≈ 244 ms, N=17 ≈ 2,042 ms** (error bars ≈ ±1 %).
+  machine (i7-14700K, .NET 10.0.8, freshly-merged `main` `f75c5ea`, captured 2026-06-08):
+  **N=16 ≈ 254.8 ms (±1.25 %), N=17 ≈ 2,103.0 ms (±0.93 %)**. About 3–4 % slower than the
+  pre-event-migration baseline (244 / 2,042 ms) — well within natural cross-build drift,
+  but the numbers above are the new authoritative reference for any A/B done on this
+  `main`.
 - Profiler finding: ~97 % of self-CPU is the `CountCanonicalDFS` loop body itself
   (bit-scan + recursion + diagonal shifts), not the prune gate. The recursion profile is
   bottom-heavy (deepest two frames carry ~69 % of self-time).
 
 **Candidate queue (pick ONE per branch, MEASURE first):**
 
-1. **Iterative core for the Unique hot path** — _**UNDER INVESTIGATION this session**_ on
-   `perf/unique-iterative-core` (Option C: profile-first, no production-code changes).
-   The bottom-heavy recursion shape suggests per-frame call/ret overhead, but the
-   `feature/kernel-perf-small-wins` round already reduced per-recursion work and saw no
-   measurable speedup, so the win is not yet evidence-backed. A line-level CPU trace
-   decides whether the port is worth a separate implementation branch. (Largest change
-   if it ships.)
+1. ~~**Iterative core for the Unique hot path**~~ — _**ABANDONED (2026-06-08)**_ on
+   `perf/unique-iterative-core` after a profile-first investigation closed it as a
+   negative finding. Line-level attribution via `profile_unit_test` showed no
+   call/ret/prologue/epilogue bucket as a separate sample group; the only non-trivial
+   leaf, `BitOperations.TrailingZeroCount` at 5.01 % Self, was tested with a
+   `Bmi1.X64.TrailingZeroCount` intrinsic pre-experiment and produced no wall-clock
+   movement (+0.7 % at N = 16, fully inside the ±1.11 % noise band) even though the
+   leaf physically vanished from the post-edit profile. The recursion shape's
+   bottom-heaviness reflects real bit-scan + arithmetic + diagonal-shift work in the
+   deepest frames, not call-frame overhead the iterative port could remove. Skip on
+   future branches.
 2. **Cached shifted diagonal masks** — remove repeated `(d1|bit)<<1` / `(d2|bit)>>1` in the
    hottest loop. *Skeptical:* the shifts depend on a per-iteration `bit`, so capture a
    line-level CPU trace to confirm there is real redundancy before committing.
-3. **Depth-based work-stealing queue** for All mode at large N (tail-imbalance on >8 cores).
+3. **Depth-based work-stealing queue** for All mode at large N (tail-imbalance on >8 cores)
+   — **next branch** once `perf/unique-iterative-core` is closed.
 
 **Process (rule).** Branch off freshly-merged `main` with a name tied to the *specific*
 experiment (e.g. `perf/unique-iterative-core`, not a generic "small-wins" name) so the
@@ -117,7 +148,7 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | `perf/unique-iterative-core` (deferred-perf candidate #1, **profile-first investigation** rather than implementation: archive review surfaced a counter-signal — the prior `feature/kernel-perf-small-wins` round reduced per-recursion work and got no measurable speedup, so a line-level CPU trace decides whether the iterative port is worth a separate implementation branch). `main` at `f75c5ea` (PR #13 `refactor/event-migration` event→push-sink migration squash-merged). |
+| Active branch | `perf/unique-iterative-core` (deferred-perf candidate #1, **closing — negative finding, no production-code changes shipped**: profile-first investigation completed, no recoverable bucket exists. Steps 1–2 ✅ baseline + ETL. Step 3 ✅ — `profile_unit_test` showed the call/ret bucket is empirically near-zero; the only leaf in the trace, `BitOperations.TrailingZeroCount` at 5.01 % Self, was disproved by a Tzcnt64-intrinsic pre-experiment (RyuJIT inlined the helper, the leaf vanished, wall-clock unchanged at N = 16 = +0.7 % within ±1.11 % noise). The C-2 change was reverted; the iterative-DFS port is abandoned. Next branch picks up Candidate queue #3, **work-stealing for All mode**.). `main` at `f75c5ea` (PR #13 `refactor/event-migration` event→push-sink migration squash-merged). |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
 | Test count | **489 / 489 passing** (400 unit + 89 view-model). Down from 513 pre-Stage-6 because Stage 6 deleted one obsolete `ShouldIgnorePreSetCancellationFlag` test and consolidated the cancellation tests onto `CancellationTokenSource`s; net coverage of the cancellation surface is unchanged or improved. |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |
