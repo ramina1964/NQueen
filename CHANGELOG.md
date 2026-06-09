@@ -67,6 +67,85 @@ All notable changes to this project are documented here.
   File changed: `NQueen.Kernel/Solvers/BitmaskSolver.CountUnique.cs` (~3 lines + comment).
 
 ### Docs
+- **`perf/all-mode-arraypool` — `ArrayPool<T>` for column / diagonal / row stacks on the
+  All-mode materialize path (from `Backlog → Larger wins, scoped risk`) profile-first
+  investigation closed with a negative finding (no production-code changes shipped).**
+  Third profile-first closure in a row, following the same pattern as queues #1
+  (`perf/unique-iterative-core`) and #2 (`perf/cached-diagonal-shifts`). Branch opened
+  off freshly-merged `main` (post-PR #16) with the explicit scope of *deciding* whether
+  pooling the per-call `int[]` / `Frame[]` buffers in `BitmaskSearchEngine.CreateState`
+  (`NQueen.Kernel/Solvers/BitmaskSearchEngine.cs:62-87`) and the per-solution `int[]`
+  copies in `BitmaskSolver.All.cs` (the `new int[rowsFound.Length]` at line 48 of
+  `RunAllUnified` and the `new int[N]` at line 119 of `CollectAllSampleSolutionsDFS`)
+  via `ArrayPool<T>.Shared` would reduce GC pressure at N ≥ 18, **before** writing the
+  pool plumbing. Three independent measurement attempts agreed on the negative branch:
+
+  1. **`profile_unit_test` MEMORY at N = 14**
+     (`BitmaskSolverAllModeTests.AllMode_Materialize_N14_RoutesThroughTwoPhasePath`) —
+     the top-3 allocation types were all xUnit reflection plumbing
+     (`System.String` 25,592 allocs / 2.20 MB, `System.Reflection.CustomAttributeType`
+     23,955 allocs / 958 KB, `System.Reflection.CustomAttributeNamedParameter` 19,613
+     allocs / 941 KB), with `createdBy` chains entirely in `System.Reflection.*` and
+     `System.Text.StringBuilder`. **No user-code type cracked the top-3** — the All-mode
+     materialize allocation surface was below the test-runner noise floor at N = 14.
+     Trace preserved as `documentSessionId d27e4774-6318-4f84-8f46-4a8c486e775e`.
+  2. **`run_benchmark` MEMORY against the existing
+     `AllModeVariantsBenchmark.All_Sequential_Materialize`** at N = 12 and N = 15 —
+     returned **timing-only output** (no `Gen0` / `Gen1` / `Gen2` / `Allocated` columns).
+     The existing class does not carry `[MemoryDiagnoser]`, and per the established
+     measurement-artifact-editing discipline (see
+     `docs/ROADMAP.md → Process (rule)`) production benchmarks are not retroactively
+     decorated. Wall-clock at N = 15 was ≈ 414 ms ±1.4 % across all four
+     (`SplitDepth` × `EnablePruning`) cells — showing the materialize path is
+     **insensitive** to the existing pruning / split-depth knobs, consistent with a
+     workload dominated by the `MaxDisplayedCount`-capped phase-1 sample emission plus
+     the phase-2 count-only DFS, not by search pruning.
+  3. **`run_benchmark` MEMORY against a new purpose-built
+     `AllModeMaterializeAllocationBenchmark`** — created on this branch with
+     `[MemoryDiagnoser]`, `[Params(15, 18)]`, and the same job settings
+     (3 warmups, 15 iterations) as `UniqueFastHalfBoardEvenOddBenchmark` and
+     `AllCountOnlyParallelScalingBenchmark`. Measured **N = 15 ≈ 82.40 ms ±1.40 %,
+     N = 18 ≈ 7,420.97 ms ±0.49 %** on the dev machine (i7-14700K, .NET 10.0.8),
+     preserved as
+     `NQueen.Benchmarking/BenchmarkDotNet.Artifacts/results/branch-baseline-all-mode-arraypool.md`.
+     The `[MemoryDiagnoser]` **also emitted no allocation columns** at either size —
+     when present, those columns are always reported, so their absence means per-op
+     allocations are below BenchmarkDotNet's reporting threshold (typically < ~1 KB).
+     The supplementary CPU trace included with the benchmark run
+     (`documentSessionId 93efc046-ed82-4ac6-a8e0-a439f215d463`) was **decisive**:
+     `BitboardNQueenSolver.Search(int, ulong, int, ulong, ulong, ulong)` at
+     **99.99 % Total / 99.99 % Self**, with the recursion shape rising from 0.43 % Self
+     at the outermost frame to 38.16 % / 28.11 % at depths 6–7. Source inspection
+     confirmed `BitboardNQueenSolver.Search`
+     (`NQueen.Kernel/Solvers/BitboardNQueenSolver.cs:95–122`) takes only `ulong` / `int`
+     arguments, performs zero managed allocations, holds zero stack arrays, and uses
+     zero `new` operators inside the recursion (the `// Allocation-free hot path`
+     comment in the source is accurate).
+
+  The decision gate established on the branch
+  (`branch-baseline-all-mode-arraypool.md`: allocation hotspot must surface AND
+  wall-clock A/B must clear ±1 % at N = 18 → ship; otherwise abandon) returned the
+  **negative branch**. The phase-1 sample DFS (`CollectAllSampleSolutionsDFS`) does
+  allocate a single `int[N]` per call and `int[N]` per solution copy at N > 25, but
+  terminates within milliseconds (capped at `SimulationSettings.MaxDisplayedCount`
+  samples) and is invisible against the 99.99 % Self of the phase-2 `Search`.
+  Similarly, `BitmaskSearchEngine.CreateState` allocations (`int[N]` queen rows,
+  `Frame[N]` stack, `int[N]` solution buffer) belong to `RunAllUnified`, which
+  `EnumerateAllAdaptive(countOnly: false)` deliberately skips at N ≥ 14 — they are
+  **never reached** on the path the ROADMAP candidate targets. **Outcome:** the
+  `ArrayPool<T>` candidate is abandoned, `perf/all-mode-arraypool` ships docs-only plus
+  the new `AllModeMaterializeAllocationBenchmark` as a **permanent regression guard**
+  for the All-mode materialize allocation surface (durable irrespective of the
+  experiment's outcome — it will catch any future regression on this path). The next
+  perf branch picks from `docs/ROADMAP.md → Backlog → Kernel Performance → Larger
+  wins, scoped risk`; the remaining candidates are **Symmetry reduction in All
+  count-only**, **Iterative core for All mode**, and **MRV heuristic**. Files changed:
+  `docs/ROADMAP.md` (Next session, Active branch row, Recently shipped, Larger wins
+  preamble + ArrayPool bullet struck through, the shipped depth-based work-stealing
+  bullet removed per the document convention), `CHANGELOG.md` (this entry),
+  `NQueen.Benchmarking/AllModeMaterializeAllocationBenchmark.cs` (new, ~50 lines), and
+  `NQueen.Benchmarking/BenchmarkDotNet.Artifacts/results/branch-baseline-all-mode-arraypool.md`
+  (new baseline document).
 - **`perf/cached-diagonal-shifts` — Candidate queue #2 profile-first investigation closed
   with a negative finding (no production-code changes shipped).** Branch opened off
   freshly-merged `main` (post-PR #15) with the explicit scope of *deciding* whether
