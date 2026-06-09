@@ -219,3 +219,15 @@ CoverageReport/*
 # -------------------------
 docs/ignored/
 
+# -------------------------
+# GitHub CLI / PR scratch files
+# Local scratch files used with `gh pr create --body-file` — never meant to be tracked.
+# -------------------------
+.pr-body.md
+.github/pr-body-*.md
+
+# -------------------------
+# Local benchmark capture logs (workflow scratch)
+# -------------------------
+ab-result.log
+

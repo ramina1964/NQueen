@@ -7,6 +7,52 @@ All notable changes to this project are documented here.
 ## [Unreleased]
 
 ### Performance
+- **Kernel performance — `BitboardNQueenSolver.CountSolutions` All-mode count-only DFS
+  core ported from recursive to iterative.** Branch `perf/all-mode-iterative-core` off
+  freshly-merged `main` (post-PR #19, `0582c13`); step 2.2 of the execution queue (from
+  `Backlog → Larger wins, scoped risk`). The recursive `Search` walked the bit-mask DFS via
+  ~10 G–90 G `call` / `ret` pairs on top of its useful work for N = 16 / N = 18; the
+  iterative port keeps the bit-mask state in registers and replaces the call stack with a
+  `Span<Frame> stack = stackalloc Frame[n - startRow]` (max 32 × 32 B = 1 KB on the stack,
+  comfortably below any default thread-stack reservation), with a leaf-shortcut
+  (`if (row + 1 == n) { count++; continue; }`) that skips the frame push for terminal rows.
+  Modelled on the existing iterative pattern in `BitmaskSearchEngine.MainLoopCountOnly`.
+  Same control flow at every dispatch site (parallel N ≥ 14 partitioner branch, parallel
+  N < 14 simple split, sequential, odd-N centre-row tail), same per-thread `Interlocked.Add`
+  reduction — behaviour-identical (oracle gate: 20 / 20 parity tests at N ∈ [1, 14] across
+  both parallel and sequential). **A/B measurement (new
+  `AllCountOnlyRecursiveVsIterativeBenchmark`, full job: 3 warmups, 15 iterations, both
+  cells in the same job for environment-controlled comparison):** N = 16 = 143.8 ms ->
+  139.3 ms (**-3.1 %**, ratio 0.97; CIs 99.9 % [142.6, 145.0] vs [138.5, 140.1],
+  non-overlapping by 2.5 ms); N = 18 = 7,314.9 ms -> 7,098.5 ms (**-3.0 %**, ratio 0.97;
+  CIs 99.9 % [7,258.2, 7,371.6] vs [7,075.0, 7,122.0], non-overlapping by 136.2 ms; 1
+  outlier of 7.16 s removed from the iterative cell). N = 18 throughput moved from ~91.6 M
+  to ~94.4 M solutions/sec on 28 logical cores. The decision gate (oracle parity at N ∈ [1,
+  14] AND > 1 % wall-clock improvement at N = 18 with non-overlapping 99.9 % CIs AND
+  non-regression at N = 16) cleared all three checks decisively. Plausible structural
+  reason: the contiguous `Span<Frame>` keeps the working set small and L1/L2-friendly
+  versus RyuJIT's recursive call frame, and the leaf-shortcut saves one frame push / pop
+  per leaf solution — at N = 18 (~91 G nodes after half-board reduction) that's a
+  meaningful amortised reduction. **First positive profile-driven finding after four
+  consecutive negatives** (`perf/unique-iterative-core`, `perf/cached-diagonal-shifts`,
+  `perf/all-mode-arraypool`, `perf/all-mode-symmetry-reduction`). Production swap
+  implemented as a rename rather than a method-name change: iterative `SearchIterative` →
+  `Search` (the production name is preserved), recursive `Search` → `SearchRecursive`
+  (kept `internal` so `AllCountOnlyRecursiveVsIterativeBenchmark` and the parity tests can
+  reach it via `InternalsVisibleTo`). All four production call sites of `CountSolutions`
+  (`BitmaskSolver.All.cs:79`, `BitmaskSolver.All.cs:111`, `BitmaskSolver.cs:280`,
+  `NQueenBench.cs:11`) were untouched. Correctness preserved (535 / 535 tests green across
+  `NQueen.UnitTests` + `NQueen.ViewModelTests`, including the +20 new parity tests:
+  `BitboardNQueenSolverTests.CountSolutions_Parallel_MatchesRecursive(n: 1..14)` × 14,
+  `BitboardNQueenSolverTests.CountSolutions_Sequential_MatchesRecursive(n: 1, 4, 5, 8, 11,
+  13)` × 6, `BitboardNQueenSolverTests.CountSolutionsRecursive_OutOfRange_Throws(n: 0, 33)`
+  × 2). The recursive baseline + new A/B benchmark stay as permanent regression guards.
+  Files changed: `NQueen.Kernel/Solvers/BitboardNQueenSolver.cs` (the rename + iterative
+  `Search` body + Frame record-struct + internal `CountSolutionsRecursive` mirror),
+  `NQueen.Kernel/NQueen.Kernel.csproj` (added `InternalsVisibleTo NQueen.Benchmarking`),
+  `NQueen.Benchmarking/AllModeBenchmarks.cs` (new
+  `AllCountOnlyRecursiveVsIterativeBenchmark`),
+  `NQueen.UnitTests/Tests/Kernel/BitboardNQueenSolverTests.cs` (new parity-test theories).
 - **Kernel performance — `BitboardNQueenSolver.CountSolutions` All-mode count-only parallel
   dispatch switched to a chunk-of-1 dynamic partitioner.** Branch `perf/all-work-stealing`
   off `main` (`f75c5ea`); Candidate queue #3 from the deferred perf track (source:
