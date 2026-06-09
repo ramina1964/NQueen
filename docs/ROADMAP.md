@@ -12,18 +12,24 @@ in the same change that touches `CHANGELOG.md`.
 
 ## Next session — start here
 
-> Updated after Option A shipped on `perf/all-work-stealing` (Candidate queue #3 closed
-> as a measurable win; see *Recently shipped* below). Branch is ready for merge to
-> `main`; next perf branch picks up a fresh candidate.
+> Updated after `perf/cached-diagonal-shifts` closed as the second profile-first negative
+> finding in the queue (Candidate queue #2 abandoned; see *Recently shipped* below). With
+> Candidate queue #3 shipped (PR #15 — `perf/all-work-stealing`) and queues #1 and #2 both
+> abandoned, the original Candidate queue is exhausted — the next perf branch picks from
+> the wider **Backlog → Kernel Performance → Larger wins, scoped risk** list below.
 
-**Active branch — none.** `perf/all-work-stealing` is complete pending merge. The branch
-shipped a **double win** in a single commit: the Option A chunk-of-1 partitioner swap
-applied independently to both the All-mode (`BitboardNQueenSolver.CountSolutions`) and
-Unique-mode (`BitmaskSolver.CountUniqueFastHalfBoard`) depth-2 parallel dispatch sites,
-clearing the ±1 % band by wide margins on both. Pick the next candidate from the queue
-below; the surviving high-confidence option is **Candidate queue #2 — Cached shifted
-diagonal masks** (still requires a line-level CPU trace to confirm the shifts are
-redundant before committing).
+**Active branch — `perf/cached-diagonal-shifts`.** Docs-only branch, complete pending merge.
+Opened off freshly-merged `main` (post-PR #15) to *decide* whether `(d1|bit)<<1` /
+`(d2|bit)>>1` in `CountCanonicalDFS`
+(`NQueen.Kernel/Solvers/BitmaskSolver.CountUnique.cs:207`) should be replaced with a
+per-row cached shifted-mask table, **before** writing the cache. Branch baseline
+established as `branch-baseline-cached-diagonal-shifts.md` (N = 16 ≈ 195.7 ms ±0.63 %,
+N = 17 ≈ 1,416.3 ms ±0.53 %). Line-level CPU attribution via `profile_unit_test` against
+`BitmaskSolverCountUniqueTests.CountUniqueAdaptive_PreservesPruningFlags(n: 16, …)`
+showed the diagonal shifts fold into the bit-scan loop's per-frame Self time with no
+separate sample band — the decision gate (≥ 2–3 % Self → write the cache; < 1 % or
+folded → abandon) returned the negative branch. Branch ships docs-only; next session
+picks from the Backlog.
 
 **Deferred perf track — context.** The notes below are the authoritative profiling
 record from `feature/kernel-perf-small-wins`. They guide candidate selection across
@@ -62,9 +68,22 @@ and profiling knowledge below, not faster code.
    bottom-heaviness reflects real bit-scan + arithmetic + diagonal-shift work in the
    deepest frames, not call-frame overhead the iterative port could remove. Skip on
    future branches.
-2. **Cached shifted diagonal masks** — remove repeated `(d1|bit)<<1` / `(d2|bit)>>1` in the
-   hottest loop. *Skeptical:* the shifts depend on a per-iteration `bit`, so capture a
-   line-level CPU trace to confirm there is real redundancy before committing.
+2. ~~**Cached shifted diagonal masks**~~ — _**ABANDONED (2026-06-10)**_ on
+   `perf/cached-diagonal-shifts` after a profile-first investigation closed it as the
+   second negative finding in the queue (matching the queue-#1 pattern from
+   `perf/unique-iterative-core`). Branch baseline re-established at
+   **N = 17 ≈ 1,416.3 ms ±0.53 %** (`branch-baseline-cached-diagonal-shifts.md`);
+   line-level CPU attribution via `profile_unit_test` against
+   `BitmaskSolverCountUniqueTests.CountUniqueAdaptive_PreservesPruningFlags(n: 16, …)`
+   confirmed the skeptical prior: the `(d1|bit)<<1` and `(d2|bit)>>1` expressions at
+   `BitmaskSolver.CountUnique.cs:207` do **not** surface as a separate sample band —
+   they fold into the recursive `CountCanonicalDFS` per-frame Self% (peak 14.66 % at
+   col 5, 13.85 % at col 6, 12.05 % at col 7) alongside `avail ^= bit`, `rows[col] = r`,
+   and the prune-gate branch. The decision gate (≥ 2–3 % Self attributable specifically
+   to the shifts → write the cache; < 1 % or folded into the bit-scan loop → abandon)
+   returned the negative branch. Because `bit = avail & -avail` is recomputed and unique
+   per iteration, a per-iteration "cache" can only rename the two ALU ops, not amortise
+   them. Skip on future branches.
 3. ~~**Depth-based work-stealing queue** for All mode at large N~~ — _**SHIPPED**
    (2026-06-09)_ on `perf/all-work-stealing`. Option A (chunk-of-1 dynamic partitioner
    over the existing depth-2 work items) cleared the ±1 % band decisively: N = 16
@@ -85,7 +104,7 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | `perf/all-work-stealing` — **complete pending merge.** Candidate queue #3 (depth-based work-stealing queue for All mode at large N) shipped as Option A: `Partitioner.Create(items, NoBuffering)` over the existing depth-2 items in `BitboardNQueenSolver.CountSolutions`, **plus the same one-line swap applied to the Unique-mode count-only hot path** (`BitmaskSolver.CountUniqueFastHalfBoard`). All-mode A/B at N = 16 / 18: **-17.0 % / -24.1 %**. Unique-mode A/B at N = 16 / 17: **-21.3 % / -31.1 %**. CIs non-overlapping at every N; 513 / 513 tests green. Full detail in `CHANGELOG.md [Unreleased] → Performance`. |
+| Active branch | `perf/cached-diagonal-shifts` — **docs-only, complete pending merge.** Candidate queue #2 (cached shifted diagonal masks in `CountCanonicalDFS`) abandoned as the second profile-first negative finding in the queue. Branch baseline `branch-baseline-cached-diagonal-shifts.md`: N = 16 ≈ 195.7 ms ±0.63 %, N = 17 ≈ 1,416.3 ms ±0.53 %. `profile_unit_test` against `BitmaskSolverCountUniqueTests.CountUniqueAdaptive_PreservesPruningFlags(n: 16, …)` showed the `(d1|bit)<<1` / `(d2|bit)>>1` expressions fold into the bit-scan loop's per-frame Self% with no separable sample band; decision gate returned the negative branch. No production-code changes. Full detail in `CHANGELOG.md [Unreleased] → Docs`. The previous active branch `perf/all-work-stealing` merged as **PR #15** (full A/B and correctness gates remain in `CHANGELOG.md [Unreleased] → Performance`). |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
 | Test count | **489 / 489 passing** (400 unit + 89 view-model). Down from 513 pre-Stage-6 because Stage 6 deleted one obsolete `ShouldIgnorePreSetCancellationFlag` test and consolidated the cancellation tests onto `CancellationTokenSource`s; net coverage of the cancellation surface is unchanged or improved. |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |
@@ -93,6 +112,24 @@ baseline before touching production code, per the team's MEASURE-first practice.
 
 ### Recently shipped (see `CHANGELOG.md` `[Unreleased]` for full detail)
 
+- `perf/cached-diagonal-shifts` — Candidate queue #2 closed as a profile-first negative
+  finding (docs-only branch, no production-code changes). Opened off freshly-merged `main`
+  (post-PR #15) to decide whether `(d1|bit)<<1` / `(d2|bit)>>1` in `CountCanonicalDFS`
+  (`BitmaskSolver.CountUnique.cs:207`) should be replaced with a per-row cached
+  shifted-mask table. Branch baseline `branch-baseline-cached-diagonal-shifts.md`:
+  N = 16 ≈ 195.7 ms ±0.63 %, N = 17 ≈ 1,416.3 ms ±0.53 %. Line-level CPU attribution via
+  `profile_unit_test` against
+  `BitmaskSolverCountUniqueTests.CountUniqueAdaptive_PreservesPruningFlags(n: 16, …)`:
+  **91.78 % Total inside the `Parallel.ForEach` body → recursive `CountCanonicalDFS`**,
+  with per-frame Self% peaking at 14.66 % (col 5), 13.85 % (col 6), 12.05 % (col 7). The
+  only non-trivial leaf was `BitOperations.TrailingZeroCount` at 5.17 % Self. **The
+  diagonal shifts did not surface as a separate sample band** — they fold into the
+  bit-scan loop's per-frame Self alongside `avail ^= bit`, `rows[col] = r`, and the
+  prune-gate branch. Decision gate (≥ 2–3 % Self attributable specifically to the shifts
+  → write the cache; < 1 % or folded → abandon) returned the negative branch. The
+  skeptical prior in the original Candidate queue #2 entry is now empirically confirmed:
+  because `bit = avail & -avail` is recomputed and unique per iteration, a per-iteration
+  "cache" can only rename the two ALU ops, not amortise them. Branch ships docs-only.
 - Unique-mode parallel count-only partitioner swap (`perf/all-work-stealing`, same commit
   as the All-mode entry below): apply the identical chunk-of-1
   `Partitioner.Create(items, NoBuffering)` swap to the depth-2 dispatch in
@@ -200,12 +237,12 @@ effort × expected impact.
 
 ### Larger wins, scoped risk
 
-> _Three of the items below — **Iterative core for the Unique hot path**, **Cached shifted
-> diagonal masks**, and **Depth-based work-stealing queue (All mode)** — are also tracked
-> in the **Candidate queue** under *Next session — start here* with selection rationale,
-> a "MEASURE first" baseline, and an "ACTIVE this session" marker for whichever is currently
-> being experimented on. Treat the *Next session* block as the live picker and this list as
-> the wider perf inventory._
+> _All three original Candidate-queue items above are now resolved: **Depth-based
+> work-stealing queue (All mode)** shipped on `perf/all-work-stealing` (PR #15), and
+> both **Iterative core for the Unique hot path** and **Cached shifted diagonal masks**
+> were abandoned as profile-first negative findings (see the Candidate-queue entries
+> for the trace evidence). The list below is the wider perf inventory for the next
+> picker._
 
 - **Depth-based work-stealing queue** for All mode at large N — replace root-only
   scheduling with a `ConcurrentQueue<PartialState>` consumed by worker threads to
@@ -215,8 +252,9 @@ effort × expected impact.
 - **`ArrayPool<T>`** for column / diagonal / row stacks to reduce GC pressure at N ≥ 18.
 - **Iterative core for All mode** — port Unique's allocation-free iterative DFS.
 - **MRV heuristic** for next-column branch ordering (cost / benefit needs benchmarking).
-- **Cached shifted diagonal masks** per row to remove repeated `(d1|bit)<<1` /
-  `(d2|bit)>>1` in the hottest loop.
+- ~~**Cached shifted diagonal masks** per row to remove repeated `(d1|bit)<<1` /
+  `(d2|bit)>>1` in the hottest loop.~~ _Abandoned 2026-06-10 on `perf/cached-diagonal-shifts`
+  — see Candidate queue #2 entry above for trace evidence._
 
 ### Investigations
 

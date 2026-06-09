@@ -67,6 +67,45 @@ All notable changes to this project are documented here.
   File changed: `NQueen.Kernel/Solvers/BitmaskSolver.CountUnique.cs` (~3 lines + comment).
 
 ### Docs
+- **`perf/cached-diagonal-shifts` — Candidate queue #2 profile-first investigation closed
+  with a negative finding (no production-code changes shipped).** Branch opened off
+  freshly-merged `main` (post-PR #15) with the explicit scope of *deciding* whether
+  `(d1|bit)<<1` / `(d2|bit)>>1` in `CountCanonicalDFS`
+  (`NQueen.Kernel/Solvers/BitmaskSolver.CountUnique.cs:207`) should be replaced with a
+  per-row cached shifted-mask table, **before** writing the cache. Re-ran
+  `UniqueFastHalfBoardEvenOddBenchmark` under the full job (3 warmups, 15 iterations) on
+  this `main` build to re-establish a baseline — **N = 16 ≈ 195.7 ms ±0.63 %, N = 17 ≈
+  1,416.3 ms ±0.53 %** on the dev machine (i7-14700K, .NET 10.0.8), preserved as
+  `NQueen.Benchmarking/BenchmarkDotNet.Artifacts/results/branch-baseline-cached-diagonal-shifts.md`.
+  Both values agree with the PR #15 post-merge measurement to within −0.05 % / −0.22 %,
+  well inside the ±1 % noise band. Line-level attribution was then collected via
+  `profile_unit_test` against
+  `BitmaskSolverCountUniqueTests.CountUniqueAdaptive_PreservesPruningFlags(n: 16, initialFlags: False)`
+  (the N = 16 case routes through `CountUniqueFastHalfBoard` → `CountCanonicalDFS`, the
+  same hook that produced the queue-#1 negative finding on `perf/unique-iterative-core`).
+  Result: **91.78 % Total inside the `Parallel.ForEach` body → recursive
+  `CountCanonicalDFS`**, with per-frame Self% peaking at 14.66 % (col 5), 13.85 %
+  (col 6), 12.05 % (col 7) and tapering as the recursion unwinds (col 4 = 9.15 %, col 3
+  = 4.87 %, col 2 = 1.96 %). The only non-trivial leaf in the trace was
+  `BitOperations.TrailingZeroCount` at **5.17 % Self** (out-of-line despite its
+  `[AggressiveInlining]` attribute, matching the queue-#1 trace). **The `(d1|bit)<<1`
+  and `(d2|bit)>>1` expressions on `BitmaskSolver.CountUnique.cs:207` did NOT surface as
+  a separate sample band** — they fold into the recursive `CountCanonicalDFS` per-frame
+  Self% alongside the bit-scan loop body (`avail ^= bit`, `rows[col] = r`, the prune-gate
+  branch). The decision gate established on the branch (≥ 2–3 % Self attributable
+  specifically to the shifts → write the cache; < 1 % or folded into the bit-scan loop
+  → document negative finding and abandon) returned the **negative branch**. This
+  empirically confirms the skeptical prior recorded in the original Candidate queue #2
+  entry: because `bit = avail & -avail` is recomputed inside the loop and unique per
+  iteration, a per-iteration "cache" of `(d1|bit)<<1` / `(d2|bit)>>1` cannot amortise
+  across iterations — it would only rename two ALU ops that the JIT has already compiled
+  into the bit-scan loop's per-frame Self time. **Outcome:** the per-row
+  shifted-diagonal-mask table is abandoned, `perf/cached-diagonal-shifts` ships docs-only,
+  and the next perf branch picks from `docs/ROADMAP.md → Backlog → Kernel Performance →
+  Larger wins, scoped risk` (the original Candidate queue is now exhausted: queue #1
+  abandoned, queue #2 abandoned, queue #3 shipped as PR #15). ROADMAP "Next session",
+  "Candidate queue #2", "Current State → Active branch", "Recently shipped", and the
+  "Backlog → Larger wins" preamble + bullet are updated to match.
 - **`perf/all-work-stealing` opened off `main` (`f75c5ea`) — Candidate queue #3: depth-based work-stealing queue for All mode.** Branch targets the documented tail-imbalance at large N on >8 cores with the current root-only `Parallel.ForEach` scheduling (source: `docs/ignored/Archive/Potential All Mode Improvements.txt:1-20`). ROADMAP "Next session", "Candidate queue #3", and "Current State → Active branch" updated to reflect the new active branch.
 - **`perf/unique-iterative-core` — Option C profile-first investigation closed with a
   negative finding (no production-code changes shipped).** Branch was opened off
