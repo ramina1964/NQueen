@@ -3,7 +3,6 @@ namespace NQueen.Benchmarking;
 /// <summary>All-mode count-only at N=18 — single-size focused timing.</summary>
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
-[CPUUsageDiagnoser]
 public class AllCountOnlyN18Benchmark
 {
     [Params(18)]

@@ -2,7 +2,6 @@ namespace NQueen.Benchmarking;
 
 [MemoryDiagnoser]
 [ThreadingDiagnoser]
-[CPUUsageDiagnoser]
 public class NQueenBench
 {
     [Params(20)]

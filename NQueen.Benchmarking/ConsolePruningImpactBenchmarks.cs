@@ -13,7 +13,6 @@ namespace NQueen.Benchmarking;
 /// </summary>
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
-[CPUUsageDiagnoser]
 [ShortRunJob]
 [WarmupCount(2)]
 [IterationCount(5)]
@@ -65,7 +64,6 @@ public class ConsolePruningImpactAllBenchmark
 /// <summary>Same comparison for Unique mode.</summary>
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
-[CPUUsageDiagnoser]
 [ShortRunJob]
 [WarmupCount(2)]
 [IterationCount(5)]

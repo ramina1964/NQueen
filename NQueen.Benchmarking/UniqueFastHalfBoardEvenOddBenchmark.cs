@@ -12,18 +12,15 @@ namespace NQueen.Benchmarking;
 /// reproducible but with wide confidence intervals.
 /// </summary>
 [SimpleJob(warmupCount: 3, iterationCount: 15)]
-[CPUUsageDiagnoser]
 public class UniqueFastHalfBoardEvenOddBenchmark
 {
     [Params(16, 17)]
     public int BoardSize { get; set; }
 
-    private readonly ISolutionFormatter _formatter = new NoopFormatter();
-
     [Benchmark(Description = "Unique Count-Only Fast Half-Board (N=16,17)")]
     public ulong Unique_CountOnly_HalfBoard()
     {
-        using var solver = new BitmaskSolver(BoardSize, SolutionMode.Unique, DisplayMode.Hide, _formatter)
+        using var solver = new BitmaskSolver(BoardSize, SolutionMode.Unique, DisplayMode.Hide, new NoopFormatter())
         {
             EnableEvents = false,
             UseParallel = true,

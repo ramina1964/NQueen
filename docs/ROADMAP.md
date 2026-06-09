@@ -12,85 +12,41 @@ in the same change that touches `CHANGELOG.md`.
 
 ## Next session — start here
 
-> Updated after merging the `refactor/event-migration` PR into `main` (2026-06-08, squash `f75c5ea`).
+> Updated after opening `perf/all-work-stealing` off `main` (`f75c5ea`).
 
-**Active branch — `perf/unique-iterative-core`.** Off freshly-merged `main` (`f75c5ea`). The
-event-migration track is shipped (Stages 0–6 + Stage 4 follow-up + the
-`EnumerateVisualizeAdaptive` consolidation + the post-migration docs sweep) — see
-`CHANGELOG.md` `[Unreleased]`. The *deferred perf track* below is now active: pick **one**
-candidate per branch, MEASURE first, A/B against the frozen baseline.
+**Active branch — `perf/all-work-stealing`.** Off `main` (`f75c5ea`). The
+`perf/unique-iterative-core` negative finding is on `main`; the deferred-perf
+track continues with Candidate queue #3 — MEASURE first, A/B against the frozen
+baseline.
 
-> 🎯 **This session's experiment — Profile-first investigation of `CountCanonicalDFS`.**
-> The branch was originally opened to port `CountCanonicalDFS` to an iterative DFS, on the
-> theory that the bottom-heavy recursion profile (~97 % of self-CPU in the loop body,
-> deepest two frames carrying ~69 % of self-time) implied real call/ret overhead. Reviewing
-> the archive in `docs/ignored/` before writing any code surfaced a counter-signal that
-> downgraded the experiment from "high confidence" to "needs evidence":
->
-> > _The most recent perf round (`feature/kernel-perf-small-wins`) explicitly tried to
-> > reduce per-recursion work — saving/restoring ref state around the recursive call to
-> > eliminate per-branch flag copies — and produced **no measurable speedup**. That
-> > finding is closely adjacent to "remove call/ret overhead", and it strongly suggests
-> > the recursion is **not** the dominant cost the profile shape would naïvely imply._
->
-> What the archive **does not** contain: any record of an iterative-core port of
-> `CountCanonicalDFS` itself (the "iterative" mentions in
-> `docs/ignored/Archive/Potential All Mode Improvements.txt` refer to the earlier,
-> superseded `CanonicalUniqueSearchEngine` and to the still-pending **All-mode** port,
-> not to the current Unique count path). So the experiment is novel, but the evidence
-> for the win is weaker than first claimed.
->
-> **Pivot — Option C (profile-first), no production-code changes this session.** Capture
-> a fresh line-level / instruction-level CPU trace on `CountCanonicalDFS` before deciding
-> whether to ship an iterative port. The trace either confirms call/ret + register
-> save/restore is a measurable share of self-CPU (→ proceed with the port on its own
-> branch with high confidence), or refutes it (→ close `perf/unique-iterative-core`
-> without code changes, record the negative finding here, pick a different candidate).
+> 🎯 **This session's experiment — Depth-based work-stealing queue for All mode.**
+> Evidence: `docs/ignored/Archive/Potential All Mode Improvements.txt:1-20` documents
+> tail-imbalance at large N on >8 cores with the current root-only `Parallel.ForEach`
+> scheduling. The hypothesis is that replacing root-only scheduling with a
+> `ConcurrentQueue<PartialState>` consumed by worker threads will reduce tail imbalance
+> and improve wall-clock at large N (e.g. N ≥ 16) on the dev machine (i7-14700K, 28
+> logical / 20 physical cores).
 >
 > **Plan of work (in order):**
-> 1. **MEASURE first ✅ done (2026-06-08).** Re-ran `UniqueFastHalfBoardEvenOddBenchmark`
->    on freshly-merged `main` (`f75c5ea`) under the full job (3 warmups, 15 iterations).
->    New authoritative baseline on the dev machine (i7-14700K, 28 logical / 20 physical):
->    **N=16 ≈ 254.8 ms ±1.25 %, N=17 ≈ 2,103.0 ms ±0.93 %**. About 3–4 % slower than the
->    pre-event-migration target (244 / 2,042 ms) — small but outside the previous ±1 %
->    band, so the table-of-record numbers are updated below to match what re-runs on
->    `main` will see.
-> 2. **Capture a line-level / instruction-level CPU profile ✅ trace captured (2026-06-08).**
->    The same benchmark was re-run with `[CPUUsageDiagnoser]` to drop a CPU sampling ETL
->    next to the results at
->    `NQueen.Benchmarking/BenchmarkDotNet.Artifacts/BenchmarkDotNet_UniqueFastHalfBoardEvenOddBenchmark_20260608_213732/1804E697-BC82-40D3-95F7-7D72D3B9E9D5/sc.user_aux.etl(x)`.
->    `analyze_perf_trace` returned no findings against the raw ETL, so we pivoted to
->    `profile_unit_test` against `BitmaskSolverCountUniqueTests.CountUniqueAdaptive_PreservesPruningFlags(n: 16, …)`
->    for line-level attribution. Result: ~90 % Total inside the `Parallel.ForEach` body →
->    `CountCanonicalDFS` recursion, with the deepest two frames (cols 13–14) carrying
->    16–19 % Self each, cols 10–12 carrying 6–17 % Self each. The single non-trivial leaf
->    that surfaced was `BitOperations.TrailingZeroCount` at **5.01 % Self** — out-of-line
->    despite its `[AggressiveInlining]` attribute. No call/ret/prologue/epilogue bucket
->    was visible as a separate sample group at all (bucket **(b)** was empirically near
->    zero).
-> 3. **Decide ✅ done — negative finding (2026-06-08).** Bucket **(b)** never materialised
->    in the trace, so the original ≥ 8 % gate cannot trigger. To rule out the only
->    candidate that *did* show up — the 5 % TZCNT leaf — we ran a one-line pre-experiment
->    (Option C-2): replaced the `BitOperations.TrailingZeroCount` call in the hot loop
->    with a hand-routed `Bmi1.X64.TrailingZeroCount` intrinsic via a `[AggressiveInlining]`
->    `Tzcnt64` helper. Re-profile confirmed the leaf physically disappeared (RyuJIT
->    inlined the helper) and the recovered cycles redistributed cleanly into the
->    surrounding cols-10..14 frames. **Wall-clock did not move** —
->    N = 16 = 256.557 ms ±1.11 % vs baseline 254.8 ms ±1.25 % (+0.7 %, fully inside both
->    noise bands); N = 17 short run produced 2.1253 s and 2.0979 s before the diagnoser
->    hung, both inside baseline 2,103.0 ms ±0.93 %. The 5 % attribution was sampling
->    noise around the call site, not real wall-clock work the JIT could remove. The C-2
->    change was reverted (no production code shipped on this branch); the iterative-DFS
->    port is **abandoned** because the bucket it would target does not exist on this
->    workload.
-> 4. **No production-code changes on this branch.** The branch carries only docs +
->    profiling artefacts (`BenchmarkDotNet.Artifacts/`). Closing `perf/unique-iterative-core`
->    with the negative finding above; the next branch picks up **work-stealing for All mode**
->    (Candidate queue #3 below) per the documented tail-imbalance evidence in
->    `docs/ignored/Archive/Potential All Mode Improvements.txt:1-20`.
+> 1. **MEASURE first** — re-run `UniqueFastHalfBoardEvenOddBenchmark` (full job: 3 warmups,
+>    15 iterations, N=16 even + N=17 odd) on freshly-checked-out `perf/all-work-stealing`
+>    to re-establish the baseline before touching any production code. Authoritative
+>    reference: **N=16 ≈ 254.8 ms (±1.25 %), N=17 ≈ 2,103.0 ms (±0.93 %)** from
+>    `main` `f75c5ea` (2026-06-08).
+> 2. **Design the work-stealing structure** — decide queue granularity (depth-2 partial
+>    states vs. deeper), work-item representation (`PartialState` struct carrying
+>    cols/d1/d2 masks + current depth), and thread-count strategy (fixed pool vs.
+>    `Environment.ProcessorCount`).
+> 3. **Implement on All-mode path only** — modify `BitmaskSolver.All.cs`; leave Unique
+>    path untouched.
+> 4. **A/B benchmark** — run `UniqueFastHalfBoardEvenOddBenchmark` (and a new All-mode
+>    equivalent benchmark if one does not exist) with the same full-job settings to
+>    measure the delta.
+> 5. **Decide** — if wall-clock improvement exceeds the ±1 % noise band at N ≥ 16, ship;
+>    otherwise record the negative finding and close the branch docs-only.
 >
-> **Out of scope for this branch:** writing the iterative port, the All-mode iterative
-> core port, MRV ordering, `ArrayPool<T>` for stacks, and the cached-mask experiment.
+> **Out of scope for this branch:** Unique-mode work-stealing, MRV ordering,
+> `ArrayPool<T>` for stacks, cached diagonal masks, and iterative All-mode core.
 > Each gets its own `perf/<specific-name>` branch per the rule below.
 
 **Deferred perf track — context.** The notes below are the authoritative profiling
@@ -134,10 +90,10 @@ and profiling knowledge below, not faster code.
    hottest loop. *Skeptical:* the shifts depend on a per-iteration `bit`, so capture a
    line-level CPU trace to confirm there is real redundancy before committing.
 3. **Depth-based work-stealing queue** for All mode at large N (tail-imbalance on >8 cores)
-   — **next branch** once `perf/unique-iterative-core` is closed.
+   — **🎯 active on `perf/all-work-stealing`**.
 
 **Process (rule).** Branch off freshly-merged `main` with a name tied to the *specific*
-experiment (e.g. `perf/unique-iterative-core`, not a generic "small-wins" name) so the
+experiment (e.g. `perf/all-work-stealing`, not a generic "small-wins" name) so the
 branch can't over-promise. Run `UniqueFastHalfBoardEvenOddBenchmark` to re-establish the
 baseline before touching production code, per the team's MEASURE-first practice.
 
@@ -148,7 +104,7 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | `perf/unique-iterative-core` (deferred-perf candidate #1, **closing — negative finding, no production-code changes shipped**: profile-first investigation completed, no recoverable bucket exists. Steps 1–2 ✅ baseline + ETL. Step 3 ✅ — `profile_unit_test` showed the call/ret bucket is empirically near-zero; the only leaf in the trace, `BitOperations.TrailingZeroCount` at 5.01 % Self, was disproved by a Tzcnt64-intrinsic pre-experiment (RyuJIT inlined the helper, the leaf vanished, wall-clock unchanged at N = 16 = +0.7 % within ±1.11 % noise). The C-2 change was reverted; the iterative-DFS port is abandoned. Next branch picks up Candidate queue #3, **work-stealing for All mode**.). `main` at `f75c5ea` (PR #13 `refactor/event-migration` event→push-sink migration squash-merged). |
+| Active branch | `perf/all-work-stealing` — Candidate queue #3: depth-based work-stealing queue for All mode at large N (tail-imbalance on >8 cores). Branch opened off `main` (`f75c5ea`). Step 1 pending: re-run `UniqueFastHalfBoardEvenOddBenchmark` to re-establish baseline before touching production code. |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
 | Test count | **489 / 489 passing** (400 unit + 89 view-model). Down from 513 pre-Stage-6 because Stage 6 deleted one obsolete `ShouldIgnorePreSetCancellationFlag` test and consolidated the cancellation tests onto `CancellationTokenSource`s; net coverage of the cancellation surface is unchanged or improved. |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |

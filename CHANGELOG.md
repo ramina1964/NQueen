@@ -7,6 +7,7 @@ All notable changes to this project are documented here.
 ## [Unreleased]
 
 ### Docs
+- **`perf/all-work-stealing` opened off `main` (`f75c5ea`) — Candidate queue #3: depth-based work-stealing queue for All mode.** Branch targets the documented tail-imbalance at large N on >8 cores with the current root-only `Parallel.ForEach` scheduling (source: `docs/ignored/Archive/Potential All Mode Improvements.txt:1-20`). ROADMAP "Next session", "Candidate queue #3", and "Current State → Active branch" updated to reflect the new active branch.
 - **`perf/unique-iterative-core` — Option C profile-first investigation closed with a
   negative finding (no production-code changes shipped).** Branch was opened off
   freshly-merged `main` (`f75c5ea`) with the explicit scope of *deciding* whether
