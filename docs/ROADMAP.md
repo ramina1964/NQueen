@@ -12,42 +12,18 @@ in the same change that touches `CHANGELOG.md`.
 
 ## Next session — start here
 
-> Updated after opening `perf/all-work-stealing` off `main` (`f75c5ea`).
+> Updated after Option A shipped on `perf/all-work-stealing` (Candidate queue #3 closed
+> as a measurable win; see *Recently shipped* below). Branch is ready for merge to
+> `main`; next perf branch picks up a fresh candidate.
 
-**Active branch — `perf/all-work-stealing`.** Off `main` (`f75c5ea`). The
-`perf/unique-iterative-core` negative finding is on `main`; the deferred-perf
-track continues with Candidate queue #3 — MEASURE first, A/B against the frozen
-baseline.
-
-> 🎯 **This session's experiment — Depth-based work-stealing queue for All mode.**
-> Evidence: `docs/ignored/Archive/Potential All Mode Improvements.txt:1-20` documents
-> tail-imbalance at large N on >8 cores with the current root-only `Parallel.ForEach`
-> scheduling. The hypothesis is that replacing root-only scheduling with a
-> `ConcurrentQueue<PartialState>` consumed by worker threads will reduce tail imbalance
-> and improve wall-clock at large N (e.g. N ≥ 16) on the dev machine (i7-14700K, 28
-> logical / 20 physical cores).
->
-> **Plan of work (in order):**
-> 1. **MEASURE first** — re-run `UniqueFastHalfBoardEvenOddBenchmark` (full job: 3 warmups,
->    15 iterations, N=16 even + N=17 odd) on freshly-checked-out `perf/all-work-stealing`
->    to re-establish the baseline before touching any production code. Authoritative
->    reference: **N=16 ≈ 254.8 ms (±1.25 %), N=17 ≈ 2,103.0 ms (±0.93 %)** from
->    `main` `f75c5ea` (2026-06-08).
-> 2. **Design the work-stealing structure** — decide queue granularity (depth-2 partial
->    states vs. deeper), work-item representation (`PartialState` struct carrying
->    cols/d1/d2 masks + current depth), and thread-count strategy (fixed pool vs.
->    `Environment.ProcessorCount`).
-> 3. **Implement on All-mode path only** — modify `BitmaskSolver.All.cs`; leave Unique
->    path untouched.
-> 4. **A/B benchmark** — run `UniqueFastHalfBoardEvenOddBenchmark` (and a new All-mode
->    equivalent benchmark if one does not exist) with the same full-job settings to
->    measure the delta.
-> 5. **Decide** — if wall-clock improvement exceeds the ±1 % noise band at N ≥ 16, ship;
->    otherwise record the negative finding and close the branch docs-only.
->
-> **Out of scope for this branch:** Unique-mode work-stealing, MRV ordering,
-> `ArrayPool<T>` for stacks, cached diagonal masks, and iterative All-mode core.
-> Each gets its own `perf/<specific-name>` branch per the rule below.
+**Active branch — none.** `perf/all-work-stealing` is complete pending merge. The branch
+shipped a **double win** in a single commit: the Option A chunk-of-1 partitioner swap
+applied independently to both the All-mode (`BitboardNQueenSolver.CountSolutions`) and
+Unique-mode (`BitmaskSolver.CountUniqueFastHalfBoard`) depth-2 parallel dispatch sites,
+clearing the ±1 % band by wide margins on both. Pick the next candidate from the queue
+below; the surviving high-confidence option is **Candidate queue #2 — Cached shifted
+diagonal masks** (still requires a line-level CPU trace to confirm the shifts are
+redundant before committing).
 
 **Deferred perf track — context.** The notes below are the authoritative profiling
 record from `feature/kernel-perf-small-wins`. They guide candidate selection across
@@ -89,8 +65,13 @@ and profiling knowledge below, not faster code.
 2. **Cached shifted diagonal masks** — remove repeated `(d1|bit)<<1` / `(d2|bit)>>1` in the
    hottest loop. *Skeptical:* the shifts depend on a per-iteration `bit`, so capture a
    line-level CPU trace to confirm there is real redundancy before committing.
-3. **Depth-based work-stealing queue** for All mode at large N (tail-imbalance on >8 cores)
-   — **🎯 active on `perf/all-work-stealing`**.
+3. ~~**Depth-based work-stealing queue** for All mode at large N~~ — _**SHIPPED**
+   (2026-06-09)_ on `perf/all-work-stealing`. Option A (chunk-of-1 dynamic partitioner
+   over the existing depth-2 work items) cleared the ±1 % band decisively: N = 16
+   **-17.0 %** (151.0 ms vs 182.0 ms baseline), N = 18 **-24.1 %** (7.39 s vs 9.74 s
+   baseline), CIs non-overlapping at both Ns. Option B (true work-stealing queue) was
+   designed but not needed. See *Recently shipped* and `CHANGELOG.md [Unreleased] →
+   Performance` for the full A/B numbers, hypothesis confirmation, and correctness gates.
 
 **Process (rule).** Branch off freshly-merged `main` with a name tied to the *specific*
 experiment (e.g. `perf/all-work-stealing`, not a generic "small-wins" name) so the
@@ -104,7 +85,7 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | `perf/all-work-stealing` — Candidate queue #3: depth-based work-stealing queue for All mode at large N (tail-imbalance on >8 cores). Branch opened off `main` (`f75c5ea`). Step 1 pending: re-run `UniqueFastHalfBoardEvenOddBenchmark` to re-establish baseline before touching production code. |
+| Active branch | `perf/all-work-stealing` — **complete pending merge.** Candidate queue #3 (depth-based work-stealing queue for All mode at large N) shipped as Option A: `Partitioner.Create(items, NoBuffering)` over the existing depth-2 items in `BitboardNQueenSolver.CountSolutions`, **plus the same one-line swap applied to the Unique-mode count-only hot path** (`BitmaskSolver.CountUniqueFastHalfBoard`). All-mode A/B at N = 16 / 18: **-17.0 % / -24.1 %**. Unique-mode A/B at N = 16 / 17: **-21.3 % / -31.1 %**. CIs non-overlapping at every N; 513 / 513 tests green. Full detail in `CHANGELOG.md [Unreleased] → Performance`. |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
 | Test count | **489 / 489 passing** (400 unit + 89 view-model). Down from 513 pre-Stage-6 because Stage 6 deleted one obsolete `ShouldIgnorePreSetCancellationFlag` test and consolidated the cancellation tests onto `CancellationTokenSource`s; net coverage of the cancellation surface is unchanged or improved. |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |
@@ -112,6 +93,29 @@ baseline before touching production code, per the team's MEASURE-first practice.
 
 ### Recently shipped (see `CHANGELOG.md` `[Unreleased]` for full detail)
 
+- Unique-mode parallel count-only partitioner swap (`perf/all-work-stealing`, same commit
+  as the All-mode entry below): apply the identical chunk-of-1
+  `Partitioner.Create(items, NoBuffering)` swap to the depth-2 dispatch in
+  `BitmaskSolver.CountUniqueFastHalfBoard` (`BitmaskSolver.CountUnique.cs:90`). A/B under
+  `UniqueFastHalfBoardEvenOddBenchmark` (full job, 3 warmups / 15 iterations): N = 16
+  -21.3 % (248.9 -> 195.8 ms), N = 17 -31.1 % (2,059.2 -> 1,419.5 ms), CIs non-overlapping at
+  both Ns. The N = 17 delta is in fact *larger* than the All-mode N = 18 delta because
+  fewer total items relative to 28 logical cores makes the static-partitioner imbalance
+  worse to start with. 513 / 513 tests green across `NQueen.UnitTests` + `NQueen.ViewModelTests`.
+  Code change: ~3 lines + a comment in `BitmaskSolver.CountUnique.cs`. The companion
+  engine-path `Parallel.ForEach` in `BitmaskParallelEngine.Unique.cs` is deliberately
+  untouched (only reachable for N < 16 count-only or for materialize/visualize paths).
+- All-mode parallel count-only partitioner swap (`perf/all-work-stealing`): wrap the
+  existing depth-2 work-item array in `Partitioner.Create(items, NoBuffering)` inside
+  `BitboardNQueenSolver.CountSolutions` so each worker pulls one item at a time instead of
+  the default static range partitioning. Per-item cost spans orders of magnitude (centre-row
+  first queens vs edge-row), so the dynamic dispatcher recovers tail-imbalance idle time.
+  A/B under new `AllCountOnlyParallelScalingBenchmark` (full job, 3 warmups / 15
+  iterations): N = 16 -17.0 % (182.0 -> 151.0 ms), N = 18 -24.1 % (9.74 -> 7.39 s), CIs
+  non-overlapping at both Ns. Throughput at N = 18 on 28 logical cores: ~68 M -> ~90 M
+  solutions/sec. 424 / 424 unit tests green; Unique-mode regression-guard benchmark
+  unaffected (Unique path is untouched). Code change: ~5 lines + a comment in
+  `BitboardNQueenSolver.cs` plus the new benchmark harness in `AllModeBenchmarks.cs`.
 - Event migration (`refactor/event-migration`, PR #13, squash `f75c5ea`): replaced the
   `BitmaskSolver` `event` surface (`QueenPlaced` / `SolutionFound` / `ProgressValueChanged` +
   `SetSimulationToken` + `IsSolverCanceled`) with per-call push sinks on `SimulationContext` —

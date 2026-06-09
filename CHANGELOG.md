@@ -6,6 +6,66 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Performance
+- **Kernel performance — `BitboardNQueenSolver.CountSolutions` All-mode count-only parallel
+  dispatch switched to a chunk-of-1 dynamic partitioner.** Branch `perf/all-work-stealing`
+  off `main` (`f75c5ea`); Candidate queue #3 from the deferred perf track (source:
+  `docs/ignored/Archive/Potential All Mode Improvements.txt:1-20`). The N >= 14 branch of
+  `CountSolutions` previously fed the depth-2 work-item array directly to
+  `Parallel.ForEach(items, ...)`, which uses a static range partitioner; on the dev machine
+  (i7-14700K, 28 logical / 20 physical cores) that left tail stragglers because per-item
+  cost spans orders of magnitude — centre-row first queens generate far larger subtrees
+  than edge-row ones, so equal-count ranges produce wildly unequal wall-clock. The fix
+  wraps the items array in
+  `Partitioner.Create(items, EnumerablePartitionerOptions.NoBuffering)` so each worker
+  pulls one item at a time and fast workers help drain the heavy items. Same items, same
+  `Search` recursion, same per-thread reduction via `Interlocked.Add` — behaviour-identical.
+  **A/B measurement (new `AllCountOnlyParallelScalingBenchmark`, full job: 3 warmups, 15
+  iterations):** N = 16 = 182.0 ms -> 151.0 ms (**-17.0 %**, CI 99.9 % [180.1, 183.9] ->
+  [149.5, 152.4], gap 27.7 ms with no overlap); N = 18 = 9,738 ms -> 7,389 ms (**-24.1 %**,
+  CI 99.9 % [9,669, 9,807] -> [7,291, 7,487], gap 2,182 ms with no overlap). N = 18
+  throughput moved from ~68 M to ~90 M solutions/sec on 28 logical cores. The larger win at
+  N = 18 vs N = 16 matches the hypothesis: tail imbalance grows with subtree size, so the
+  heavier the workload, the more headroom the dynamic partitioner recovers. Correctness
+  preserved (424 / 424 unit tests green, including every All-mode count-only parallel gate:
+  `BitboardNQueenSolverTests.CountSolutions_Parallel_*`,
+  `LargeBoardAllSolutionCountsTests.AllMode_CountOnly_LargeBoards_Exact(n: 15)`,
+  `HalfBoardFlagAllModeTests.CountOnly_AllMode_FlagOn_MatchesExpected(n: 15, 16, 17)`,
+  `SolverParallelConsistencyTests.ParallelVsSequential_CountsMatch(n: 9..12, mode: All)`,
+  `Slow.AllMode_CountOnly_LargeBoards_TotalMatches(n: 9..14)`,
+  `BitmaskSolverAllModeTests.AllMode_CountOnly_N14_RoutesThroughBitboardCountSolutions`).
+  Option B (a true `ConcurrentQueue<PartialState>` with depth-3 splitting and
+  `LongRunning` Tasks) was designed as an escalation but is **not needed** for the current
+  N range — Option A already cleared the ±1 % noise band at both measured board sizes.
+  Files changed: `NQueen.Kernel/Solvers/BitboardNQueenSolver.cs` (the partitioner swap,
+  ~5 lines + comment) and `NQueen.Benchmarking/AllModeBenchmarks.cs` (new
+  `AllCountOnlyParallelScalingBenchmark`, `[Params(16, 18)]`, same job settings as the
+  Unique guard).
+- **Kernel performance — `BitmaskSolver.CountUniqueFastHalfBoard` Unique-mode count-only
+  parallel dispatch switched to the same chunk-of-1 dynamic partitioner.** Same commit /
+  same branch as the All-mode fix above. The half-board parallel DFS at
+  `NQueen.Kernel/Solvers/BitmaskSolver.CountUnique.cs:90` previously fed its depth-2
+  work-item array (built by `BuildUniqueDepth2WorkItems`, col-0 restricted to the top half)
+  directly into `Parallel.ForEach(items, …)` with the default static range partitioner.
+  Even though the canonical-prune gate (`EnablePartialReflectionPruning`) damps the
+  first-queen variance somewhat, item-count-to-cores ratios at N = 16 / 17 are low enough
+  that static slicing still leaves stragglers on 28 logical cores. The fix is one line —
+  wrap the items array in `Partitioner.Create(items, EnumerablePartitionerOptions.NoBuffering)`
+  so each worker pulls one item at a time. Same items, same `CountCanonicalDFS` recursion,
+  same per-thread `Interlocked.Add` reduction — behaviour-identical. **A/B measurement
+  (`UniqueFastHalfBoardEvenOddBenchmark`, full job: 3 warmups, 15 iterations):** N = 16 =
+  248.9 ms -> 195.8 ms (**-21.3 %**, ±1.29 ms vs ±2.56 % baseline error, gap 53.1 ms with
+  no CI overlap); N = 17 = 2,059.2 ms -> 1,419.5 ms (**-31.1 %**, ±6.50 ms vs ±0.53 %
+  baseline error, gap 639.7 ms with no CI overlap). The N = 17 delta is in fact larger than
+  the All-mode N = 18 delta — fewer total items relative to 28 logical cores makes the
+  static-partitioner imbalance worse to start with, so the dynamic dispatcher recovers more.
+  Same correctness gates green (513 / 513 across `NQueen.UnitTests` + `NQueen.ViewModelTests`,
+  including all canonical-counting and reflection-pruning tests). The companion engine-path
+  `Parallel.ForEach` in `NQueen.Kernel/Solvers/Engines/BitmaskParallelEngine.Unique.cs:52`
+  is **deliberately untouched** — it is reachable only for `N < 16` count-only or for
+  materialize/visualize paths, neither of which the regression-guard benchmark exercises.
+  File changed: `NQueen.Kernel/Solvers/BitmaskSolver.CountUnique.cs` (~3 lines + comment).
+
 ### Docs
 - **`perf/all-work-stealing` opened off `main` (`f75c5ea`) — Candidate queue #3: depth-based work-stealing queue for All mode.** Branch targets the documented tail-imbalance at large N on >8 cores with the current root-only `Parallel.ForEach` scheduling (source: `docs/ignored/Archive/Potential All Mode Improvements.txt:1-20`). ROADMAP "Next session", "Candidate queue #3", and "Current State → Active branch" updated to reflect the new active branch.
 - **`perf/unique-iterative-core` — Option C profile-first investigation closed with a
