@@ -12,36 +12,39 @@ in the same change that touches `CHANGELOG.md`.
 
 ## Next session — start here
 
-> Updated after `perf/all-mode-arraypool` merged as **PR #17** (third profile-first
-> negative finding in a row, docs-only; see *Recently shipped* below). The original
-> Candidate queue is exhausted and the cross-listed `ArrayPool<T> for column / diagonal /
-> row stacks` item is closed. The next session picks from a user-defined execution queue
-> covering housekeeping, the remaining `Backlog → Larger wins, scoped risk` candidates,
-> the `Investigations` item, and the `Active Track → Kernel Test Coverage` closeout.
+> Updated after `perf/all-mode-symmetry-reduction` closed as the **fourth profile-first
+> negative finding in a row** (see *Recently shipped* below). The previous active branch
+> `docs/roadmap-sync-post-pr17` merged as **PR #18** (post-PR-#17 docs sync; docs-only).
+> The execution queue continues to *next sub-item* under `Backlog → Larger wins, scoped
+> risk`.
 
-**No active branch.** Working tree clean on `main` (post-PR #17 squash-merge `b0fcb4c`).
+**Active branch — `perf/all-mode-symmetry-reduction`.** Docs-only branch, complete
+pending merge. Opened off freshly-merged `main` (post-PR #18, `7d07a69`) with the
+explicit scope of *deciding* whether the remaining D4 factor of up to 4× — beyond the
+existing half-board reflection — could be extracted on the All count-only path via a port
+of the reflection-only forward-prefix prune `SearchHelpers.ShouldPrunePrefixFull` from
+the Unique path ("Experiment A1"). Branch baseline
+`branch-baseline-all-mode-symmetry-reduction.md` (cross-checked across two existing
+harnesses on `7d07a69`): `AllCountOnlyN18Benchmark` N = 18 ≈ 7,403 ms ±0.67 %, and
+`AllCountOnlyParallelScalingBenchmark` N = 16 ≈ 148.1 ms ±0.78 %, N = 18 ≈ 7,358.8 ms
+±0.77 %. **The kill signal arrived from code reading before any production change**:
+for any `row0 ∈ [0, N/2)` on **even N**, `row0 < N-1-row0` strictly, so
+`ShouldPrunePrefixFull`'s loop hits `break` at `i = 0` and returns `false` for every
+node — the prune would fire **zero times** at N = 16 / N = 18, guaranteeing pure overhead
+for zero pruning benefit. The structural argument closes the entire candidate, not just
+Experiment A1: the half-board restriction already captures the maximal subgroup of the
+row-reflection prune on even N; the remaining D4 factor lives in the rotations (rot90,
+rot180, rot270), which are not column-preserving and require leaf-level canonical-form
+checking — pure overhead on a path at 99.99 % Self CPU on register-tight bit-mask
+operations. Branch ships docs-only.
 
-**Execution queue (one branch per item, in this order).** Each item gets its own branch
-off freshly-merged `main` with the profile-first / measure-first discipline that closed
-the last three perf branches.
-
-1. **Documentation drift housekeeping** _(in flight)_ — flip this block + the *Active
-   branch* row in *Current State* + the *Recently shipped* narrative below to reflect
-   that PR #17 has merged. No production-code changes. Branch:
-   `docs/roadmap-sync-post-pr17`.
-2. **Backlog → Larger wins, scoped risk** — execute in this sub-order:
-   1. **Symmetry reduction in All count-only path** beyond the existing half-board
-      restriction.
-   2. **Iterative core for All mode** — port Unique's allocation-free iterative DFS over
-      to the `BitboardNQueenSolver.Search` site.
-   3. **MRV heuristic** for next-column branch ordering.
-3. **Backlog → Investigations** — Unique CountOnly vs Materialize gap at N = 17–19.
-   Discovery task (start with `profile_unit_test` CPU on the Materialize path and
-   compare against the CountOnly profile).
-4. **Active Track → Kernel Test Coverage closeout** — recollect coverage, fill the three
-   `TBD — pending re-collect` baseline cells (`AllMode`, `Unique`, `Materialize`), and
-   refresh `Current State → Code coverage`.
-5. **Backlog → Small wins, low risk** — currently empty; revisit only if populated.
+**Execution queue — progress.** Step 1 (Documentation drift housekeeping) shipped as
+PR #18. Step 2.1 (Symmetry reduction in All count-only path) closes here as the fourth
+profile-first negative finding. Next up: step 2.2 — **Iterative core for All mode**
+(port Unique's allocation-free iterative DFS over to the `BitboardNQueenSolver.Search`
+site). Then 2.3 (MRV heuristic), then 3 (Investigations — Unique CountOnly vs
+Materialize gap at N = 17–19), then 4 (Test Coverage closeout), then 5 if 5 ever gets
+populated.
 
 **Deferred perf track — context.** The notes below are the authoritative profiling
 record from `feature/kernel-perf-small-wins`. They guide candidate selection across
@@ -116,7 +119,7 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | `docs/roadmap-sync-post-pr17` — small docs-only sync flipping this file from "`perf/all-mode-arraypool` in-flight" to "PR #17 merged." `perf/all-mode-arraypool` itself shipped as the **third profile-first negative finding in a row** via PR #17 (`b0fcb4c`); detail under *Recently shipped* and `CHANGELOG.md [Unreleased] → Docs`. The previous active branch `perf/cached-diagonal-shifts` merged as **PR #16** (Candidate queue #2 closure; docs-only). |
+| Active branch | `perf/all-mode-symmetry-reduction` — **docs-only, complete pending merge.** "Symmetry reduction in All count-only path" candidate (from `Backlog → Larger wins, scoped risk`) abandoned as the **fourth profile-first negative finding in a row**. Branch baseline `branch-baseline-all-mode-symmetry-reduction.md` (cross-checked on two existing harnesses on `7d07a69`): `AllCountOnlyN18Benchmark` N = 18 ≈ 7,403 ms ±0.67 %; `AllCountOnlyParallelScalingBenchmark` N = 16 ≈ 148.1 ms ±0.78 %, N = 18 ≈ 7,358.8 ms ±0.77 %. Kill signal arrived from code reading before any production change: the existing half-board restriction `row0 ∈ [0, N/2)` already exhausts the row-reflection prune on even N (the prune's loop hits `break` at `i = 0` for every node), so porting `ShouldPrunePrefixFull` would fire zero times at N = 16 / 18 — pure overhead for zero benefit. The remaining D4 factor of up to 4× lives in rotations (rot90, rot180, rot270), which are not column-preserving and require leaf-level canonical-form checking — pure overhead on a 99.99 %-Self register-tight path. Decision gate returned the negative branch via the structural argument; no production-code changes; no new measurement artifact (the existing `AllCountOnlyN18Benchmark` and `AllCountOnlyParallelScalingBenchmark` from PR #15 already serve as permanent regression guards). Full detail in `CHANGELOG.md [Unreleased] → Docs`. The previous active branch `docs/roadmap-sync-post-pr17` merged as **PR #18** (post-PR-#17 docs sync; docs-only). |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
 | Test count | **489 / 489 passing** (400 unit + 89 view-model). Down from 513 pre-Stage-6 because Stage 6 deleted one obsolete `ShouldIgnorePreSetCancellationFlag` test and consolidated the cancellation tests onto `CancellationTokenSource`s; net coverage of the cancellation surface is unchanged or improved. |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |
@@ -124,6 +127,41 @@ baseline before touching production code, per the team's MEASURE-first practice.
 
 ### Recently shipped (see `CHANGELOG.md` `[Unreleased]` for full detail)
 
+- `perf/all-mode-symmetry-reduction` — "Symmetry reduction in All count-only path"
+  candidate (from `Backlog → Larger wins, scoped risk`) closed as the **fourth
+  profile-first negative finding in a row** (docs-only branch, no production-code
+  changes). Opened off freshly-merged `main` (post-PR #18, `7d07a69`) to *decide*
+  whether the remaining D4 factor of up to 4× — beyond the existing half-board
+  reflection captured by `BitboardNQueenSolver.CountSolutions` (`row0 ∈ [0, N/2)` +
+  `count *= 2`) — could be extracted via a port of the reflection-only forward-prefix
+  prune `SearchHelpers.ShouldPrunePrefixFull` from the Unique path ("Experiment A1").
+  Branch baseline cross-checked on two existing harnesses on `7d07a69`:
+  `AllCountOnlyN18Benchmark` N = 18 ≈ 7,403 ms ±0.67 %, and
+  `AllCountOnlyParallelScalingBenchmark` N = 16 ≈ 148.1 ms ±0.78 %, N = 18 ≈ 7,358.8 ms
+  ±0.77 % (cross-benchmark agreement at N = 18: 0.6 % apart). **The kill signal arrived
+  from code reading before any production change**: `SearchHelpers.ShouldPrunePrefixFull`
+  (`SearchHelpers.cs:73-84`) walks `for i in [0..depth]: if rows[i] > N-1-rows[i] return
+  true; if rows[i] < N-1-rows[i] break`. The existing All count-only path already
+  restricts row 0 to the top half (`BitboardNQueenSolver.cs:80`, `for (int row0 = 0;
+  row0 < half; row0++)`); for any `row0 ∈ [0, N/2)` on **even N**, `row0 < N-1-row0`
+  strictly — so the prune's loop hits `break` at `i = 0` and returns `false` for every
+  node in the tree. The benchmark targets are N = 16 and N = 18 — both even — so the
+  port would fire **zero times** at the measured sizes, adding per-node overhead for
+  zero pruning benefit and guaranteeing regression. The structural argument closes the
+  entire candidate, not just Experiment A1: the half-board restriction already captures
+  the maximal subgroup of the row-reflection prune on even N; the remaining D4 factor
+  of up to 4× lives in the rotation symmetries (rot90, rot180, rot270), which are
+  **not column-preserving** and therefore not amenable to forward-prefix pruning at all
+  — they require leaf-level canonical-form checking, which on a path that runs at
+  99.99 % Self CPU on register-tight bit-mask operations (per the PR #17 trace evidence)
+  is pure overhead. A quarter-board fundamental-domain enumeration with closed-form
+  orbit weighting (Option B) would have bounded upside (≈25-40 % wall-clock at best),
+  non-trivial implementation (≈200-300 lines + extensive correctness validation against
+  the N ≤ 18 oracle), and ≈75 % prior probability of becoming the negative finding
+  regardless given the three preceding negatives — not pursued. No production-code
+  changes; no new measurement artifact (the existing `AllCountOnlyN18Benchmark` and
+  `AllCountOnlyParallelScalingBenchmark` from PR #15 already serve as permanent
+  regression guards for this code path). Branch ships docs-only.
 - `perf/all-mode-arraypool` (PR #17, squash `b0fcb4c`) — `ArrayPool<T>` for column /
   diagonal / row stacks on the All-mode materialize path (from `Backlog → Larger wins,
   scoped risk`) closed as the **third profile-first negative finding in a row**
@@ -281,13 +319,23 @@ effort × expected impact.
 > queue (All mode)** shipped on `perf/all-work-stealing` / PR #15; both **Iterative core
 > for the Unique hot path** and **Cached shifted diagonal masks** abandoned as
 > profile-first negative findings). The cross-listed **`ArrayPool<T>` for column /
-> diagonal / row stacks** below is likewise resolved — abandoned on `perf/all-mode-arraypool`
-> as the third profile-first negative finding in a row (see *Recently shipped*
-> and `CHANGELOG.md [Unreleased] → Docs` for the trace evidence). The list below is
-> the wider perf inventory for the next picker._
+> diagonal / row stacks** is likewise resolved (abandoned on `perf/all-mode-arraypool`
+> as the third profile-first negative finding in a row). The list-level
+> **Symmetry reduction in All count-only path** is also resolved (abandoned on
+> `perf/all-mode-symmetry-reduction` as the fourth profile-first negative finding;
+> structural argument from code reading — see *Recently shipped* and
+> `CHANGELOG.md [Unreleased] → Docs`). The list below is the wider perf inventory for
+> the next picker._
 
-- **Symmetry reduction in All count-only path** beyond the existing half-board
-  restriction (enumerate fundamental representatives and expand by symmetry factor).
+- ~~**Symmetry reduction in All count-only path** beyond the existing half-board
+  restriction (enumerate fundamental representatives and expand by symmetry factor).~~
+  _Abandoned 2026-06-12 on `perf/all-mode-symmetry-reduction` — see *Recently shipped*
+  and the `[Unreleased] → Docs` CHANGELOG entry for the structural argument. The
+  half-board restriction `row0 ∈ [0, N/2)` on even N already exhausts the row-reflection
+  prune (`ShouldPrunePrefixFull`'s loop breaks at `i = 0` for every node at the
+  benchmark sizes N = 16 / 18); the remaining D4 factor of up to 4× lives in rotation
+  symmetries that are not column-preserving and require leaf-level canonical-form
+  checking — pure overhead on a 99.99 %-Self register-tight path._
 - ~~**`ArrayPool<T>`** for column / diagonal / row stacks to reduce GC pressure at N ≥ 18.~~
   _Abandoned 2026-06-11 on `perf/all-mode-arraypool` — see *Recently shipped* and the
   `[Unreleased] → Docs` CHANGELOG entry for the three-measurement trace evidence. The

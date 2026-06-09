@@ -67,6 +67,49 @@ All notable changes to this project are documented here.
   File changed: `NQueen.Kernel/Solvers/BitmaskSolver.CountUnique.cs` (~3 lines + comment).
 
 ### Docs
+- **`perf/all-mode-symmetry-reduction` — "Symmetry reduction in All count-only path"
+  candidate (from `Backlog → Larger wins, scoped risk`) closed as the **fourth
+  profile-first negative finding in a row** (no production-code changes shipped).**
+  Branch opened off freshly-merged `main` (post-PR #18, `7d07a69`) with the explicit
+  scope of *deciding* whether the remaining D4 factor of up to 4× — beyond the existing
+  half-board reflection captured by `BitboardNQueenSolver.CountSolutions` (`row0 ∈
+  [0, N/2)` + `count *= 2`, with center-row handling for odd N) — could be extracted via
+  a port of the reflection-only forward-prefix prune `SearchHelpers.ShouldPrunePrefixFull`
+  from the Unique path. Branch baseline `branch-baseline-all-mode-symmetry-reduction.md`
+  re-established two cross-checking measurements on `7d07a69`:
+  `AllCountOnlyN18Benchmark` N = 18 ≈ 7,403 ms ±0.67 %, and
+  `AllCountOnlyParallelScalingBenchmark` N = 16 ≈ 148.1 ms ±0.78 %, N = 18 ≈ 7,358.8 ms
+  ±0.77 % (cross-benchmark agreement at N = 18: 0.6 % apart, well inside run-to-run
+  drift; N = 16 = 148.1 ms consistent with the post-PR-#15 expected band of 151.0 ms).
+  Decision gate established up front: oracle gate (counts match
+  `ExpectedSolutionCounts.AllSolutions` for all N ∈ [4, 18]) — non-negotiable; perf gate
+  (±1 % wall-clock improvement at N = 18) + non-regression at N = 16 — must both clear
+  to ship. **The kill signal arrived from code reading before any production change**:
+  `SearchHelpers.ShouldPrunePrefixFull` (`SearchHelpers.cs:73-84`) is a stateless
+  reflection-only forward-prefix prune that walks `for i in [0..depth]: if rows[i] >
+  N-1-rows[i] return true; if rows[i] < N-1-rows[i] break`. The existing All count-only
+  path already restricts row 0 to the top half (`BitboardNQueenSolver.cs:80`,
+  `for (int row0 = 0; row0 < half; row0++)`); for any `row0 ∈ [0, N/2)` on **even N**,
+  `row0 < N-1-row0` strictly — so the prune's loop hits `break` at `i = 0` and returns
+  `false` for every node in the tree. The benchmark targets are N = 16 and N = 18 —
+  both even — so porting the prune would fire **zero times** at the measured sizes.
+  Added per-node work would be pure overhead with zero pruning benefit, guaranteeing
+  regression at exactly the sizes the decision gate measures. The structural argument
+  closes the entire candidate, not just the reflection-prune sub-design: the half-board
+  restriction `row0 ∈ [0, N/2)` on even N already captures the maximal subgroup of the
+  row-reflection prune; the remaining D4 factor of up to 4× lives in the rotation
+  symmetries (rot90, rot180, rot270), which are **not column-preserving** and therefore
+  not amenable to forward-prefix pruning at all — they require leaf-level canonical-form
+  checking, which on a path that runs at 99.99 % Self CPU on register-tight bit-mask
+  operations (per the PR #17 trace evidence) is pure overhead. A quarter-board
+  fundamental-domain enumeration with closed-form orbit weighting (Option B) would have
+  bounded upside (≈25-40 % wall-clock at best), non-trivial implementation
+  (≈200-300 lines + extensive correctness validation against the N ≤ 18 oracle), and
+  a ≈75 % prior probability of becoming the negative finding regardless given the three
+  preceding negatives — not pursued. No production-code changes; no new measurement
+  artifact (the existing `AllCountOnlyN18Benchmark` and `AllCountOnlyParallelScalingBenchmark`
+  established by PR #15 already serve as permanent regression guards for this code path).
+  Branch ships docs-only.
 - **`perf/all-mode-arraypool` — `ArrayPool<T>` for column / diagonal / row stacks on the
   All-mode materialize path (from `Backlog → Larger wins, scoped risk`) profile-first
   investigation closed with a negative finding (no production-code changes shipped).**
