@@ -12,36 +12,87 @@ in the same change that touches `CHANGELOG.md`.
 
 ## Next session — start here
 
-> Updated after `perf/all-mode-iterative-core` merged as **PR #20** (first positive
-> profile-driven finding after four consecutive negatives — see *Recently shipped*
-> below). The execution queue continues to *next sub-item* under `Backlog → Larger
-> wins, scoped risk`.
+> Updated when `perf/all-mode-mrv-heuristic` opened off `main` at `d4b26cc` (post-PR #22:
+> the small `chore: untrack accidentally-committed .diagsession profiler trace` cleanup
+> that followed PR #21's docs sync after PR #20's iterative-core production swap — see
+> *Recently shipped*).
 
-**Active branch — none.** `main` is at `9352187` (post-PR #20). Open the next experiment
-on a fresh branch off this commit per the team's MEASURE-first practice.
+**Active branch — `perf/all-mode-mrv-heuristic`.** Just opened off `main` at `d4b26cc`;
+branch baseline measurement is the next action (no production code touched yet). The
+MEASURE-first investigation should establish profile-time evidence *before* deciding
+whether to write any production code (see *Decision gate* below).
 
 **Execution queue — progress.** Step 1 (Documentation drift housekeeping) shipped as
 PR #18. Step 2.1 (Symmetry reduction in All count-only path) closed as the fourth
 profile-first negative finding (PR #19). Step 2.2 (Iterative core for All mode) shipped
 as **PR #20** — the first positive after four negatives (-3.0 % at N = 18, -3.1 % at
-N = 16, both with non-overlapping 99.9 % CIs; 535 / 535 tests green). Next up: step 2.3
-— **MRV heuristic** for next-column branch ordering (cost / benefit needs benchmarking).
-Then 3 (Investigations — Unique CountOnly vs Materialize gap at N = 17–19), then 4
-(Test Coverage closeout), then 5 if 5 ever gets populated.
+N = 16, both with non-overlapping 99.9 % CIs; 535 / 535 tests green). Step 2.3 —
+**MRV heuristic** for next-column branch ordering — is now the active branch
+(`perf/all-mode-mrv-heuristic`). Then 3 (Investigations — Unique CountOnly vs
+Materialize gap at N = 17–19), then 4 (Test Coverage closeout), then 5 if 5 ever gets
+populated.
 
-**Step 2.3 — starting brief (MRV heuristic).** Branch off freshly-merged `main`
-(`9352187`) as `perf/all-mode-mrv-heuristic` (or `perf/unique-mrv-heuristic`, depending
-on which path the profile-first investigation indicates). Re-establish the branch
-baseline by running `AllCountOnlyParallelScalingBenchmark` (N = 16, N = 18) on the new
-commit before any production change — expect numbers near the post-PR #20 reference
-(N = 16 ≈ 139 ms, N = 18 ≈ 7.10 s). Decision-gate criteria identical to the iterative-core
-branch: oracle parity at N ∈ [1, 14] AND > 1 % improvement at N = 18 with non-overlapping
-99.9 % CIs AND non-regression at N = 16. Prior probability of a positive finding here is
-low on `BitboardNQueenSolver.Search`'s register-tight bit-mask DFS (the bit-scan
-`available & -available` already implements a fast "lowest-set-bit" branching order; an
-MRV heuristic would have to amortise its variable-counting work against that path's
-99.99 %-Self register profile) — so the experiment should be set up to *kill* via early
-profile evidence before any wide production-code change.
+**Step 2.3 — starting brief (MRV heuristic on the All count-only path).**
+
+*What MRV would mean here.* The current `BitboardNQueenSolver.Search` (now iterative
+after PR #20) walks columns 0..N-1 in **fixed order** and tries each available row in
+LSB-first order via `bit = available & -available`. An MRV (Minimum Remaining Values)
+heuristic instead picks, at each level, the *next column whose `available` mask has the
+fewest set bits* — the column most constrained by what's already been placed. The
+classical CSP rationale is fail-fast: branching on the most constrained variable prunes
+larger subtrees earlier. On the N-Queens bit-mask DFS the per-row work changes too
+(can't reuse the linear column walk; needs a popcount across the remaining columns'
+availability masks at every level).
+
+*Where to look first (profile-first).* On post-PR #20 `main`, run `profile_unit_test`
+against an N = 16 representative test (e.g. one of the new
+`BitboardNQueenSolverTests.CountSolutions_*` theories) and confirm:
+  - The expected ~99 % Self bucket on the iterative `Search` body (the new production
+    path).
+  - Whether the per-row `available` computation
+    (`available = ~(cols | d1 | d2) & mask`) shows up as its own sample band, or folds
+    into the bit-scan loop the way the diagonal shifts did on the queue-#2 negative
+    finding (`perf/cached-diagonal-shifts`).
+
+*Re-baseline before any production change.* Run `AllCountOnlyParallelScalingBenchmark`
+(N = 16, N = 18) on the new commit. Expected numbers near the post-PR #20 reference:
+N = 16 ≈ 139 ms, N = 18 ≈ 7.10 s (these are the *iterative* numbers from
+`AllCountOnlyRecursiveVsIterativeBenchmark`'s iterative cell, not the recursive
+baseline from earlier branches).
+
+*Decision gate (fixed up front).* Identical to the iterative-core branch:
+  1. **Oracle** — a new `MrvSearch` (or `Search` variant) must equal `CountSolutions`
+     for every N ∈ [1, 14] across both `parallel: true` and `parallel: false`.
+  2. **Perf (primary)** — at N = 18, the MRV variant must show a wall-clock improvement
+     over the iterative `Search` baseline of **> 1 %** with **non-overlapping 99.9 % CIs**.
+  3. **Non-regression** — at N = 16 the MRV variant must not regress by more than 1 %.
+
+*Prior probability — low.* `BitboardNQueenSolver.Search` runs at ~99 % Self on register-tight
+bit-mask operations; an MRV heuristic adds per-level popcount work across all remaining
+columns' availability masks (4-8 popcounts per descent at N = 16-18, each touching state
+that would otherwise stay in registers). The pruning savings would have to dominate that
+added ALU + register-pressure cost. The track record on this code path is 4-of-5
+negative findings, with positives only when the change either (a) removes a per-leaf
+operation entirely (PR #20's leaf-shortcut) or (b) re-targets a structural inefficiency
+off the hot path (PR #15's chunk-of-1 partitioner moved tail-imbalance work *off* `Search`).
+MRV adds work *on* the hot path, so the prior says ~10-20 % positive probability. Set
+the experiment up to *kill quickly* via early profile evidence before any wide
+production-code change.
+
+*Two reasonable structural shapes if profile evidence supports continuing.*
+  - **Variant A — column reorder, fixed at root.** Compute an MRV-suggested column
+    order *once* per top-level work item (or once per N), then walk in that order. Cheap
+    per-iteration; predictability for the bit-scan loop is preserved.
+  - **Variant B — dynamic, per-level.** Recompute the MRV column at each descent.
+    Maximally aggressive pruning but adds the per-level popcount work the prior
+    pessimism is about. Implement only if Variant A clears the gate decisively (giving
+    headroom for the more expensive form).
+
+If the early profile evidence shows no concentrated `Search` Self band that MRV could
+plausibly amortise against, close as the **fifth profile-first negative finding** (the
+pattern reasserted) and document in `CHANGELOG.md [Unreleased] → Docs` matching the PR
+#19 / PR #17 / PR #16 / PR #14 precedents. Otherwise, write Variant A first, A/B against
+the iterative-core baseline in a new `AllCountOnlyMrvVsBaselineBenchmark`, decide.
 
 **Deferred perf track — context.** The notes below are the authoritative profiling
 record from `feature/kernel-perf-small-wins`. They guide candidate selection across
@@ -116,7 +167,7 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | _none_ — `main` is at `9352187` (post-PR #20, the iterative-core production swap). The previous active branch `perf/all-mode-iterative-core` merged as **PR #20** as the **first positive profile-driven finding after four consecutive negatives**: -3.0 % at N = 18 (7,314.9 → 7,098.5 ms), -3.1 % at N = 16 (143.8 → 139.3 ms), both with non-overlapping 99.9 % CIs; full detail in *Recently shipped* and `CHANGELOG.md [Unreleased] → Performance`. Next branch off `9352187` per *Next session*. |
+| Active branch | `perf/all-mode-mrv-heuristic` — just opened off `main` at `d4b26cc` (post-PR #22). State: **branch baseline measurement is the next action**; no production code touched yet. Decision gate (fixed up front, identical to the iterative-core branch): oracle parity at N ∈ [1, 14] AND > 1 % improvement at N = 18 with non-overlapping 99.9 % CIs AND non-regression at N = 16. Prior probability of a positive finding here is low (≈10-20 %) on `BitboardNQueenSolver.Search`'s register-tight bit-mask DFS (an MRV heuristic adds per-level popcount work across remaining columns' availability masks; the track record on this path is 4-of-5 negative findings, with positives only when changes remove per-leaf operations entirely or re-target structural inefficiencies off the hot path). Set up to *kill quickly* via early profile evidence. Full detail in *Next session — start here*. The previous active branch `perf/all-mode-iterative-core` merged as **PR #20** as the **first positive profile-driven finding after four consecutive negatives**: -3.0 % at N = 18 (7,314.9 → 7,098.5 ms), -3.1 % at N = 16 (143.8 → 139.3 ms), both with non-overlapping 99.9 % CIs. |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
 | Test count | **535 / 535 passing** (446 unit + 89 view-model). Up from 515 pre-branch because this branch added 20 new parity tests in `BitboardNQueenSolverTests` (CountSolutions_{Parallel,Sequential}_MatchesRecursive theories + CountSolutionsRecursive_OutOfRange_Throws). |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |
