@@ -12,24 +12,32 @@ in the same change that touches `CHANGELOG.md`.
 
 ## Next session — start here
 
-> Updated after `perf/cached-diagonal-shifts` closed as the second profile-first negative
-> finding in the queue (Candidate queue #2 abandoned; see *Recently shipped* below). With
-> Candidate queue #3 shipped (PR #15 — `perf/all-work-stealing`) and queues #1 and #2 both
-> abandoned, the original Candidate queue is exhausted — the next perf branch picks from
-> the wider **Backlog → Kernel Performance → Larger wins, scoped risk** list below.
+> Updated after `perf/all-mode-arraypool` closed as the **third profile-first negative
+> finding** in a row (see *Recently shipped* below). The previous active branch
+> `perf/cached-diagonal-shifts` merged as **PR #16** (Candidate queue #2 closure;
+> docs-only). With the original Candidate queue exhausted and `ArrayPool<T> for column /
+> diagonal / row stacks` now also closed, the next perf branch picks the next item from
+> **Backlog → Kernel Performance → Larger wins, scoped risk** below.
 
-**Active branch — `perf/cached-diagonal-shifts`.** Docs-only branch, complete pending merge.
-Opened off freshly-merged `main` (post-PR #15) to *decide* whether `(d1|bit)<<1` /
-`(d2|bit)>>1` in `CountCanonicalDFS`
-(`NQueen.Kernel/Solvers/BitmaskSolver.CountUnique.cs:207`) should be replaced with a
-per-row cached shifted-mask table, **before** writing the cache. Branch baseline
-established as `branch-baseline-cached-diagonal-shifts.md` (N = 16 ≈ 195.7 ms ±0.63 %,
-N = 17 ≈ 1,416.3 ms ±0.53 %). Line-level CPU attribution via `profile_unit_test` against
-`BitmaskSolverCountUniqueTests.CountUniqueAdaptive_PreservesPruningFlags(n: 16, …)`
-showed the diagonal shifts fold into the bit-scan loop's per-frame Self time with no
-separate sample band — the decision gate (≥ 2–3 % Self → write the cache; < 1 % or
-folded → abandon) returned the negative branch. Branch ships docs-only; next session
-picks from the Backlog.
+**Active branch — `perf/all-mode-arraypool`.** Docs-only branch, complete pending merge.
+Opened off freshly-merged `main` (post-PR #16) to *decide* whether pooling the per-call
+`int[]` / `Frame[]` buffers in `BitmaskSearchEngine.CreateState` and the per-solution
+`int[]` copies in `BitmaskSolver.All.cs` via `ArrayPool<T>.Shared` would reduce GC
+pressure on the All-mode materialize path at N ≥ 18 (per the wording of the *Backlog →
+Larger wins, scoped risk* item). Branch baseline established as
+`branch-baseline-all-mode-arraypool.md` (new `[MemoryDiagnoser]` benchmark
+`AllModeMaterializeAllocationBenchmark`: N = 15 ≈ 82.40 ms ±1.40 %, N = 18 ≈
+7,420.97 ms ±0.49 %). Two earlier measurements (N = 14 `profile_unit_test` MEMORY, and
+the existing `AllModeVariantsBenchmark.All_Sequential_Materialize` MEMORY) returned no
+user-code allocation signal — the unit-test trace was drowned in xUnit reflection
+plumbing, and the existing benchmark class lacks `[MemoryDiagnoser]`. The new dedicated
+benchmark with `[MemoryDiagnoser]` also surfaced no allocation columns (BenchmarkDotNet
+suppresses them when per-op allocations are below ~1 KB), AND the supplementary CPU trace
+pinned **99.99 % Self on `BitboardNQueenSolver.Search`** — the explicitly allocation-free
+static DFS (`// Allocation-free hot path` per the source). The decision gate (allocation
+hotspot must surface AND wall-clock A/B must clear ±1 % at N = 18 → ship; otherwise
+abandon) returned the negative branch. Branch ships docs-only plus the new benchmark as
+a permanent regression guard.
 
 **Deferred perf track — context.** The notes below are the authoritative profiling
 record from `feature/kernel-perf-small-wins`. They guide candidate selection across
@@ -104,7 +112,7 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | `perf/cached-diagonal-shifts` — **docs-only, complete pending merge.** Candidate queue #2 (cached shifted diagonal masks in `CountCanonicalDFS`) abandoned as the second profile-first negative finding in the queue. Branch baseline `branch-baseline-cached-diagonal-shifts.md`: N = 16 ≈ 195.7 ms ±0.63 %, N = 17 ≈ 1,416.3 ms ±0.53 %. `profile_unit_test` against `BitmaskSolverCountUniqueTests.CountUniqueAdaptive_PreservesPruningFlags(n: 16, …)` showed the `(d1|bit)<<1` / `(d2|bit)>>1` expressions fold into the bit-scan loop's per-frame Self% with no separable sample band; decision gate returned the negative branch. No production-code changes. Full detail in `CHANGELOG.md [Unreleased] → Docs`. The previous active branch `perf/all-work-stealing` merged as **PR #15** (full A/B and correctness gates remain in `CHANGELOG.md [Unreleased] → Performance`). |
+| Active branch | `perf/all-mode-arraypool` — **docs-only, complete pending merge.** `ArrayPool<T>` for column / diagonal / row stacks on the All-mode materialize path (from `Backlog → Larger wins, scoped risk`) abandoned as the **third profile-first negative finding in a row**. Branch baseline `branch-baseline-all-mode-arraypool.md` (new `AllModeMaterializeAllocationBenchmark` with `[MemoryDiagnoser]`): N = 15 ≈ 82.40 ms ±1.40 %, N = 18 ≈ 7,420.97 ms ±0.49 %. `[MemoryDiagnoser]` did not emit allocation columns at either size (per-op allocations below the reporting threshold), AND the supplementary CPU trace pinned **99.99 % Self on `BitboardNQueenSolver.Search`** — the explicitly allocation-free static DFS. Decision gate returned the negative branch. No production-code changes; the new benchmark stays as a permanent regression guard. Full detail in `CHANGELOG.md [Unreleased] → Docs`. The previous active branch `perf/cached-diagonal-shifts` merged as **PR #16** (Candidate queue #2 closure; docs-only; entries remain in `CHANGELOG.md [Unreleased] → Docs`). |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
 | Test count | **489 / 489 passing** (400 unit + 89 view-model). Down from 513 pre-Stage-6 because Stage 6 deleted one obsolete `ShouldIgnorePreSetCancellationFlag` test and consolidated the cancellation tests onto `CancellationTokenSource`s; net coverage of the cancellation surface is unchanged or improved. |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |
@@ -112,6 +120,34 @@ baseline before touching production code, per the team's MEASURE-first practice.
 
 ### Recently shipped (see `CHANGELOG.md` `[Unreleased]` for full detail)
 
+- `perf/all-mode-arraypool` — `ArrayPool<T>` for column / diagonal / row stacks on the
+  All-mode materialize path (from `Backlog → Larger wins, scoped risk`) closed as the
+  **third profile-first negative finding in a row** (docs-only branch, no production-code
+  changes). Opened off freshly-merged `main` (post-PR #16) to decide whether pooling the
+  per-call `int[]` / `Frame[]` buffers in `BitmaskSearchEngine.CreateState` and the
+  per-solution `int[]` copies in `BitmaskSolver.All.cs` via `ArrayPool<T>.Shared` would
+  reduce GC pressure at N ≥ 18. Three independent measurement attempts agreed: (1) the
+  N = 14 unit-test MEMORY trace (`profile_unit_test` against
+  `AllMode_Materialize_N14_RoutesThroughTwoPhasePath`) had the top-3 allocation types
+  dominated by xUnit reflection plumbing (`System.String`, `CustomAttributeType`,
+  `CustomAttributeNamedParameter`) with no user-code types in the top hits; (2) running
+  the existing `AllModeVariantsBenchmark.All_Sequential_Materialize` in MEMORY mode
+  returned timing-only output (the class lacks `[MemoryDiagnoser]`); (3) a new
+  purpose-built `AllModeMaterializeAllocationBenchmark` with `[MemoryDiagnoser]` and
+  `[Params(15, 18)]` likewise emitted no allocation columns (per-op allocations below
+  BenchmarkDotNet's reporting threshold), AND the supplementary CPU trace pinned
+  **99.99 % Self on `BitboardNQueenSolver.Search`** — the explicitly allocation-free
+  static DFS that phase 2 of `CollectAllSamplesAndCountParallel` calls. Source
+  inspection confirmed `BitboardNQueenSolver.Search` takes only `ulong`/`int` arguments
+  with zero `new` operators in the recursion (the `// Allocation-free hot path` comment
+  is accurate). The decision gate (allocation hotspot must surface AND wall-clock A/B
+  must clear ±1 % at N = 18 → ship; otherwise abandon) returned the negative branch.
+  The phase-1 sample DFS (`CollectAllSampleSolutionsDFS`) does allocate a single
+  `int[N]` per call and `int[N]` per solution copy at N > 25, but terminates within
+  milliseconds (capped at `MaxDisplayedCount` samples) and is invisible against the
+  99.99 % Self of `Search`. The new `AllModeMaterializeAllocationBenchmark` stays as a
+  permanent regression guard for the All-mode materialize allocation surface,
+  irrespective of the experiment's outcome. Branch ships docs-only.
 - `perf/cached-diagonal-shifts` — Candidate queue #2 closed as a profile-first negative
   finding (docs-only branch, no production-code changes). Opened off freshly-merged `main`
   (post-PR #15) to decide whether `(d1|bit)<<1` / `(d2|bit)>>1` in `CountCanonicalDFS`
@@ -237,19 +273,24 @@ effort × expected impact.
 
 ### Larger wins, scoped risk
 
-> _All three original Candidate-queue items above are now resolved: **Depth-based
-> work-stealing queue (All mode)** shipped on `perf/all-work-stealing` (PR #15), and
-> both **Iterative core for the Unique hot path** and **Cached shifted diagonal masks**
-> were abandoned as profile-first negative findings (see the Candidate-queue entries
-> for the trace evidence). The list below is the wider perf inventory for the next
-> picker._
+> _All three original Candidate-queue items are resolved (**Depth-based work-stealing
+> queue (All mode)** shipped on `perf/all-work-stealing` / PR #15; both **Iterative core
+> for the Unique hot path** and **Cached shifted diagonal masks** abandoned as
+> profile-first negative findings). The cross-listed **`ArrayPool<T>` for column /
+> diagonal / row stacks** below is likewise resolved — abandoned on `perf/all-mode-arraypool`
+> as the third profile-first negative finding in a row (see *Recently shipped*
+> and `CHANGELOG.md [Unreleased] → Docs` for the trace evidence). The list below is
+> the wider perf inventory for the next picker._
 
-- **Depth-based work-stealing queue** for All mode at large N — replace root-only
-  scheduling with a `ConcurrentQueue<PartialState>` consumed by worker threads to
-  reduce tail imbalance on >8 cores. Source: `Potential All Mode Improvements.txt`.
 - **Symmetry reduction in All count-only path** beyond the existing half-board
   restriction (enumerate fundamental representatives and expand by symmetry factor).
-- **`ArrayPool<T>`** for column / diagonal / row stacks to reduce GC pressure at N ≥ 18.
+- ~~**`ArrayPool<T>`** for column / diagonal / row stacks to reduce GC pressure at N ≥ 18.~~
+  _Abandoned 2026-06-11 on `perf/all-mode-arraypool` — see *Recently shipped* and the
+  `[Unreleased] → Docs` CHANGELOG entry for the three-measurement trace evidence. The
+  All-mode materialize hot path is `BitboardNQueenSolver.Search`, an explicitly
+  allocation-free static DFS (99.99 % Self in the supplementary CPU trace); the
+  `int[]` / `Frame[]` candidates for pooling are reached only on a millisecond-scale
+  phase-1 sample DFS that is invisible against `Search`._
 - **Iterative core for All mode** — port Unique's allocation-free iterative DFS.
 - **MRV heuristic** for next-column branch ordering (cost / benefit needs benchmarking).
 - ~~**Cached shifted diagonal masks** per row to remove repeated `(d1|bit)<<1` /
