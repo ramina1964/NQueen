@@ -12,38 +12,36 @@ in the same change that touches `CHANGELOG.md`.
 
 ## Next session — start here
 
-> Updated after `perf/all-mode-iterative-core` shipped as the **first positive
-> profile-driven finding after four consecutive negatives** (see *Recently shipped*
-> below). The previous active branch `perf/all-mode-symmetry-reduction` merged as
-> **PR #19** (fourth profile-first negative finding in a row, docs-only). The execution
-> queue continues to *next sub-item* under `Backlog → Larger wins, scoped risk`.
+> Updated after `perf/all-mode-iterative-core` merged as **PR #20** (first positive
+> profile-driven finding after four consecutive negatives — see *Recently shipped*
+> below). The execution queue continues to *next sub-item* under `Backlog → Larger
+> wins, scoped risk`.
 
-**Active branch — `perf/all-mode-iterative-core`.** Production-changing branch, complete
-pending merge. Opened off freshly-merged `main` (post-PR #19, `0582c13`) with the
-explicit scope of *measuring* whether porting `BitboardNQueenSolver.Search` from the
-recursive form to an allocation-free iterative DFS (modelled on
-`BitmaskSearchEngine.MainLoopCountOnly`'s pattern) would clear the ±1 % wall-clock
-decision gate at N = 18. Branch baseline `branch-baseline-all-mode-iterative-core.md`
-(`AllCountOnlyParallelScalingBenchmark` on `3cd7162`): N = 16 ≈ 147.2 ms ±0.6 %, N = 18
-≈ 7,359.4 ms ±1.02 %. New `AllCountOnlyRecursiveVsIterativeBenchmark` (recursive cell
-`Baseline = true`, both cells in the same job): N = 16 = 143.8 → 139.3 ms (**-3.1 %**,
-ratio 0.97, non-overlapping 99.9 % CIs); N = 18 = 7,314.9 → 7,098.5 ms (**-3.0 %**,
-ratio 0.97, non-overlapping 99.9 % CIs by 136.2 ms). All three decision gates clear
-(oracle parity at N ∈ [1, 14] via 20 new parity tests; > 1 % perf at N = 18; non-regression
-at N = 16 — in fact a 3.1 % improvement). Production swap implemented as a rename so the
-production method name `BitboardNQueenSolver.CountSolutions` is preserved across all
-four call sites; the recursive variant is retained as `internal` `CountSolutionsRecursive`
-+ `SearchRecursive` solely as the comparison cell for the new A/B benchmark (permanent
-regression guard). 535 / 535 tests green; full detail in `CHANGELOG.md [Unreleased] →
-Performance`.
+**Active branch — none.** `main` is at `9352187` (post-PR #20). Open the next experiment
+on a fresh branch off this commit per the team's MEASURE-first practice.
 
 **Execution queue — progress.** Step 1 (Documentation drift housekeeping) shipped as
 PR #18. Step 2.1 (Symmetry reduction in All count-only path) closed as the fourth
-profile-first negative finding (PR #19). Step 2.2 (Iterative core for All mode) ships
-here as the first positive after four negatives. Next up: step 2.3 — **MRV heuristic**
-for next-column branch ordering (cost / benefit needs benchmarking). Then 3
-(Investigations — Unique CountOnly vs Materialize gap at N = 17–19), then 4 (Test
-Coverage closeout), then 5 if 5 ever gets populated.
+profile-first negative finding (PR #19). Step 2.2 (Iterative core for All mode) shipped
+as **PR #20** — the first positive after four negatives (-3.0 % at N = 18, -3.1 % at
+N = 16, both with non-overlapping 99.9 % CIs; 535 / 535 tests green). Next up: step 2.3
+— **MRV heuristic** for next-column branch ordering (cost / benefit needs benchmarking).
+Then 3 (Investigations — Unique CountOnly vs Materialize gap at N = 17–19), then 4
+(Test Coverage closeout), then 5 if 5 ever gets populated.
+
+**Step 2.3 — starting brief (MRV heuristic).** Branch off freshly-merged `main`
+(`9352187`) as `perf/all-mode-mrv-heuristic` (or `perf/unique-mrv-heuristic`, depending
+on which path the profile-first investigation indicates). Re-establish the branch
+baseline by running `AllCountOnlyParallelScalingBenchmark` (N = 16, N = 18) on the new
+commit before any production change — expect numbers near the post-PR #20 reference
+(N = 16 ≈ 139 ms, N = 18 ≈ 7.10 s). Decision-gate criteria identical to the iterative-core
+branch: oracle parity at N ∈ [1, 14] AND > 1 % improvement at N = 18 with non-overlapping
+99.9 % CIs AND non-regression at N = 16. Prior probability of a positive finding here is
+low on `BitboardNQueenSolver.Search`'s register-tight bit-mask DFS (the bit-scan
+`available & -available` already implements a fast "lowest-set-bit" branching order; an
+MRV heuristic would have to amortise its variable-counting work against that path's
+99.99 %-Self register profile) — so the experiment should be set up to *kill* via early
+profile evidence before any wide production-code change.
 
 **Deferred perf track — context.** The notes below are the authoritative profiling
 record from `feature/kernel-perf-small-wins`. They guide candidate selection across
@@ -118,7 +116,7 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | `perf/all-mode-iterative-core` — **production-changing, complete pending merge.** "Iterative core for All mode" candidate (from `Backlog → Larger wins, scoped risk`) shipped as the **first positive profile-driven finding after four consecutive negatives**. New A/B harness `AllCountOnlyRecursiveVsIterativeBenchmark` (both cells in the same 3-warmup / 15-iteration job, recursive `Baseline = true`): N = 16 = 143.8 → 139.3 ms (**-3.1 %**, ratio 0.97); N = 18 = 7,314.9 → 7,098.5 ms (**-3.0 %**, ratio 0.97); all three decision gates clear (oracle parity at N ∈ [1, 14], > 1 % perf at N = 18, non-regression at N = 16). Production swap implemented as a rename — iterative `SearchIterative` → `Search`, recursive `Search` → `SearchRecursive` — so the production method name `BitboardNQueenSolver.CountSolutions` is preserved across all four call sites (`BitmaskSolver.All.cs:79`, `BitmaskSolver.All.cs:111`, `BitmaskSolver.cs:280`, `NQueenBench.cs:11`). Recursive variant retained as `internal` `CountSolutionsRecursive` + `SearchRecursive` (kept under `InternalsVisibleTo` for benchmark + tests) solely as the A/B comparison cell — permanent regression guard. Plausible structural reason for the win: contiguous `stackalloc Frame[n - startRow]` keeps the working set in a small L1/L2-friendly span, and the leaf-shortcut (`if (row + 1 == n) { count++; continue; }`) saves one frame push / pop per leaf solution. Full detail in `CHANGELOG.md [Unreleased] → Performance`. The previous active branch `perf/all-mode-symmetry-reduction` merged as **PR #19** (fourth profile-first negative finding). |
+| Active branch | _none_ — `main` is at `9352187` (post-PR #20, the iterative-core production swap). The previous active branch `perf/all-mode-iterative-core` merged as **PR #20** as the **first positive profile-driven finding after four consecutive negatives**: -3.0 % at N = 18 (7,314.9 → 7,098.5 ms), -3.1 % at N = 16 (143.8 → 139.3 ms), both with non-overlapping 99.9 % CIs; full detail in *Recently shipped* and `CHANGELOG.md [Unreleased] → Performance`. Next branch off `9352187` per *Next session*. |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
 | Test count | **535 / 535 passing** (446 unit + 89 view-model). Up from 515 pre-branch because this branch added 20 new parity tests in `BitboardNQueenSolverTests` (CountSolutions_{Parallel,Sequential}_MatchesRecursive theories + CountSolutionsRecursive_OutOfRange_Throws). |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |
@@ -126,13 +124,13 @@ baseline before touching production code, per the team's MEASURE-first practice.
 
 ### Recently shipped (see `CHANGELOG.md` `[Unreleased]` for full detail)
 
-- `perf/all-mode-iterative-core` — "Iterative core for All mode" candidate (from
-  `Backlog → Larger wins, scoped risk`) shipped as the **first positive profile-driven
-  finding after four consecutive negatives** (production-changing branch). Opened off
-  freshly-merged `main` (post-PR #19, `0582c13`) to *measure* whether porting
-  `BitboardNQueenSolver.Search` from the recursive bit-mask DFS to an allocation-free
-  iterative form (modelled on `BitmaskSearchEngine.MainLoopCountOnly`'s pattern) would
-  clear the ±1 % wall-clock decision gate at N = 18. Branch baseline
+- `perf/all-mode-iterative-core` (PR #20, squash `9352187`) — "Iterative core for All
+  mode" candidate (from `Backlog → Larger wins, scoped risk`) shipped as the **first
+  positive profile-driven finding after four consecutive negatives** (production-changing
+  branch). Opened off freshly-merged `main` (post-PR #19, `0582c13`) to *measure*
+  whether porting `BitboardNQueenSolver.Search` from the recursive bit-mask DFS to an
+  allocation-free iterative form (modelled on `BitmaskSearchEngine.MainLoopCountOnly`'s
+  pattern) would clear the ±1 % wall-clock decision gate at N = 18.
   `branch-baseline-all-mode-iterative-core.md` on `3cd7162`: `AllCountOnlyParallelScalingBenchmark`
   N = 16 ≈ 147.2 ms ±0.6 %, N = 18 ≈ 7,359.4 ms ±1.02 %. New A/B harness
   `AllCountOnlyRecursiveVsIterativeBenchmark` (both cells in the same 3-warmup /
