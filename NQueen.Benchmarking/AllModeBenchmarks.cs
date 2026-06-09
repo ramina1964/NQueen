@@ -3,7 +3,6 @@ namespace NQueen.Benchmarking;
 /// <summary>All-mode count-only at N=18 — single-size focused timing.</summary>
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
-[CPUUsageDiagnoser]
 public class AllCountOnlyN18Benchmark
 {
     [Params(18)]
@@ -13,6 +12,44 @@ public class AllCountOnlyN18Benchmark
 
     [Benchmark(Baseline = true, Description = "All Parallel Count-Only (N=18)")]
     public ulong All_Parallel_CountOnly_N18()
+    {
+        using var solver = new BitmaskSolver(BoardSize, SolutionMode.All, DisplayMode.Hide, _formatter)
+        {
+            EnableEvents = false,
+            UseParallel = true,
+            UseCountOnlyAllMode = true,
+            EnablePrefixMinimalityPruning = false,
+            EnablePartialReflectionPruning = false,
+            EnableHalfBoardRestriction = BoardSize >= 15,
+            ParallelRootSplitDepth = 3,
+            UseAdaptiveDepth = true
+        };
+        return solver.Solve().SolutionsCount;
+    }
+}
+
+/// <summary>
+/// All-mode parallel count-only at N=16 and N=18 with the same full job as
+/// <see cref="UniqueFastHalfBoardEvenOddBenchmark"/> (3 warmups, 15 measured iterations)
+/// so wall-clock deltas land in a comparable confidence interval.
+/// <para>
+/// Targets the All-mode hot path through <c>BitboardNQueenSolver.CountSolutions</c>'s
+/// parallel branch — the same path the <c>perf/all-work-stealing</c> experiment swaps
+/// the partitioner on. N=16 catches the size where the half-board restriction first
+/// makes the per-item cost-variance hurt; N=18 carries enough total work that any
+/// tail-imbalance reduction shows up clearly above noise.
+/// </para>
+/// </summary>
+[SimpleJob(warmupCount: 3, iterationCount: 15)]
+public class AllCountOnlyParallelScalingBenchmark
+{
+    [Params(16, 18)]
+    public int BoardSize { get; set; }
+
+    private readonly ISolutionFormatter _formatter = new NoopFormatter();
+
+    [Benchmark(Description = "All Parallel Count-Only Scaling (N=16,18)")]
+    public ulong All_Parallel_CountOnly_Scaling()
     {
         using var solver = new BitmaskSolver(BoardSize, SolutionMode.All, DisplayMode.Hide, _formatter)
         {

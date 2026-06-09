@@ -19,6 +19,5 @@ global using NQueen.TestShared.Infrastructure;
 global using NQueen.ViewModelTests.Helpers;
 global using NQueen.ViewModelTests.Setup;
 global using System.Reflection;
-global using System.Threading.Channels;
 global using System.Windows;
 global using System.Windows.Threading;

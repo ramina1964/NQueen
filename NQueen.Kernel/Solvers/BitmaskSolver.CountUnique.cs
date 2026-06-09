@@ -87,8 +87,13 @@ public partial class BitmaskSolver
             var items = BuildUniqueDepth2WorkItems(n, fullMask, firstRowLimitExclusive);
             var po = new ParallelOptions { MaxDegreeOfParallelism = cores };
 
+            // Chunk-of-1 dynamic partitioner: hands each depth-2 work item to the next idle
+            // worker instead of pre-slicing the array into static ranges. Same rationale as
+            // the All-mode swap in BitboardNQueenSolver — see CHANGELOG.md [Unreleased].
+            var partitioner = Partitioner.Create(items, EnumerablePartitionerOptions.NoBuffering);
+
             Parallel.ForEach(
-                items,
+                partitioner,
                 po,
                 localInit: () =>
                 {

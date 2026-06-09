@@ -8,6 +8,3 @@ global using NQueen.Domain.Models;
 global using NQueen.Domain.Settings;
 global using NQueen.Kernel.Solvers;
 global using NQueen.Shared.Utils;
-global using System;
-global using System.Linq;
-global using System.Threading.Tasks;

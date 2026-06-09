@@ -22,8 +22,14 @@ public static class BitboardNQueenSolver
                 // queen pair with col-0 row restricted to the first half). For N=20 this yields
                 // ~180 items instead of 10, giving far better core saturation and load-balancing.
                 var items = BuildDepth2WorkItems(n, mask, half);
+                // Wrap the array in a chunk-of-1 partitioner so Parallel.ForEach dispatches
+                // one item at a time per worker instead of statically range-partitioning the
+                // array up front. Work-item cost varies by orders of magnitude (centre-row
+                // first queens produce vastly more subtree work than edge-row ones), so the
+                // default static partitioning leaves stragglers and idle cores at the tail.
+                var partitioner = Partitioner.Create(items, EnumerablePartitionerOptions.NoBuffering);
                 Parallel.ForEach(
-                    items,
+                    partitioner,
                     new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
                     () => 0L,
                     (item, _, local) => local + Search(n, mask, 2, item.Cols, item.D1, item.D2),

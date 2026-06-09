@@ -32,7 +32,6 @@ public class UniqueCountPackedBenchmark
 /// <summary>Fast half-board unique count-only path for N=15-17.</summary>
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
-[CPUUsageDiagnoser]
 public class UniqueFastHalfBoardBenchmark
 {
     [Params(15, 16, 17)]
@@ -57,7 +56,6 @@ public class UniqueFastHalfBoardBenchmark
 }
 
 /// <summary>Count-only vs materialise comparison across high-N boards (N=16-20).</summary>
-[CPUUsageDiagnoser]
 [ShortRunJob]
 [WarmupCount(1)]
 [IterationCount(3)]

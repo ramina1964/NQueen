@@ -8,6 +8,11 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Deterministic>true</Deterministic>
 		<Platforms>AnyCPU;x64</Platforms>
+		<!-- Disable the VS-only assembly-level BDN config injected by the
+			 DiagnosticsHub package so the benchmarks run correctly from the
+			 command line (dotnet run -c Release). The package's own generated
+			 file documents this symbol as the recommended opt-out. -->
+		<DefineConstants>$(DefineConstants);DISABLE_PROFILER_AGENT_CONFIG</DefineConstants>
 	</PropertyGroup>
 
 	<ItemGroup>
