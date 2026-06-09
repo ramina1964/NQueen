@@ -55,4 +55,57 @@ public class BitboardNQueenSolverTests
     public void CountSolutions_OutOfRange_Throws(int n) =>
         FluentActions.Invoking(() => BitboardNQueenSolver.CountSolutions(n))
             .Should().Throw<ArgumentOutOfRangeException>();
+
+    // ── Iterative variant parity (perf/all-mode-iterative-core A/B) ──────────
+    // CountSolutions is the production iterative variant; CountSolutionsRecursive is the
+    // recursive baseline retained internally only as the comparison cell for
+    // AllCountOnlyRecursiveVsIterativeBenchmark. These tests gate count-equivalence at every
+    // parallel/sequential combination across the sizes the public solver suite already covers
+    // exactly. Coverage of larger N (15-18) happens via the benchmark workload itself, which
+    // asserts oracle counts in its body.
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(7)]
+    [InlineData(8)]
+    [InlineData(9)]
+    [InlineData(10)]
+    [InlineData(11)]
+    [InlineData(12)]
+    [InlineData(13)]
+    [InlineData(14)]
+    public void CountSolutions_Parallel_MatchesRecursive(int n)
+    {
+        var recursive = BitboardNQueenSolver.CountSolutionsRecursive(n, parallel: true);
+        var iterative = BitboardNQueenSolver.CountSolutions(n, parallel: true);
+        iterative.Should().Be(recursive,
+            $"the iterative production variant must agree with the recursive baseline at N={n} (parallel)");
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(8)]
+    [InlineData(11)]
+    [InlineData(13)]
+    public void CountSolutions_Sequential_MatchesRecursive(int n)
+    {
+        var recursive = BitboardNQueenSolver.CountSolutionsRecursive(n, parallel: false);
+        var iterative = BitboardNQueenSolver.CountSolutions(n, parallel: false);
+        iterative.Should().Be(recursive,
+            $"the iterative production variant must agree with the recursive baseline at N={n} (sequential)");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(33)]
+    public void CountSolutionsRecursive_OutOfRange_Throws(int n) =>
+        FluentActions.Invoking(() => BitboardNQueenSolver.CountSolutionsRecursive(n))
+            .Should().Throw<ArgumentOutOfRangeException>();
 }

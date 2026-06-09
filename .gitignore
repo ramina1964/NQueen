@@ -226,3 +226,8 @@ docs/ignored/
 .pr-body.md
 .github/pr-body-*.md
 
+# -------------------------
+# Local benchmark capture logs (workflow scratch)
+# -------------------------
+ab-result.log
+

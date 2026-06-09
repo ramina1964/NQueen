@@ -67,6 +67,44 @@ public class AllCountOnlyParallelScalingBenchmark
 }
 
 /// <summary>
+/// Recursive vs iterative A/B for <see cref="BitboardNQueenSolver"/>'s All-mode count-only
+/// hot path. Iterative production path is <see cref="BitboardNQueenSolver.CountSolutions"/>;
+/// the recursive baseline retained for the regression-guard comparison is the
+/// internal <c>BitboardNQueenSolver.CountSolutionsRecursive</c>.
+/// <para>
+/// This is the regression-guard harness for <c>perf/all-mode-iterative-core</c> (ROADMAP step
+/// 2.2). Both cells run inside the same BenchmarkDotNet process pair under the same
+/// 3-warmup / 15-iteration full job that <see cref="UniqueFastHalfBoardEvenOddBenchmark"/>
+/// uses, so the iterative-vs-recursive delta comes out of identical environmental
+/// conditions. The recursive cell is <c>Baseline = true</c> so BDN reports the iterative
+/// ratio directly.
+/// </para>
+/// <para>
+/// As shipped (2026-06-09): N=16 -3.1 % (143.8 ms -> 139.3 ms); N=18 -3.0 %
+/// (7,314.9 ms -> 7,098.5 ms); both with non-overlapping 99.9 % CIs.
+/// </para>
+/// <para>
+/// The benchmark stays in the repo as a permanent regression guard for this code path —
+/// any future change that re-introduces recursion (or otherwise inverts the ratio) shows
+/// up here against an in-tree reference baseline.
+/// </para>
+/// </summary>
+[SimpleJob(warmupCount: 3, iterationCount: 15)]
+public class AllCountOnlyRecursiveVsIterativeBenchmark
+{
+    [Params(16, 18)]
+    public int BoardSize { get; set; }
+
+    [Benchmark(Baseline = true, Description = "Recursive Search (CountSolutionsRecursive)")]
+    public long Recursive() =>
+        BitboardNQueenSolver.CountSolutionsRecursive(BoardSize, parallel: true);
+
+    [Benchmark(Description = "Iterative Search (CountSolutions, production)")]
+    public long Iterative() =>
+        BitboardNQueenSolver.CountSolutions(BoardSize, parallel: true);
+}
+
+/// <summary>
 /// Compares All-mode strategies across split depths and pruning settings.
 /// 2 sizes × 2 depths × 2 pruning states × 4 methods = 32 combinations.
 /// </summary>
