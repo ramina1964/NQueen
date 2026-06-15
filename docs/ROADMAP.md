@@ -12,116 +12,112 @@ in the same change that touches `CHANGELOG.md`.
 
 ## Next session — start here
 
-> Updated when `perf/all-mode-mrv-heuristic` closed as the **fifth profile-first
-> negative finding in a row** on the All count-only `BitboardNQueenSolver.Search` code
-> path. Closure ships docs-only on the same branch (no production code touched). Per
-> the closure profile, a major secondary signal surfaced that is now the highest
-> a-priori candidate in the perf backlog — see *Step 2.4 below* and *Recently shipped*.
+> Updated when `perf/all-mode-iterative-search-bounds-elision` closed as the **sixth
+> profile-first negative finding in a row** on the All count-only
+> `BitboardNQueenSolver.Search` code path. Closure ships docs-only (no production
+> code retained on this branch). Step 2.4 was the first candidate where the surfaced
+> symbol-level signal (`Span<Frame>.get_Item` at 66.36 % Self) was strong enough on
+> paper to justify a measure-and-decide pass and the JIT actually emitted the
+> predicted code-shape change — yet the runtime cost of the eliminated work was below
+> the measurement floor. The execution queue advances to Step 3 (Investigations); the
+> remaining backlog candidates on `BitboardNQueenSolver.Search` now require disassembly
+> evidence (or equivalent µarch reasoning) of the proposed change's *dynamic* cost
+> difference, not symbol-level Self attribution alone, before being accepted.
 
-**Active branch — `perf/all-mode-mrv-heuristic` (closing docs-only).** The MRV kill
-check returned **NO**: line-level CPU attribution via `profile_unit_test` against
-`HalfBoardFlagAllModeTests.CountOnly_AllMode_FlagOn_MatchesExpected(n: 16)` showed the
-per-row `available = ~(cols | d1 | d2) & mask` line did not surface as its own
-≥ 2–3 % Self band. The entire iterative `Search` body Self is 25.48 % (split across
-all eight inline ops), and the dominant cost is `Span<Frame>.get_Item` at **66.36 %
-Self** — the bounds-checked frame-load on backtrack at `BitboardNQueenSolver.cs:200`.
-MRV would not change that load, and would *add* per-level popcount work onto the
-already-small bit-mask body. Branch ships docs-only matching PR #16 / PR #17 / PR #19
-precedents. See `CHANGELOG.md [Unreleased] → Docs` and the in-tree archived evidence
-at `NQueen.Benchmarking/BenchmarkDotNet.Artifacts/results/kill-check-mrv-heuristic.md`.
+**Active branch — `perf/all-mode-iterative-search-bounds-elision` (closing docs-only).**
+The bounds-check elision kill check returned **NO** to the > 1 % wall-clock decision
+gate at N = 18 despite oracle parity holding cleanly (535 / 535 tests green).
+Variant A (`MemoryMarshal.GetReference(stack)` once + `Unsafe.Add(ref head, row -
+startRow)` for both backtrack-load and push-store) was implemented and measured.
+Same-session `AllCountOnlyParallelScalingBenchmark`: N = 18 = 7,115.5 ms
+(±1.01 %) → 7,071.1 ms (±0.47 %), Δ −0.62 % with **overlapping 99.9 % CIs**
+(post [7,037.90, 7,104.30] ms vs baseline [7,043.89, 7,187.11] ms, 60.41 ms shared);
+N = 16 = 139.7 ms → 140.3 ms, Δ +0.43 % within noise. **Forensic disassembly
+evidence settled why the gate failed**: `DOTNET_JitDisasm=Search` captured both
+forms; baseline emits two `cmp idx, length / jae RNGCHKFAIL` sequences in the inner
+loop (one per stack access); Variant A emits zero, total `Search` body shrinks from
+410 → 383 bytes (−27 bytes, −6.6 %), `CORINFO_HELP_RNGCHKFAIL` cold path
+eliminated. **The bounds checks were real and Variant A successfully removed both—
+yet the wall-clock didn't move.** Structural lesson on this microarchitecture
+(Intel i7-14700K, X64 RyuJIT AVX2): `cmp/jae` bounds-check pair is essentially free
+at runtime despite costing instruction bytes — correctly-predicted never-taken
+branch, front-end µop fusion, execution-port-parallel issue with the surrounding
+4×qword frame loads. The 66.36 % Self the profiler attributed to `Span<Frame>.
+get_Item` was the **frame-load itself**, not the bounds check. Branch ships docs-only
+matching PR #16 / #17 / #19 / #23 precedents. See `CHANGELOG.md [Unreleased] → Docs`
+and the in-tree archived evidence at
+`NQueen.Benchmarking/BenchmarkDotNet.Artifacts/results/option-A-all-mode-baseline.md`,
+`jit-disasm-baseline-search-only.txt`, and `jit-disasm-variant-A-search-only.txt`.
 
 **Execution queue — progress.** Step 1 (Documentation drift housekeeping) shipped as
 PR #18. Step 2.1 (Symmetry reduction in All count-only path) closed as the fourth
 profile-first negative finding (PR #19). Step 2.2 (Iterative core for All mode) shipped
 as **PR #20** — the first positive after four negatives (-3.0 % at N = 18, -3.1 % at
 N = 16, both with non-overlapping 99.9 % CIs; 535 / 535 tests green). Step 2.3 (MRV
-heuristic) closed as the **fifth profile-first negative finding** on the active branch
-`perf/all-mode-mrv-heuristic` — closure shipped docs-only, branch ready to merge.
-Step 2.4 — `Span<Frame>.get_Item` **bounds-check elision** in the iterative `Search`
-body — surfaced from the Step 2.3 kill-check profile and is now the next active perf
-candidate. Then 3 (Investigations — Unique CountOnly vs Materialize gap at N = 17–19),
-then 4 (Test Coverage closeout).
+heuristic) closed as the **fifth profile-first negative finding** via PR #23
+(squash `f1552ac`, docs-only). Step 2.4 (`Span<Frame>.get_Item` bounds-check elision
+in iterative `Search`) closed as the **sixth profile-first negative finding** on
+`perf/all-mode-iterative-search-bounds-elision` — closure ships docs-only on this
+branch, ready to merge. **Step 3 (Investigations — Unique CountOnly vs Materialize
+gap at N = 17–19) is now the next active candidate.** Then 4 (Test Coverage
+closeout).
 
-**Step 2.4 — starting brief (`Span<Frame>.get_Item` bounds-check elision in iterative
+**Step 2.4 — closure brief (`Span<Frame>.get_Item` bounds-check elision in iterative
 `Search`).**
 
-*What surfaced.* The Step 2.3 kill-check profile against
-`HalfBoardFlagAllModeTests.CountOnly_AllMode_FlagOn_MatchesExpected(n: 16)` returned
-this hot path:
+*The candidate that almost broke the pattern — and what we learned when it didn't.*
+For the first time on the All count-only `BitboardNQueenSolver.Search` code path, the
+surfaced symbol-level signal was strong enough on paper to justify a measure-and-decide
+pass: `Span<Frame>.get_Item` at **66.36 % Self** in the Step 2.3 kill-check profile,
+the **largest single-function Self attribution ever documented on this code path**.
+Variant A (`MemoryMarshal.GetReference(stack)` once + `Unsafe.Add(ref head,
+row - startRow)` for both reads and writes) was implemented and the oracle gate
+cleared cleanly (535 / 535). The same-session post-Variant-A run measured −0.62 % at
+N = 18 with **overlapping 99.9 % CIs** (post [7,037.90, 7,104.30] ms vs baseline
+[7,043.89, 7,187.11] ms, 60.41 ms shared) — below the > 1 % gate and statistically
+not distinguishable from the baseline. **Forensic disassembly settled the *why***:
+`DOTNET_JitDisasm=Search` confirmed both bounds checks were genuinely emitted in the
+baseline form (two `cmp idx, length / jae G_M000_IG20` → `call CORINFO_HELP_RNGCHKFAIL`
+sequences, one per stack access in the inner loop), and Variant A successfully
+removed both — total `Search` body shrank 410 → 383 bytes (−27 bytes, −6.6 %), the
+`RNGCHKFAIL` cold-path block was eliminated, both index computations dropped directly
+into `shl idx, 5` + `add base` + four `mov qword ptr` operations. **Yet the
+wall-clock did not move.** Structural lesson: on this microarchitecture (Intel
+i7-14700K, X64 RyuJIT AVX2), the `cmp/jae` bounds-check pair is **essentially free at
+runtime** despite costing instruction bytes, because the `jae` is virtually
+never-taken (out-of-bounds is a bug) and so correctly-predicted by the static
+not-taken default; modern x86-64 cores fuse `cmp + jae` into a single front-end µop;
+and the pair issues in execution-port-parallel with the four 8-byte frame loads,
+never sitting on the latency-critical chain. The 66.36 % Self the profiler attributed
+to `Span<Frame>.get_Item` was the **frame-load itself** — the four `qword ptr [base
++ 0 / 8 / 16 / 24]` reads from stackalloc memory — which the line-attribution model
+folded into the indexer's symbol along with the elidable check; the profiler's
+symbol-level Self attribution cannot distinguish "bounds check fired" from "memory
+load occurred" on a tight loop body.
 
-```
-BitboardNQueenSolver.<>c__DisplayClass0_0.<CountSolutions>b__4   91.92 % Total /  0.08 % Self
-└─> BitboardNQueenSolver.Search                                  91.84 % Total / 25.48 % Self
-    └─> Span<Frame>.get_Item(int)                                66.36 % Total / 66.36 % Self [HOT]
-```
+**Sixth profile-first negative finding** in a row on the All count-only
+`BitboardNQueenSolver.Search` code path, and the most informative of the six — the
+decisive evidence is now in tree under
+`NQueen.Benchmarking/BenchmarkDotNet.Artifacts/results/` as
+`option-A-all-mode-baseline.md` (same-session baseline + post-Variant-A numbers +
+gate verdict) and the two `jit-disasm-*-search-only.txt` files (forensic
+instruction-stream diff). **Candidate-evaluation bar permanently raised** for this
+code path: future candidates on `BitboardNQueenSolver.Search` now require either
+(a) `[DisassemblyDiagnoser]` / `DOTNET_JitDisasm` evidence of the proposed change's
+*dynamic* cost difference, not symbol-level Self alone, or (b) µarch reasoning
+explaining why the change reduces critical-path latency rather than instruction
+count. Production code reverted to its pre-experiment state on this branch (matches
+`main` at `f1552ac`); branch ships docs-only.
 
-`Span<Frame>.get_Item` at **66.36 % Self** is **2.6× the entire `Search` body's
-combined Self** — a single indexer eclipses every register-tight ALU op in the function.
-Each `stack[row - startRow]` read inside the `if (available == 0)` backtrack branch
-(`BitboardNQueenSolver.cs:200`) runs the JIT-emitted bounds check; for an N = 18
-workload that fires across the ~91 G-node search tree, so the bounds check itself is
-where the runtime is going.
-
-*Why this is genuinely new.* The four prior negatives on this path closed because the
-candidate optimization's target line did not surface as a concentrated band. **This
-candidate's target line is at 66.36 % Self.** That is the **largest single-function
-Self attribution** ever documented on this code path — for comparison, the strongest
-prior signal was `BitOperations.TrailingZeroCount` at 5.17 % Self on
-`perf/cached-diagonal-shifts` (still abandoned because the leaf was register-cheap once
-the `Bmi1.X64.TrailingZeroCount` intrinsic substitution was tried).
-
-*Decision gate (fixed up front).* Identical to PR #20's pattern:
-  1. **Oracle** — the bounds-check-elided variant must equal `CountSolutions` for every
-     N ∈ [1, 14] across both `parallel: true` and `parallel: false`. Reuse / extend the
-     existing `BitboardNQueenSolverTests.CountSolutions_{Parallel,Sequential}_MatchesRecursive`
-     theories.
-  2. **Perf (primary)** — at N = 18, the elided variant must show a wall-clock improvement
-     over the post-PR #20 iterative baseline (`branch-baseline-all-mode-mrv-heuristic.md`:
-     7,043.0 ms ±0.44 %) of **> 1 %** with **non-overlapping 99.9 % CIs** in a new
-     `AllCountOnlyBoundsElisionVsBaselineBenchmark` (full job: 3 warmups, 15 iterations,
-     both cells in the same job).
-  3. **Non-regression** — at N = 16 the elided variant must not regress vs the same
-     baseline (140.4 ms ±0.66 %) by more than 1 %.
-
-*Prior probability — high (relative to the rest of the backlog).* The signal is
-unambiguous and the fix shape is well-trodden: replace `Span<Frame> stack` indexer
-access with `ref Frame head = ref MemoryMarshal.GetReference(stack)` once, then read /
-write via `Unsafe.Add(ref head, row - startRow)` (or the equivalent on
-`stackalloc Frame[]` via `Unsafe.AsRef`). This is the canonical RyuJIT bounds-check
-elision pattern and is used elsewhere in the BCL hot paths the project depends on.
-Calibrated guess: **~50–70 % positive probability** for clearing the > 1 % wall-clock
-gate at N = 18 — substantially higher than any prior candidate on this path. The risk
-is correctness (an `Unsafe`-based pointer walk that goes out of bounds on backtrack
-would be a genuine memory-safety bug, not just a perf regression), so the oracle gate
-plus the existing 535-test suite plus the new bounds-check assertions in DEBUG builds
-have to hold.
-
-*Two reasonable structural shapes.*
-  - **Variant A — `MemoryMarshal.GetReference` + `Unsafe.Add`.** Get the Span's base
-    `ref Frame` once at the top of `Search`; replace every `stack[row - startRow]`
-    access (one read on backtrack, one write on push) with `Unsafe.Add(ref head,
-    row - startRow)`. Minimal code change (~3 lines). The bounds-check is elided
-    statically since `row - startRow` is bounded by the Span's known length.
-  - **Variant B — fully raw `Frame*` over the stackalloc'd buffer.** Allocate via
-    `Frame* stack = stackalloc Frame[n - startRow]`, work entirely in pointer arithmetic
-    inside an `unsafe` block. Maximally fast but loses the Span debugger ergonomics and
-    requires `unsafe` keyword on the method. Implement only if Variant A clears the
-    gate but a measurable margin remains on the table.
-
-If Variant A's profile shows the bounds check vanished (the new
-`<>c__DisplayClass0_0.<CountSolutions>b__4` Self should rise sharply, the `Span` indexer
-should disappear from the top-N) **and** the wall-clock gate clears, Variant A ships
-as the production hot path with the existing iterative form retained as
-`internal SearchBoundsChecked` for the new A/B benchmark. If the bounds check vanishes
-in profile but wall-clock doesn't move, that's a sixth negative finding — still useful
-data, since it says the bounds check is JIT-emitted-but-branch-predicted-out and the
-Self attribution is misleading; close docs-only mirroring this branch's pattern.
-
-*Re-baseline before any production change.* The post-PR #20 baseline in
-`branch-baseline-all-mode-mrv-heuristic.md` (N = 16 = 140.4 ms ±0.66 %, N = 18 =
-7,043.0 ms ±0.44 %) is fresh enough to reuse if the next session opens within ~1 week
-on the same hardware / environment. If longer, re-run `AllCountOnlyParallelScalingBenchmark`
-on freshly-merged `main` to capture a new baseline doc.
+*Prediction-vs-outcome footnote.* The starting brief that opened this branch
+explicitly anticipated this outcome shape: *"If the bounds check vanishes in profile
+but wall-clock doesn't move, that's a sixth negative finding — still useful data,
+since it says the bounds check is JIT-emitted-but-branch-predicted-out and the Self
+attribution is misleading; close docs-only mirroring this branch's pattern."* That's
+exactly what the disassembly + same-session benchmark showed. The calibrated
+~50–70 % positive prior was the right calibration to act on (the symbol-level signal
+*was* genuinely the strongest ever seen on this code path, and the fix shape *was*
+the canonical RyuJIT bounds-elision pattern), but the µarch reality outweighed both.
 
 **Deferred perf track — context.** The notes below are the authoritative profiling
 record from `feature/kernel-perf-small-wins`. They guide candidate selection across
@@ -196,7 +192,7 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | `perf/all-mode-mrv-heuristic` — closing docs-only as the **fifth profile-first negative finding in a row** on the All count-only `BitboardNQueenSolver.Search` code path. The MRV kill-criterion answer was NO (the per-row `available = ~(cols | d1 | d2) & mask` line did not surface as its own ≥ 2–3 % Self band; entire `Search` body Self is 25.48 % combined across all eight inline ops). The kill-check profile surfaced a major secondary signal — `Span<Frame>.get_Item` at **66.36 % Self**, the bounds-checked frame-load on backtrack — that is now the strongest a-priori candidate in the perf backlog and seeds Step 2.4 (`Span<Frame>.get_Item` bounds-check elision) as the next active perf branch. Pattern reaffirmed: positives on this path require either *removing a per-leaf operation entirely* or *re-targeting a structural inefficiency off the hot path*; adding work *on* the hot path has now failed twice in identical fashion (this branch and PR #16). The previous active branch `perf/all-mode-iterative-core` merged as **PR #20** as the **first positive profile-driven finding after four consecutive negatives**: -3.0 % at N = 18 (7,314.9 → 7,098.5 ms), -3.1 % at N = 16 (143.8 → 139.3 ms), both with non-overlapping 99.9 % CIs. Full detail in *Next session — start here* and `CHANGELOG.md [Unreleased] → Docs`. |
+| Active branch | `perf/all-mode-iterative-search-bounds-elision` — closing docs-only as the **sixth profile-first negative finding in a row** on the All count-only `BitboardNQueenSolver.Search` code path. Variant A (`MemoryMarshal.GetReference(stack)` + `Unsafe.Add(ref head, row - startRow)` for both backtrack-load and push-store) was implemented and measured: oracle parity cleared (535 / 535 tests green); same-session `AllCountOnlyParallelScalingBenchmark` N = 18 = 7,115.5 → 7,071.1 ms (Δ −0.62 %, **overlapping 99.9 % CIs**), N = 16 = 139.7 → 140.3 ms (within noise) — fails both the > 1 % wall-clock gate and the non-overlapping-CI gate. **Forensic disassembly via `DOTNET_JitDisasm=Search`** confirmed Variant A genuinely removed both bounds-check sequences (`Search` body 410 → 383 bytes, `CORINFO_HELP_RNGCHKFAIL` cold path eliminated), so the gate failure is not a fixture bug — it is the `cmp/jae` pair being essentially free at runtime on this microarchitecture (correctly-predicted never-taken branch + front-end µop fusion + execution-port-parallel issue with the surrounding 4×qword frame loads). The 66.36 % Self the profiler attributed to `Span<Frame>.get_Item` was the **frame-load itself**, not the bounds check — line-attribution folded the load and the elidable check into the same symbol. Most informative of the six negatives on this path — candidate-evaluation bar now permanently requires disassembly or µarch evidence of *dynamic* cost difference, not symbol-level Self alone. The previous active branch `perf/all-mode-mrv-heuristic` closed as the fifth profile-first negative finding via **PR #23** (squash `f1552ac`, docs-only). The perf-track positives remain **PR #15** (-17 to -24 % from the chunk-of-1 partitioner) and **PR #20** (-3.0 % at N = 18 / -3.1 % at N = 16 from the iterative `Search` body + leaf-shortcut). Full detail in *Next session — start here* and `CHANGELOG.md [Unreleased] → Docs`. |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
 | Test count | **535 / 535 passing** (446 unit + 89 view-model). Up from 515 pre-branch because this branch added 20 new parity tests in `BitboardNQueenSolverTests` (CountSolutions_{Parallel,Sequential}_MatchesRecursive theories + CountSolutionsRecursive_OutOfRange_Throws). |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |
@@ -204,6 +200,55 @@ baseline before touching production code, per the team's MEASURE-first practice.
 
 ### Recently shipped (see `CHANGELOG.md` `[Unreleased]` for full detail)
 
+- `perf/all-mode-iterative-search-bounds-elision` — "`Span<Frame>.get_Item`
+  bounds-check elision in iterative `Search`" candidate (Step 2.4 of the perf
+  execution queue, seeded from the Step 2.3 kill-check secondary discovery) closed as
+  the **sixth profile-first negative finding in a row** (docs-only branch, no
+  production-code changes shipped). Opened off freshly-merged `main` (post-PR #23,
+  `f1552ac`) to *decide* whether replacing `stack[row - startRow]` reads/writes in
+  `BitboardNQueenSolver.Search` with the canonical RyuJIT bounds-elision pattern
+  (`MemoryMarshal.GetReference(stack)` + `Unsafe.Add(ref head, row - startRow)`)
+  would clear the > 1 % wall-clock gate at N = 18. Calibrated prior **~50–70 %
+  positive** because the Step 2.3 profile had surfaced `Span<Frame>.get_Item` at
+  **66.36 % Self** — the largest single-function Self attribution ever documented on
+  this code path. Branch baseline (`option-A-all-mode-baseline.md`) re-established
+  same-session at N = 16 = 139.7 ms ±0.40 %, N = 18 = 7,115.5 ms ±1.01 %. **Variant A
+  was implemented and measured** (~3 source lines: `using
+  System.Runtime.InteropServices;` + the `MemoryMarshal.GetReference` ref + two
+  `Unsafe.Add` rewrites). Oracle gate cleared cleanly: 535 / 535 tests green
+  including the 28 parity theories
+  `BitboardNQueenSolverTests.CountSolutions_{Parallel,Sequential}_MatchesRecursive(n:
+  1..14)`. Same-session post-Variant-A: N = 18 = 7,071.1 ms ±0.47 % (Δ −0.62 %, post
+  CI [7,037.90, 7,104.30] ms overlapping baseline CI [7,043.89, 7,187.11] ms by
+  60.41 ms — fails both the > 1 % gate and the non-overlapping-CI gate); N = 16 =
+  140.3 ms (Δ +0.43 %, within noise, non-regression OK). The point-estimate gain at
+  N = 18 (−44 ms) is **smaller than the baseline run's own 99.9 % CI half-width**
+  (±71.6 ms) — cannot be distinguished from run-to-run noise. **Forensic disassembly
+  via `DOTNET_JitDisasm=Search`** confirmed both forms emitted as predicted: baseline
+  has two `cmp idx, length / jae G_M000_IG20` → `call CORINFO_HELP_RNGCHKFAIL`
+  sequences (one per stack access); Variant A emits zero, total `Search` body
+  shrinks 410 → 383 bytes (−27 bytes, −6.6 %), `RNGCHKFAIL` cold-path block
+  eliminated. **The bounds checks were real and Variant A successfully removed both
+  — yet the wall-clock didn't move statistically.** Structural lesson on this
+  microarchitecture (Intel i7-14700K, X64 RyuJIT AVX2): the `cmp/jae` bounds-check
+  pair is essentially free at runtime despite costing instruction bytes —
+  correctly-predicted never-taken branch + front-end µop fusion + execution-port-
+  parallel issue with the surrounding 4×qword frame loads. The 66.36 % Self the
+  profiler attributed to `Span<Frame>.get_Item` was the **frame-load itself** (four
+  `qword ptr` reads from stackalloc memory), not the bounds check; line-attribution
+  folded the load and the elidable check into the same symbol. **Most informative of
+  the six negatives on this code path.** Candidate-evaluation bar permanently raised:
+  future candidates on `BitboardNQueenSolver.Search` now require either
+  `[DisassemblyDiagnoser]` / `DOTNET_JitDisasm` evidence of *dynamic* cost
+  difference, not symbol-level Self alone, or µarch reasoning explaining critical-
+  path latency reduction rather than instruction-count reduction. Production code
+  reverted to its pre-experiment state on this branch (matches `main` at `f1552ac`).
+  No production-code changes ship; no new benchmark (the existing
+  `AllCountOnlyParallelScalingBenchmark` and
+  `AllCountOnlyRecursiveVsIterativeBenchmark` from PR #15 / PR #20 served as the
+  permanent regression guards). Branch baseline + the two JIT-disasm captures stay
+  in tree under `NQueen.Benchmarking/BenchmarkDotNet.Artifacts/results/` (gitignored)
+  as archived evidence. 535 / 535 tests stay green. Branch ships docs-only.
 - `perf/all-mode-mrv-heuristic` — "MRV (Minimum Remaining Values) heuristic for
   next-column branch ordering" candidate (from `Backlog → Larger wins, scoped risk`;
   Step 2.3 of the execution queue) closed as the **fifth profile-first negative finding
@@ -497,25 +542,21 @@ effort × expected impact.
 > finding; line-level evidence — see *Recently shipped*). The list below is the wider
 > perf inventory for the next picker._
 
-- **`Span<Frame>.get_Item` bounds-check elision in iterative `Search`** — surfaced from
-  the `perf/all-mode-mrv-heuristic` kill-check profile (Step 2.3 closure). At N = 16,
-  `Span<Frame>.get_Item(int)` runs at **66.36 % Self** — 2.6× the entire `Search` body's
-  combined Self. The bounds check on `stack[row - startRow]` (read on backtrack at
-  `BitboardNQueenSolver.cs:200`, write on push at line 215) fires across the ~91 G-node
-  search tree at N = 18. Largest single-function Self attribution ever documented on
-  this code path. Calibrated prior **~50–70 % positive** for clearing the > 1 %
-  wall-clock gate at N = 18 — substantially higher than any prior candidate on this
-  path. Variant A: `MemoryMarshal.GetReference(stack)` once + `Unsafe.Add(ref head,
-  row - startRow)` for both read and write (~3 lines, RyuJIT canonical bounds-elision
-  pattern). Variant B: fully raw `Frame*` over `stackalloc Frame[]` (`unsafe` block,
-  loses Span debugger ergonomics — only if Variant A leaves a measurable margin on the
-  table). Decision gate identical to PR #20 (oracle parity at N ∈ [1, 14] across both
-  parallel modes; > 1 % wall-clock improvement at N = 18 with non-overlapping 99.9 % CIs;
-  non-regression at N = 16). Risk shape is correctness, not perf — an `Unsafe`-based
-  pointer walk that goes out of bounds on backtrack would be a memory-safety bug, so
-  the oracle gate plus the existing 535-test suite plus a debug-only bounds-assert have
-  to hold. **Step 2.4 of the execution queue.** Full brief in *Next session — start
-  here*.
+- ~~**`Span<Frame>.get_Item` bounds-check elision in iterative `Search`**~~ _Abandoned
+  2026-06-15 on `perf/all-mode-iterative-search-bounds-elision` — see *Recently shipped*
+  and the `[Unreleased] → Docs` CHANGELOG entry for the disassembly + same-session
+  measurement evidence. Variant A (`MemoryMarshal.GetReference(stack)` + `Unsafe.Add(ref
+  head, row - startRow)`) successfully removed both bounds-check sequences (`Search`
+  body 410 → 383 bytes, `CORINFO_HELP_RNGCHKFAIL` cold path eliminated, verified via
+  `DOTNET_JitDisasm=Search`) but produced no measurable wall-clock movement at N = 18
+  (Δ −0.62 %, overlapping 99.9 % CIs) — the `cmp/jae` bounds-check pair is essentially
+  free on this microarchitecture due to correctly-predicted never-taken branches +
+  front-end µop fusion + execution-port-parallel issue with the surrounding 4×qword
+  frame loads. The 66.36 % Self the profiler attributed to `Span<Frame>.get_Item` was
+  the frame-load itself, folded into the indexer's symbol by line-attribution. **Sixth
+  profile-first negative finding in a row on this code path.** Candidate-evaluation
+  bar now permanently requires disassembly or µarch evidence of *dynamic* cost
+  difference, not symbol-level Self alone._
 - ~~**MRV heuristic** for next-column branch ordering~~ _Abandoned 2026-06-15 on
   `perf/all-mode-mrv-heuristic` — see *Recently shipped* and the `[Unreleased] → Docs`
   CHANGELOG entry for the line-level CPU attribution evidence. The per-row
