@@ -12,35 +12,49 @@ in the same change that touches `CHANGELOG.md`.
 
 ## Next session — start here
 
-> Updated when `perf/all-mode-mrv-heuristic` closed as the **fifth profile-first
-> negative finding in a row** on the All count-only `BitboardNQueenSolver.Search` code
-> path. Closure ships docs-only on the same branch (no production code touched). Per
-> the closure profile, a major secondary signal surfaced that is now the highest
-> a-priori candidate in the perf backlog — see *Step 2.4 below* and *Recently shipped*.
+> Updated when `perf/all-mode-iterative-search-bounds-elision` opened off `main` at
+> `f1552ac` (post-PR #23: the docs-only closure of `perf/all-mode-mrv-heuristic` as
+> the **fifth profile-first negative finding in a row** on the All count-only
+> `BitboardNQueenSolver.Search` code path). Branch baseline measurement is the next
+> action; no production code touched yet. The MEASURE-first investigation should
+> establish profile-time evidence (or reuse the recent post-PR #20 measurement, fresh
+> within ±1 % at both Ns) *before* any production code change — see *Decision gate*
+> in the *Step 2.4 — starting brief* below.
 
-**Active branch — `perf/all-mode-mrv-heuristic` (closing docs-only).** The MRV kill
-check returned **NO**: line-level CPU attribution via `profile_unit_test` against
-`HalfBoardFlagAllModeTests.CountOnly_AllMode_FlagOn_MatchesExpected(n: 16)` showed the
-per-row `available = ~(cols | d1 | d2) & mask` line did not surface as its own
-≥ 2–3 % Self band. The entire iterative `Search` body Self is 25.48 % (split across
-all eight inline ops), and the dominant cost is `Span<Frame>.get_Item` at **66.36 %
-Self** — the bounds-checked frame-load on backtrack at `BitboardNQueenSolver.cs:200`.
-MRV would not change that load, and would *add* per-level popcount work onto the
-already-small bit-mask body. Branch ships docs-only matching PR #16 / PR #17 / PR #19
-precedents. See `CHANGELOG.md [Unreleased] → Docs` and the in-tree archived evidence
-at `NQueen.Benchmarking/BenchmarkDotNet.Artifacts/results/kill-check-mrv-heuristic.md`.
+**Active branch — `perf/all-mode-iterative-search-bounds-elision`.** Just opened off
+`main` at `f1552ac`. Picks up the secondary signal that surfaced from the Step 2.3
+(MRV) kill check: `Span<Frame>.get_Item` at **66.36 % Self** in the iterative
+`Search` body — the bounds-checked frame-load on backtrack at
+`BitboardNQueenSolver.cs:200` — is the **largest single-function Self attribution
+ever documented on this code path** (2.6× the entire `Search` body's combined Self;
+for comparison, the strongest prior signal was `BitOperations.TrailingZeroCount` at
+5.17 % Self on `perf/cached-diagonal-shifts`, still abandoned because the leaf was
+register-cheap once the `Bmi1.X64.TrailingZeroCount` intrinsic substitution was
+tried). The fix shape is well-trodden: `MemoryMarshal.GetReference(stack)` once +
+`Unsafe.Add(ref head, row - startRow)` for both the read on backtrack and the write
+on push — the canonical RyuJIT bounds-elision pattern, ~3 lines. Calibrated prior
+**~50–70 % positive** for clearing the > 1 % wall-clock gate at N = 18 — substantially
+higher than any prior candidate on this path. Risk shape is correctness, not perf
+(an `Unsafe`-based pointer walk that goes out of bounds on backtrack would be a
+genuine memory-safety bug), so the oracle gate plus the existing 535-test suite
+plus a debug-only bounds-assert have to hold.
+
+For the full closure rationale of the just-merged `perf/all-mode-mrv-heuristic`
+(Step 2.3) see `CHANGELOG.md [Unreleased] → Docs` (the closure entry shipped via
+PR #23) and the in-tree archived profile evidence at
+`NQueen.Benchmarking/BenchmarkDotNet.Artifacts/results/kill-check-mrv-heuristic.md`.
 
 **Execution queue — progress.** Step 1 (Documentation drift housekeeping) shipped as
 PR #18. Step 2.1 (Symmetry reduction in All count-only path) closed as the fourth
 profile-first negative finding (PR #19). Step 2.2 (Iterative core for All mode) shipped
 as **PR #20** — the first positive after four negatives (-3.0 % at N = 18, -3.1 % at
 N = 16, both with non-overlapping 99.9 % CIs; 535 / 535 tests green). Step 2.3 (MRV
-heuristic) closed as the **fifth profile-first negative finding** on the active branch
-`perf/all-mode-mrv-heuristic` — closure shipped docs-only, branch ready to merge.
-Step 2.4 — `Span<Frame>.get_Item` **bounds-check elision** in the iterative `Search`
-body — surfaced from the Step 2.3 kill-check profile and is now the next active perf
-candidate. Then 3 (Investigations — Unique CountOnly vs Materialize gap at N = 17–19),
-then 4 (Test Coverage closeout).
+heuristic) closed as the **fifth profile-first negative finding** via PR #23
+(squash `f1552ac`, docs-only). Step 2.4 — `Span<Frame>.get_Item` **bounds-check
+elision** in the iterative `Search` body — surfaced from the Step 2.3 kill-check
+profile and is the **active perf branch** (`perf/all-mode-iterative-search-bounds-elision`).
+Then 3 (Investigations — Unique CountOnly vs Materialize gap at N = 17–19), then 4
+(Test Coverage closeout).
 
 **Step 2.4 — starting brief (`Span<Frame>.get_Item` bounds-check elision in iterative
 `Search`).**
@@ -196,7 +210,7 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | `perf/all-mode-mrv-heuristic` — closing docs-only as the **fifth profile-first negative finding in a row** on the All count-only `BitboardNQueenSolver.Search` code path. The MRV kill-criterion answer was NO (the per-row `available = ~(cols | d1 | d2) & mask` line did not surface as its own ≥ 2–3 % Self band; entire `Search` body Self is 25.48 % combined across all eight inline ops). The kill-check profile surfaced a major secondary signal — `Span<Frame>.get_Item` at **66.36 % Self**, the bounds-checked frame-load on backtrack — that is now the strongest a-priori candidate in the perf backlog and seeds Step 2.4 (`Span<Frame>.get_Item` bounds-check elision) as the next active perf branch. Pattern reaffirmed: positives on this path require either *removing a per-leaf operation entirely* or *re-targeting a structural inefficiency off the hot path*; adding work *on* the hot path has now failed twice in identical fashion (this branch and PR #16). The previous active branch `perf/all-mode-iterative-core` merged as **PR #20** as the **first positive profile-driven finding after four consecutive negatives**: -3.0 % at N = 18 (7,314.9 → 7,098.5 ms), -3.1 % at N = 16 (143.8 → 139.3 ms), both with non-overlapping 99.9 % CIs. Full detail in *Next session — start here* and `CHANGELOG.md [Unreleased] → Docs`. |
+| Active branch | `perf/all-mode-iterative-search-bounds-elision` — just opened off `main` at `f1552ac` (post-PR #23: the docs-only closure of `perf/all-mode-mrv-heuristic` as the fifth profile-first negative finding in a row). State: **branch baseline measurement is the next action**; no production code touched yet. Step 2.4 of the perf execution queue: pick up the secondary signal that surfaced from the Step 2.3 (MRV) kill-check profile — `Span<Frame>.get_Item` at **66.36 % Self** in the iterative `Search` body, the bounds-checked frame-load on backtrack at `BitboardNQueenSolver.cs:200`. Largest single-function Self attribution ever documented on this code path (2.6× the entire `Search` body's combined Self). Fix shape: `MemoryMarshal.GetReference(stack)` + `Unsafe.Add(ref head, row - startRow)` (canonical RyuJIT bounds-elision pattern, ~3 lines). Calibrated prior **~50–70 % positive** for clearing the > 1 % wall-clock gate at N = 18 — substantially higher than any prior candidate on this path. Decision gate (fixed up front, mirroring PR #20): oracle parity at N ∈ [1, 14] across both `parallel: true` and `parallel: false` AND > 1 % wall-clock improvement at N = 18 with non-overlapping 99.9 % CIs AND non-regression at N = 16. Risk shape is correctness, not perf (an `Unsafe` walk that goes out of bounds on backtrack would be a memory-safety bug). Full brief in *Next session — start here*. The previous branch `perf/all-mode-mrv-heuristic` closed as the **fifth profile-first negative finding** via PR #23 (squash `f1552ac`); the perf-track positives remain PR #15 (-17 to -24 % from the chunk-of-1 partitioner) and PR #20 (-3.0 % at N = 18 / -3.1 % at N = 16 from the iterative `Search` body + leaf-shortcut). |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
 | Test count | **535 / 535 passing** (446 unit + 89 view-model). Up from 515 pre-branch because this branch added 20 new parity tests in `BitboardNQueenSolverTests` (CountSolutions_{Parallel,Sequential}_MatchesRecursive theories + CountSolutionsRecursive_OutOfRange_Throws). |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |
