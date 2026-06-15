@@ -12,87 +12,116 @@ in the same change that touches `CHANGELOG.md`.
 
 ## Next session — start here
 
-> Updated when `perf/all-mode-mrv-heuristic` opened off `main` at `d4b26cc` (post-PR #22:
-> the small `chore: untrack accidentally-committed .diagsession profiler trace` cleanup
-> that followed PR #21's docs sync after PR #20's iterative-core production swap — see
-> *Recently shipped*).
+> Updated when `perf/all-mode-mrv-heuristic` closed as the **fifth profile-first
+> negative finding in a row** on the All count-only `BitboardNQueenSolver.Search` code
+> path. Closure ships docs-only on the same branch (no production code touched). Per
+> the closure profile, a major secondary signal surfaced that is now the highest
+> a-priori candidate in the perf backlog — see *Step 2.4 below* and *Recently shipped*.
 
-**Active branch — `perf/all-mode-mrv-heuristic`.** Just opened off `main` at `d4b26cc`;
-branch baseline measurement is the next action (no production code touched yet). The
-MEASURE-first investigation should establish profile-time evidence *before* deciding
-whether to write any production code (see *Decision gate* below).
+**Active branch — `perf/all-mode-mrv-heuristic` (closing docs-only).** The MRV kill
+check returned **NO**: line-level CPU attribution via `profile_unit_test` against
+`HalfBoardFlagAllModeTests.CountOnly_AllMode_FlagOn_MatchesExpected(n: 16)` showed the
+per-row `available = ~(cols | d1 | d2) & mask` line did not surface as its own
+≥ 2–3 % Self band. The entire iterative `Search` body Self is 25.48 % (split across
+all eight inline ops), and the dominant cost is `Span<Frame>.get_Item` at **66.36 %
+Self** — the bounds-checked frame-load on backtrack at `BitboardNQueenSolver.cs:200`.
+MRV would not change that load, and would *add* per-level popcount work onto the
+already-small bit-mask body. Branch ships docs-only matching PR #16 / PR #17 / PR #19
+precedents. See `CHANGELOG.md [Unreleased] → Docs` and the in-tree archived evidence
+at `NQueen.Benchmarking/BenchmarkDotNet.Artifacts/results/kill-check-mrv-heuristic.md`.
 
 **Execution queue — progress.** Step 1 (Documentation drift housekeeping) shipped as
 PR #18. Step 2.1 (Symmetry reduction in All count-only path) closed as the fourth
 profile-first negative finding (PR #19). Step 2.2 (Iterative core for All mode) shipped
 as **PR #20** — the first positive after four negatives (-3.0 % at N = 18, -3.1 % at
-N = 16, both with non-overlapping 99.9 % CIs; 535 / 535 tests green). Step 2.3 —
-**MRV heuristic** for next-column branch ordering — is now the active branch
-(`perf/all-mode-mrv-heuristic`). Then 3 (Investigations — Unique CountOnly vs
-Materialize gap at N = 17–19), then 4 (Test Coverage closeout), then 5 if 5 ever gets
-populated.
+N = 16, both with non-overlapping 99.9 % CIs; 535 / 535 tests green). Step 2.3 (MRV
+heuristic) closed as the **fifth profile-first negative finding** on the active branch
+`perf/all-mode-mrv-heuristic` — closure shipped docs-only, branch ready to merge.
+Step 2.4 — `Span<Frame>.get_Item` **bounds-check elision** in the iterative `Search`
+body — surfaced from the Step 2.3 kill-check profile and is now the next active perf
+candidate. Then 3 (Investigations — Unique CountOnly vs Materialize gap at N = 17–19),
+then 4 (Test Coverage closeout).
 
-**Step 2.3 — starting brief (MRV heuristic on the All count-only path).**
+**Step 2.4 — starting brief (`Span<Frame>.get_Item` bounds-check elision in iterative
+`Search`).**
 
-*What MRV would mean here.* The current `BitboardNQueenSolver.Search` (now iterative
-after PR #20) walks columns 0..N-1 in **fixed order** and tries each available row in
-LSB-first order via `bit = available & -available`. An MRV (Minimum Remaining Values)
-heuristic instead picks, at each level, the *next column whose `available` mask has the
-fewest set bits* — the column most constrained by what's already been placed. The
-classical CSP rationale is fail-fast: branching on the most constrained variable prunes
-larger subtrees earlier. On the N-Queens bit-mask DFS the per-row work changes too
-(can't reuse the linear column walk; needs a popcount across the remaining columns'
-availability masks at every level).
+*What surfaced.* The Step 2.3 kill-check profile against
+`HalfBoardFlagAllModeTests.CountOnly_AllMode_FlagOn_MatchesExpected(n: 16)` returned
+this hot path:
 
-*Where to look first (profile-first).* On post-PR #20 `main`, run `profile_unit_test`
-against an N = 16 representative test (e.g. one of the new
-`BitboardNQueenSolverTests.CountSolutions_*` theories) and confirm:
-  - The expected ~99 % Self bucket on the iterative `Search` body (the new production
-    path).
-  - Whether the per-row `available` computation
-    (`available = ~(cols | d1 | d2) & mask`) shows up as its own sample band, or folds
-    into the bit-scan loop the way the diagonal shifts did on the queue-#2 negative
-    finding (`perf/cached-diagonal-shifts`).
+```
+BitboardNQueenSolver.<>c__DisplayClass0_0.<CountSolutions>b__4   91.92 % Total /  0.08 % Self
+└─> BitboardNQueenSolver.Search                                  91.84 % Total / 25.48 % Self
+    └─> Span<Frame>.get_Item(int)                                66.36 % Total / 66.36 % Self [HOT]
+```
 
-*Re-baseline before any production change.* Run `AllCountOnlyParallelScalingBenchmark`
-(N = 16, N = 18) on the new commit. Expected numbers near the post-PR #20 reference:
-N = 16 ≈ 139 ms, N = 18 ≈ 7.10 s (these are the *iterative* numbers from
-`AllCountOnlyRecursiveVsIterativeBenchmark`'s iterative cell, not the recursive
-baseline from earlier branches).
+`Span<Frame>.get_Item` at **66.36 % Self** is **2.6× the entire `Search` body's
+combined Self** — a single indexer eclipses every register-tight ALU op in the function.
+Each `stack[row - startRow]` read inside the `if (available == 0)` backtrack branch
+(`BitboardNQueenSolver.cs:200`) runs the JIT-emitted bounds check; for an N = 18
+workload that fires across the ~91 G-node search tree, so the bounds check itself is
+where the runtime is going.
 
-*Decision gate (fixed up front).* Identical to the iterative-core branch:
-  1. **Oracle** — a new `MrvSearch` (or `Search` variant) must equal `CountSolutions`
-     for every N ∈ [1, 14] across both `parallel: true` and `parallel: false`.
-  2. **Perf (primary)** — at N = 18, the MRV variant must show a wall-clock improvement
-     over the iterative `Search` baseline of **> 1 %** with **non-overlapping 99.9 % CIs**.
-  3. **Non-regression** — at N = 16 the MRV variant must not regress by more than 1 %.
+*Why this is genuinely new.* The four prior negatives on this path closed because the
+candidate optimization's target line did not surface as a concentrated band. **This
+candidate's target line is at 66.36 % Self.** That is the **largest single-function
+Self attribution** ever documented on this code path — for comparison, the strongest
+prior signal was `BitOperations.TrailingZeroCount` at 5.17 % Self on
+`perf/cached-diagonal-shifts` (still abandoned because the leaf was register-cheap once
+the `Bmi1.X64.TrailingZeroCount` intrinsic substitution was tried).
 
-*Prior probability — low.* `BitboardNQueenSolver.Search` runs at ~99 % Self on register-tight
-bit-mask operations; an MRV heuristic adds per-level popcount work across all remaining
-columns' availability masks (4-8 popcounts per descent at N = 16-18, each touching state
-that would otherwise stay in registers). The pruning savings would have to dominate that
-added ALU + register-pressure cost. The track record on this code path is 4-of-5
-negative findings, with positives only when the change either (a) removes a per-leaf
-operation entirely (PR #20's leaf-shortcut) or (b) re-targets a structural inefficiency
-off the hot path (PR #15's chunk-of-1 partitioner moved tail-imbalance work *off* `Search`).
-MRV adds work *on* the hot path, so the prior says ~10-20 % positive probability. Set
-the experiment up to *kill quickly* via early profile evidence before any wide
-production-code change.
+*Decision gate (fixed up front).* Identical to PR #20's pattern:
+  1. **Oracle** — the bounds-check-elided variant must equal `CountSolutions` for every
+     N ∈ [1, 14] across both `parallel: true` and `parallel: false`. Reuse / extend the
+     existing `BitboardNQueenSolverTests.CountSolutions_{Parallel,Sequential}_MatchesRecursive`
+     theories.
+  2. **Perf (primary)** — at N = 18, the elided variant must show a wall-clock improvement
+     over the post-PR #20 iterative baseline (`branch-baseline-all-mode-mrv-heuristic.md`:
+     7,043.0 ms ±0.44 %) of **> 1 %** with **non-overlapping 99.9 % CIs** in a new
+     `AllCountOnlyBoundsElisionVsBaselineBenchmark` (full job: 3 warmups, 15 iterations,
+     both cells in the same job).
+  3. **Non-regression** — at N = 16 the elided variant must not regress vs the same
+     baseline (140.4 ms ±0.66 %) by more than 1 %.
 
-*Two reasonable structural shapes if profile evidence supports continuing.*
-  - **Variant A — column reorder, fixed at root.** Compute an MRV-suggested column
-    order *once* per top-level work item (or once per N), then walk in that order. Cheap
-    per-iteration; predictability for the bit-scan loop is preserved.
-  - **Variant B — dynamic, per-level.** Recompute the MRV column at each descent.
-    Maximally aggressive pruning but adds the per-level popcount work the prior
-    pessimism is about. Implement only if Variant A clears the gate decisively (giving
-    headroom for the more expensive form).
+*Prior probability — high (relative to the rest of the backlog).* The signal is
+unambiguous and the fix shape is well-trodden: replace `Span<Frame> stack` indexer
+access with `ref Frame head = ref MemoryMarshal.GetReference(stack)` once, then read /
+write via `Unsafe.Add(ref head, row - startRow)` (or the equivalent on
+`stackalloc Frame[]` via `Unsafe.AsRef`). This is the canonical RyuJIT bounds-check
+elision pattern and is used elsewhere in the BCL hot paths the project depends on.
+Calibrated guess: **~50–70 % positive probability** for clearing the > 1 % wall-clock
+gate at N = 18 — substantially higher than any prior candidate on this path. The risk
+is correctness (an `Unsafe`-based pointer walk that goes out of bounds on backtrack
+would be a genuine memory-safety bug, not just a perf regression), so the oracle gate
+plus the existing 535-test suite plus the new bounds-check assertions in DEBUG builds
+have to hold.
 
-If the early profile evidence shows no concentrated `Search` Self band that MRV could
-plausibly amortise against, close as the **fifth profile-first negative finding** (the
-pattern reasserted) and document in `CHANGELOG.md [Unreleased] → Docs` matching the PR
-#19 / PR #17 / PR #16 / PR #14 precedents. Otherwise, write Variant A first, A/B against
-the iterative-core baseline in a new `AllCountOnlyMrvVsBaselineBenchmark`, decide.
+*Two reasonable structural shapes.*
+  - **Variant A — `MemoryMarshal.GetReference` + `Unsafe.Add`.** Get the Span's base
+    `ref Frame` once at the top of `Search`; replace every `stack[row - startRow]`
+    access (one read on backtrack, one write on push) with `Unsafe.Add(ref head,
+    row - startRow)`. Minimal code change (~3 lines). The bounds-check is elided
+    statically since `row - startRow` is bounded by the Span's known length.
+  - **Variant B — fully raw `Frame*` over the stackalloc'd buffer.** Allocate via
+    `Frame* stack = stackalloc Frame[n - startRow]`, work entirely in pointer arithmetic
+    inside an `unsafe` block. Maximally fast but loses the Span debugger ergonomics and
+    requires `unsafe` keyword on the method. Implement only if Variant A clears the
+    gate but a measurable margin remains on the table.
+
+If Variant A's profile shows the bounds check vanished (the new
+`<>c__DisplayClass0_0.<CountSolutions>b__4` Self should rise sharply, the `Span` indexer
+should disappear from the top-N) **and** the wall-clock gate clears, Variant A ships
+as the production hot path with the existing iterative form retained as
+`internal SearchBoundsChecked` for the new A/B benchmark. If the bounds check vanishes
+in profile but wall-clock doesn't move, that's a sixth negative finding — still useful
+data, since it says the bounds check is JIT-emitted-but-branch-predicted-out and the
+Self attribution is misleading; close docs-only mirroring this branch's pattern.
+
+*Re-baseline before any production change.* The post-PR #20 baseline in
+`branch-baseline-all-mode-mrv-heuristic.md` (N = 16 = 140.4 ms ±0.66 %, N = 18 =
+7,043.0 ms ±0.44 %) is fresh enough to reuse if the next session opens within ~1 week
+on the same hardware / environment. If longer, re-run `AllCountOnlyParallelScalingBenchmark`
+on freshly-merged `main` to capture a new baseline doc.
 
 **Deferred perf track — context.** The notes below are the authoritative profiling
 record from `feature/kernel-perf-small-wins`. They guide candidate selection across
@@ -167,7 +196,7 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | `perf/all-mode-mrv-heuristic` — just opened off `main` at `d4b26cc` (post-PR #22). State: **branch baseline measurement is the next action**; no production code touched yet. Decision gate (fixed up front, identical to the iterative-core branch): oracle parity at N ∈ [1, 14] AND > 1 % improvement at N = 18 with non-overlapping 99.9 % CIs AND non-regression at N = 16. Prior probability of a positive finding here is low (≈10-20 %) on `BitboardNQueenSolver.Search`'s register-tight bit-mask DFS (an MRV heuristic adds per-level popcount work across remaining columns' availability masks; the track record on this path is 4-of-5 negative findings, with positives only when changes remove per-leaf operations entirely or re-target structural inefficiencies off the hot path). Set up to *kill quickly* via early profile evidence. Full detail in *Next session — start here*. The previous active branch `perf/all-mode-iterative-core` merged as **PR #20** as the **first positive profile-driven finding after four consecutive negatives**: -3.0 % at N = 18 (7,314.9 → 7,098.5 ms), -3.1 % at N = 16 (143.8 → 139.3 ms), both with non-overlapping 99.9 % CIs. |
+| Active branch | `perf/all-mode-mrv-heuristic` — closing docs-only as the **fifth profile-first negative finding in a row** on the All count-only `BitboardNQueenSolver.Search` code path. The MRV kill-criterion answer was NO (the per-row `available = ~(cols | d1 | d2) & mask` line did not surface as its own ≥ 2–3 % Self band; entire `Search` body Self is 25.48 % combined across all eight inline ops). The kill-check profile surfaced a major secondary signal — `Span<Frame>.get_Item` at **66.36 % Self**, the bounds-checked frame-load on backtrack — that is now the strongest a-priori candidate in the perf backlog and seeds Step 2.4 (`Span<Frame>.get_Item` bounds-check elision) as the next active perf branch. Pattern reaffirmed: positives on this path require either *removing a per-leaf operation entirely* or *re-targeting a structural inefficiency off the hot path*; adding work *on* the hot path has now failed twice in identical fashion (this branch and PR #16). The previous active branch `perf/all-mode-iterative-core` merged as **PR #20** as the **first positive profile-driven finding after four consecutive negatives**: -3.0 % at N = 18 (7,314.9 → 7,098.5 ms), -3.1 % at N = 16 (143.8 → 139.3 ms), both with non-overlapping 99.9 % CIs. Full detail in *Next session — start here* and `CHANGELOG.md [Unreleased] → Docs`. |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
 | Test count | **535 / 535 passing** (446 unit + 89 view-model). Up from 515 pre-branch because this branch added 20 new parity tests in `BitboardNQueenSolverTests` (CountSolutions_{Parallel,Sequential}_MatchesRecursive theories + CountSolutionsRecursive_OutOfRange_Throws). |
 | Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |
@@ -175,6 +204,57 @@ baseline before touching production code, per the team's MEASURE-first practice.
 
 ### Recently shipped (see `CHANGELOG.md` `[Unreleased]` for full detail)
 
+- `perf/all-mode-mrv-heuristic` — "MRV (Minimum Remaining Values) heuristic for
+  next-column branch ordering" candidate (from `Backlog → Larger wins, scoped risk`;
+  Step 2.3 of the execution queue) closed as the **fifth profile-first negative finding
+  in a row** (docs-only branch, no production-code changes). Opened off freshly-merged
+  `main` (post-PR #22, `d4b26cc`) to *decide* whether the iterative
+  `BitboardNQueenSolver.Search` should pick the next column whose
+  `available = ~(cols | d1 | d2) & mask` has the fewest set bits — classical CSP
+  fail-fast — rather than walking columns 0..N-1 in fixed order. Two structural shapes
+  on the table: Variant A (column reorder fixed at root, cheap per-iteration), Variant B
+  (dynamic per-level recompute). Branch baseline
+  `branch-baseline-all-mode-mrv-heuristic.md` re-established at N = 16 = 140.4 ms
+  ±0.66 %, N = 18 = 7,043.0 ms ±0.44 % (both within ±1 % of the post-PR #20 iterative
+  reference; the prior session's environmental-regression suspicion confirmed an
+  artifact, not a code regression). **The kill signal arrived from line-level CPU
+  attribution before any production change** via `profile_unit_test` against
+  `HalfBoardFlagAllModeTests.CountOnly_AllMode_FlagOn_MatchesExpected(n: 16)` — the
+  production All-mode count-only dispatch end-to-end. Function-level rollup:
+  `BitboardNQueenSolver.Search` body 91.84 % Total / **25.48 % Self** combined across
+  all eight inline ops in the loop body (the `if (available == 0)` backtrack pop, LSB
+  extraction, bit-clear, leaf-shortcut, frame push, diagonal-shift descend block,
+  `row++`, and the per-row `available = ~(cols | d1 | d2) & mask` line MRV would
+  manipulate); `Span<Frame>.get_Item(int)` at **66.36 % Self** [HOT]. Eight inline ops
+  sharing 25.48 % Self gives a per-op average around 3.2 % at most, with a heavily
+  uneven actual distribution — and even on the most generous read, **no single inline
+  op including the `available = …` line plausibly clears 2–3 % Self attributable
+  specifically to it**. The line folds into the bit-scan loop's per-iteration Self
+  exactly the way the diagonal shifts `(d1|bit)<<1` and `(d2|bit)>>1` did on
+  `perf/cached-diagonal-shifts` (PR #16) — the failure mode the kill criterion was
+  written to detect. Beyond line attribution, the dominant cost (`Span<Frame>.get_Item`
+  at 66.36 % Self, **2.6× the entire `Search` body's combined Self**) is cleanly
+  outside MRV's lever entirely: MRV changes which column is branched next but does not
+  reduce frames pushed onto the stack, and would *add* per-level popcount work onto
+  `Search`'s body — `(N - d)` popcount calls plus a min-reduction at depth `d`,
+  4–8 popcounts per descent at N = 16 — each touching state that would otherwise stay
+  in registers. Pattern reasserts: positives on this path require either *removing a
+  per-leaf operation entirely* (PR #20's leaf-shortcut) or *re-targeting a structural
+  inefficiency off the hot path* (PR #15's chunk-of-1 partitioner moved tail-imbalance
+  work *off* `Search`); adding work *on* the hot path — even with plausible pruning
+  upside — has now failed twice in identical fashion (this branch and PR #16).
+  **Secondary discovery (deliberately out of scope but recorded for the perf backlog):**
+  `Span<Frame>.get_Item` at 66.36 % Self is the **largest single-function Self
+  attribution ever documented on this code path** — for comparison the strongest prior
+  signal was `BitOperations.TrailingZeroCount` at 5.17 % Self on
+  `perf/cached-diagonal-shifts`. Seeds Step 2.4 (`Span<Frame>.get_Item` bounds-check
+  elision) as the next active perf candidate; full brief in *Next session — start
+  here*. No production-code changes; no new benchmark (the existing
+  `AllCountOnlyParallelScalingBenchmark` and `AllCountOnlyRecursiveVsIterativeBenchmark`
+  from PR #15 / PR #20 already serve as permanent regression guards). Branch baseline
+  doc and kill-check evidence doc both stay in tree under
+  `NQueen.Benchmarking/BenchmarkDotNet.Artifacts/results/` (gitignored) as archived
+  evidence. 535 / 535 tests stay green. Branch ships docs-only.
 - `perf/all-mode-iterative-core` (PR #20, squash `9352187`) — "Iterative core for All
   mode" candidate (from `Backlog → Larger wins, scoped risk`) shipped as the **first
   positive profile-driven finding after four consecutive negatives** (production-changing
@@ -412,9 +492,39 @@ effort × expected impact.
 > **Symmetry reduction in All count-only path** is also resolved (abandoned on
 > `perf/all-mode-symmetry-reduction` as the fourth profile-first negative finding;
 > structural argument from code reading — see *Recently shipped* and
-> `CHANGELOG.md [Unreleased] → Docs`). The list below is the wider perf inventory for
-> the next picker._
+> `CHANGELOG.md [Unreleased] → Docs`). The **MRV heuristic** is also resolved
+> (abandoned on `perf/all-mode-mrv-heuristic` as the fifth profile-first negative
+> finding; line-level evidence — see *Recently shipped*). The list below is the wider
+> perf inventory for the next picker._
 
+- **`Span<Frame>.get_Item` bounds-check elision in iterative `Search`** — surfaced from
+  the `perf/all-mode-mrv-heuristic` kill-check profile (Step 2.3 closure). At N = 16,
+  `Span<Frame>.get_Item(int)` runs at **66.36 % Self** — 2.6× the entire `Search` body's
+  combined Self. The bounds check on `stack[row - startRow]` (read on backtrack at
+  `BitboardNQueenSolver.cs:200`, write on push at line 215) fires across the ~91 G-node
+  search tree at N = 18. Largest single-function Self attribution ever documented on
+  this code path. Calibrated prior **~50–70 % positive** for clearing the > 1 %
+  wall-clock gate at N = 18 — substantially higher than any prior candidate on this
+  path. Variant A: `MemoryMarshal.GetReference(stack)` once + `Unsafe.Add(ref head,
+  row - startRow)` for both read and write (~3 lines, RyuJIT canonical bounds-elision
+  pattern). Variant B: fully raw `Frame*` over `stackalloc Frame[]` (`unsafe` block,
+  loses Span debugger ergonomics — only if Variant A leaves a measurable margin on the
+  table). Decision gate identical to PR #20 (oracle parity at N ∈ [1, 14] across both
+  parallel modes; > 1 % wall-clock improvement at N = 18 with non-overlapping 99.9 % CIs;
+  non-regression at N = 16). Risk shape is correctness, not perf — an `Unsafe`-based
+  pointer walk that goes out of bounds on backtrack would be a memory-safety bug, so
+  the oracle gate plus the existing 535-test suite plus a debug-only bounds-assert have
+  to hold. **Step 2.4 of the execution queue.** Full brief in *Next session — start
+  here*.
+- ~~**MRV heuristic** for next-column branch ordering~~ _Abandoned 2026-06-15 on
+  `perf/all-mode-mrv-heuristic` — see *Recently shipped* and the `[Unreleased] → Docs`
+  CHANGELOG entry for the line-level CPU attribution evidence. The per-row
+  `available = ~(cols | d1 | d2) & mask` line did not surface as its own ≥ 2–3 % Self
+  band (folded into the iterative `Search` body's combined 25.48 % Self across all
+  eight inline ops, identical pattern to the cached-diagonal-shifts negative on
+  PR #16); MRV would add per-level popcount work onto an already-small bit-mask body
+  while leaving the dominant 66.36 % `Span<Frame>.get_Item` cost untouched. Fifth
+  profile-first negative finding in a row on this code path._
 - ~~**Symmetry reduction in All count-only path** beyond the existing half-board
   restriction (enumerate fundamental representatives and expand by symmetry factor).~~
   _Abandoned 2026-06-12 on `perf/all-mode-symmetry-reduction` — see *Recently shipped*
@@ -436,7 +546,6 @@ effort × expected impact.
   `[Unreleased] → Performance` CHANGELOG entry. **First positive profile-driven finding
   after four consecutive negatives** (-3.0 % at N = 18, -3.1 % at N = 16, both with
   non-overlapping 99.9 % CIs)._
-- **MRV heuristic** for next-column branch ordering (cost / benefit needs benchmarking).
 - ~~**Cached shifted diagonal masks** per row to remove repeated `(d1|bit)<<1` /
   `(d2|bit)>>1` in the hottest loop.~~ _Abandoned 2026-06-10 on `perf/cached-diagonal-shifts`
   — see Candidate queue #2 entry above for trace evidence._

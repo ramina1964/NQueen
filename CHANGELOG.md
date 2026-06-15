@@ -113,6 +113,81 @@ All notable changes to this project are documented here.
   File changed: `NQueen.Kernel/Solvers/BitmaskSolver.CountUnique.cs` (~3 lines + comment).
 
 ### Docs
+- **`perf/all-mode-mrv-heuristic` — "MRV (Minimum Remaining Values) heuristic for
+  next-column branch ordering" candidate (from `Backlog → Larger wins, scoped risk`;
+  Step 2.3 of the execution queue) closed as the **fifth profile-first negative finding
+  in a row** (no production-code changes shipped).** Branch opened off freshly-merged
+  `main` (post-PR #22, `d4b26cc`) with the explicit scope of *deciding* whether the
+  iterative `BitboardNQueenSolver.Search` (the production hot path after PR #20's swap)
+  should be modified to pick the next column whose `available = ~(cols | d1 | d2) & mask`
+  has the fewest set bits — the most-constrained variable, classical CSP fail-fast —
+  rather than walking columns 0..N-1 in fixed order. Two structural shapes were on the
+  table: Variant A (column reorder fixed at root, cheap per-iteration), Variant B
+  (dynamic per-level recompute, more aggressive pruning at the cost of per-level popcount
+  work). Branch baseline `branch-baseline-all-mode-mrv-heuristic.md` re-established at
+  N = 16 = 140.4 ms ±0.66 %, N = 18 = 7,043.0 ms ±0.44 % — both within ±1 % of the
+  post-PR #20 iterative reference, confirming the prior session's environmental
+  regression suspicion was a warm-up / scheduler artifact, not a code or toolchain
+  regression. Decision gate established up front (mirroring the iterative-core branch):
+  oracle parity at N ∈ [1, 14] across both `parallel: true` and `parallel: false` AND
+  > 1 % wall-clock improvement at N = 18 with non-overlapping 99.9 % CIs AND
+  non-regression at N = 16. Prior probability calibrated low (~10–20 % positive) because
+  `Search` runs at register-tight bit-mask ops and MRV adds per-level popcount work
+  *onto* the hot path. **The kill signal arrived from line-level CPU attribution before
+  any production change** via `profile_unit_test` against
+  `HalfBoardFlagAllModeTests.CountOnly_AllMode_FlagOn_MatchesExpected(n: 16)` — the
+  production All-mode count-only dispatch (`BitmaskSolver.GetSimResultsAsync` →
+  `EnumerateAllAdaptive(countOnly: true)` → `BitboardNQueenSolver.CountSolutions` →
+  `Parallel.ForEach` over depth-2 work items → iterative `Search`). **Function-level
+  rollup**: `BitboardNQueenSolver.Search` body 91.84 % Total / **25.48 % Self**, and
+  `Span<Frame>.get_Item(int)` (the bounds-checked frame-load on backtrack) at **66.36 %
+  Self [HOT]**. The 25.48 % `Search` body Self is the *combined* attribution for **all
+  eight inline ops in the loop body** (`if (available == 0)` + backtrack pop, `bit =
+  available & -available`, `available &= available - 1`, leaf-shortcut, frame push,
+  diagonal-shift descend block, `row++`, and the per-row `available = ~(cols | d1 | d2)
+  & mask` line MRV would manipulate). Eight inline ops sharing 25.48 % Self gives a
+  per-op average around 3.2 % at most, with a heavily uneven actual distribution — and
+  even on the most generous read, **no single inline op including the `available = …`
+  line plausibly clears 2–3 % Self attributable specifically to it**. The line folds
+  into the bit-scan loop's per-iteration Self exactly the way the diagonal shifts
+  `(d1 | bit) << 1` and `(d2 | bit) >> 1` did on `perf/cached-diagonal-shifts`
+  (PR #16) — which is precisely the failure mode the kill criterion was written to
+  detect. Beyond the line-attribution question, the dominant cost (`Span<Frame>.get_Item`
+  at 66.36 % Self, **2.6× the entire `Search` body's combined Self**) is cleanly outside
+  MRV's lever entirely: MRV changes which column is branched next, but does not reduce
+  the number of frames pushed onto the stack along the path to a solution (N queens
+  still require N push/pop pairs along any successful branch). MRV would *add*
+  per-level popcount work onto `Search`'s body — `(N - d)` popcount calls plus a
+  min-reduction at depth `d`, 4–8 popcounts per descent at N = 16, each touching state
+  that would otherwise stay in registers. The pruning savings would have to dominate
+  that added ALU + register-pressure cost, but the line evidence above shows the
+  bit-mask ops MRV's pruning would amortize against are *already* small — the dominant
+  cost lives in the Span backtrack-load that MRV does not touch. The pattern reasserts:
+  positives on this path require either *removing a per-leaf operation entirely*
+  (PR #20's leaf-shortcut) or *re-targeting a structural inefficiency off the hot path*
+  (PR #15's chunk-of-1 partitioner moved tail-imbalance work *off* `Search`); adding
+  work *on* the hot path — even with plausible pruning upside — has now failed twice in
+  identical fashion (this branch and PR #16). **Secondary discovery (out of scope but
+  recorded for the perf backlog)**: `Span<Frame>.get_Item` at 66.36 % Self is a
+  genuinely new signal on this code path. PR #20 swapped recursive→iterative and won
+  −3.0 % at N = 18 / −3.1 % at N = 16; the post-PR #20 profile now shows the
+  *replacement* mechanism (stackalloc Span<Frame> with bounds-checked indexing) is
+  itself the dominant runtime cost, not an incidental one. A backlog entry seeding this
+  hypothesis (likely `ref Frame f = ref MemoryMarshal.GetReference(stack)` +
+  `Unsafe.Add` to elide the bounds check, with its own MEASURE-first correctness gates)
+  is added to `docs/ROADMAP.md → Backlog → Kernel Performance → Larger wins, scoped
+  risk` so it can be picked up cleanly on a future branch. Acting on it inside this
+  branch was deliberately not done — the kill criterion was written specifically to
+  evaluate MRV; conflating two experiments would undermine the perf-discipline pattern
+  (one branch = one MEASURE-first hypothesis). No production-code changes; no new
+  benchmark (the existing `AllCountOnlyParallelScalingBenchmark` and
+  `AllCountOnlyRecursiveVsIterativeBenchmark` from PR #15 / PR #20 already serve as
+  permanent regression guards for this code path). The branch baseline
+  (`branch-baseline-all-mode-mrv-heuristic.md`) and the kill-check evidence doc
+  (`kill-check-mrv-heuristic.md`) both stay in tree under
+  `NQueen.Benchmarking/BenchmarkDotNet.Artifacts/results/` as archived evidence
+  (gitignored, but useful when bisecting future perf changes). 535 / 535 tests stay
+  green (no production changes). Branch ships docs-only.
 - **`perf/all-mode-symmetry-reduction` — "Symmetry reduction in All count-only path"
   candidate (from `Backlog → Larger wins, scoped risk`) closed as the **fourth
   profile-first negative finding in a row** (no production-code changes shipped).**
