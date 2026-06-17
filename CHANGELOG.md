@@ -113,6 +113,23 @@ All notable changes to this project are documented here.
   File changed: `NQueen.Kernel/Solvers/BitmaskSolver.CountUnique.cs` (~3 lines + comment).
 
 ### Docs
+- **Test coverage baseline refresh (branch `test/coverage-report-refresh` — Step 4
+  from `docs/ROADMAP.md` Active Track — Kernel Test Coverage).** Ran full test
+  suite with `dotnet test --collect:"XPlat Code Coverage"` to establish fresh
+  baseline metrics for the five shipped `BitmaskSolver.*.cs` dedicated test
+  classes. Updated `docs/ROADMAP.md` Current State table: overall 40.24 % line /
+  23.36 % branch coverage (2025-04-23). Updated Active Track table with
+  per-partial baselines: `BitmaskSolver.cs` (root) 23.16 % / 16.50 %,
+  `BitmaskSolver.Single.cs` 40.90 % / 39.68 %, `BitmaskSolver.All.cs` 53.27 % /
+  31.66 %, `BitmaskSolver.Unique.cs` 37.33 % / 31.57 %. Note:
+  `BitmaskSolver.CountUnique.cs` and `BitmaskSolver.Materialize.cs` are not
+  reported separately by coverlet (methods may be inlined or merged during
+  instrumentation); their dedicated test classes (`BitmaskSolverCountUniqueTests`
+  with 14 tests, `BitmaskSolverMaterializeTests` with 7 tests) exist and execute
+  successfully. Track complete: every `BitmaskSolver.*.cs` partial now has a
+  dedicated test class and documented baseline coverage. Enhanced `.gitignore`
+  with `*.tmp`, `.git-*.tmp.*`, `*.log` rules to prevent future temp-file clutter
+  in Git Changes view.
 - **`investigate/unique-materialize-gap` — "Unique CountOnly vs Materialize gap"
   investigation (Step 3 from `docs/ROADMAP.md` Investigations) closed as
   gap-already-eliminated (no production-code changes shipped).** Branch opened
