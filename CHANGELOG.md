@@ -113,6 +113,25 @@ All notable changes to this project are documented here.
   File changed: `NQueen.Kernel/Solvers/BitmaskSolver.CountUnique.cs` (~3 lines + comment).
 
 ### Docs
+- **`investigate/unique-materialize-gap` — "Unique CountOnly vs Materialize gap"
+  investigation (Step 3 from `docs/ROADMAP.md` Investigations) closed as
+  gap-already-eliminated (no production-code changes shipped).** Branch opened
+  off `main` (`37b8fdf`) to investigate the historical ~5–6× performance
+  difference between Unique count-only and Unique materialize modes at
+  N = 17–19, as noted in the ROADMAP Investigations backlog. Fresh baseline
+  measurement via `UniqueHighNBenchmark` (ShortRun, 1 warmup / 3 iterations,
+  N = 16–19) returned **CountOnly/Materialize ratios of 0.99–1.01×** (all within
+  measurement noise; essentially identical performance). The historical gap was
+  **fully eliminated** by the two-phase split in `EnumerateUniqueVisualizeAdaptive`
+  shipped earlier (CHANGELOG.md lines 696–710): Phase 1 streams/animates up to
+  the visualization cap (≤ 100 solutions by default), Phase 2 switches to
+  count-only via `CountSolutions` to get the exact total without materialization
+  overhead. The two-phase architecture correctly applies the same optimization to
+  the Unique materialize path that was already present in the All-mode equivalent.
+  Investigation concludes: no further action required; gap is eliminated by shipped
+  code. No production changes; 535 / 535 tests stay green. Branch ships docs-only
+  (ROADMAP.md updated to mark Step 3 as closed). Partial benchmark log archived as
+  `NQueen.Benchmarking/baseline-unique-countonly-vs-materialize.log` for reference.
 - **`perf/all-mode-iterative-search-bounds-elision` — "`Span<Frame>.get_Item`
   bounds-check elision in iterative `Search`" candidate (Step 2.4 of the perf execution
   queue, seeded from the Step 2.3 kill-check secondary discovery) closed as the **sixth

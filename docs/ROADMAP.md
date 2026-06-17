@@ -593,9 +593,13 @@ effort × expected impact.
 
 ### Investigations
 
-- **Unique CountOnly vs Materialize gap** at N = 17–19 — historical data shows a
+- ~~**Unique CountOnly vs Materialize gap** at N = 17–19 — historical data shows a
   ~5–6× difference. Two-phase split in `EnumerateUniqueVisualizeAdaptive` closed
-  part of the gap but there is likely more to find.
+  part of the gap but there is likely more to find.~~ _Closed 2026-06-17 on
+  `investigate/unique-materialize-gap` — fresh baseline measurement at N = 16–19
+  (ShortRun, 3 iterations) shows CountOnly/Materialize ratios of 0.99–1.01×
+  (within noise). The historical gap was fully eliminated by the two-phase split
+  shipped earlier (CHANGELOG.md lines 696–710). No further action required._
 
 ---
 

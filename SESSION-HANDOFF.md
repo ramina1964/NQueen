@@ -1,12 +1,38 @@
 # Session Handoff: Step 3 — Unique CountOnly vs Materialize Gap Investigation
 
-## Current State (2026-06-17)
+## STATUS: ✅ COMPLETED (2026-06-17)
 
 **Branch**: `investigate/unique-materialize-gap`  
-**Plan**: Step 3 investigation (from `docs/ROADMAP.md` line 596-598)  
-**Step**: step-1 (in-progress) — Run `UniqueHighNBenchmark` to quantify the gap
+**Outcome**: Gap already eliminated; investigation closed docs-only  
+**Next**: Commit docs, push branch, open PR
 
-## What Just Happened
+## Investigation Summary
+
+**Hypothesis**: Historical ~5–6× Unique CountOnly vs Materialize gap at N=17–19 may still exist.
+
+**Measurement**: `UniqueHighNBenchmark` (ShortRun, N=16-19, partial due to interruption)
+
+**Result**: **Gap eliminated** — CountOnly/Materialize ratios: 0.99–1.01× (within noise)
+
+| N  | CountOnly Mean | Materialize Mean | Ratio | Gap Status |
+|----|----------------|------------------|-------|------------|
+| 16 | 203.5 ms       | 201.3 ms         | 0.99× | ✅ None    |
+| 17 | 1.477 s        | 1.478 s          | 1.00× | ✅ None    |
+| 18 | 10.270 s       | 10.339 s         | 1.01× | ✅ None    |
+| 19 | 83.5 s         | 82.3 s           | 0.99× | ✅ None    |
+
+**Root cause**: Two-phase split in `EnumerateUniqueVisualizeAdaptive` (shipped earlier,
+CHANGELOG.md lines 696-710) already eliminated the gap by switching to count-only after
+the visualization cap.
+
+**Changes shipped**:
+- None to production code
+- `docs/ROADMAP.md`: Step 3 moved from Investigations to closed
+- `CHANGELOG.md`: New Docs entry documenting gap-already-eliminated closure
+
+**Tests**: 535 / 535 green (no production changes)
+
+## Files Modified This Session
 
 1. **Plan registered** for Step 3: "Unique CountOnly vs Materialize gap" investigation
 2. **Benchmark launched** in background:
