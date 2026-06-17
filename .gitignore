@@ -38,6 +38,14 @@
 *_wpftmp.csproj
 
 # -------------------------
+# Temporary files
+# -------------------------
+*.tmp
+.git-*.tmp
+.git-*.tmp.*
+*.log
+
+# -------------------------
 # BenchmarkDotNet
 # TODO (template): Remove this section if the new repo has no benchmarking project.
 # -------------------------

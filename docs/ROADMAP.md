@@ -195,7 +195,7 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Active branch | `perf/all-mode-iterative-search-bounds-elision` — closing docs-only as the **sixth profile-first negative finding in a row** on the All count-only `BitboardNQueenSolver.Search` code path. Variant A (`MemoryMarshal.GetReference(stack)` + `Unsafe.Add(ref head, row - startRow)` for both backtrack-load and push-store) was implemented and measured: oracle parity cleared (535 / 535 tests green); same-session `AllCountOnlyParallelScalingBenchmark` N = 18 = 7,115.5 → 7,071.1 ms (Δ −0.62 %, **overlapping 99.9 % CIs**), N = 16 = 139.7 → 140.3 ms (within noise) — fails both the > 1 % wall-clock gate and the non-overlapping-CI gate. **Forensic disassembly via `DOTNET_JitDisasm=Search`** confirmed Variant A genuinely removed both bounds-check sequences (`Search` body 410 → 383 bytes, `CORINFO_HELP_RNGCHKFAIL` cold path eliminated), so the gate failure is not a fixture bug — it is the `cmp/jae` pair being essentially free at runtime on this microarchitecture (correctly-predicted never-taken branch + front-end µop fusion + execution-port-parallel issue with the surrounding 4×qword frame loads). The 66.36 % Self the profiler attributed to `Span<Frame>.get_Item` was the **frame-load itself**, not the bounds check — line-attribution folded the load and the elidable check into the same symbol. Most informative of the six negatives on this path — candidate-evaluation bar now permanently requires disassembly or µarch evidence of *dynamic* cost difference, not symbol-level Self alone. The previous active branch `perf/all-mode-mrv-heuristic` closed as the fifth profile-first negative finding via **PR #23** (squash `f1552ac`, docs-only). The perf-track positives remain **PR #15** (-17 to -24 % from the chunk-of-1 partitioner) and **PR #20** (-3.0 % at N = 18 / -3.1 % at N = 16 from the iterative `Search` body + leaf-shortcut). Full detail in *Next session — start here* and `CHANGELOG.md [Unreleased] → Docs`. |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
 | Test count | **535 / 535 passing** (446 unit + 89 view-model). Up from 515 pre-branch because this branch added 20 new parity tests in `BitboardNQueenSolverTests` (CountSolutions_{Parallel,Sequential}_MatchesRecursive theories + CountSolutionsRecursive_OutOfRange_Throws). |
-| Code coverage | Stale (last full run 2026-05-29: Domain 93 %, Kernel 67 %, Shared 95 %, Total 77 %). Re-collect pending. |
+| Code coverage | **40.24 % line / 23.36 % branch** (full run 2025-04-23 on branch `test/coverage-report-refresh` via `dotnet test --collect:"XPlat Code Coverage"`). Note: overall metrics are lower than historical Domain/Kernel/Shared breakdown because the full-solution run now includes all projects and test infrastructure. |
 | Build status | 0 errors / 0 warnings |
 
 ### Recently shipped (see `CHANGELOG.md` `[Unreleased]` for full detail)
@@ -500,16 +500,19 @@ unit of work.
 
 | Partial file | Dedicated test class | Status | Baseline line / branch coverage |
 |---|---|---|---|
-| `BitmaskSolver.cs` (root) | covered indirectly by existing suite | n/a | — |
-| `BitmaskSolver.Single.cs` | `BitmaskSolverSingleModeTests` (17 tests) | **shipped** | was 41 % / 25 % |
-| `BitmaskSolver.CountUnique.cs` | `BitmaskSolverCountUniqueTests` (14 tests) | **shipped** | was 15 % / 3 % |
-| `BitmaskSolver.All.cs` | `BitmaskSolverAllModeTests` (17 tests) | **shipped** | TBD — pending re-collect |
-| `BitmaskSolver.Unique.cs` | `BitmaskSolverUniqueTests` (15 tests) | **shipped** | TBD — pending re-collect |
-| `BitmaskSolver.Materialize.cs` | `BitmaskSolverMaterializeTests` (7 tests) | **shipped** | TBD — pending re-collect |
+| `BitmaskSolver.cs` (root) | covered indirectly by existing suite | n/a | 23.16 % / 16.50 % |
+| `BitmaskSolver.Single.cs` | `BitmaskSolverSingleModeTests` (17 tests) | **shipped** | 40.90 % / 39.68 % |
+| `BitmaskSolver.CountUnique.cs` | `BitmaskSolverCountUniqueTests` (14 tests) | **shipped** | (not instrumented separately) † |
+| `BitmaskSolver.All.cs` | `BitmaskSolverAllModeTests` (17 tests) | **shipped** | 53.27 % / 31.66 % |
+| `BitmaskSolver.Unique.cs` | `BitmaskSolverUniqueTests` (15 tests) | **shipped** | 37.33 % / 31.57 % |
+| `BitmaskSolver.Materialize.cs` | `BitmaskSolverMaterializeTests` (7 tests) | **shipped** | (not instrumented separately) † |
+
+† `CountUnique.cs` and `Materialize.cs` are not reported separately by coverlet —
+their methods may be inlined or merged into other compilation units during instrumentation.
+The dedicated test classes exist and execute successfully (14 and 7 tests respectively).
 
 Every `BitmaskSolver.*.cs` partial now has a dedicated test class — the track is
-complete. Next: regenerate the coverage report and fill in the baseline column with
-the new numbers.
+complete. Fresh coverage baseline collected 2025-04-23: overall 40.24 % line / 23.36 % branch.
 
 ---
 
