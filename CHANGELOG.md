@@ -7,25 +7,32 @@ All notable changes to this project are documented here.
 ## [Unreleased]
 
 ### GUI
-- **Fixed layout stability and alignment issues** (branch `fix/gui-issues`):
-  - **Flickering eliminated:** SimulationPanel progress row uses fixed `Height="36"` instead of 
-    `Height="Auto"`. ProgressBar has explicit `Height="20"` and `Margin="0,8"` (no wrapper margin) 
-    to prevent any layout recalculation when visibility changes.
-  - **Slider alignment:** Delay slider now uses **identical layout pattern** as TextBox/ComboBox 
-    controls: `MinWidth="120"`, `HorizontalAlignment="Right"`, `Margin="{StaticResource InputCellMargin}"`. 
-    Previously used DockPanel container with inline value TextBlock, causing misalignment. Delay 
-    value now shown in ToolTip instead.
-  - **Column height matching:** Added star-sized bottom row (`<RowDefinition Height="*" />`) to right 
-    control column grid, filling remaining vertical space to match chessboard height.
-  - **Vertical spacing optimization:** Reduced inter-panel spacing from 8px to 4px and adjusted 
-    window margins (10→6 top/bottom, header margin 10→4) to create space for fixed-height progress bar.
-  - **Technical note:** WPF layout with Viewbox uniform scaling + fixed 1260px design canvas + 
-    three-column Auto/Auto/Fixed grid creates complex sizing interactions. Controls must use 
-    **identical** alignment attributes (`MinWidth`, `HorizontalAlignment`, `Margin`) to align 
-    properly; wrapper containers (DockPanel, StackPanel) break alignment even when dimensions seem 
-    equivalent. Fixed-height progress row (36px) + explicit ProgressBar dimensions (Height=20, 
-    Margin=0,8) ensures zero layout shift during visibility changes. Future UI work: consider 
-    documenting these patterns or simplifying the layout structure.
+- **Comprehensive layout optimization and alignment improvements** (branch `fix/gui-issues`):
+  - **Width optimization:** Reduced window default width from 1200px to 1105px (-95px / -7.9%) and 
+    minimum width from 820px to 745px through systematic control sizing.
+  - **Control sizing:** All input controls (TextBox, ComboBox, Slider) standardized to 120px width 
+    with right alignment. Removed unnecessary stretching.
+  - **Column widths:** Label column reduced from 200px to 185px, control column from 160px to 120px, 
+    right panel column from 420px to 325px.
+  - **Vertical spacing optimization:** Reduced `LabelCellMargin` and `InputCellMargin` from 
+    `0,4,8,4` / `0,4,0,4` to `0,2,8,2` / `0,2,0,2` (saves ~40px across all panels).
+  - **SimulationPanel compression:** Progress row height 36px → 28px, ProgressBar margin 0,8 → 0,4, 
+    button margins 8px → 4px vertical.
+  - **Label text optimization:** 
+    - "Solutions (Max Displayed: 5)" → "Solutions (Max: 5)" 
+    - "Memory Consumption (MB)" → "Memory Usage (MB)"
+  - **Flicker elimination:** Fixed-height progress row prevents layout recalculation during 
+    simulation state changes.
+  - **Pixel-perfect rendering:** Added `UseLayoutRounding="True"` and `SnapsToDevicePixels="True"` 
+    to MainWindow, Viewbox, and PanelCardStyle to reduce sub-pixel rendering artifacts.
+  - **Style cleanup:** Removed layout-interfering defaults from AppStyles.xaml (LabelStyle, 
+    TextBoxNumericalStyle, ComboBoxStyle, SliderStyle, ButtonStyle, ProgressBarStyle).
+  - **Save button layout:** Centered across both columns with content-sized width, no longer 
+    pushes grid layout.
+  - **Technical note:** Bottom alignment of chessboard and control columns remains approximate 
+    due to inherent panel content height requirements (~640px chessboard vs. ~660-680px total 
+    panel stack including borders, headers, padding). Forcing exact equality would clip content. 
+    Current state prioritizes content visibility while maintaining visual balance.
 
 ### Dependencies
 - **Updated NuGet packages to latest compatible versions:**
