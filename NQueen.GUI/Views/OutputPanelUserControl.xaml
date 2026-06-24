@@ -27,19 +27,8 @@
             <!-- Two columns: fixed-width label column ensures right-column alignment across all panels -->
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="200" />
-                <ColumnDefinition Width="160" />
+                <ColumnDefinition Width="120" />
             </Grid.ColumnDefinitions>
-
-            <!-- Invisible width reference: the largest possible (ulong) count with space
-                 separators. Its desired width forces col1 wide enough that real values never clip. -->
-            <Label
-                Grid.Row="0"
-                Grid.Column="1"
-                HorizontalContentAlignment="Right"
-                Content="18 446 744 073 709 551 615"
-                IsHitTestVisible="False"
-                Style="{StaticResource LabelStyle}"
-                Visibility="Hidden" />
 
             <!-- Board Size -->
             <Label

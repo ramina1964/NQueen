@@ -41,7 +41,7 @@
 
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="200" />
-                    <ColumnDefinition Width="160" />
+                    <ColumnDefinition Width="120" />
                 </Grid.ColumnDefinitions>
 
                 <!--  Board Size  -->
@@ -55,8 +55,9 @@
                 <TextBox
                     Grid.Row="0"
                     Grid.Column="1"
+                    Width="120"
+                    HorizontalAlignment="Right"
                     Margin="{StaticResource InputCellMargin}"
-                    HorizontalAlignment="Stretch"
                     IsEnabled="{Binding IsInInputMode}"
                     Style="{StaticResource TextBoxNumericalStyle}"
                     Text="{Binding BoardSizeText, UpdateSourceTrigger=LostFocus, Mode=TwoWay, ValidatesOnDataErrors=True}" />
@@ -72,8 +73,9 @@
                 <ComboBox
                     Grid.Row="1"
                     Grid.Column="1"
+                    Width="120"
+                    HorizontalAlignment="Right"
                     Margin="{StaticResource InputCellMargin}"
-                    HorizontalAlignment="Stretch"
                     IsEnabled="{Binding IsInInputMode}"
                     ItemsSource="{Binding EnumSolutionModes, Mode=TwoWay}"
                     SelectedItem="{Binding SolutionMode, Mode=TwoWay}"
@@ -91,8 +93,9 @@
                     x:Name="CmbDisplayMode"
                     Grid.Row="2"
                     Grid.Column="1"
+                    Width="120"
+                    HorizontalAlignment="Right"
                     Margin="{StaticResource InputCellMargin}"
-                    HorizontalAlignment="Stretch"
                     IsEnabled="{Binding IsInInputMode}"
                     ItemsSource="{Binding EnumDisplayModes, Mode=TwoWay}"
                     SelectedItem="{Binding DisplayMode, Mode=TwoWay}"
@@ -106,11 +109,13 @@
                     Content="Delay in Milisec"
                     Style="{StaticResource LabelStyle}" />
 
-                <!--  Delay slider - fills column via SliderStyle HorizontalAlignment=Stretch  -->
+                <!--  Delay slider - matches width of controls above it  -->
                 <Slider
                     x:Name="DelaySlider"
                     Grid.Row="3"
                     Grid.Column="1"
+                    Width="120"
+                    HorizontalAlignment="Right"
                     Margin="{StaticResource InputCellMargin}"
                     IsEnabled="{Binding DisplayMode, Converter={StaticResource DisplayModeToEnabledConverter}, ConverterParameter=Visualize}"
                     Maximum="3000"
