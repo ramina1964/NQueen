@@ -12,7 +12,7 @@ All notable changes to this project are documented here.
   - `FluentAssertions`: 8.8.0 → 8.10.0
   - `Microsoft.Extensions.DependencyInjection`: 10.0.2 → 10.0.9
   - `Microsoft.Extensions.Hosting`: 10.0.2 → 10.0.9
-  - `Microsoft.NET.Test.Sdk`: 18.0.1 → 18.6.0
+  - `Microsoft.NET.Test.Sdk`: 18.0.1 → 18.7.0
   - `coverlet.collector`: 6.0.4 → 10.0.1
   - `coverlet.msbuild`: 6.0.4 → 10.0.1
   - `Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers`: 18.3.36812.1 → 18.7.37220.1
