@@ -6,6 +6,20 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Dependencies
+- **Updated NuGet packages to latest compatible versions:**
+  - `CommunityToolkit.Mvvm`: 8.4.0 → 8.4.2
+  - `FluentAssertions`: 8.8.0 → 8.10.0
+  - `Microsoft.Extensions.DependencyInjection`: 10.0.2 → 10.0.9
+  - `Microsoft.Extensions.Hosting`: 10.0.2 → 10.0.9
+  - `Microsoft.NET.Test.Sdk`: 18.0.1 → 18.7.0
+  - `coverlet.collector`: 6.0.4 → 10.0.1
+  - `coverlet.msbuild`: 6.0.4 → 10.0.1
+  - `Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers`: 18.3.36812.1 → 18.7.37220.1
+- **Documented FluentValidation license compliance:** Added inline comment confirming that
+  FluentValidation 12.1.1 is compliant for this open-source MIT-licensed project under its
+  free usage terms for open-source projects.
+
 ### Performance
 - **Kernel performance — `BitboardNQueenSolver.CountSolutions` All-mode count-only DFS
   core ported from recursive to iterative.** Branch `perf/all-mode-iterative-core` off
