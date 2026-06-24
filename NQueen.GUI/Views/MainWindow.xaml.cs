@@ -92,11 +92,8 @@ public partial class MainWindow : Window, IDisposable
         chessBoard.Height   = DesignBoardSize;
         solutionList.Height = DesignBoardSize;
 
-        // MinHeight (not an exact Height): when the four panels fit, the column matches the
-        // board and the '*' gap rows distribute the surplus (space-between). When content
-        // overflows (e.g. the board-size error label appears), the column GROWS instead of
-        // clipping the bottom Solver Settings panel — and the Viewbox then scales the full,
-        // unclipped composition, so maximizing/resizing actually helps.
+        // MinHeight allows the column to grow if needed (e.g., when validation errors appear)
+        // while ensuring it matches the board height under normal conditions.
         controlColumn.MinHeight = DesignBoardSize;
 
         // Keep the ViewModel dimensions in sync with the design board.
