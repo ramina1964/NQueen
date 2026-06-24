@@ -27,7 +27,7 @@ public class SolutionFormatter : ISolutionFormatter
     public static string UpdateSolutionLabel(SolutionMode solutionMode) =>
         solutionMode == SolutionMode.Single
                 ? $"Solution"
-                : $"Solutions (Max Displayed: {_maxDisplayedCount})";
+                : $"Solutions (Max: {_maxDisplayedCount})";
 
     private static List<List<Position>> SplitIntoLines(
         IEnumerable<Position> positions, int lineLength)
