@@ -13,7 +13,10 @@ in the same change that touches `CHANGELOG.md`.
 ## Next session — start here
 
 > **Execution queue complete** (2025-04-23). All seven planned steps shipped or closed.
-> The project is in a clean state with no active branches. Summary below.
+> **NuGet package maintenance complete** (PR #28, 2026-06-23). All packages updated to
+> latest compatible versions: 9 packages updated including Microsoft.NET.Test.Sdk 18.7.0,
+> coverlet 10.0.1 (major), and Microsoft.Extensions.* 10.0.9. FluentValidation license
+> compliance documented. The project is in a clean state with no active branches. Summary below.
 
 **Execution queue — final status.**
 
