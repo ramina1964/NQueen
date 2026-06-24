@@ -64,23 +64,30 @@
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top" />
 
-            <!--  Center: Chessboard  -->
-            <ContentControl
-                x:Name="chessboardPlaceholder"
-                Grid.Column="2"
-                Margin="0"
-                HorizontalAlignment="Stretch"
-                VerticalAlignment="Top"
-                MinWidth="200" />
+            <!--  Center: Chessboard - wrapped to match control column structure -->
+            <Border Grid.Column="2" 
+                    BorderThickness="0"
+                    VerticalAlignment="Top"
+                    HorizontalAlignment="Stretch">
+                <ContentControl
+                    x:Name="chessboardPlaceholder"
+                    Margin="0"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Top"
+                    MinWidth="200" />
+            </Border>
 
-            <!--  Right: Controls (fills board height; gaps distribute evenly) -->
-            <Grid
-                x:Name="controlColumn"
-                Grid.Column="4"
-                Grid.IsSharedSizeScope="True"
-                Margin="0"
-                HorizontalAlignment="Stretch"
-                VerticalAlignment="Top">
+            <!--  Right: Controls - wrapped to match chessboard structure -->
+            <Border Grid.Column="4"
+                    BorderThickness="0"
+                    VerticalAlignment="Top"
+                    HorizontalAlignment="Stretch">
+                <Grid
+                    x:Name="controlColumn"
+                    Grid.IsSharedSizeScope="True"
+                    Margin="0"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Top">
 
                 <!--  Panels size to their natural height (Auto); the fixed 4px spacer rows keep a
                       constant gap between cards at all times — including while simulating, when the
@@ -127,6 +134,7 @@
                     MinWidth="220"
                     HorizontalAlignment="Stretch" />
             </Grid>
+            </Border>
         </Grid>
     </Grid>
     </Viewbox>

@@ -9,8 +9,8 @@
     <Thickness x:Key="FramePadding">4</Thickness>
     <Thickness x:Key="ButtonMargin">8</Thickness>
     <Thickness x:Key="FieldRowMargin">0,4</Thickness>
-    <Thickness x:Key="LabelCellMargin">0,4,8,4</Thickness>
-    <Thickness x:Key="InputCellMargin">0,4,0,4</Thickness>
+    <Thickness x:Key="LabelCellMargin">0,2,8,2</Thickness>
+    <Thickness x:Key="InputCellMargin">0,2,0,2</Thickness>
 
     <!--  ******************** Typography tokens ********************  -->
     <!--  Caption / helper text size; reference instead of literal FontSize values.  -->
