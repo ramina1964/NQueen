@@ -17,13 +17,15 @@
     ResizeMode="CanResize"
     WindowStartupLocation="CenterScreen"
     WindowState="Normal"
+    UseLayoutRounding="True"
+    SnapsToDevicePixels="True"
     mc:Ignorable="d">
 
     <!--  Viewbox scales the whole layout uniformly; board stays square, panels keep their ratios  -->
-    <Viewbox Stretch="Uniform">
+    <Viewbox Stretch="Uniform" SnapsToDevicePixels="True">
     <!--  Fixed design width so the Viewbox scale stays constant; content changes (e.g. selected-solution
           locations after Simulate) scroll within the layout instead of resizing the whole UI.  -->
-    <Grid Width="1260" Margin="10,6,10,6" Background="{StaticResource SurfaceBrush}" HorizontalAlignment="Stretch">
+    <Grid Width="1260" Margin="10,6,10,6" Background="{StaticResource SurfaceBrush}" HorizontalAlignment="Stretch" SnapsToDevicePixels="True">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" MinHeight="40" />
             <RowDefinition Height="Auto" />
@@ -75,6 +77,7 @@
             <Grid
                 x:Name="controlColumn"
                 Grid.Column="4"
+                Grid.IsSharedSizeScope="True"
                 Margin="0"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Top">

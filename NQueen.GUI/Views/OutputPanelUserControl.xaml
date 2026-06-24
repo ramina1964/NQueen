@@ -24,12 +24,10 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- col0 (labels) stretches and right-aligns so each label sits just left of its value;
-                 col1 (values) is Auto and right-aligned flush to the panel edge. The hidden sizer
-                 below pins col1 to the widest representable count so no number ever clips. -->
+            <!-- Two columns: fixed-width label column ensures right-column alignment across all panels -->
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="160" />
             </Grid.ColumnDefinitions>
 
             <!-- Invisible width reference: the largest possible (ulong) count with space
@@ -47,13 +45,14 @@
             <Label
                 Grid.Row="0"
                 Grid.Column="0"
-                HorizontalContentAlignment="Right"
+                Margin="{StaticResource LabelCellMargin}"
                 Content="Board Size"
                 Style="{StaticResource LabelStyle}" />
 
             <Label
                 Grid.Row="0"
                 Grid.Column="1"
+                Margin="{StaticResource InputCellMargin}"
                 HorizontalContentAlignment="Right"
                 Content="{Binding BoardSize}"
                 Style="{StaticResource LabelStyle}" />
@@ -62,13 +61,14 @@
             <Label
                 Grid.Row="1"
                 Grid.Column="0"
-                HorizontalContentAlignment="Right"
+                Margin="{StaticResource LabelCellMargin}"
                 Content="{Binding ResultLabel}"
                 Style="{StaticResource LabelStyle}" />
 
             <Label
                 Grid.Row="1"
                 Grid.Column="1"
+                Margin="{StaticResource InputCellMargin}"
                 HorizontalContentAlignment="Right"
                 Content="{Binding NoOfSolutions}"
                 Style="{StaticResource LabelStyle}" />
@@ -77,13 +77,14 @@
             <Label
                 Grid.Row="2"
                 Grid.Column="0"
-                HorizontalContentAlignment="Right"
+                Margin="{StaticResource LabelCellMargin}"
                 Content="Elapsed Time (sec)"
                 Style="{StaticResource LabelStyle}" />
 
             <Label
                 Grid.Row="2"
                 Grid.Column="1"
+                Margin="{StaticResource InputCellMargin}"
                 HorizontalContentAlignment="Right"
                 Content="{Binding ElapsedTimeInSec}"
                 Style="{StaticResource LabelStyle}" />
@@ -92,13 +93,14 @@
             <Label
                 Grid.Row="3"
                 Grid.Column="0"
-                HorizontalContentAlignment="Right"
+                Margin="{StaticResource LabelCellMargin}"
                 Content="Memory Consumption (MB)"
                 Style="{StaticResource LabelStyle}" />
 
             <Label
                 Grid.Row="3"
                 Grid.Column="1"
+                Margin="{StaticResource InputCellMargin}"
                 HorizontalContentAlignment="Right"
                 Content="{Binding MemoryConsumption}"
                 Style="{StaticResource LabelStyle}" />
