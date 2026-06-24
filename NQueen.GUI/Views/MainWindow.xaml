@@ -23,7 +23,7 @@
     <Viewbox Stretch="Uniform">
     <!--  Fixed design width so the Viewbox scale stays constant; content changes (e.g. selected-solution
           locations after Simulate) scroll within the layout instead of resizing the whole UI.  -->
-    <Grid Width="1260" Margin="10" Background="{StaticResource SurfaceBrush}" HorizontalAlignment="Stretch">
+    <Grid Width="1260" Margin="10,6,10,6" Background="{StaticResource SurfaceBrush}" HorizontalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" MinHeight="40" />
             <RowDefinition Height="Auto" />
@@ -35,7 +35,7 @@
               Auto board / solution-list columns and clipping the panels.  -->
         <Border x:Name="HeaderBorder"
             Grid.Row="0"
-            Margin="0,0,0,10"
+            Margin="0,0,0,4"
             Padding="0"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Top"
@@ -79,18 +79,19 @@
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Top">
 
-                <!--  Panels size to their natural height (Auto); the fixed 8px spacer rows keep a
+                <!--  Panels size to their natural height (Auto); the fixed 4px spacer rows keep a
                       constant gap between cards at all times — including while simulating, when the
                       old '*' space-between rows used to collapse to zero as the panels grew. The
-                      column's MinHeight (set in code-behind) lets it grow rather than clip.  -->
+                      bottom row with Height="*" fills remaining space to match chessboard height.  -->
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="8" />
+                    <RowDefinition Height="4" />
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="8" />
+                    <RowDefinition Height="4" />
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="8" />
+                    <RowDefinition Height="4" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
                 <Grid.ColumnDefinitions>

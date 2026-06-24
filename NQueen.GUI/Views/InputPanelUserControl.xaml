@@ -37,7 +37,6 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <Grid.ColumnDefinitions>
@@ -110,6 +109,7 @@
                     Content="Delay in Milisec"
                     Style="{StaticResource LabelStyle}" />
 
+                <!--  Delay slider - same alignment pattern as TextBox/ComboBox above  -->
                 <Slider
                     x:Name="DelaySlider"
                     Grid.Row="3"
@@ -122,17 +122,8 @@
                     Maximum="3000"
                     Minimum="10"
                     Style="{StaticResource SliderStyle}"
+                    ToolTip="{Binding DelayInMilliseconds}"
                     Value="{Binding DelayInMilliseconds, Mode=TwoWay}" />
-
-                <!--  Delay value text  -->
-                <TextBlock
-                    Grid.Row="4"
-                    Grid.Column="1"
-                    Margin="0,0,5,2"
-                    HorizontalAlignment="Right"
-                    Foreground="{StaticResource TextSubtleBrush}"
-                    FontSize="{StaticResource CaptionFontSize}"
-                    Text="{Binding DelayInMilliseconds}" />
             </Grid>
         </GroupBox>
     </StackPanel>

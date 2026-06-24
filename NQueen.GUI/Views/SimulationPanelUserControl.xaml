@@ -19,8 +19,8 @@
         <!--  Content grid; padding owned by the card template  -->
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition />
-                <RowDefinition />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="36" />
             </Grid.RowDefinitions>
 
             <StackPanel
@@ -41,13 +41,14 @@
                     Style="{StaticResource ButtonStyle}" />
             </StackPanel>
 
-            <!--  ProgressBar with overlayed Label  -->
+            <!--  ProgressBar with overlayed Label - no wrapper Grid to prevent layout shifts  -->
             <Grid
-                Grid.Row="1"
-                Margin="{StaticResource FieldRowMargin}">
+                Grid.Row="1">
 
                 <ProgressBar
                     Name="ProgressBar"
+                    Height="20"
+                    Margin="0,8"
                     IsIndeterminate="{Binding IsSingleRunning}"
                     Minimum="0"
                     Maximum="100"
@@ -55,7 +56,6 @@
                     Visibility="{Binding ProgressVisibility}"
                     Value="{Binding ProgressPercent, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
 
-                <!-- Label still bound to string label -->
                 <Label
                     Name="ProgressLabelStyle"
                     HorizontalAlignment="Center"
