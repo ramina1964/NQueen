@@ -14,7 +14,6 @@
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="185" />
@@ -23,8 +22,6 @@
 
             <Label Grid.Row="0" Grid.Column="0" Content="Solution Storage Mode" Style="{StaticResource LabelStyle}" Margin="{StaticResource LabelCellMargin}" />
             <ComboBox Grid.Row="0" Grid.Column="1" Width="120" HorizontalAlignment="Right" ItemsSource="{Binding EnumStorageModes}" SelectedItem="{Binding SelectedStorageMode}" Style="{StaticResource ComboBoxStyle}" IsEnabled="{Binding CanChangeStorageMode}" Margin="{StaticResource InputCellMargin}" />
-
-            <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Text="Parallel auto-tuned; Half-board auto-enabled." FontSize="{StaticResource CaptionFontSize}" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,2" />
         </Grid>
     </GroupBox>
 </UserControl>
