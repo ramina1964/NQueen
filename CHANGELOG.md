@@ -7,6 +7,17 @@ All notable changes to this project are documented here.
 ## [Unreleased]
 
 ### GUI
+- **GUI view naming consolidation** — renamed the remaining `UserControl`-suffixed views to a
+  consistent, suffix-free semantic scheme so every view name reflects its role:
+  - `ActiveSolutionUserControl` → `SelectedSolutionBar` (matches its "Selected Solution" header
+    and the `SelectedSolution` binding).
+  - `ChessboardUserControl` → `ChessboardView`.
+  - `ListOfSolutionsUserControl` → `SolutionListPanel`.
+  Updated all references in `MainWindow.xaml`, `MainWindow.xaml.cs`, and the DI registrations in
+  `GuiServiceCollectionExtensions.cs`. No `UserControl` suffix remains in the GUI project.
+- **`SelectedSolutionBar` "Locations" label polish** — appended a colon (`Locations:`),
+  set it to **Bold** for subtle emphasis, and replaced its hardcoded `Margin="0,0,8,0"`
+  with the `LabelCellMargin` spacing token for consistency with the other panels.
 - **Comprehensive layout optimization and alignment improvements** (branch `fix/gui-issues`):
   - **Width optimization:** Reduced window default width from 1200px to 1105px (-95px / -7.9%) and 
     minimum width from 820px to 745px through systematic control sizing.

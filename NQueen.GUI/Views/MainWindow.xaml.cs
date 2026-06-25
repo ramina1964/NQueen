@@ -19,8 +19,8 @@ public partial class MainWindow : Window, IDisposable
         Loaded += MainView_Loaded;
         MainViewModel = mainViewModel;
 
-        // Resolve and add ChessboardUserControl to the MainWindow
-        var chessboard = _serviceProvider.GetRequiredService<ChessboardUserControl>();
+        // Resolve and add ChessboardView to the MainWindow
+        var chessboard = _serviceProvider.GetRequiredService<ChessboardView>();
         chessboard.DataContext = MainViewModel;
         chessboardPlaceholder.Content = chessboard;
 
@@ -74,9 +74,9 @@ public partial class MainWindow : Window, IDisposable
 
     private void MainView_Loaded(object sender, RoutedEventArgs e)
     {
-        if (chessboardPlaceholder.Content is not ChessboardUserControl board)
+        if (chessboardPlaceholder.Content is not ChessboardView board)
             throw new InvalidOperationException(
-                "chessboardPlaceholder.Content is not a ChessboardUserControl.");
+                "chessboardPlaceholder.Content is not a ChessboardView.");
 
         ApplyDesignLayout(board);
     }
@@ -86,7 +86,7 @@ public partial class MainWindow : Window, IDisposable
     /// scales the result to the actual window, so the board stays square and the whole
     /// UI zooms uniformly — no monitor-fit arithmetic or per-resize recomputation needed.
     /// </summary>
-    private void ApplyDesignLayout(ChessboardUserControl chessBoard)
+    private void ApplyDesignLayout(ChessboardView chessBoard)
     {
         // Set chessboard to fixed square size matching the solution list height
         chessBoard.Width  = DesignBoardSize;

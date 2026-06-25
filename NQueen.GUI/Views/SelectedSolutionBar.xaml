@@ -1,5 +1,5 @@
-﻿<UserControl
-    x:Class="NQueen.GUI.Views.ActiveSolutionUserControl"
+<UserControl
+    x:Class="NQueen.GUI.Views.SelectedSolutionBar"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -26,9 +26,10 @@
             <!--  Label for locations  -->
             <Label
                 Grid.Column="0"
-                Margin="0,0,8,0"
+                Margin="{StaticResource LabelCellMargin}"
                 VerticalAlignment="Center"
-                Content="Locations"
+                Content="Locations:"
+                FontWeight="Bold"
                 Foreground="{StaticResource TextPrimaryBrush}"
                 Style="{StaticResource LabelStyle}" />
 

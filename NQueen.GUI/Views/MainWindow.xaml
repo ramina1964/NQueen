@@ -33,7 +33,7 @@
 
         <!--  Top header row: spans the full canvas width and is independent of the body
               columns below, so a long selected-solution string scrolls inside the header
-              (see the ScrollViewer in ActiveSolutionUserControl) instead of stretching the
+              (see the ScrollViewer in SelectedSolutionBar) instead of stretching the
               Auto board / solution-list columns and clipping the panels.  -->
         <Border x:Name="HeaderBorder"
             Grid.Row="0"
@@ -42,7 +42,7 @@
             HorizontalAlignment="Stretch"
             VerticalAlignment="Top"
             Background="Transparent">
-            <view:ActiveSolutionUserControl HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+            <view:SelectedSolutionBar HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
         </Border>
 
         <!--  Body row: the five-column layout. Nested so the header above cannot inflate
@@ -57,7 +57,7 @@
             </Grid.ColumnDefinitions>
 
             <!--  Left: Solution List  -->
-            <view:ListOfSolutionsUserControl
+            <view:SolutionListPanel
                 x:Name="solutionList"
                 Grid.Column="0"
                 Margin="0"
