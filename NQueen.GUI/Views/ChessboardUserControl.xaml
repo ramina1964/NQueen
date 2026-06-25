@@ -36,8 +36,6 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border
-                            Width="{Binding Width}"
-                            Height="{Binding Height}"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
                             AutomationProperties.Name="{Binding}"

@@ -1,5 +1,5 @@
 <UserControl
-    x:Class="NQueen.GUI.Views.OutputPanelUserControl"
+    x:Class="NQueen.GUI.Views.SolutionSummaryPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -17,97 +17,73 @@
         <!-- Content grid; padding owned by the card template -->
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition />
-                <RowDefinition />
-                <RowDefinition />
-                <RowDefinition />
-                <RowDefinition />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- col0 (labels) stretches and right-aligns so each label sits just left of its value;
-                 col1 (values) is Auto and right-aligned flush to the panel edge. The hidden sizer
-                 below pins col1 to the widest representable count so no number ever clips. -->
+            <!-- Two columns: fixed-width label column ensures right-column alignment across all panels -->
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="185" />
+                <ColumnDefinition Width="150" />
             </Grid.ColumnDefinitions>
-
-            <!-- Invisible width reference: the largest possible (ulong) count with space
-                 separators. Its desired width forces col1 wide enough that real values never clip. -->
-            <Label
-                Grid.Row="0"
-                Grid.Column="1"
-                HorizontalContentAlignment="Right"
-                Content="18 446 744 073 709 551 615"
-                IsHitTestVisible="False"
-                Style="{StaticResource LabelStyle}"
-                Visibility="Hidden" />
-
-            <!-- Board Size -->
-            <Label
-                Grid.Row="0"
-                Grid.Column="0"
-                HorizontalContentAlignment="Right"
-                Content="Board Size"
-                Style="{StaticResource LabelStyle}" />
-
-            <Label
-                Grid.Row="0"
-                Grid.Column="1"
-                HorizontalContentAlignment="Right"
-                Content="{Binding BoardSize}"
-                Style="{StaticResource LabelStyle}" />
 
             <!-- Result Title -->
             <Label
-                Grid.Row="1"
+                Grid.Row="0"
                 Grid.Column="0"
-                HorizontalContentAlignment="Right"
+                Margin="{StaticResource LabelCellMargin}"
                 Content="{Binding ResultLabel}"
                 Style="{StaticResource LabelStyle}" />
 
             <Label
-                Grid.Row="1"
+                Grid.Row="0"
                 Grid.Column="1"
+                Margin="{StaticResource InputCellMargin}"
                 HorizontalContentAlignment="Right"
                 Content="{Binding NoOfSolutions}"
                 Style="{StaticResource LabelStyle}" />
 
             <!-- Elapsed Time -->
             <Label
-                Grid.Row="2"
+                Grid.Row="1"
                 Grid.Column="0"
-                HorizontalContentAlignment="Right"
+                Margin="{StaticResource LabelCellMargin}"
                 Content="Elapsed Time (sec)"
                 Style="{StaticResource LabelStyle}" />
 
             <Label
-                Grid.Row="2"
+                Grid.Row="1"
                 Grid.Column="1"
+                Margin="{StaticResource InputCellMargin}"
                 HorizontalContentAlignment="Right"
                 Content="{Binding ElapsedTimeInSec}"
                 Style="{StaticResource LabelStyle}" />
 
             <!-- Memory Usage -->
             <Label
-                Grid.Row="3"
+                Grid.Row="2"
                 Grid.Column="0"
-                HorizontalContentAlignment="Right"
-                Content="Memory Consumption (MB)"
+                Margin="{StaticResource LabelCellMargin}"
+                Content="Memory Usage (MB)"
                 Style="{StaticResource LabelStyle}" />
 
             <Label
-                Grid.Row="3"
+                Grid.Row="2"
                 Grid.Column="1"
+                Margin="{StaticResource InputCellMargin}"
                 HorizontalContentAlignment="Right"
                 Content="{Binding MemoryConsumption}"
                 Style="{StaticResource LabelStyle}" />
 
-            <!-- Save Button -->
+            <!-- Save Button - centered across both columns, auto-sized to content -->
             <Button
-                Grid.Row="4"
+                Grid.Row="3"
+                Grid.Column="0"
                 Grid.ColumnSpan="2"
-                MinWidth="140"
+                HorizontalAlignment="Center"
+                Padding="16,4"
                 Margin="{StaticResource ButtonMargin}"
                 Command="{Binding SaveCommand}"
                 Content="Save To File"

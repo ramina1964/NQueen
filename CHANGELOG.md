@@ -6,6 +6,34 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### GUI
+- **Comprehensive layout optimization and alignment improvements** (branch `fix/gui-issues`):
+  - **Width optimization:** Reduced window default width from 1200px to 1105px (-95px / -7.9%) and 
+    minimum width from 820px to 745px through systematic control sizing.
+  - **Control sizing:** All input controls (TextBox, ComboBox, Slider) standardized to 120px width 
+    with right alignment. Removed unnecessary stretching.
+  - **Column widths:** Label column reduced from 200px to 185px, control column from 160px to 120px, 
+    right panel column from 420px to 325px.
+  - **Vertical spacing optimization:** Reduced `LabelCellMargin` and `InputCellMargin` from 
+    `0,4,8,4` / `0,4,0,4` to `0,2,8,2` / `0,2,0,2` (saves ~40px across all panels).
+  - **SimulationPanel compression:** Progress row height 36px → 28px, ProgressBar margin 0,8 → 0,4, 
+    button margins 8px → 4px vertical.
+  - **Label text optimization:** 
+    - "Solutions (Max Displayed: 5)" → "Solutions (Max: 5)" 
+    - "Memory Consumption (MB)" → "Memory Usage (MB)"
+  - **Flicker elimination:** Fixed-height progress row prevents layout recalculation during 
+    simulation state changes.
+  - **Pixel-perfect rendering:** Added `UseLayoutRounding="True"` and `SnapsToDevicePixels="True"` 
+    to MainWindow, Viewbox, and PanelCardStyle to reduce sub-pixel rendering artifacts.
+  - **Style cleanup:** Removed layout-interfering defaults from AppStyles.xaml (LabelStyle, 
+    TextBoxNumericalStyle, ComboBoxStyle, SliderStyle, ButtonStyle, ProgressBarStyle).
+  - **Save button layout:** Centered across both columns with content-sized width, no longer 
+    pushes grid layout.
+  - **Technical note:** Bottom alignment of chessboard and control columns remains approximate 
+    due to inherent panel content height requirements (~640px chessboard vs. ~660-680px total 
+    panel stack including borders, headers, padding). Forcing exact equality would clip content. 
+    Current state prioritizes content visibility while maintaining visual balance.
+
 ### Dependencies
 - **Updated NuGet packages to latest compatible versions:**
   - `CommunityToolkit.Mvvm`: 8.4.0 → 8.4.2

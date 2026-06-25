@@ -24,13 +24,13 @@ public partial class MainWindow : Window, IDisposable
         chessboard.DataContext = MainViewModel;
         chessboardPlaceholder.Content = chessboard;
 
-        // Resolve and add InputPanelUserControl to the MainWindow
-        var inputPanel = _serviceProvider.GetRequiredService<InputPanelUserControl>();
+        // Resolve and add InputPanel to the MainWindow
+        var inputPanel = _serviceProvider.GetRequiredService<InputPanel>();
         inputPanel.DataContext = MainViewModel;
         inputPanelPlaceHolder.Content = inputPanel;
 
-        // Resolve and add SimulationPanelUserControl to the MainWindow
-        var simulationPanel = _serviceProvider.GetRequiredService<SimulationPanelUserControl>();
+        // Resolve and add SimulationPanel to the MainWindow
+        var simulationPanel = _serviceProvider.GetRequiredService<SimulationPanel>();
         simulationPanel.DataContext = MainViewModel;
         simulationPanelPlaceHolder.Content = simulationPanel;
     }
@@ -88,15 +88,16 @@ public partial class MainWindow : Window, IDisposable
     /// </summary>
     private void ApplyDesignLayout(ChessboardUserControl chessBoard)
     {
-        chessBoard.Width    = DesignBoardSize;
-        chessBoard.Height   = DesignBoardSize;
+        // Set chessboard to fixed square size matching the solution list height
+        chessBoard.Width  = DesignBoardSize;
+        chessBoard.Height = DesignBoardSize;
+        chessBoard.HorizontalAlignment = HorizontalAlignment.Left;
+        chessBoard.VerticalAlignment   = VerticalAlignment.Top;
+
         solutionList.Height = DesignBoardSize;
 
-        // MinHeight (not an exact Height): when the four panels fit, the column matches the
-        // board and the '*' gap rows distribute the surplus (space-between). When content
-        // overflows (e.g. the board-size error label appears), the column GROWS instead of
-        // clipping the bottom Solver Settings panel — and the Viewbox then scales the full,
-        // unclipped composition, so maximizing/resizing actually helps.
+        // MinHeight allows the column to grow if needed (e.g., when validation errors appear)
+        // while ensuring it matches the board height under normal conditions.
         controlColumn.MinHeight = DesignBoardSize;
 
         // Keep the ViewModel dimensions in sync with the design board.

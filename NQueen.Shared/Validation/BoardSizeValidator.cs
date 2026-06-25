@@ -23,7 +23,7 @@ public class BoardSizeValidator : AbstractValidator<string>
             .Cascade(CascadeMode.Stop)
             .Must(bst => ParsingUtils.TryParseInt(bst, out var v) && v >= BoardSettings.MinSize)
                 .WithName("BoardSizeText")
-                .WithMessage(ErrorMessages.SizeTooSmallMsg)
+                .WithMessage(ErrorMessages.OutOfRangeMsg)
             .Must(bst => ParsingUtils.TryParseInt(bst, out var v2) && v2 <= maxSize)
                 .WithName("BoardSizeText")
                 .WithMessage(errorMsg);
@@ -34,12 +34,12 @@ public class BoardSizeValidator : AbstractValidator<string>
         solutionMode switch
         {
             SolutionMode.Single => (
-                BoardSettings.MaxSizeForSingle, ErrorMessages.SizeTooLargeForSingle),
+                BoardSettings.MaxSizeForSingle, ErrorMessages.OutOfRangeSingle),
 
             SolutionMode.Unique => (
-                BoardSettings.MaxSizeForUnique, ErrorMessages.SizeTooLargeForUnique),
+                BoardSettings.MaxSizeForUnique, ErrorMessages.OutOfRangeUnique),
 
-            SolutionMode.All => (BoardSettings.MaxSizeForAll, ErrorMessages.SizeTooLargeForAll),
+            SolutionMode.All => (BoardSettings.MaxSizeForAll, ErrorMessages.OutOfRangeAll),
             _ => throw new ArgumentOutOfRangeException(nameof(solutionMode))
         };
 }

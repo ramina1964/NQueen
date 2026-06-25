@@ -6,21 +6,21 @@ public static class NQueenTestSets
         new()
         {
             {
-                "1000", SolutionMode.Single, false, nameof(ErrorMessages.SizeTooLargeForSingle)
+                "1000", SolutionMode.Single, false, nameof(ErrorMessages.OutOfRangeSingle)
             },
             {
-                "1000", SolutionMode.Unique, false, nameof(ErrorMessages.SizeTooLargeForUnique)
+                "1000", SolutionMode.Unique, false, nameof(ErrorMessages.OutOfRangeUnique)
             },
             {
-                "1000", SolutionMode.All, false, nameof(ErrorMessages.SizeTooLargeForAll)
+                "1000", SolutionMode.All, false, nameof(ErrorMessages.OutOfRangeAll)
             },
             {
                 (BoardSettings.MaxSizeForUnique + 1).ToString(), SolutionMode.Unique, false,
-                nameof(ErrorMessages.SizeTooLargeForUnique)
+                nameof(ErrorMessages.OutOfRangeUnique)
             },
             {
                 (BoardSettings.MaxSizeForAll + 1).ToString(), SolutionMode.All, false,
-                nameof(ErrorMessages.SizeTooLargeForAll) }
+                nameof(ErrorMessages.OutOfRangeAll) }
         };
 
     public static TheoryData<int, SolutionMode> SmallValueCases =>
@@ -44,8 +44,8 @@ public static class NQueenTestSets
             { "   ", false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg) },
             { "       ", false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg) },
             { "", false, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg) },
-            { "0", false, nameof(ErrorMessages.SizeTooSmallMsg) },
-            { "-1", false, nameof(ErrorMessages.SizeTooSmallMsg) },
+            { "0", false, nameof(ErrorMessages.OutOfRangeMsg) },
+            { "-1", false, nameof(ErrorMessages.OutOfRangeMsg) },
             { "8.0", false, nameof(ErrorMessages.InvalidIntegerError) },
             { "4,5", false, nameof(ErrorMessages.InvalidIntegerError) },
             { "abc", false, nameof(ErrorMessages.InvalidIntegerError) },

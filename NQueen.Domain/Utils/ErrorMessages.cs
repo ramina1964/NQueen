@@ -3,25 +3,25 @@
 public static class ErrorMessages
 {
     public const string InvalidIntegerError =
-        "Board size must be a valid integer.";
+        "Invalid Board Size: Must be an integer.";
 
-    public const string NoSolutionMessage =
-        "No Solutions found. Try a larger board size!";
+    public const string NoSolutionMsg =
+        "No Solutions Found: Try a larger board size!";
 
     public const string ValueNullOrWhiteSpaceMsg =
-        "Board size can not be null, empty or contain exclusively spaces.";
+        "Invalid Board Size: null, empty or spaces.";
 
-    public static string SizeTooSmallMsg =>
-        $"Board size must be greater than or equal to {BoardSettings.MinSize}.";
+    public static string OutOfRangeMsg =>
+        $"Valid Range is [{BoardSettings.MinSize}, {BoardSettings.MaxSizeForAll}].";
 
-    public static string SizeTooLargeForSingle =>
-        $"Board size for Single Solution must not exceed {BoardSettings.MaxSizeForSingle}.";
+    public static string OutOfRangeSingle =>
+        $"Valid Size: [{BoardSettings.MinSize}, {BoardSettings.MaxSizeForSingle}].";
 
-    public static string SizeTooLargeForUnique =>
-        $"Board size for 'Unique Solutions' must not exceed {BoardSettings.MaxSizeForUnique}.";
+    public static string OutOfRangeUnique =>
+        $"Valid Size: [{BoardSettings.MinSize}, {BoardSettings.MaxSizeForUnique}].";
 
-    public static string SizeTooLargeForAll =>
-        $"Board size for 'All Solutions' must not exceed {BoardSettings.MaxSizeForAll}.";
+    public static string OutOfRangeAll =>
+        $"Valid Size: [{BoardSettings.MinSize}, {BoardSettings.MaxSizeForAll}].";
 
     // DisplayMode.Visualize limit message
     public static string VisualizeSizeTooLarge =>
