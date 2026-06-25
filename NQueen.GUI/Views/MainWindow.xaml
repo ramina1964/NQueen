@@ -8,7 +8,7 @@
     xmlns:view="clr-namespace:NQueen.GUI.Views"
     xmlns:viewmodel="clr-namespace:NQueen.GUI.ViewModels"
     Title="Solutions of NQueen Problem using Symmetry Pruned Backtracking with .NET 10.0"
-    Width="1105"
+    Width="1135"
     Height="780"
     MinWidth="745"
     MinHeight="560"
@@ -25,7 +25,7 @@
     <Viewbox Stretch="Uniform" SnapsToDevicePixels="True">
     <!--  Fixed design width so the Viewbox scale stays constant; content changes (e.g. selected-solution
           locations after Simulate) scroll within the layout instead of resizing the whole UI.  -->
-    <Grid Width="1165" Margin="10,6,10,6" Background="{StaticResource SurfaceBrush}" HorizontalAlignment="Stretch" SnapsToDevicePixels="True">
+    <Grid Width="1195" Margin="10,6,10,6" Background="{StaticResource SurfaceBrush}" HorizontalAlignment="Stretch" SnapsToDevicePixels="True">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" MinHeight="40" />
             <RowDefinition Height="Auto" />
@@ -51,9 +51,9 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="LeftColumn" Width="Auto" />
                 <ColumnDefinition Width="10" />
-                <ColumnDefinition x:Name="BoardColumn" Width="Auto" />
+                <ColumnDefinition x:Name="BoardColumn" Width="*" />
                 <ColumnDefinition Width="10" />
-                <ColumnDefinition Width="325" />
+                <ColumnDefinition Width="355" />
             </Grid.ColumnDefinitions>
 
             <!--  Left: Solution List  -->
@@ -68,13 +68,12 @@
             <Border Grid.Column="2" 
                     BorderThickness="0"
                     VerticalAlignment="Top"
-                    HorizontalAlignment="Stretch">
+                    HorizontalAlignment="Left">
                 <ContentControl
                     x:Name="chessboardPlaceholder"
                     Margin="0"
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Top"
-                    MinWidth="200" />
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top" />
             </Border>
 
             <!--  Right: Controls - wrapped to match chessboard structure -->

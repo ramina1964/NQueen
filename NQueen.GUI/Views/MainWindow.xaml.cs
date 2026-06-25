@@ -88,8 +88,12 @@ public partial class MainWindow : Window, IDisposable
     /// </summary>
     private void ApplyDesignLayout(ChessboardUserControl chessBoard)
     {
-        chessBoard.Width    = DesignBoardSize;
-        chessBoard.Height   = DesignBoardSize;
+        // Set chessboard to fixed square size matching the solution list height
+        chessBoard.Width  = DesignBoardSize;
+        chessBoard.Height = DesignBoardSize;
+        chessBoard.HorizontalAlignment = HorizontalAlignment.Left;
+        chessBoard.VerticalAlignment   = VerticalAlignment.Top;
+
         solutionList.Height = DesignBoardSize;
 
         // MinHeight allows the column to grow if needed (e.g., when validation errors appear)

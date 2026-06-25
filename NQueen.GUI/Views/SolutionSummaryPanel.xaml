@@ -26,7 +26,7 @@
             <!-- Two columns: fixed-width label column ensures right-column alignment across all panels -->
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="185" />
-                <ColumnDefinition Width="120" />
+                <ColumnDefinition Width="150" />
             </Grid.ColumnDefinitions>
 
             <!-- Result Title -->
