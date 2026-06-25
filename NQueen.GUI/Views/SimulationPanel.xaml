@@ -30,13 +30,13 @@
                 Orientation="Horizontal">
                 <Button
                     Width="80"
-                    Margin="8,4"
+                    Margin="{StaticResource ButtonInlineMargin}"
                     Command="{Binding CancelCommand}"
                     Content="Cancel"
                     Style="{StaticResource ButtonStyle}" />
                 <Button
                     Width="80"
-                    Margin="8,4"
+                    Margin="{StaticResource ButtonInlineMargin}"
                     Command="{Binding SimulateCommand}"
                     Content="Simulate"
                     IsDefault="True"
@@ -51,7 +51,7 @@
                 <ProgressBar
                     Name="ProgressBar"
                     Height="20"
-                    Margin="0,4"
+                    Margin="{StaticResource FieldRowMargin}"
                     IsIndeterminate="{Binding IsSingleRunning}"
                     Minimum="0"
                     Maximum="100"

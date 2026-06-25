@@ -18,7 +18,7 @@ public static class GuiServiceCollectionExtensions
         // Windows / Views / ViewModels
         services.AddSingleton<MainWindow>();
         services.AddTransient<MainViewModel>();
-        services.AddTransient<ChessboardUserControl>();
+        services.AddTransient<ChessboardView>();
         services.AddTransient<InputPanel>();
         services.AddTransient<SimulationPanel>();
 

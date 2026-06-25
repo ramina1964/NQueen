@@ -77,17 +77,17 @@
                 Content="{Binding MemoryConsumption}"
                 Style="{StaticResource LabelStyle}" />
 
-            <!-- Save Button - centered across both columns, auto-sized to content -->
-            <Button
-                Grid.Row="3"
-                Grid.Column="0"
-                Grid.ColumnSpan="2"
-                HorizontalAlignment="Center"
-                Padding="16,4"
-                Margin="{StaticResource ButtonMargin}"
-                Command="{Binding SaveCommand}"
-                Content="Save To File"
-                Style="{StaticResource ButtonStyle}" />
+<!-- Save Button - centered across both columns, fixed width to match other buttons -->
+<Button
+    Grid.Row="3"
+    Grid.Column="0"
+    Grid.ColumnSpan="2"
+    Width="120"
+    HorizontalAlignment="Center"
+    Margin="{StaticResource ButtonMargin}"
+    Command="{Binding SaveCommand}"
+    Content="Save To File"
+    Style="{StaticResource ButtonStyle}" />
         </Grid>
     </GroupBox>
 </UserControl>

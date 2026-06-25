@@ -7,6 +7,21 @@ All notable changes to this project are documented here.
 ## [Unreleased]
 
 ### GUI
+- **GUI view naming consolidation** — renamed the remaining `UserControl`-suffixed views to a
+  consistent, suffix-free semantic scheme so every view name reflects its role:
+  - `ActiveSolutionUserControl` → `SelectedSolutionBar` (matches its "Selected Solution" header
+    and the `SelectedSolution` binding).
+  - `ChessboardUserControl` → `ChessboardView`.
+  - `ListOfSolutionsUserControl` → `SolutionListPanel`.
+  Updated all references in `MainWindow.xaml`, `MainWindow.xaml.cs`, and the DI registrations in
+  `GuiServiceCollectionExtensions.cs`. No `UserControl` suffix remains in the GUI project.
+- **`SelectedSolutionBar` "Locations" label polish** — appended a colon (`Locations:`),
+  set it to **Bold** for subtle emphasis, and replaced its hardcoded `Margin="0,0,8,0"`
+  with the `LabelCellMargin` spacing token for consistency with the other panels.
+- **Spacing-token consolidation (SimulationPanel)** — removed the last hardcoded layout
+  literals: added a `ButtonInlineMargin` (`8,4`) token referenced by the Cancel/Simulate
+  buttons, and applied the previously unused `FieldRowMargin` (`0,4`) token to the
+  ProgressBar. Spacing-token utilization is now 100% (no visual change).
 - **Comprehensive layout optimization and alignment improvements** (branch `fix/gui-issues`):
   - **Width optimization:** Reduced window default width from 1200px to 1105px (-95px / -7.9%) and 
     minimum width from 820px to 745px through systematic control sizing.
@@ -27,8 +42,8 @@ All notable changes to this project are documented here.
     to MainWindow, Viewbox, and PanelCardStyle to reduce sub-pixel rendering artifacts.
   - **Style cleanup:** Removed layout-interfering defaults from AppStyles.xaml (LabelStyle, 
     TextBoxNumericalStyle, ComboBoxStyle, SliderStyle, ButtonStyle, ProgressBarStyle).
-  - **Save button layout:** Centered across both columns with content-sized width, no longer 
-    pushes grid layout.
+  - **Save button layout:** Centered across both columns with a fixed 120px width to match the 
+    other action buttons, no longer pushes grid layout.
   - **Technical note:** Bottom alignment of chessboard and control columns remains approximate 
     due to inherent panel content height requirements (~640px chessboard vs. ~660-680px total 
     panel stack including borders, headers, padding). Forcing exact equality would clip content. 
