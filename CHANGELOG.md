@@ -42,8 +42,8 @@ All notable changes to this project are documented here.
     to MainWindow, Viewbox, and PanelCardStyle to reduce sub-pixel rendering artifacts.
   - **Style cleanup:** Removed layout-interfering defaults from AppStyles.xaml (LabelStyle, 
     TextBoxNumericalStyle, ComboBoxStyle, SliderStyle, ButtonStyle, ProgressBarStyle).
-  - **Save button layout:** Centered across both columns with content-sized width, no longer 
-    pushes grid layout.
+  - **Save button layout:** Centered across both columns with a fixed 120px width to match the 
+    other action buttons, no longer pushes grid layout.
   - **Technical note:** Bottom alignment of chessboard and control columns remains approximate 
     due to inherent panel content height requirements (~640px chessboard vs. ~660-680px total 
     panel stack including borders, headers, padding). Forcing exact equality would clip content. 
