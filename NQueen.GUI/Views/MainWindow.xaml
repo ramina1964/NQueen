@@ -113,7 +113,7 @@
                     MinWidth="220"
                     HorizontalAlignment="Stretch" />
 
-                <view:OutputPanelUserControl
+                <view:SolutionSummaryPanel
                     Grid.Row="2"
                     Grid.Column="0"
                     MinWidth="220"

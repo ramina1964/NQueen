@@ -24,13 +24,13 @@ public partial class MainWindow : Window, IDisposable
         chessboard.DataContext = MainViewModel;
         chessboardPlaceholder.Content = chessboard;
 
-        // Resolve and add InputPanelUserControl to the MainWindow
-        var inputPanel = _serviceProvider.GetRequiredService<InputPanelUserControl>();
+        // Resolve and add InputPanel to the MainWindow
+        var inputPanel = _serviceProvider.GetRequiredService<InputPanel>();
         inputPanel.DataContext = MainViewModel;
         inputPanelPlaceHolder.Content = inputPanel;
 
-        // Resolve and add SimulationPanelUserControl to the MainWindow
-        var simulationPanel = _serviceProvider.GetRequiredService<SimulationPanelUserControl>();
+        // Resolve and add SimulationPanel to the MainWindow
+        var simulationPanel = _serviceProvider.GetRequiredService<SimulationPanel>();
         simulationPanel.DataContext = MainViewModel;
         simulationPanelPlaceHolder.Content = simulationPanel;
     }

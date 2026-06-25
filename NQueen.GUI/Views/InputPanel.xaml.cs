@@ -1,8 +1,8 @@
 ﻿namespace NQueen.GUI.Views;
 
-public partial class InputPanelUserControl : UserControl
+public partial class InputPanel : UserControl
 {
-    public InputPanelUserControl()
+    public InputPanel()
     {
         InitializeComponent();
 
