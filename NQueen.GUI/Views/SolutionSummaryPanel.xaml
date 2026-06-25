@@ -77,13 +77,13 @@
                 Content="{Binding MemoryConsumption}"
                 Style="{StaticResource LabelStyle}" />
 
-            <!-- Save Button - centered across both columns, auto-sized to content -->
+            <!-- Save Button - centered across both columns -->
             <Button
                 Grid.Row="3"
                 Grid.Column="0"
                 Grid.ColumnSpan="2"
+                Width="120"
                 HorizontalAlignment="Center"
-                Padding="16,4"
                 Margin="{StaticResource ButtonMargin}"
                 Command="{Binding SaveCommand}"
                 Content="Save To File"
