@@ -90,17 +90,17 @@ public class DomainUtilityTests
     public void ErrorMessages_Constants_NotNullOrEmpty()
     {
         ErrorMessages.InvalidIntegerError.Should().NotBeNullOrEmpty();
-        ErrorMessages.NoSolutionMessage.Should().NotBeNullOrEmpty();
+        ErrorMessages.NoSolutionMsg.Should().NotBeNullOrEmpty();
         ErrorMessages.ValueNullOrWhiteSpaceMsg.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
     public void ErrorMessages_Properties_ContainBoardSizeValues()
     {
-        ErrorMessages.SizeTooSmallMsg.Should().Contain(BoardSettings.MinSize.ToString());
-        ErrorMessages.SizeTooLargeForSingle.Should().Contain(BoardSettings.MaxSizeForSingle.ToString());
-        ErrorMessages.SizeTooLargeForUnique.Should().Contain(BoardSettings.MaxSizeForUnique.ToString());
-        ErrorMessages.SizeTooLargeForAll.Should().Contain(BoardSettings.MaxSizeForAll.ToString());
+        ErrorMessages.OutOfRangeMsg.Should().Contain(BoardSettings.MinSize.ToString());
+        ErrorMessages.OutOfRangeSingle.Should().Contain(BoardSettings.MaxSizeForSingle.ToString());
+        ErrorMessages.OutOfRangeUnique.Should().Contain(BoardSettings.MaxSizeForUnique.ToString());
+        ErrorMessages.OutOfRangeAll.Should().Contain(BoardSettings.MaxSizeForAll.ToString());
         ErrorMessages.VisualizeSizeTooLarge.Should().Contain(SimulationSettings.MaxVisualizeBoardSize.ToString());
     }
 

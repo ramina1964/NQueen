@@ -29,7 +29,7 @@ public class MainViewModelValidationTests
             {
                 var expectedError = expectedErrorKey switch
                 {
-                    nameof(ErrorMessages.SizeTooSmallMsg) => ErrorMessages.SizeTooSmallMsg,
+                    nameof(ErrorMessages.OutOfRangeMsg) => ErrorMessages.OutOfRangeMsg,
                     nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg) => ErrorMessages.ValueNullOrWhiteSpaceMsg,
                     nameof(ErrorMessages.InvalidIntegerError) => ErrorMessages.InvalidIntegerError,
                     _ => null
@@ -40,14 +40,14 @@ public class MainViewModelValidationTests
     }
 
     [Theory]
-    [InlineData(null,  SolutionMode.Unique, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
-    [InlineData("",    SolutionMode.Unique, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
+    [InlineData(null, SolutionMode.Unique, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
+    [InlineData("", SolutionMode.Unique, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
     [InlineData("abc", SolutionMode.Unique, nameof(ErrorMessages.InvalidIntegerError))]
-    [InlineData("-1",  SolutionMode.Unique, nameof(ErrorMessages.SizeTooSmallMsg))]
-    [InlineData(null,  SolutionMode.All,    nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
-    [InlineData("",    SolutionMode.All,    nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
-    [InlineData("abc", SolutionMode.All,    nameof(ErrorMessages.InvalidIntegerError))]
-    [InlineData("-1",  SolutionMode.All,    nameof(ErrorMessages.SizeTooSmallMsg))]
+    [InlineData("-1", SolutionMode.Unique, nameof(ErrorMessages.OutOfRangeMsg))]
+    [InlineData(null, SolutionMode.All, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
+    [InlineData("", SolutionMode.All, nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg))]
+    [InlineData("abc", SolutionMode.All, nameof(ErrorMessages.InvalidIntegerError))]
+    [InlineData("-1", SolutionMode.All, nameof(ErrorMessages.OutOfRangeMsg))]
     public void BoardSizeText_Validation_ShouldHandleInvalidInput_ForUniqueAndAllModes(
         string? boardSizeText, SolutionMode solutionMode, string expectedErrorKey)
     {
@@ -62,9 +62,9 @@ public class MainViewModelValidationTests
         var expectedError = expectedErrorKey switch
         {
             nameof(ErrorMessages.ValueNullOrWhiteSpaceMsg) => ErrorMessages.ValueNullOrWhiteSpaceMsg,
-            nameof(ErrorMessages.InvalidIntegerError)      => ErrorMessages.InvalidIntegerError,
-            nameof(ErrorMessages.SizeTooSmallMsg)          => ErrorMessages.SizeTooSmallMsg,
-            _                                              => null
+            nameof(ErrorMessages.InvalidIntegerError) => ErrorMessages.InvalidIntegerError,
+            nameof(ErrorMessages.OutOfRangeMsg) => ErrorMessages.OutOfRangeMsg,
+            _ => null
         };
         errors.Should().Contain(expectedError);
     }
@@ -108,9 +108,9 @@ public class MainViewModelValidationTests
             {
                 var expectedError = expectedErrorKey switch
                 {
-                    nameof(ErrorMessages.SizeTooLargeForSingle) => ErrorMessages.SizeTooLargeForSingle,
-                    nameof(ErrorMessages.SizeTooLargeForUnique) => ErrorMessages.SizeTooLargeForUnique,
-                    nameof(ErrorMessages.SizeTooLargeForAll) => ErrorMessages.SizeTooLargeForAll,
+                    nameof(ErrorMessages.OutOfRangeSingle) => ErrorMessages.OutOfRangeSingle,
+                    nameof(ErrorMessages.OutOfRangeUnique) => ErrorMessages.OutOfRangeUnique,
+                    nameof(ErrorMessages.OutOfRangeAll) => ErrorMessages.OutOfRangeAll,
                     _ => null
                 };
                 errors.Should().Contain(expectedError);
@@ -134,13 +134,13 @@ public class MainViewModelValidationTests
             .Cast<string>()
             .ToList();
 
-        errors.Should().Contain(ErrorMessages.SizeTooLargeForUnique);
+        errors.Should().Contain(ErrorMessages.OutOfRangeUnique);
 
         mainVm.SolutionMode = finalSolutionMode;
         mainVm.BoardSizeText = finalBoardSizeText;
 
         errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
-        errors.Should().Contain(ErrorMessages.SizeTooLargeForAll); // 21 invalid for All (max 20)
+        errors.Should().Contain(ErrorMessages.OutOfRangeAll); // 21 invalid for All (max 20)
     }
 
     [Fact]
