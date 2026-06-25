@@ -99,8 +99,6 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="4" />
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="4" />
-                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
@@ -124,12 +122,6 @@
                 <ContentControl
                     x:Name="simulationPanelPlaceHolder"
                     Grid.Row="4"
-                    Grid.Column="0"
-                    MinWidth="220"
-                    HorizontalAlignment="Stretch" />
-
-                <view:AdvancedSettingsPanel
-                    Grid.Row="6"
                     Grid.Column="0"
                     MinWidth="220"
                     HorizontalAlignment="Stretch" />

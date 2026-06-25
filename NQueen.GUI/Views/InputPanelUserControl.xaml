@@ -37,6 +37,7 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <Grid.ColumnDefinitions>
@@ -101,9 +102,28 @@
                     SelectedItem="{Binding DisplayMode, Mode=TwoWay}"
                     Style="{StaticResource ComboBoxStyle}" />
 
-                <!--  Delay in Milisec  -->
+                <!--  Solution Storage Mode  -->
                 <Label
                     Grid.Row="3"
+                    Grid.Column="0"
+                    Margin="{StaticResource LabelCellMargin}"
+                    Content="Solution Storage Mode"
+                    Style="{StaticResource LabelStyle}" />
+
+                <ComboBox
+                    Grid.Row="3"
+                    Grid.Column="1"
+                    Width="120"
+                    HorizontalAlignment="Right"
+                    Margin="{StaticResource InputCellMargin}"
+                    IsEnabled="{Binding CanChangeStorageMode}"
+                    ItemsSource="{Binding EnumStorageModes}"
+                    SelectedItem="{Binding SelectedStorageMode}"
+                    Style="{StaticResource ComboBoxStyle}" />
+
+                <!--  Delay in Milisec  -->
+                <Label
+                    Grid.Row="4"
                     Grid.Column="0"
                     Margin="{StaticResource LabelCellMargin}"
                     Content="Delay in Milisec"
@@ -112,7 +132,7 @@
                 <!--  Delay slider - matches width of controls above it  -->
                 <Slider
                     x:Name="DelaySlider"
-                    Grid.Row="3"
+                    Grid.Row="4"
                     Grid.Column="1"
                     Width="120"
                     HorizontalAlignment="Right"

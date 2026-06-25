@@ -21,7 +21,6 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!-- Two columns: fixed-width label column ensures right-column alignment across all panels -->
@@ -30,32 +29,16 @@
                 <ColumnDefinition Width="120" />
             </Grid.ColumnDefinitions>
 
-            <!-- Board Size -->
-            <Label
-                Grid.Row="0"
-                Grid.Column="0"
-                Margin="{StaticResource LabelCellMargin}"
-                Content="Board Size"
-                Style="{StaticResource LabelStyle}" />
-
-            <Label
-                Grid.Row="0"
-                Grid.Column="1"
-                Margin="{StaticResource InputCellMargin}"
-                HorizontalContentAlignment="Right"
-                Content="{Binding BoardSize}"
-                Style="{StaticResource LabelStyle}" />
-
             <!-- Result Title -->
             <Label
-                Grid.Row="1"
+                Grid.Row="0"
                 Grid.Column="0"
                 Margin="{StaticResource LabelCellMargin}"
                 Content="{Binding ResultLabel}"
                 Style="{StaticResource LabelStyle}" />
 
             <Label
-                Grid.Row="1"
+                Grid.Row="0"
                 Grid.Column="1"
                 Margin="{StaticResource InputCellMargin}"
                 HorizontalContentAlignment="Right"
@@ -64,14 +47,14 @@
 
             <!-- Elapsed Time -->
             <Label
-                Grid.Row="2"
+                Grid.Row="1"
                 Grid.Column="0"
                 Margin="{StaticResource LabelCellMargin}"
                 Content="Elapsed Time (sec)"
                 Style="{StaticResource LabelStyle}" />
 
             <Label
-                Grid.Row="2"
+                Grid.Row="1"
                 Grid.Column="1"
                 Margin="{StaticResource InputCellMargin}"
                 HorizontalContentAlignment="Right"
@@ -80,14 +63,14 @@
 
             <!-- Memory Usage -->
             <Label
-                Grid.Row="3"
+                Grid.Row="2"
                 Grid.Column="0"
                 Margin="{StaticResource LabelCellMargin}"
                 Content="Memory Usage (MB)"
                 Style="{StaticResource LabelStyle}" />
 
             <Label
-                Grid.Row="3"
+                Grid.Row="2"
                 Grid.Column="1"
                 Margin="{StaticResource InputCellMargin}"
                 HorizontalContentAlignment="Right"
@@ -96,7 +79,7 @@
 
             <!-- Save Button - centered across both columns, auto-sized to content -->
             <Button
-                Grid.Row="4"
+                Grid.Row="3"
                 Grid.Column="0"
                 Grid.ColumnSpan="2"
                 HorizontalAlignment="Center"
