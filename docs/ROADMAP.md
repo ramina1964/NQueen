@@ -16,7 +16,12 @@ in the same change that touches `CHANGELOG.md`.
 > **NuGet package maintenance complete** (PR #28, 2026-06-23). All packages updated to
 > latest compatible versions: 9 packages updated including Microsoft.NET.Test.Sdk 18.7.0,
 > coverlet 10.0.1 (major), and Microsoft.Extensions.* 10.0.9. FluentValidation license
-> compliance documented. The project is in a clean state with no active branches. Summary below.
+> compliance documented.
+> **GUI layout consolidation complete** (PR #31, squash-merged). View naming standardized to a
+> suffix-free scheme (`ChessboardView`, `SolutionListPanel`, `SelectedSolutionBar`), master
+> layout optimized (window 1200px → 1105px), and all spacing literals tokenized (100% token
+> utilization). See `docs/GUI-LAYOUT-AUDIT-REPORT.md` for the full audit. The project is in a
+> clean state with no active branches. Summary below.
 
 **Execution queue — final status.**
 
@@ -122,14 +127,23 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | **fix/gui-issues** — GUI layout optimization and alignment improvements (8 commits). Comprehensive refinements: width reduction (window 1200px → 1105px, -95px / -7.9%), vertical spacing optimization (~40px saved), control sizing standardization (120px right-aligned), label text compression, flicker elimination, pixel-perfect rendering, style cleanup. All panels now compact and well-aligned with no clipping. Bottom alignment approximate due to inherent panel content height vs. chessboard dimensions. Ready to merge after testing. See `CHANGELOG.md [Unreleased] → GUI` for full details. |
+| Active branch | **none** — `fix/gui-issues` shipped via PR #31 (squash-merged). GUI layout consolidation: suffix-free view naming, width reduction (window 1200px → 1105px, -95px / -7.9%), ~40px vertical spacing savings, 120px right-aligned controls, flicker elimination, pixel-perfect rendering, and 100% spacing-token utilization. See `CHANGELOG.md [Unreleased] → GUI` and `docs/GUI-LAYOUT-AUDIT-REPORT.md`. |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
-| Test count | **535 / 535 passing** (446 unit + 89 view-model). Up from 515 pre-branch because this branch added 20 new parity tests in `BitboardNQueenSolverTests` (CountSolutions_{Parallel,Sequential}_MatchesRecursive theories + CountSolutionsRecursive_OutOfRange_Throws). |
+| Test count | **535 / 535 passing** (446 unit + 89 view-model). Includes the 20 parity tests in `BitboardNQueenSolverTests` (CountSolutions_{Parallel,Sequential}_MatchesRecursive theories + CountSolutionsRecursive_OutOfRange_Throws). Unchanged by PR #31 (layout/naming only). |
 | Code coverage | **40.24 % line / 23.36 % branch** (full run 2025-04-23 on branch `test/coverage-report-refresh` via `dotnet test --collect:"XPlat Code Coverage"`). Note: overall metrics are lower than historical Domain/Kernel/Shared breakdown because the full-solution run now includes all projects and test infrastructure. |
 | Build status | 0 errors / 0 warnings |
 
 ### Recently shipped (see `CHANGELOG.md` `[Unreleased]` for full detail)
 
+- `fix/gui-issues` — **GUI layout consolidation** (PR #31, squash-merged). Standardized all
+  WPF view names to a suffix-free, role-based scheme (`InputPanel`, `SolutionSummaryPanel`,
+  `SimulationPanel`, `ChessboardView`, `SelectedSolutionBar`, `SolutionListPanel`); no
+  `UserControl` suffix remains. Optimized the master layout (window default 1200px → 1105px,
+  min 820px → 745px; ~40px vertical spacing reclaimed; 120px right-aligned controls; `Viewbox`
+  + fixed 1195px design canvas) and tokenized the last spacing literals (added `ButtonInlineMargin`,
+  applied the previously unused `FieldRowMargin`) for 100% spacing-token utilization. Produced
+  `docs/GUI-LAYOUT-AUDIT-REPORT.md` (layout health 9.7/10). Layout/naming only — 535/535 tests
+  unchanged, no production solver-code changes.
 - `perf/all-mode-iterative-search-bounds-elision` — "`Span<Frame>.get_Item`
   bounds-check elision in iterative `Search`" candidate (Step 2.4 of the perf
   execution queue, seeded from the Step 2.3 kill-check secondary discovery) closed as
