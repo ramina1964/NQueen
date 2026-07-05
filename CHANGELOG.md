@@ -7,6 +7,16 @@ All notable changes to this project are documented here.
 ## [Unreleased]
 
 ### Testing
+- **Added Kernel solver edge-case tests** — introduced `BitmaskSolverConfigTests`
+  and `ProgressReporterTests` under `NQueen.UnitTests/Tests/Kernel/`. Covers the
+  previously-untested `BitmaskSolver.DelayInMillisec` clamping rule (non-positive →
+  0, below-minimum → `MinDelayInMilliseconds`, at/above → preserved), the
+  constructor null-formatter `ArgumentNullException` guard, the two `Solve()`
+  board-size guards (`InvalidOperationException` for `BoardSize <= 0`,
+  `NotSupportedException` for `N > MaxBitmaskBoardSize`), `Dispose()` idempotency,
+  and the internal `ProgressReporter` bucket logic (`totalTasks == 0` → 100,
+  bucket-crossing reporting, no re-report within a bucket, monotonic buckets).
+  17 new tests, all passing.
 - **Added dedicated unit tests for untested Domain model types** — introduced
   `PositionTests`, `LazyPositionListTests`, `SolutionTests`, and
   `SimulationResultsTests` under `NQueen.UnitTests/Tests/Domain/`, plus a
