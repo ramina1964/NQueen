@@ -7,6 +7,15 @@ All notable changes to this project are documented here.
 ## [Unreleased]
 
 ### Testing
+- **Added Console runner service-registration tests** — introduced
+  `ConsoleServiceRegistrationTests` under `NQueen.UnitTests/Tests/Console/`.
+  Covers `ConsoleServiceCollectionExtensions.AddNQueenServices`: formatter
+  registration, the `BitmaskSolver` concrete registration and its
+  `ISolver`/`ISolverBackEnd`/`ISolverFrontEnd` interface mappings, the
+  console-specific `CountOnly` storage-mode defaults, transient solver lifetime
+  (distinct instances), non-override of a pre-registered formatter, fluent
+  chaining, and `App` resolution/construction. Added a `ProjectReference` from
+  `NQueen.UnitTests` to `NQueen.ConsoleApp`. 11 new tests, all passing.
 - **Added validation and GUI-converter edge-case tests** — introduced
   `BoardSizeValidatorTests` and `ConverterTests` under
   `NQueen.ViewModelTests/Tests/`. `BoardSizeValidatorTests` covers the
