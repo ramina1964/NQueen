@@ -32,10 +32,10 @@ public class BitmaskSolverMaterializeTests
     private static void AssertValidPlacement(int[] rows)
     {
         int n = rows.Length;
-        rows.Distinct().Should().HaveCount(n, "no two queens on the same row");
+        rows.Distinct().Count().ShouldBe(n, "no two queens on the same row");
         for (int i = 0; i < n; i++)
             for (int j = i + 1; j < n; j++)
-                Math.Abs(rows[i] - rows[j]).Should().NotBe(j - i,
+                Math.Abs(rows[i] - rows[j]).ShouldNotBe(j - i,
                     $"queens at columns {i} and {j} must not share a diagonal");
     }
 
@@ -70,10 +70,10 @@ public class BitmaskSolverMaterializeTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetAll(n),
+        result.SolutionsCount.ShouldBe(ExpectedSolutionCounts.GetAll(n),
             $"All count for N={n} must equal the curated lookup value");
-        result.Solutions.Should().NotBeEmpty("materialize path must surface sample solutions");
-        result.Solutions.Count.Should().BeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount,
+        result.Solutions.ShouldNotBeEmpty("materialize path must surface sample solutions");
+        result.Solutions.Count.ShouldBeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount,
             "samples must be capped by MaxDisplayedCount");
 
         foreach (var sol in result.Solutions)
@@ -85,7 +85,7 @@ public class BitmaskSolverMaterializeTests
             .Select(s => string.Join(',', s.QueenPositions))
             .Distinct()
             .Count()
-            .Should().Be(result.Solutions.Count, $"All-mode samples for N={n} must be distinct boards");
+            .ShouldBe(result.Solutions.Count, $"All-mode samples for N={n} must be distinct boards");
     }
 
     // -- Unique-mode lookup-materialize --------------------------------------
@@ -104,10 +104,10 @@ public class BitmaskSolverMaterializeTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetUnique(n),
+        result.SolutionsCount.ShouldBe(ExpectedSolutionCounts.GetUnique(n),
             $"Unique count for N={n} must equal the curated lookup value");
-        result.Solutions.Should().NotBeEmpty("materialize path must surface sample solutions");
-        result.Solutions.Count.Should().BeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount,
+        result.Solutions.ShouldNotBeEmpty("materialize path must surface sample solutions");
+        result.Solutions.Count.ShouldBeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount,
             "samples must be capped by MaxDisplayedCount");
 
         foreach (var sol in result.Solutions)
@@ -137,22 +137,22 @@ public class BitmaskSolverMaterializeTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetUnique(n),
+        result.SolutionsCount.ShouldBe(ExpectedSolutionCounts.GetUnique(n),
             $"Unique count for N={n} must equal the curated lookup value");
-        result.Solutions.Should().NotBeEmpty("the materialize path must surface sample solutions");
+        result.Solutions.ShouldNotBeEmpty("the materialize path must surface sample solutions");
 
         var scratch = new int[n * 8];
         foreach (var sol in result.Solutions)
         {
             AssertValidPlacement(sol.QueenPositions);
             SymmetryHelper.IsIdentityCanonical(sol.QueenPositions, scratch)
-                .Should().BeTrue($"every Unique sample for N={n} must be its own canonical representative");
+                .ShouldBeTrue($"every Unique sample for N={n} must be its own canonical representative");
         }
 
         var canonicalSignatures = result.Solutions
             .Select(s => CanonicalSignature(s.QueenPositions))
             .ToList();
-        canonicalSignatures.Distinct().Count().Should().Be(result.Solutions.Count,
+        canonicalSignatures.Distinct().Count().ShouldBe(result.Solutions.Count,
             $"the {result.Solutions.Count} Unique samples for N={n} must be fundamentally distinct (no symmetry duplicates)");
     }
 
@@ -169,9 +169,9 @@ public class BitmaskSolverMaterializeTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetAll(21));
-        result.Solutions.Should().NotBeEmpty();
-        result.Solutions.Count.Should().BeLessThanOrEqualTo(cap, "explicit cap must be honoured");
+        result.SolutionsCount.ShouldBe(ExpectedSolutionCounts.GetAll(21));
+        result.Solutions.ShouldNotBeEmpty();
+        result.Solutions.Count.ShouldBeLessThanOrEqualTo(cap, "explicit cap must be honoured");
         foreach (var sol in result.Solutions)
             AssertValidPlacement(sol.QueenPositions);
     }
@@ -191,14 +191,14 @@ public class BitmaskSolverMaterializeTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.Solutions.Count.Should().BeGreaterThan(1,
+        result.Solutions.Count.ShouldBeGreaterThan(1,
             "the early-exit DFS should surface multiple samples");
 
         var distinct = result.Solutions
             .Select(s => string.Join(',', s.QueenPositions))
             .Distinct()
             .Count();
-        distinct.Should().Be(result.Solutions.Count, "materialised samples should be distinct");
+        distinct.ShouldBe(result.Solutions.Count, "materialised samples should be distinct");
 
         if (mode == SolutionMode.Unique)
         {
@@ -210,12 +210,12 @@ public class BitmaskSolverMaterializeTests
             var scratch = new int[21 * 8];
             foreach (var sol in result.Solutions)
                 SymmetryHelper.IsIdentityCanonical(sol.QueenPositions, scratch)
-                    .Should().BeTrue("each Unique sample must be its own canonical representative");
+                    .ShouldBeTrue("each Unique sample must be its own canonical representative");
 
             var canonicalSignatures = result.Solutions
                 .Select(s => CanonicalSignature(s.QueenPositions))
                 .ToList();
-            canonicalSignatures.Distinct().Count().Should().Be(result.Solutions.Count,
+            canonicalSignatures.Distinct().Count().ShouldBe(result.Solutions.Count,
                 "no two Unique samples may be symmetry-equivalent (rotations/reflections of one another)");
         }
     }
@@ -232,10 +232,10 @@ public class BitmaskSolverMaterializeTests
         var second = await solver.GetSimResultsAsync(
             new SimulationContext(26, SolutionMode.All, DisplayMode.Hide));
 
-        first.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetAll(21));
-        second.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetAll(26),
+        first.SolutionsCount.ShouldBe(ExpectedSolutionCounts.GetAll(21));
+        second.SolutionsCount.ShouldBe(ExpectedSolutionCounts.GetAll(26),
             "a reused solver instance must reset sample state between runs");
-        second.Solutions.Should().NotBeEmpty();
+        second.Solutions.ShouldNotBeEmpty();
         foreach (var sol in second.Solutions)
             AssertValidPlacement(sol.QueenPositions);
     }

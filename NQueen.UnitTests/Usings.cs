@@ -1,4 +1,4 @@
-﻿global using FluentAssertions;
+﻿global using Shouldly;
 global using Microsoft.Extensions.DependencyInjection;
 global using NQueen.Domain.Context;
 global using NQueen.Domain.Enums;

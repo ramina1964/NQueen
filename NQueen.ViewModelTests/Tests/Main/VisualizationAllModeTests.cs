@@ -50,15 +50,15 @@ public class VisualizationAllModeTests
     // Asserts that the chessboard shows a valid N-Queen solution after visualization.
     private static void AssertValidVisualization(MainViewModel mainVm, int boardSize)
     {
-        mainVm.ObservableSolutions.Should().NotBeEmpty("At least one solution should be materialized.");
-        mainVm.SelectedSolution.Should().NotBeNull("First solution should be selected after visualization completes.");
+        mainVm.ObservableSolutions.ShouldNotBeEmpty("At least one solution should be materialized.");
+        mainVm.SelectedSolution.ShouldNotBeNull("First solution should be selected after visualization completes.");
         mainVm.ChessboardVm.Squares.Count(sq => !string.IsNullOrEmpty(sq.ImagePath))
-            .Should().Be(boardSize, "All queens should be rendered on the board.");
+            .ShouldBe(boardSize, "All queens should be rendered on the board.");
 
         var positions = mainVm.SelectedSolution!.Positions.ToList();
-        positions.Count.Should().Be(boardSize, "Solution should contain exactly N positions.");
+        positions.Count.ShouldBe(boardSize, "Solution should contain exactly N positions.");
         positions.Select(p => p.RowIndex).Distinct().Count()
-            .Should().BeGreaterThan(1, "Queens should not all occupy the same row.");
+            .ShouldBeGreaterThan(1, "Queens should not all occupy the same row.");
 
         for (int i = 0; i < positions.Count; i++)
         {
@@ -66,9 +66,9 @@ public class VisualizationAllModeTests
             {
                 var a = positions[i];
                 var b = positions[j];
-                a.RowIndex.Should().NotBe(b.RowIndex, "Two queens share a row.");
+                a.RowIndex.ShouldNotBe(b.RowIndex, "Two queens share a row.");
                 Math.Abs(a.RowIndex - b.RowIndex)
-                    .Should().NotBe(Math.Abs(a.ColumnIndex - b.ColumnIndex), "Two queens share a diagonal.");
+                    .ShouldNotBe(Math.Abs(a.ColumnIndex - b.ColumnIndex), "Two queens share a diagonal.");
             }
         }
     }

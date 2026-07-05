@@ -15,8 +15,8 @@ public class ParsingUtilsTests
         string input, bool expectedResult, int expectedValue)
     {
         var result = ParsingUtils.TryParseInt(input, out int value);
-        result.Should().Be(expectedResult);
-        value.Should().Be(expectedValue);
+        result.ShouldBe(expectedResult);
+        value.ShouldBe(expectedValue);
     }
 
     [Theory]
@@ -28,8 +28,8 @@ public class ParsingUtilsTests
     public void TryParseInt_InvalidInput_ReturnsFalseAndZero(string input)
     {
         var result = ParsingUtils.TryParseInt(input, out int value);
-        result.Should().BeFalse();
-        value.Should().Be(0);
+        result.ShouldBeFalse();
+        value.ShouldBe(0);
     }
 
     // ── ParseIntOrThrow ──────────────────────────────────────────────────────
@@ -39,14 +39,13 @@ public class ParsingUtilsTests
     [InlineData("8",   8)]
     [InlineData("-1", -1)]
     public void ParseIntOrThrow_ValidInput_ReturnsCorrectValue(string input, int expected) =>
-        ParsingUtils.ParseIntOrThrow(input).Should().Be(expected);
+        ParsingUtils.ParseIntOrThrow(input).ShouldBe(expected);
 
     [Theory]
     [InlineData("")]
     [InlineData("abc")]
     [InlineData("3.14")]
     public void ParseIntOrThrow_InvalidInput_ThrowsInvalidOperationException(string input) =>
-        FluentActions.Invoking(() => ParsingUtils.ParseIntOrThrow(input))
-            .Should().Throw<InvalidOperationException>()
-            .WithMessage($"*'{input}'*");
+        Should.Throw<InvalidOperationException>(() => ParsingUtils.ParseIntOrThrow(input))
+            .Message.ShouldContain($"'{input}'");
 }

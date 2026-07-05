@@ -11,7 +11,7 @@ public class SearchHelpersTests
     [InlineData(7, 3,  true)]   // odd N=7, center row = 3
     [InlineData(7, 2,  false)]  // odd N=7, not center
     public void IsOddCenterFirstRow_ReturnsExpected(int n, int r, bool expected) =>
-        SearchHelpers.IsOddCenterFirstRow(n, r).Should().Be(expected);
+        SearchHelpers.IsOddCenterFirstRow(n, r).ShouldBe(expected);
 
     // ── PackIdentityKey ──────────────────────────────────────────────────────
 
@@ -23,7 +23,7 @@ public class SearchHelpersTests
         var canon = SymmetryHelper.GetCanonicalForm(sol, scratch, null);
         var key1 = SearchHelpers.PackIdentityKey(canon, scratch);
         var key2 = SearchHelpers.PackIdentityKey(canon, scratch);
-        key1.Should().Be(key2);
+        key1.ShouldBe(key2);
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public class SearchHelpersTests
         var canon = SymmetryHelper.GetCanonicalForm(sol, scratch, null);
         var keyFromSol   = SearchHelpers.PackIdentityKey(sol, scratch);
         var keyFromCanon = SearchHelpers.PackIdentityKey(canon, scratch);
-        keyFromSol.Should().Be(keyFromCanon);
+        keyFromSol.ShouldBe(keyFromCanon);
     }
 
     // ── PackIdentityKeyAndRows ───────────────────────────────────────────────
@@ -48,8 +48,8 @@ public class SearchHelpersTests
         var canon = SymmetryHelper.GetCanonicalForm(sol, scratch, null);
         var (key, rows) = SearchHelpers.PackIdentityKeyAndRows(canon, scratch, canon.Length);
         var expected = SymmetryHelper.PackRows(rows);
-        key.Should().Be(expected);
-        rows.Should().HaveCount(canon.Length);
+        key.ShouldBe(expected);
+        rows.Count().ShouldBe(canon.Length);
     }
 
     [Fact]
@@ -59,7 +59,7 @@ public class SearchHelpersTests
         int[] scratch = new int[5 * 8];
         var canon = SymmetryHelper.GetCanonicalForm(sol, scratch, null);
         var (_, rows) = SearchHelpers.PackIdentityKeyAndRows(sol, scratch, sol.Length);
-        rows.Should().BeEquivalentTo(canon, options => options.WithStrictOrdering());
+        rows.ShouldBe(canon);
     }
 
     // ── ShouldPrunePrefixIncremental ─────────────────────────────────────────
@@ -71,7 +71,7 @@ public class SearchHelpersTests
         bool reflEq = true, minEq = true;
         SearchHelpers.ShouldPrunePrefixIncremental(
             rows, 1, 4, false, false, ref reflEq, ref minEq)
-            .Should().BeFalse();
+            .ShouldBeFalse();
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public class SearchHelpersTests
         var result = SearchHelpers.ShouldPrunePrefixIncremental(
             rows, 1, 4, reflectionEnabled: true, minimalityEnabled: false,
             ref reflEq, ref minEq);
-        result.Should().BeTrue();
+        result.ShouldBeTrue();
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public class SearchHelpersTests
         SearchHelpers.ShouldPrunePrefixIncremental(
             rows, 1, 4, reflectionEnabled: true, minimalityEnabled: false,
             ref reflEq, ref minEq);
-        reflEq.Should().BeFalse();
+        reflEq.ShouldBeFalse();
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public class SearchHelpersTests
         var result = SearchHelpers.ShouldPrunePrefixIncremental(
             rows, 1, 4, reflectionEnabled: false, minimalityEnabled: true,
             ref reflEq, ref minEq);
-        result.Should().BeTrue();
+        result.ShouldBeTrue();
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public class SearchHelpersTests
         bool reflEq = true, minEq = true;
         SearchHelpers.ShouldPrunePrefixIncremental(
             rows, 0, 4, true, true, ref reflEq, ref minEq)
-            .Should().BeFalse();
+            .ShouldBeFalse();
     }
 
     // ── ShouldPrunePrefixFull (reflection-only, stateless) ───────────────────
@@ -137,7 +137,7 @@ public class SearchHelpersTests
     [InlineData(new[] { -1, -1, -1, -1 }, 0, 4, true, false)]
     public void ShouldPrunePrefixFull_ReturnsExpected(int[] rows, int depth, int n, bool reflectionEnabled, bool expected)
     {
-        SearchHelpers.ShouldPrunePrefixFull(rows, depth, n, reflectionEnabled).Should().Be(expected);
+        SearchHelpers.ShouldPrunePrefixFull(rows, depth, n, reflectionEnabled).ShouldBe(expected);
     }
 
     [Fact]
@@ -150,6 +150,6 @@ public class SearchHelpersTests
         // reach a canonical solution. ShouldPrunePrefixFull must NOT prune.
         int[] rows = [2, 6, -1, -1, -1, -1, -1, -1];
         SearchHelpers.ShouldPrunePrefixFull(rows, 1, 8, reflectionEnabled: true)
-            .Should().BeFalse("rotate-180 minimality is unsound as a forward-prefix prune and must not be applied");
+            .ShouldBeFalse("rotate-180 minimality is unsound as a forward-prefix prune and must not be applied");
     }
 }

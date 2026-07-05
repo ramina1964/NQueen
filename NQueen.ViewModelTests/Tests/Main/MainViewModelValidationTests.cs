@@ -1,4 +1,4 @@
-﻿namespace NQueen.ViewModelTests.Tests.Main;
+namespace NQueen.ViewModelTests.Tests.Main;
 
 public class MainViewModelValidationTests
 {
@@ -17,13 +17,13 @@ public class MainViewModelValidationTests
 
         if (isValid)
         {
-            errors.Should().BeEmpty();
-            mainVm.HasErrors.Should().BeFalse();
+            errors.ShouldBeEmpty();
+            mainVm.HasErrors.ShouldBeFalse();
         }
         else
         {
-            errors.Should().NotBeEmpty();
-            mainVm.HasErrors.Should().BeTrue();
+            errors.ShouldNotBeEmpty();
+            mainVm.HasErrors.ShouldBeTrue();
 
             if (expectedErrorKey != null)
             {
@@ -34,7 +34,7 @@ public class MainViewModelValidationTests
                     nameof(ErrorMessages.InvalidIntegerError) => ErrorMessages.InvalidIntegerError,
                     _ => null
                 };
-                errors.Should().Contain(expectedError);
+                errors.ShouldContain(expectedError);
             }
         }
     }
@@ -56,8 +56,8 @@ public class MainViewModelValidationTests
 
         var errors = vm.GetErrors(nameof(vm.BoardSizeText)).Cast<string>().ToList();
 
-        errors.Should().NotBeEmpty();
-        vm.HasErrors.Should().BeTrue();
+        errors.ShouldNotBeEmpty();
+        vm.HasErrors.ShouldBeTrue();
 
         var expectedError = expectedErrorKey switch
         {
@@ -66,7 +66,7 @@ public class MainViewModelValidationTests
             nameof(ErrorMessages.OutOfRangeMsg) => ErrorMessages.OutOfRangeMsg,
             _ => null
         };
-        errors.Should().Contain(expectedError);
+        errors.ShouldContain(expectedError);
     }
 
     [Theory]
@@ -78,8 +78,8 @@ public class MainViewModelValidationTests
 
         var errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
 
-        errors.Should().BeEmpty();
-        mainVm.HasErrors.Should().BeFalse();
+        errors.ShouldBeEmpty();
+        mainVm.HasErrors.ShouldBeFalse();
     }
 
     [Theory]
@@ -96,13 +96,13 @@ public class MainViewModelValidationTests
 
         if (isValid)
         {
-            errors.Should().BeEmpty();
-            mainVm.HasErrors.Should().BeFalse();
+            errors.ShouldBeEmpty();
+            mainVm.HasErrors.ShouldBeFalse();
         }
         else
         {
-            errors.Should().NotBeEmpty();
-            mainVm.HasErrors.Should().BeTrue();
+            errors.ShouldNotBeEmpty();
+            mainVm.HasErrors.ShouldBeTrue();
 
             if (expectedErrorKey != null)
             {
@@ -113,7 +113,7 @@ public class MainViewModelValidationTests
                     nameof(ErrorMessages.OutOfRangeAll) => ErrorMessages.OutOfRangeAll,
                     _ => null
                 };
-                errors.Should().Contain(expectedError);
+                errors.ShouldContain(expectedError);
             }
         }
     }
@@ -134,13 +134,13 @@ public class MainViewModelValidationTests
             .Cast<string>()
             .ToList();
 
-        errors.Should().Contain(ErrorMessages.OutOfRangeUnique);
+        errors.ShouldContain(ErrorMessages.OutOfRangeUnique);
 
         mainVm.SolutionMode = finalSolutionMode;
         mainVm.BoardSizeText = finalBoardSizeText;
 
         errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
-        errors.Should().Contain(ErrorMessages.OutOfRangeAll); // 21 invalid for All (max 20)
+        errors.ShouldContain(ErrorMessages.OutOfRangeAll); // 21 invalid for All (max 20)
     }
 
     [Fact]
@@ -153,11 +153,11 @@ public class MainViewModelValidationTests
             .Cast<string>()
             .ToList();
 
-        errors.Should().NotBeEmpty();
+        errors.ShouldNotBeEmpty();
         mainVm.BoardSizeText = "8";
         errors = mainVm.GetErrors(nameof(mainVm.BoardSizeText)).Cast<string>().ToList();
-        errors.Should().BeEmpty();
-        mainVm.HasErrors.Should().BeFalse();
+        errors.ShouldBeEmpty();
+        mainVm.HasErrors.ShouldBeFalse();
     }
 
     [Theory]
@@ -178,9 +178,9 @@ public class MainViewModelValidationTests
         vm.BoardSizeText = boardSizeText; // triggers validation in valid mode now
         BuildBoardIfValid(vm);
 
-        vm.ChessboardVm.Squares.Count.Should().Be(expectedBoardSize * expectedBoardSize);
-        countWhileInvalid.Should().NotBe(expectedBoardSize * expectedBoardSize);
-        vm.HasErrors.Should().BeFalse();
+        vm.ChessboardVm.Squares.Count.ShouldBe(expectedBoardSize * expectedBoardSize);
+        countWhileInvalid.ShouldNotBe(expectedBoardSize * expectedBoardSize);
+        vm.HasErrors.ShouldBeFalse();
     }
 
     [Theory]
@@ -197,8 +197,8 @@ public class MainViewModelValidationTests
 
         var expectedSize = ParsingUtils.ParseIntOrThrow(boardSizeText);
         var expectedCount = expectedSize * expectedSize;
-        vm.ChessboardVm.Squares.Count.Should().Be(expectedCount);
-        vm.HasErrors.Should().BeFalse();
+        vm.ChessboardVm.Squares.Count.ShouldBe(expectedCount);
+        vm.HasErrors.ShouldBeFalse();
 
         // Switch to invalid mode (size now exceeds limit of that mode)
         vm.SolutionMode = invalidMode;
@@ -207,9 +207,9 @@ public class MainViewModelValidationTests
         // Attempt to rebuild (should be rejected)
         BuildBoardIfValid(vm);
 
-        vm.ChessboardVm.Squares.Count.Should().Be(expectedCount);
-        vm.HasErrors.Should().BeTrue();
-        vm.GetErrors(nameof(vm.BoardSizeText)).Cast<string>().Should().NotBeEmpty();
+        vm.ChessboardVm.Squares.Count.ShouldBe(expectedCount);
+        vm.HasErrors.ShouldBeTrue();
+        vm.GetErrors(nameof(vm.BoardSizeText)).Cast<string>().ShouldNotBeEmpty();
     }
 
     // Helper: only creates board if current (mode, size) pair is valid.

@@ -1,4 +1,4 @@
-﻿global using FluentAssertions;
+﻿global using Shouldly;
 global using Microsoft.Extensions.DependencyInjection;
 global using Moq;
 global using NQueen.Domain.Context;

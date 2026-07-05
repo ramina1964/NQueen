@@ -36,8 +36,8 @@ public class BitmaskSolverCountUniqueTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(expected, $"unique count-only must equal expected for N={n}");
-        result.Solutions.Should().BeEmpty("count-only must not materialise solutions");
+        result.SolutionsCount.ShouldBe(expected, $"unique count-only must equal expected for N={n}");
+        result.Solutions.ShouldBeEmpty("count-only must not materialise solutions");
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class BitmaskSolverCountUniqueTests
         {
             var ctx = new SimulationContext(n, SolutionMode.Unique, DisplayMode.Hide);
             var result = await solver.GetSimResultsAsync(ctx);
-            result.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetUnique(n),
+            result.SolutionsCount.ShouldBe(ExpectedSolutionCounts.GetUnique(n),
                 $"adaptive count must match curated unique count for N={n}");
         }
     }
@@ -71,9 +71,9 @@ public class BitmaskSolverCountUniqueTests
 
         await solver.GetSimResultsAsync(ctx);
 
-        solver.EnablePrefixMinimalityPruning.Should().Be(initialFlags,
+        solver.EnablePrefixMinimalityPruning.ShouldBe(initialFlags,
             "count-only Unique must restore EnablePrefixMinimalityPruning to its caller-supplied value");
-        solver.EnablePartialReflectionPruning.Should().Be(initialFlags,
+        solver.EnablePartialReflectionPruning.ShouldBe(initialFlags,
             "count-only Unique must restore EnablePartialReflectionPruning to its caller-supplied value");
     }
 
@@ -88,7 +88,7 @@ public class BitmaskSolverCountUniqueTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(6UL);
-        result.Solutions.Should().BeEmpty();
+        result.SolutionsCount.ShouldBe(6UL);
+        result.Solutions.ShouldBeEmpty();
     }
 }

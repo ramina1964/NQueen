@@ -6,6 +6,17 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Testing
+- **Migrated the test suite from FluentAssertions to Shouldly** — replaced the
+  commercially-licensed `FluentAssertions` 8.10.0 with the free, open-source
+  `Shouldly` 4.3.0 across `NQueen.UnitTests`, `NQueen.ViewModelTests`, and
+  `NQueen.TestShared`. Updated `Directory.Packages.props`, the three test project
+  `PackageReference` items, and the global `Usings.cs` files, then converted all
+  assertion call sites (`x.Should().Be(y)` → `x.ShouldBe(y)`, exception assertions
+  to `Should.Throw<T>(...)`, `HaveCount(n)` → `.Count().ShouldBe(n)`,
+  `ContainSingle()` → `ShouldHaveSingleItem()`, `BeEquivalentTo` → `ShouldBe`, etc.).
+  No behavioral change — all 535 tests pass.
+
 ### GUI
 - **GUI view naming consolidation** — renamed the remaining `UserControl`-suffixed views to a
   consistent, suffix-free semantic scheme so every view name reflects its role:

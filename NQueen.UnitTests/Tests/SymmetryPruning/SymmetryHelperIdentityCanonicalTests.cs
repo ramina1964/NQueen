@@ -14,12 +14,12 @@ public class SymmetryHelperIdentityCanonicalTests(SolverBackEndFixture fixture) 
     public void IsIdentityCanonical_ReturnsTrue_ForCanonicalSolutions(int n)
     {
         var all = EnumerateAllRawSolutions(n).ToList();
-        all.Should().NotBeEmpty();
+        all.ShouldNotBeEmpty();
         foreach (var sol in all.Take(3))
         {
             int[] scratch = new int[n * 8];
             var canon = SymmetryHelper.GetCanonicalForm(sol, scratch, null);
-            SymmetryHelper.IsIdentityCanonical(canon, scratch).Should().BeTrue();
+            SymmetryHelper.IsIdentityCanonical(canon, scratch).ShouldBeTrue();
         }
     }
 
@@ -35,7 +35,7 @@ public class SymmetryHelperIdentityCanonicalTests(SolverBackEndFixture fixture) 
         var transforms = SymmetryHelper.GetAllTransforms(first);
         var canon = SymmetryHelper.GetCanonicalForm(first, scratch, null);
         var nonCanon = transforms.First(t => !t.SequenceEqual(canon));
-        SymmetryHelper.IsIdentityCanonical(nonCanon, scratch).Should().BeFalse();
+        SymmetryHelper.IsIdentityCanonical(nonCanon, scratch).ShouldBeFalse();
     }
 
     [Theory]
@@ -52,13 +52,13 @@ public class SymmetryHelperIdentityCanonicalTests(SolverBackEndFixture fixture) 
         // Use the consolidated symmetry-pruned unique counter
         ulong count = NQueen.Kernel.Solvers.Engines.SymmetryPrunedUniqueCounter.Count(n, cap, rows => collected.Add(rows));
 
-        count.Should().Be(ExpectedSolutionCounts.GetUnique(n));
-        collected.Count.Should().BeLessThanOrEqualTo((int)count);
+        count.ShouldBe(ExpectedSolutionCounts.GetUnique(n));
+        collected.Count.ShouldBeLessThanOrEqualTo((int)count);
 
         foreach (var sol in collected)
         {
             int[] scratch = new int[n * 8];
-            SymmetryHelper.IsIdentityCanonical(sol, scratch).Should().BeTrue();
+            SymmetryHelper.IsIdentityCanonical(sol, scratch).ShouldBeTrue();
         }
     }
 

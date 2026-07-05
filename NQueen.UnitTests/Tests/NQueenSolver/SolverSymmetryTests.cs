@@ -1,4 +1,4 @@
-﻿namespace NQueen.UnitTests.Tests.NQueenSolver;
+namespace NQueen.UnitTests.Tests.NQueenSolver;
 
 public class SolverSymmetryTests
 {
@@ -18,12 +18,12 @@ public class SolverSymmetryTests
             solutions.Add(new Memory<int>(symmetrical));
 
         // Assert
-        solutions.Count.Should().Be(ExpectedSolutions.ExpectedSymmetryVariantCountN5);
+        solutions.Count.ShouldBe(ExpectedSolutions.ExpectedSymmetryVariantCountN5);
 
         foreach (var symmetrical in symmetricalSolutions)
         {
             var memorySolution = new Memory<int>(symmetrical);
-            solutions.Contains(memorySolution).Should().BeTrue($"Symmetrical solution {string.Join(',', symmetrical)} should be detected.");
+            solutions.Contains(memorySolution).ShouldBeTrue($"Symmetrical solution {string.Join(',', symmetrical)} should be detected.");
         }
     }
 }

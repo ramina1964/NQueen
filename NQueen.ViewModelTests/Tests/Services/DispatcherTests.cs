@@ -1,4 +1,4 @@
-﻿namespace NQueen.ViewModelTests.Tests.Services;
+namespace NQueen.ViewModelTests.Tests.Services;
 
 public class DispatcherTests
 {
@@ -16,7 +16,7 @@ public class DispatcherTests
         dispatcher.Object.Invoke(() => actionInvoked = true);
 
         // Assert
-        actionInvoked.Should().BeTrue();
+        actionInvoked.ShouldBeTrue();
     }
 
     [Fact]
@@ -33,6 +33,6 @@ public class DispatcherTests
         dispatcher.Object.BeginInvoke(() => actionInvoked = true, DispatcherPriority.Normal);
 
         // Assert
-        actionInvoked.Should().BeTrue();
+        actionInvoked.ShouldBeTrue();
     }
 }

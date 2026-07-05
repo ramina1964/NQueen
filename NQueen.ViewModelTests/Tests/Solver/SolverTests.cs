@@ -22,9 +22,9 @@ public class SolverTests
         var results = await solver.Object.GetSimResultsAsync(simContext);
 
         // Assert
-        results.Solutions.Should().NotBeEmpty();
-        results.SolutionsCount.Should().Be(1);
-        results.IsTotalInferred.Should().BeFalse();
+        results.Solutions.ShouldNotBeEmpty();
+        results.SolutionsCount.ShouldBe(1UL);
+        results.IsTotalInferred.ShouldBeFalse();
     }
 
     [Fact]
@@ -47,9 +47,9 @@ public class SolverTests
         var results = await solver.Object.GetSimResultsAsync(simContext);
 
         // Assert
-        results.Solutions.Should().BeEmpty();
-        results.SolutionsCount.Should().Be(0);
-        results.IsTotalInferred.Should().BeFalse();
+        results.Solutions.ShouldBeEmpty();
+        results.SolutionsCount.ShouldBe(0UL);
+        results.IsTotalInferred.ShouldBeFalse();
     }
 
     [Fact]
@@ -74,8 +74,8 @@ public class SolverTests
         var results = await solver.GetSimResultsAsync(ctx);
 
         // Assert
-        results.SolutionsCount.Should().Be(1);
-        solutionFoundNotifications.Should().BeGreaterThanOrEqualTo(0);
+        results.SolutionsCount.ShouldBe(1UL);
+        solutionFoundNotifications.ShouldBeGreaterThanOrEqualTo(0);
     }
 
     [Fact]
@@ -104,8 +104,8 @@ public class SolverTests
         var results = await solver.GetSimResultsAsync(ctx);
 
         // Assert
-        results.Should().NotBeNull();
-        results.SolutionsCount.Should().BeGreaterThanOrEqualTo(0);
+        results.ShouldNotBeNull();
+        results.SolutionsCount.ShouldBeGreaterThanOrEqualTo(0UL);
     }
 
     [Fact]
@@ -132,7 +132,7 @@ public class SolverTests
 
         _ = await solver.GetSimResultsAsync(ctx);
 
-        queenNotifications.Should().BeGreaterThanOrEqualTo(8);
-        lastDepth.Should().Be(8);
+        queenNotifications.ShouldBeGreaterThanOrEqualTo(8);
+        lastDepth.ShouldBe(8);
     }
 }

@@ -11,22 +11,21 @@ public class SolverSingleModeTests(SolverBackEndFixture fixture)
         int boardSize, SolutionMode solutionMode)
     {
         // Arrange
-        solutionMode.Should().Be(SolutionMode.Single);
+        solutionMode.ShouldBe(SolutionMode.Single);
         var ctx = new SimulationContext(boardSize, solutionMode, DisplayMode.Hide);
         var expectedSolutions = TestBase.FetchExpectedSols(ctx);
-        expectedSolutions.Should().ContainSingle(
-            $"Expected data must hold exactly one solution for N={boardSize}");
+        expectedSolutions.ShouldHaveSingleItem();
 
         // Act
         var results = await _solver.GetSimResultsAsync(ctx);
 
         // Assert
-        results.SolutionsCount.Should().Be(1UL,
+        results.SolutionsCount.ShouldBe(1UL,
             $"Single mode should return exactly one solution for N={boardSize}");
 
-        results.Solutions.Should().ContainSingle();
+        results.Solutions.ShouldHaveSingleItem();
         var actualRows = results.Solutions[0].QueenPositions.ToArray();
-        actualRows.Should().BeEquivalentTo(expectedSolutions[0]);
+        actualRows.ShouldBe(expectedSolutions[0], ignoreOrder: true);
     }
 
     private readonly ISolverBackEnd _solver = fixture.Sut;

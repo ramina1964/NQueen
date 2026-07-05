@@ -29,10 +29,10 @@ public class BitmaskSolverSingleModeTests
     private static void AssertValidPlacement(int[] rows)
     {
         int n = rows.Length;
-        rows.Distinct().Should().HaveCount(n, "no two queens on the same row");
+        rows.Distinct().Count().ShouldBe(n, "no two queens on the same row");
         for (int i = 0; i < n; i++)
             for (int j = i + 1; j < n; j++)
-                Math.Abs(rows[i] - rows[j]).Should().NotBe(j - i,
+                Math.Abs(rows[i] - rows[j]).ShouldNotBe(j - i,
                     $"queens at columns {i} and {j} must not share a diagonal");
     }
 
@@ -52,8 +52,8 @@ public class BitmaskSolverSingleModeTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(1UL);
-        result.Solutions.Should().ContainSingle();
+        result.SolutionsCount.ShouldBe(1UL);
+        result.Solutions.ShouldHaveSingleItem();
         AssertValidPlacement(result.Solutions[0].QueenPositions);
     }
 
@@ -69,9 +69,9 @@ public class BitmaskSolverSingleModeTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(0UL,
+        result.SolutionsCount.ShouldBe(0UL,
             $"N={n} has no valid placements — fallback engine yields no solution");
-        result.Solutions.Should().BeEmpty();
+        result.Solutions.ShouldBeEmpty();
     }
 
     // ── Fallback enumeration: small N without curated entry (N = 14) ────────
@@ -86,8 +86,8 @@ public class BitmaskSolverSingleModeTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(1UL);
-        result.Solutions.Should().ContainSingle();
+        result.SolutionsCount.ShouldBe(1UL);
+        result.Solutions.ShouldHaveSingleItem();
         AssertValidPlacement(result.Solutions[0].QueenPositions);
     }
 
@@ -108,8 +108,8 @@ using var solver = MakeSolver();
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(1UL);
-        result.Solutions.Should().ContainSingle();
+        result.SolutionsCount.ShouldBe(1UL);
+        result.Solutions.ShouldHaveSingleItem();
         AssertValidPlacement(result.Solutions[0].QueenPositions);
     }
 
@@ -132,14 +132,14 @@ using var solver = MakeSolver();
             OnSolutionFound: solutionSink, OnQueenPlaced: queenWriter);
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(1UL);
-        result.Solutions.Should().ContainSingle();
-        queenPlaced.Should().BeGreaterThan(0,
+        result.SolutionsCount.ShouldBe(1UL);
+        result.Solutions.ShouldHaveSingleItem();
+        queenPlaced.ShouldBeGreaterThan(0,
             "engine-backed Visualize path must push QueenPlaced for each placement");
         // Note: the visualize-engine callback currently fires SolutionFound twice for Single mode
         // (once via MaterializeSingle, once at the call site). The duplicate is a known production
         // discrepancy tracked separately — assert ≥ 1 here to keep this coverage test green.
-        solutionFound.Should().BeGreaterThanOrEqualTo(1,
+        solutionFound.ShouldBeGreaterThanOrEqualTo(1,
             "engine-backed Visualize path must push SolutionFound at least once for Single mode");
     }
 
@@ -169,8 +169,8 @@ using var solver = MakeSolver();
             Cancellation: cts.Token, OnQueenPlaced: queenWriter);
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.Should().NotBeNull();
-        placedSeen.Should().BeGreaterThan(0, "cancellation toggles after the first QueenPlaced notification");
+        result.ShouldNotBeNull();
+        placedSeen.ShouldBeGreaterThan(0, "cancellation toggles after the first QueenPlaced notification");
     }
 
     // ── MaterializeSingle: packed storage path (N ≤ 25) ─────────────────────
@@ -183,9 +183,9 @@ using var solver = MakeSolver();
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.Solutions.Should().ContainSingle();
+        result.Solutions.ShouldHaveSingleItem();
         var rows = result.Solutions[0].QueenPositions;
-        rows.Should().HaveCount(4);
+        rows.Count().ShouldBe(4);
         AssertValidPlacement(rows);
     }
 
@@ -201,14 +201,14 @@ using var solver = MakeSolver();
         var second = await solver.GetSimResultsAsync(
             new SimulationContext(8, SolutionMode.Single, DisplayMode.Hide));
 
-        first.SolutionsCount.Should().Be(1UL);
-        first.Solutions.Should().ContainSingle();
-        first.Solutions[0].QueenPositions.Should().HaveCount(4);
+        first.SolutionsCount.ShouldBe(1UL);
+        first.Solutions.ShouldHaveSingleItem();
+        first.Solutions[0].QueenPositions.Count().ShouldBe(4);
 
-        second.SolutionsCount.Should().Be(1UL,
+        second.SolutionsCount.ShouldBe(1UL,
             "second run must not accumulate the previous run's state");
-        second.Solutions.Should().ContainSingle();
-        second.Solutions[0].QueenPositions.Should().HaveCount(8);
+        second.Solutions.ShouldHaveSingleItem();
+        second.Solutions[0].QueenPositions.Count().ShouldBe(8);
     }
 
     // ── Cap disabled: still emits one solution ──────────────────────────────
@@ -224,7 +224,7 @@ using var solver = MakeSolver();
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(1UL);
-        result.Solutions.Should().ContainSingle();
+        result.SolutionsCount.ShouldBe(1UL);
+        result.Solutions.ShouldHaveSingleItem();
     }
 }

@@ -26,8 +26,8 @@ public class BitmaskSolverModeTests(SolverBackEndFixture fixture)
     {
         var ctx = new SimulationContext(n, SolutionMode.Single, DisplayMode.Hide);
         var result = await _solver.GetSimResultsAsync(ctx);
-        result.SolutionsCount.Should().Be(1UL);
-        result.Solutions.Should().ContainSingle();
+        result.SolutionsCount.ShouldBe(1UL);
+        result.Solutions.ShouldHaveSingleItem();
     }
 
     [Theory]
@@ -37,8 +37,8 @@ public class BitmaskSolverModeTests(SolverBackEndFixture fixture)
     {
         var ctx = new SimulationContext(n, SolutionMode.Single, DisplayMode.Hide);
         var result = await _solver.GetSimResultsAsync(ctx);
-        result.SolutionsCount.Should().Be(0UL);
-        result.Solutions.Should().BeEmpty();
+        result.SolutionsCount.ShouldBe(0UL);
+        result.Solutions.ShouldBeEmpty();
     }
 
     // ── All mode — Materialize ────────────────────────────────────────────────
@@ -51,7 +51,7 @@ public class BitmaskSolverModeTests(SolverBackEndFixture fixture)
     {
         var ctx = new SimulationContext(n, SolutionMode.All, DisplayMode.Hide);
         var result = await _solver.GetSimResultsAsync(ctx);
-        result.SolutionsCount.Should().Be(expected);
+        result.SolutionsCount.ShouldBe(expected);
     }
 
     // ── All mode — CountOnly ─────────────────────────────────────────────────
@@ -64,8 +64,8 @@ public class BitmaskSolverModeTests(SolverBackEndFixture fixture)
         solver.AllStorageMode = ResultStorageMode.CountOnly;
         var ctx = new SimulationContext(n, SolutionMode.All, DisplayMode.Hide);
         var result = await solver.GetSimResultsAsync(ctx);
-        result.SolutionsCount.Should().Be(expected);
-        result.Solutions.Should().BeEmpty("CountOnly mode must not materialise solutions");
+        result.SolutionsCount.ShouldBe(expected);
+        result.Solutions.ShouldBeEmpty("CountOnly mode must not materialise solutions");
     }
 
     // ── Unique mode — Materialize ─────────────────────────────────────────────
@@ -78,7 +78,7 @@ public class BitmaskSolverModeTests(SolverBackEndFixture fixture)
     {
         var ctx = new SimulationContext(n, SolutionMode.Unique, DisplayMode.Hide);
         var result = await _solver.GetSimResultsAsync(ctx);
-        result.SolutionsCount.Should().Be(expected);
+        result.SolutionsCount.ShouldBe(expected);
     }
 
     // ── Unique mode — CountOnly ──────────────────────────────────────────────
@@ -91,8 +91,8 @@ public class BitmaskSolverModeTests(SolverBackEndFixture fixture)
         solver.UniqueStorageMode = ResultStorageMode.CountOnly;
         var ctx = new SimulationContext(n, SolutionMode.Unique, DisplayMode.Hide);
         var result = await solver.GetSimResultsAsync(ctx);
-        result.SolutionsCount.Should().Be(expected);
-        result.Solutions.Should().BeEmpty("CountOnly mode must not materialise solutions");
+        result.SolutionsCount.ShouldBe(expected);
+        result.Solutions.ShouldBeEmpty("CountOnly mode must not materialise solutions");
     }
 
     // ── Cancellation ─────────────────────────────────────────────────────────
@@ -107,6 +107,6 @@ public class BitmaskSolverModeTests(SolverBackEndFixture fixture)
         var ctx = new SimulationContext(8, SolutionMode.All, DisplayMode.Hide, Cancellation: cts.Token);
 
         var result = await _solver.GetSimResultsAsync(ctx);
-        result.Should().NotBeNull();
+        result.ShouldNotBeNull();
     }
 }

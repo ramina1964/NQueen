@@ -11,7 +11,7 @@ public class StorageModeTests
     {
         var vm = TestHelpers.CreateMainViewModel(solutionMode: solutionMode);
 
-        vm.SelectedStorageMode.Should().Be(ResultStorageMode.Materialize,
+        vm.SelectedStorageMode.ShouldBe(ResultStorageMode.Materialize,
             "Single mode always materializes the one solution found.");
     }
 
@@ -20,7 +20,7 @@ public class StorageModeTests
     {
         var vm = TestHelpers.CreateMainViewModel(solutionMode: SolutionMode.Single);
 
-        vm.CanChangeStorageMode.Should().BeFalse(
+        vm.CanChangeStorageMode.ShouldBeFalse(
             "Solution Storage Mode ComboBox must be disabled for Single mode.");
     }
 
@@ -34,7 +34,7 @@ public class StorageModeTests
     {
         var vm = TestHelpers.CreateMainViewModel(solutionMode: solutionMode);
 
-        vm.SelectedStorageMode.Should().Be(ResultStorageMode.CountOnly,
+        vm.SelectedStorageMode.ShouldBe(ResultStorageMode.CountOnly,
             "Switching to Unique/All should restore CountOnly as the default.");
     }
 
@@ -46,7 +46,7 @@ public class StorageModeTests
     {
         var vm = TestHelpers.CreateMainViewModel(solutionMode: solutionMode);
 
-        vm.CanChangeStorageMode.Should().BeTrue(
+        vm.CanChangeStorageMode.ShouldBeTrue(
             "Solution Storage Mode ComboBox must be enabled for Unique and All modes.");
     }
 
@@ -59,13 +59,13 @@ public class StorageModeTests
         SolutionMode targetMode)
     {
         var vm = TestHelpers.CreateMainViewModel(solutionMode: SolutionMode.Single);
-        vm.SelectedStorageMode.Should().Be(ResultStorageMode.Materialize);
+        vm.SelectedStorageMode.ShouldBe(ResultStorageMode.Materialize);
 
         vm.SolutionMode = targetMode;
 
-        vm.SelectedStorageMode.Should().Be(ResultStorageMode.CountOnly,
+        vm.SelectedStorageMode.ShouldBe(ResultStorageMode.CountOnly,
             "Storage mode should revert to CountOnly when leaving Single mode.");
-        vm.CanChangeStorageMode.Should().BeTrue();
+        vm.CanChangeStorageMode.ShouldBeTrue();
     }
 
     // ── Switching from Unique/All → Single forces Materialize and disables ──
@@ -77,13 +77,13 @@ public class StorageModeTests
         SolutionMode sourceMode)
     {
         var vm = TestHelpers.CreateMainViewModel(solutionMode: sourceMode);
-        vm.SelectedStorageMode.Should().Be(ResultStorageMode.CountOnly);
+        vm.SelectedStorageMode.ShouldBe(ResultStorageMode.CountOnly);
 
         vm.SolutionMode = SolutionMode.Single;
 
-        vm.SelectedStorageMode.Should().Be(ResultStorageMode.Materialize,
+        vm.SelectedStorageMode.ShouldBe(ResultStorageMode.Materialize,
             "Switching to Single must force Materialize.");
-        vm.CanChangeStorageMode.Should().BeFalse(
+        vm.CanChangeStorageMode.ShouldBeFalse(
             "ComboBox must be disabled when mode is Single.");
     }
 
@@ -101,9 +101,9 @@ public class StorageModeTests
             solutionMode: solutionMode,
             displayMode: DisplayMode.Visualize);
 
-        vm.SelectedStorageMode.Should().Be(ResultStorageMode.Materialize,
+        vm.SelectedStorageMode.ShouldBe(ResultStorageMode.Materialize,
             "Visualize mode requires solutions to be materialized for rendering.");
-        vm.CanChangeStorageMode.Should().BeFalse(
+        vm.CanChangeStorageMode.ShouldBeFalse(
             "ComboBox must be disabled while visualizing.");
     }
 }

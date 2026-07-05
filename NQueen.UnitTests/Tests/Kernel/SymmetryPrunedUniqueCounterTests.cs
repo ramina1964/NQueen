@@ -12,15 +12,15 @@ public class SymmetryPrunedUniqueCounterTests
     [InlineData(7, 6UL)]
     [InlineData(8, 12UL)]
     public void Count_WithoutPruning_MatchesExpectedUniqueSolutions(int n, ulong expected) =>
-        SymmetryPrunedUniqueCounter.Count(n, cap: 0).Should().Be(expected);
+        SymmetryPrunedUniqueCounter.Count(n, cap: 0).ShouldBe(expected);
 
     [Fact]
     public void Count_ZeroBoardSize_ReturnsZero() =>
-        SymmetryPrunedUniqueCounter.Count(0, cap: 0).Should().Be(0UL);
+        SymmetryPrunedUniqueCounter.Count(0, cap: 0).ShouldBe(0UL);
 
     [Fact]
     public void Count_NegativeBoardSize_ReturnsZero() =>
-        SymmetryPrunedUniqueCounter.Count(-1, cap: 0).Should().Be(0UL);
+        SymmetryPrunedUniqueCounter.Count(-1, cap: 0).ShouldBe(0UL);
 
     // ── Materialization callback ─────────────────────────────────────────────
 
@@ -29,9 +29,9 @@ public class SymmetryPrunedUniqueCounterTests
     {
         var collected = new System.Collections.Concurrent.ConcurrentBag<int[]>();
         var count = SymmetryPrunedUniqueCounter.Count(6, cap: 1, onMaterialized: rows => collected.Add(rows));
-        count.Should().Be(1UL);
-        collected.Should().HaveCount(1);
-        collected.First().Should().HaveCount(6);
+        count.ShouldBe(1UL);
+        collected.Count().ShouldBe(1);
+        collected.First().Count().ShouldBe(6);
     }
 
     [Fact]
@@ -39,8 +39,8 @@ public class SymmetryPrunedUniqueCounterTests
     {
         var collected = new List<int[]>();
         var count = SymmetryPrunedUniqueCounter.Count(5, cap: 10, onMaterialized: rows => collected.Add(rows));
-        count.Should().Be(2UL);
-        collected.Should().HaveCount(2);
+        count.ShouldBe(2UL);
+        collected.Count().ShouldBe(2);
     }
 
     // ── Pruning flags ────────────────────────────────────────────────────────
@@ -49,19 +49,19 @@ public class SymmetryPrunedUniqueCounterTests
     [InlineData(5, 2UL)]
     [InlineData(6, 1UL)]
     public void Count_WithReflectionPruning_MatchesExpectedCount(int n, ulong expected) =>
-        SymmetryPrunedUniqueCounter.Count(n, cap: 0, reflectionPruning: true).Should().Be(expected);
+        SymmetryPrunedUniqueCounter.Count(n, cap: 0, reflectionPruning: true).ShouldBe(expected);
 
     [Theory]
     [InlineData(5, 2UL)]
     [InlineData(6, 1UL)]
     public void Count_WithPrefixMinimality_MatchesExpectedCount(int n, ulong expected) =>
-        SymmetryPrunedUniqueCounter.Count(n, cap: 0, prefixMinimality: true).Should().Be(expected);
+        SymmetryPrunedUniqueCounter.Count(n, cap: 0, prefixMinimality: true).ShouldBe(expected);
 
     [Theory]
     [InlineData(5, 2UL)]
     public void Count_BothPruningFlags_MatchesExpectedCount(int n, ulong expected) =>
         SymmetryPrunedUniqueCounter.Count(n, cap: 0, prefixMinimality: true, reflectionPruning: true)
-            .Should().Be(expected);
+            .ShouldBe(expected);
 
     // ── Solutions are valid placements ───────────────────────────────────────
 
@@ -70,11 +70,11 @@ public class SymmetryPrunedUniqueCounterTests
     {
         var solutions = new List<int[]>();
         SymmetryPrunedUniqueCounter.Count(6, cap: 1, onMaterialized: rows => solutions.Add(rows));
-        solutions.Should().NotBeEmpty();
+        solutions.ShouldNotBeEmpty();
         foreach (var sol in solutions)
         {
-            sol.Should().HaveCount(6);
-            sol.Distinct().Should().HaveCount(6, "no two queens in the same row");
+            sol.Count().ShouldBe(6);
+            sol.Distinct().Count().ShouldBe(6, "no two queens in the same row");
         }
     }
 }

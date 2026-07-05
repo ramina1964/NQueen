@@ -13,7 +13,7 @@ public class NumericUtilsTests
     [InlineData(1000000L,   "1 000 000")]
     [InlineData(999L,       "999")]
     public void FormatWithSpaceSeparator_Long_FormatsWithSpaces(long value, string expected) =>
-        NumericUtils.FormatWithSpaceSeparator(value).Should().Be(expected);
+        NumericUtils.FormatWithSpaceSeparator(value).ShouldBe(expected);
 
     // ── FormatWithSpaceSeparator(double, int) ────────────────────────────────
 
@@ -24,7 +24,7 @@ public class NumericUtilsTests
         double value, int decimals)
     {
         var result = NumericUtils.FormatWithSpaceSeparator(value, decimals);
-        result.Should().NotContain(CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
+        result.ShouldNotContain(CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
     }
 
     [Theory]
@@ -35,8 +35,8 @@ public class NumericUtilsTests
     {
         var dec = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
         var result = NumericUtils.FormatWithSpaceSeparator(value, decimals);
-        result.Should().Contain(" ");    // thousand separator
-        result.Should().Contain(dec);    // decimal separator
+        result.ShouldContain(" ");    // thousand separator
+        result.ShouldContain(dec);    // decimal separator
     }
 
     [Fact]
@@ -44,8 +44,8 @@ public class NumericUtilsTests
     {
         var dec = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
         var result = NumericUtils.FormatWithSpaceSeparator(1234.5);
-        result.Should().Contain(dec);    // has decimal separator
-        result.Should().Contain(" ");    // has thousand separator
+        result.ShouldContain(dec);    // has decimal separator
+        result.ShouldContain(" ");    // has thousand separator
     }
 
     // ── ParseFormattedNumber ─────────────────────────────────────────────────
@@ -55,14 +55,13 @@ public class NumericUtilsTests
     [InlineData("999",     999)]
     public void ParseFormattedNumber_ValidInput_ReturnsParsedValue(
         string input, int expected) =>
-        NumericUtils.ParseFormattedNumber(input).Should().Be(expected);
+        NumericUtils.ParseFormattedNumber(input).ShouldBe(expected);
 
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
     public void ParseFormattedNumber_NullOrWhitespace_ThrowsArgumentException(string input) =>
-        FluentActions.Invoking(() => NumericUtils.ParseFormattedNumber(input))
-            .Should().Throw<ArgumentException>();
+        Should.Throw<ArgumentException>(() => NumericUtils.ParseFormattedNumber(input));
 
     // ── IncFormattedNumber ───────────────────────────────────────────────────
 
@@ -70,12 +69,11 @@ public class NumericUtilsTests
     [InlineData("")]
     [InlineData("   ")]
     public void IncFormattedNumber_NullOrWhitespace_ThrowsArgumentException(string input) =>
-        FluentActions.Invoking(() => NumericUtils.IncFormattedNumber(input))
-            .Should().Throw<ArgumentException>();
+        Should.Throw<ArgumentException>(() => NumericUtils.IncFormattedNumber(input));
 
     // ── UpdateMemoryUsage ────────────────────────────────────────────────────
 
     [Fact]
     public void UpdateMemoryUsage_ReturnsNonEmptyString() =>
-        NumericUtils.UpdateMemoryUsage().Should().NotBeNullOrWhiteSpace();
+        NumericUtils.UpdateMemoryUsage().ShouldNotBeNullOrWhiteSpace();
 }

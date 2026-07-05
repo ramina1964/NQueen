@@ -1,4 +1,4 @@
-﻿namespace NQueen.ViewModelTests.Tests.Main;
+namespace NQueen.ViewModelTests.Tests.Main;
 
 public class ProgressRelayTests : IDisposable
 {
@@ -31,22 +31,22 @@ public class ProgressRelayTests : IDisposable
         // Wait until the simulation has actually started instead of assuming a fixed delay;
         // on slow CI runners a hard-coded delay races with the async command start.
         await TestHelpers.WaitForConditionAsync(() => vm.IsSimulating, TimeSpan.FromSeconds(5));
-        vm.IsSimulating.Should().BeTrue("Simulation should have started.");
-        vm.ProgressPercent.Should().Be(0, "Initial progress percent should be 0 before heartbeat fires.");
+        vm.IsSimulating.ShouldBeTrue("Simulation should have started.");
+        vm.ProgressPercent.ShouldBe(0, "Initial progress percent should be 0 before heartbeat fires.");
 
         // Force internal state to appear silent past the heartbeat threshold.
         var lastUpdateField = vm.GetType().GetField("_lastProgressUpdateUtc", BindingFlags.NonPublic | BindingFlags.Instance);
-        lastUpdateField.Should().NotBeNull();
+        lastUpdateField.ShouldNotBeNull();
         lastUpdateField!.SetValue(vm, DateTime.UtcNow - TimeSpan.FromMilliseconds(SimulationSettings.ProgressIntervalInMilliSec + 500));
 
         // Invoke private heartbeat tick method via reflection to simulate timer firing.
         var tickMethod = vm.GetType().GetMethod("ProgressHeartbeatTimer_Tick", BindingFlags.NonPublic | BindingFlags.Instance);
-        tickMethod.Should().NotBeNull();
+        tickMethod.ShouldNotBeNull();
         tickMethod!.Invoke(vm, new object?[] { null, EventArgs.Empty });
 
         // Assert: synthetic progress advanced above0 but below cap (95).
-        vm.ProgressPercent.Should().BeGreaterThan(0, "Heartbeat should increment progress after silence interval.");
-        vm.ProgressPercent.Should().BeLessThan(96, "Synthetic progress must stay below95 cap.");
+        vm.ProgressPercent.ShouldBeGreaterThan(0, "Heartbeat should increment progress after silence interval.");
+        vm.ProgressPercent.ShouldBeLessThan(96, "Synthetic progress must stay below95 cap.");
 
         // Cleanup: allow solver task to finish.
         await TestHelpers.WaitForSimulationCompletionAsync(vm);

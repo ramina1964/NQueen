@@ -46,11 +46,11 @@ public class SolverParallelConsistencyTests(SolverBackEndFixture fixture)
             // Known minor undercount for Unique N=12 with current advanced pruning heuristics (missing4).
             if (mode == SolutionMode.Unique && n == 12)
             {
-                parallelResults.SolutionsCount.Should().BeOneOf([expected, expected - 4UL]);
+                parallelResults.SolutionsCount.ShouldBeOneOf(expected, expected - 4UL);
             }
             else
             {
-                parallelResults.SolutionsCount.Should().Be(expected, $"Parallel {mode} count mismatch for N={n}");
+                parallelResults.SolutionsCount.ShouldBe(expected, $"Parallel {mode} count mismatch for N={n}");
             }
 
             // Verify sequential path only for All mode.
@@ -58,7 +58,7 @@ public class SolverParallelConsistencyTests(SolverBackEndFixture fixture)
             {
                 bsSeq.UseParallel = false;
                 var seqResults = await _solver.GetSimResultsAsync(ctx);
-                seqResults.SolutionsCount.Should().Be(expected, $"Sequential {mode} count mismatch for N={n}");
+                seqResults.SolutionsCount.ShouldBe(expected, $"Sequential {mode} count mismatch for N={n}");
             }
         }
         finally

@@ -33,10 +33,10 @@ public class BitmaskSolverAllModeTests
     private static void AssertValidPlacement(int[] rows)
     {
         int n = rows.Length;
-        rows.Distinct().Should().HaveCount(n, "no two queens on the same row");
+        rows.Distinct().Count().ShouldBe(n, "no two queens on the same row");
         for (int i = 0; i < n; i++)
             for (int j = i + 1; j < n; j++)
-                Math.Abs(rows[i] - rows[j]).Should().NotBe(j - i,
+                Math.Abs(rows[i] - rows[j]).ShouldNotBe(j - i,
                     $"queens at columns {i} and {j} must not share a diagonal");
     }
 
@@ -63,8 +63,8 @@ public class BitmaskSolverAllModeTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(expected, $"all count-only must equal expected for N={n}");
-        result.Solutions.Should().BeEmpty("count-only must not materialise solutions");
+        result.SolutionsCount.ShouldBe(expected, $"all count-only must equal expected for N={n}");
+        result.Solutions.ShouldBeEmpty("count-only must not materialise solutions");
     }
 
     // -- RunAllUnified materialize branch (small N) ---------------------------
@@ -81,9 +81,9 @@ public class BitmaskSolverAllModeTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(92UL, "all-mode count for N=8 is 92 (OEIS A000170)");
-        result.Solutions.Should().NotBeEmpty("materialize path must surface at least one sample");
-        result.Solutions.Count.Should().BeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount,
+        result.SolutionsCount.ShouldBe(92UL, "all-mode count for N=8 is 92 (OEIS A000170)");
+        result.Solutions.ShouldNotBeEmpty("materialize path must surface at least one sample");
+        result.Solutions.Count.ShouldBeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount,
             "materialize path must cap displayed solutions");
         foreach (var s in result.Solutions)
             AssertValidPlacement(s.QueenPositions);
@@ -103,12 +103,12 @@ public class BitmaskSolverAllModeTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(365_596UL, "all-mode count for N=14 is 365 596 (OEIS A000170)");
-        result.Solutions.Should().NotBeEmpty("two-phase path must surface at least one sample");
-        result.Solutions.Count.Should().BeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount);
+        result.SolutionsCount.ShouldBe(365_596UL, "all-mode count for N=14 is 365 596 (OEIS A000170)");
+        result.Solutions.ShouldNotBeEmpty("two-phase path must surface at least one sample");
+        result.Solutions.Count.ShouldBeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount);
         foreach (var s in result.Solutions)
         {
-            s.QueenPositions.Should().HaveCount(14);
+            s.QueenPositions.Count().ShouldBe(14);
             AssertValidPlacement(s.QueenPositions);
         }
     }
@@ -125,8 +125,8 @@ public class BitmaskSolverAllModeTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(365_596UL);
-        result.Solutions.Should().BeEmpty();
+        result.SolutionsCount.ShouldBe(365_596UL);
+        result.Solutions.ShouldBeEmpty();
     }
 
     // -- DFS cap-stop semantics in CollectAllSampleSolutionsDFS ---------------
@@ -142,7 +142,7 @@ public class BitmaskSolverAllModeTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.Solutions.Count.Should().Be(SimulationSettings.MaxDisplayedCount,
+        result.Solutions.Count.ShouldBe(SimulationSettings.MaxDisplayedCount,
             "Phase 1 DFS must collect exactly the configured cap on samples for N=14");
         foreach (var s in result.Solutions)
             AssertValidPlacement(s.QueenPositions);
@@ -168,9 +168,9 @@ public class BitmaskSolverAllModeTests
             OnSolutionFound: solutionSink);
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(92UL);
-        solutionFound.Should().BeGreaterThan(0, "materialize path must push SolutionFound");
-        solutionFound.Should().BeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount,
+        result.SolutionsCount.ShouldBe(92UL);
+        solutionFound.ShouldBeGreaterThan(0, "materialize path must push SolutionFound");
+        solutionFound.ShouldBeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount,
             "notifications must be suppressed after the materialisation cap is reached");
     }
 
@@ -200,8 +200,8 @@ public class BitmaskSolverAllModeTests
             Cancellation: cts.Token, OnSolutionFound: solutionSink);
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.Should().NotBeNull();
-        eventsSeen.Should().BeGreaterThan(0, "cancellation toggles after the first SolutionFound notification");
+        result.ShouldNotBeNull();
+        eventsSeen.ShouldBeGreaterThan(0, "cancellation toggles after the first SolutionFound notification");
     }
 
     // -- Storage-mode equivalence: AllStorageMode = CountOnly vs UseCountOnlyAllMode --
@@ -215,8 +215,8 @@ public class BitmaskSolverAllModeTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(92UL);
-        result.Solutions.Should().BeEmpty(
+        result.SolutionsCount.ShouldBe(92UL);
+        result.Solutions.ShouldBeEmpty(
             "AllStorageMode.CountOnly must skip materialisation just like UseCountOnlyAllMode");
     }
 
@@ -233,8 +233,8 @@ public class BitmaskSolverAllModeTests
         var second = await solver.GetSimResultsAsync(
             new SimulationContext(8, SolutionMode.All, DisplayMode.Hide));
 
-        first.SolutionsCount.Should().Be(4UL, "all-mode count for N=6 is 4 (OEIS A000170)");
-        second.SolutionsCount.Should().Be(92UL,
+        first.SolutionsCount.ShouldBe(4UL, "all-mode count for N=6 is 4 (OEIS A000170)");
+        second.SolutionsCount.ShouldBe(92UL,
             "second run must not accumulate the previous run's state");
     }
 
@@ -253,8 +253,8 @@ public class BitmaskSolverAllModeTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(4UL);
-        result.Solutions.Should().HaveCount(4,
+        result.SolutionsCount.ShouldBe(4UL);
+        result.Solutions.Count().ShouldBe(4,
             "enableCap=false must surface every materialised solution for small N");
         foreach (var s in result.Solutions)
             AssertValidPlacement(s.QueenPositions);

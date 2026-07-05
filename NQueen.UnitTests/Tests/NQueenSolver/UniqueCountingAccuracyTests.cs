@@ -23,7 +23,7 @@ public class UniqueCountingAccuracyTests(SolverBackEndFixture fixture)
             var ctx = new SimulationContext(n, SolutionMode.Unique, DisplayMode.Hide);
             var results = await _solver.GetSimResultsAsync(ctx);
             ulong expected = ExpectedSolutionCounts.GetUnique(n);
-            results.SolutionsCount.Should().Be(expected, $"Fundamental unique count should match curated data for N={n}.");
+            results.SolutionsCount.ShouldBe(expected, $"Fundamental unique count should match curated data for N={n}.");
         }
         finally
         {

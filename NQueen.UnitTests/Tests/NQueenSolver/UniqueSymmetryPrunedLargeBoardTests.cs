@@ -14,8 +14,8 @@ public class UniqueSymmetryPrunedLargeBoardTests
             UseCountOnlyUniqueMode = false
         };
         var resultsMat = solverMat.Solve();
-        resultsMat.SolutionsCount.Should().BeGreaterThan(0);
-        resultsMat.Solutions.Count.Should().BeLessThanOrEqualTo(cap);
+        resultsMat.SolutionsCount.ShouldBeGreaterThan(0UL);
+        resultsMat.Solutions.Count.ShouldBeLessThanOrEqualTo(cap);
 
         // CountOnly mode (should not materialize any solutions)
         var solverCnt = new BitmaskSolver(n, SolutionMode.Unique, DisplayMode.Hide, formatter, maxSolutionsInOutput: 0)
@@ -23,7 +23,7 @@ public class UniqueSymmetryPrunedLargeBoardTests
             UseCountOnlyUniqueMode = true
         };
         var resultsCnt = solverCnt.Solve();
-        resultsCnt.SolutionsCount.Should().Be(resultsMat.SolutionsCount);
-        resultsCnt.Solutions.Should().BeEmpty();
+        resultsCnt.SolutionsCount.ShouldBe(resultsMat.SolutionsCount);
+        resultsCnt.Solutions.ShouldBeEmpty();
     }
 }

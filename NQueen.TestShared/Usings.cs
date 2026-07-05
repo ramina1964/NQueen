@@ -1,4 +1,4 @@
-﻿global using FluentAssertions;
+﻿global using Shouldly;
 global using NQueen.Domain.Enums;
 global using NQueen.Domain.Interfaces;
 global using NQueen.Domain.Models;

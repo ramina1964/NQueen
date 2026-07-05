@@ -14,7 +14,7 @@ public class BitboardNQueenSolverTests
     [InlineData(7,  40L)]
     [InlineData(8,  92L)]
     public void CountSolutions_Parallel_ReturnsKnownCount(int n, long expected) =>
-        BitboardNQueenSolver.CountSolutions(n, parallel: true).Should().Be(expected);
+        BitboardNQueenSolver.CountSolutions(n, parallel: true).ShouldBe(expected);
 
     [Theory]
     [InlineData(1,  1L)]
@@ -22,7 +22,7 @@ public class BitboardNQueenSolverTests
     [InlineData(5,  10L)]
     [InlineData(8,  92L)]
     public void CountSolutions_Sequential_ReturnsKnownCount(int n, long expected) =>
-        BitboardNQueenSolver.CountSolutions(n, parallel: false).Should().Be(expected);
+        BitboardNQueenSolver.CountSolutions(n, parallel: false).ShouldBe(expected);
 
     [Fact]
     public void CountSolutions_ParallelAndSequential_AgreeForAllSmallN()
@@ -31,7 +31,7 @@ public class BitboardNQueenSolverTests
         {
             var par = BitboardNQueenSolver.CountSolutions(n, parallel: true);
             var seq = BitboardNQueenSolver.CountSolutions(n, parallel: false);
-            par.Should().Be(seq, $"parallel and sequential should agree for N={n}");
+            par.ShouldBe(seq, $"parallel and sequential should agree for N={n}");
         }
     }
 
@@ -41,20 +41,19 @@ public class BitboardNQueenSolverTests
     [InlineData(5,  10L)]
     [InlineData(7,  40L)]
     public void CountSolutions_OddN_IncludesMiddleColumnPath(int n, long expected) =>
-        BitboardNQueenSolver.CountSolutions(n, parallel: false).Should().Be(expected);
+        BitboardNQueenSolver.CountSolutions(n, parallel: false).ShouldBe(expected);
 
     // ── Boundary & argument validation ──────────────────────────────────────
 
     [Fact]
     public void CountSolutions_N1_Returns1() =>
-        BitboardNQueenSolver.CountSolutions(1).Should().Be(1L);
+        BitboardNQueenSolver.CountSolutions(1).ShouldBe(1L);
 
     [Theory]
     [InlineData(0)]   // below the minimum board size
     [InlineData(33)]  // above the maximum supported board size
     public void CountSolutions_OutOfRange_Throws(int n) =>
-        FluentActions.Invoking(() => BitboardNQueenSolver.CountSolutions(n))
-            .Should().Throw<ArgumentOutOfRangeException>();
+        Should.Throw<ArgumentOutOfRangeException>(() => BitboardNQueenSolver.CountSolutions(n));
 
     // ── Iterative variant parity (perf/all-mode-iterative-core A/B) ──────────
     // CountSolutions is the production iterative variant; CountSolutionsRecursive is the
@@ -83,7 +82,7 @@ public class BitboardNQueenSolverTests
     {
         var recursive = BitboardNQueenSolver.CountSolutionsRecursive(n, parallel: true);
         var iterative = BitboardNQueenSolver.CountSolutions(n, parallel: true);
-        iterative.Should().Be(recursive,
+        iterative.ShouldBe(recursive,
             $"the iterative production variant must agree with the recursive baseline at N={n} (parallel)");
     }
 
@@ -98,7 +97,7 @@ public class BitboardNQueenSolverTests
     {
         var recursive = BitboardNQueenSolver.CountSolutionsRecursive(n, parallel: false);
         var iterative = BitboardNQueenSolver.CountSolutions(n, parallel: false);
-        iterative.Should().Be(recursive,
+        iterative.ShouldBe(recursive,
             $"the iterative production variant must agree with the recursive baseline at N={n} (sequential)");
     }
 
@@ -106,6 +105,5 @@ public class BitboardNQueenSolverTests
     [InlineData(0)]
     [InlineData(33)]
     public void CountSolutionsRecursive_OutOfRange_Throws(int n) =>
-        FluentActions.Invoking(() => BitboardNQueenSolver.CountSolutionsRecursive(n))
-            .Should().Throw<ArgumentOutOfRangeException>();
+        Should.Throw<ArgumentOutOfRangeException>(() => BitboardNQueenSolver.CountSolutionsRecursive(n));
 }

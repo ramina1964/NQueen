@@ -1,4 +1,4 @@
-﻿namespace NQueen.TestShared.Assertions;
+namespace NQueen.TestShared.Assertions;
 
 public static class SolutionAssertions
 {
@@ -12,13 +12,13 @@ public static class SolutionAssertions
         var expectedSet = new HashSet<int[]>(expected, comparer);
         var actualSet = new HashSet<int[]>(actual, comparer);
 
-        actualSet.Count.Should().Be(expectedSet.Count,
+        actualSet.Count.ShouldBe(expectedSet.Count,
             $"expected {expectedSet.Count} distinct solutions for {scenario} but got {actualSet.Count}");
 
         var missing = expectedSet.Where(e => !actualSet.Contains(e)).ToList();
-        missing.Should().BeEmpty($"solver missed {missing.Count} solution(s) for {scenario}");
+        missing.ShouldBeEmpty($"solver missed {missing.Count} solution(s) for {scenario}");
 
         var unexpected = actualSet.Where(a => !expectedSet.Contains(a)).ToList();
-        unexpected.Should().BeEmpty($"solver produced {unexpected.Count} unexpected solution(s) for {scenario}");
+        unexpected.ShouldBeEmpty($"solver produced {unexpected.Count} unexpected solution(s) for {scenario}");
     }
 }

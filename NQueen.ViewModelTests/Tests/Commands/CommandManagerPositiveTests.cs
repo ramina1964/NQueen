@@ -1,4 +1,4 @@
-﻿namespace NQueen.ViewModelTests.Tests.Commands;
+namespace NQueen.ViewModelTests.Tests.Commands;
 
 public class CommandManagerPositiveTests
 {
@@ -22,8 +22,8 @@ public class CommandManagerPositiveTests
         await tcs.Task;
 
         // Assert
-        mainVm.SimulationResults.Solutions.Should().NotBeNullOrEmpty();
-        mainVm.IsSimulating.Should().BeFalse();
+        mainVm.SimulationResults.Solutions.ShouldNotBeEmpty();
+        mainVm.IsSimulating.ShouldBeFalse();
     }
 
     [Fact]
@@ -39,7 +39,7 @@ public class CommandManagerPositiveTests
         mainVm.CancelCommand.Execute(null);
 
         // Assert
-        mainVm.IsSimulating.Should().BeFalse();
+        mainVm.IsSimulating.ShouldBeFalse();
     }
 
     [Theory]
@@ -63,6 +63,6 @@ public class CommandManagerPositiveTests
         mainVm.SaveCommand.Execute(null);
 
         // Assert
-            mainVm.IsIdle.Should().BeTrue();
+            mainVm.IsIdle.ShouldBeTrue();
             }
         }

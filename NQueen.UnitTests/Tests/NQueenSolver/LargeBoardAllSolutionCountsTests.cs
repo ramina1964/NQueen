@@ -24,8 +24,8 @@ public class LargeBoardAllSolutionCountsTests(SolverBackEndFixture fixture)
         _solver.UseCountOnlyAllMode = true; _solver.UseCountOnlyUniqueMode = false;
         var ctx = new SimulationContext(n, SolutionMode.All, DisplayMode.Hide);
         var res = await _solver.GetSimResultsAsync(ctx);
-        res.Solutions.Should().BeEmpty();
-        res.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetAll(n), $"All-mode count mismatch for N={n}");
+        res.Solutions.ShouldBeEmpty();
+        res.SolutionsCount.ShouldBe(ExpectedSolutionCounts.GetAll(n), $"All-mode count mismatch for N={n}");
     }
 
     // Materialization sanity: ensure at least one solution materialized and count matches expected for sample board (lookup path where possible)
@@ -39,9 +39,9 @@ public class LargeBoardAllSolutionCountsTests(SolverBackEndFixture fixture)
         _solver.UseCountOnlyAllMode = false; _solver.UseCountOnlyUniqueMode = false;
         var ctx = new SimulationContext(n, SolutionMode.All, DisplayMode.Hide);
         var res = await _solver.GetSimResultsAsync(ctx);
-        res.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetAll(n));
-        res.Solutions.Count.Should().BeGreaterThan(0);
-        (res.Solutions.Count <= SimulationSettings.MaxDisplayedCount).Should().BeTrue();
+        res.SolutionsCount.ShouldBe(ExpectedSolutionCounts.GetAll(n));
+        res.Solutions.Count.ShouldBeGreaterThan(0);
+        (res.Solutions.Count <= SimulationSettings.MaxDisplayedCount).ShouldBeTrue();
     }
 
     private readonly ISolverBackEnd _solver = fixture.Sut;

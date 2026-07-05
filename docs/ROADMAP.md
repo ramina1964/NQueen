@@ -127,7 +127,7 @@ baseline before touching production code, per the team's MEASURE-first practice.
 | Item | Value |
 |---|---|
 | Latest release | **1.0.0** — 2026-05-29 (merged from `refactor/consolidate`) |
-| Active branch | **none** — `fix/gui-issues` shipped via PR #31 (squash-merged). GUI layout consolidation: suffix-free view naming, width reduction (window 1200px → 1105px, -95px / -7.9%), ~40px vertical spacing savings, 120px right-aligned controls, flicker elimination, pixel-perfect rendering, and 100% spacing-token utilization. See `CHANGELOG.md [Unreleased] → GUI` and `docs/GUI-LAYOUT-AUDIT-REPORT.md`. |
+| Active branch | **`migrate/fluentassertions-to-shouldly`** — migrating the test suite off the commercially-licensed `FluentAssertions` 8.10.0 to the free `Shouldly` 4.3.0 across `NQueen.UnitTests`, `NQueen.ViewModelTests`, and `NQueen.TestShared`. Test-only change; build clean and all 535/535 tests still pass. See `CHANGELOG.md [Unreleased] → Testing`. (Prior: `fix/gui-issues` shipped via PR #31, squash-merged — GUI layout consolidation.) |
 | Target framework | .NET 10 across all projects (`net10.0` / `net10.0-windows` for GUI) |
 | Test count | **535 / 535 passing** (446 unit + 89 view-model). Includes the 20 parity tests in `BitboardNQueenSolverTests` (CountSolutions_{Parallel,Sequential}_MatchesRecursive theories + CountSolutionsRecursive_OutOfRange_Throws). Unchanged by PR #31 (layout/naming only). |
 | Code coverage | **40.24 % line / 23.36 % branch** (full run 2025-04-23 on branch `test/coverage-report-refresh` via `dotnet test --collect:"XPlat Code Coverage"`). Note: overall metrics are lower than historical Domain/Kernel/Shared breakdown because the full-solution run now includes all projects and test infrastructure. |
@@ -135,6 +135,11 @@ baseline before touching production code, per the team's MEASURE-first practice.
 
 ### Recently shipped (see `CHANGELOG.md` `[Unreleased]` for full detail)
 
+- `migrate/fluentassertions-to-shouldly` — **test-assertion library migration** (in flight).
+  Replaced `FluentAssertions` 8.10.0 with `Shouldly` 4.3.0 to drop the commercial-license
+  dependency, converting every assertion call site across the three test projects
+  (`x.Should().Be(y)` → `x.ShouldBe(y)`, `Should.Throw<T>(...)`, `ShouldHaveSingleItem()`,
+  `.Count().ShouldBe(n)`, etc.). Test-only — 535/535 tests unchanged, build clean.
 - `fix/gui-issues` — **GUI layout consolidation** (PR #31, squash-merged). Standardized all
   WPF view names to a suffix-free, role-based scheme (`InputPanel`, `SolutionSummaryPanel`,
   `SimulationPanel`, `ChessboardView`, `SelectedSolutionBar`, `SolutionListPanel`); no

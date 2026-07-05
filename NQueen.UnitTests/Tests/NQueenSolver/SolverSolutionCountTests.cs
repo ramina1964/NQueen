@@ -57,12 +57,12 @@ public class SolverSolutionCountTests(SolverBackEndFixture fixture)
                 SolutionMode.All => ExpectedSolutions.GetAllCount(n),
                 _ => throw new ArgumentOutOfRangeException(nameof(mode))
             };
-            results.SolutionsCount.Should().Be(expected, $"{mode} solutions count for N={n} should match expected source.");
+            results.SolutionsCount.ShouldBe(expected, $"{mode} solutions count for N={n} should match expected source.");
             // Materialized solutions may be capped; assert size constraints and board size integrity
-            results.Solutions.Should().NotBeNull();
+            results.Solutions.ShouldNotBeNull();
             foreach (var s in results.Solutions)
-                s.BoardSize.Should().Be(n);
-            results.Solutions.Count.Should().BeLessThanOrEqualTo((int)expected);
+                s.BoardSize.ShouldBe(n);
+            results.Solutions.Count.ShouldBeLessThanOrEqualTo((int)expected);
         }
         finally
         {
@@ -90,8 +90,8 @@ public class SolverSolutionCountTests(SolverBackEndFixture fixture)
                 SolutionMode.All => ExpectedSolutions.GetAllCount(n),
                 _ => throw new ArgumentOutOfRangeException(nameof(mode))
             };
-            results.Solutions.Should().BeEmpty($"Count-only mode should not materialize solutions for {mode} N={n}.");
-            results.SolutionsCount.Should().Be(expected, $"{mode} count mismatch for N={n}");
+            results.Solutions.ShouldBeEmpty($"Count-only mode should not materialize solutions for {mode} N={n}.");
+            results.SolutionsCount.ShouldBe(expected, $"{mode} count mismatch for N={n}");
         }
         finally
         {
@@ -122,11 +122,11 @@ public class SolverSolutionCountTests(SolverBackEndFixture fixture)
         };
 
         int expectedMaterialized = (int)Math.Min(_maxDisplayedCount, expected);
-        results.Solutions.Should().NotBeNull();
-        results.Solutions.Count.Should().Be(expectedMaterialized, $"Materialize mode should produce min(cap, expected) solutions for {mode} N={n}.");
-        results.SolutionsCount.Should().Be(expected, $"Total solutions count for {mode} N={n} should match expected.");
+        results.Solutions.ShouldNotBeNull();
+        results.Solutions.Count.ShouldBe(expectedMaterialized, $"Materialize mode should produce min(cap, expected) solutions for {mode} N={n}.");
+        results.SolutionsCount.ShouldBe(expected, $"Total solutions count for {mode} N={n} should match expected.");
         foreach (var s in results.Solutions)
-            s.BoardSize.Should().Be(n);
+            s.BoardSize.ShouldBe(n);
     }
 
     [Theory]
@@ -150,11 +150,11 @@ public class SolverSolutionCountTests(SolverBackEndFixture fixture)
             _ => throw new ArgumentOutOfRangeException(nameof(mode))
         };
         int expectedMaterialized = (int)Math.Min((ulong)cap, expected);
-        results.Solutions.Should().NotBeNull();
-        results.Solutions.Count.Should().Be(expectedMaterialized, $"Materialize mode should produce min(MaxDisplayedCount, expected) solutions for {mode} N={n}.");
-        results.SolutionsCount.Should().Be(expected, $"Total solutions count for {mode} N={n} should match expected.");
+        results.Solutions.ShouldNotBeNull();
+        results.Solutions.Count.ShouldBe(expectedMaterialized, $"Materialize mode should produce min(MaxDisplayedCount, expected) solutions for {mode} N={n}.");
+        results.SolutionsCount.ShouldBe(expected, $"Total solutions count for {mode} N={n} should match expected.");
         foreach (var s in results.Solutions)
-            s.BoardSize.Should().Be(n);
+            s.BoardSize.ShouldBe(n);
     }
 
     private const int _maxDisplayedCount = SimulationSettings.MaxDisplayedCount;

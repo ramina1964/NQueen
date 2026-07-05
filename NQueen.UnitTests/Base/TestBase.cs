@@ -80,11 +80,11 @@ public class TestBase(ISolverBackEnd sut)
         // Compare sets via HashSet equality since packed assertion helper does not exist.
         var expectedSet = new HashSet<UInt128>(ExpectedSolutionsPacked);
         var actualSet = new HashSet<UInt128>(ActualSolutionsPacked);
-        actualSet.Count.Should().Be(expectedSet.Count,
+        actualSet.Count.ShouldBe(expectedSet.Count,
             $"expected {expectedSet.Count} distinct solutions for N={simContext.BoardSize} {simContext.SolutionMode} but got {actualSet.Count}");
         var missing = expectedSet.Except(actualSet).ToList();
-        missing.Should().BeEmpty($"solver missed {missing.Count} solution(s) for N={simContext.BoardSize} {simContext.SolutionMode}");
+        missing.ShouldBeEmpty($"solver missed {missing.Count} solution(s) for N={simContext.BoardSize} {simContext.SolutionMode}");
         var unexpected = actualSet.Except(expectedSet).ToList();
-        unexpected.Should().BeEmpty($"solver produced {unexpected.Count} unexpected solution(s) for N={simContext.BoardSize} {simContext.SolutionMode}");
+        unexpected.ShouldBeEmpty($"solver produced {unexpected.Count} unexpected solution(s) for N={simContext.BoardSize} {simContext.SolutionMode}");
     }
 }

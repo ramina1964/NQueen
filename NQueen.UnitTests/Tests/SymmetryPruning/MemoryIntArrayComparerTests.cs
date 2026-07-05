@@ -13,7 +13,7 @@ public class MemoryIntArrayComparerTests
 
         var areEqual = _comparer.Equals(memoryA, memoryB);
 
-        areEqual.Should().Be(expected, $"comparing {string.Join(',', first)} and {string.Join(',', second)} should be {expected}");
+        areEqual.ShouldBe(expected, $"comparing {string.Join(',', first)} and {string.Join(',', second)} should be {expected}");
     }
 
     [Theory]
@@ -22,7 +22,7 @@ public class MemoryIntArrayComparerTests
     {
         var solution = new Memory<int>(solutionArray);
         var variants = GetSymmetricalSolutions(solution);
-        variants.Should().HaveCount(ExpectedSolutions.ExpectedSymmetryVariantCountN5);
+        variants.Count.ShouldBe(ExpectedSolutions.ExpectedSymmetryVariantCountN5);
     }
 
     [Fact]

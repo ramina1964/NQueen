@@ -9,7 +9,7 @@ public class SymmetryHelperExtendedTests
     [InlineData(5, 2, 0b11111UL)]  // column >= 2 → mask unchanged
     public void ApplyAdvancedSymmetryPruning_ReturnsMaskUnchanged(int boardSize, int col, ulong mask)
     {
-        SymmetryHelper.ApplyAdvancedSymmetryPruning(boardSize, col, new int[boardSize], mask).Should().Be(mask);
+        SymmetryHelper.ApplyAdvancedSymmetryPruning(boardSize, col, new int[boardSize], mask).ShouldBe(mask);
     }
 
     [Theory]
@@ -18,7 +18,7 @@ public class SymmetryHelperExtendedTests
     public void ApplyAdvancedSymmetryPruning_Column0_CutsToHalf(int boardSize, ulong fullMask, ulong expected)
     {
         var result = SymmetryHelper.ApplyAdvancedSymmetryPruning(boardSize, 0, new int[boardSize], fullMask);
-        result.Should().Be(expected);
+        result.ShouldBe(expected);
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class SymmetryHelperExtendedTests
         queenRows[0] = 2;
         ulong fullMask = 0xFFUL;
         var result = SymmetryHelper.ApplyAdvancedSymmetryPruning(8, 1, queenRows, fullMask);
-        (result & 0b111UL).Should().Be(0UL); // bits 0,1,2 cleared
+        (result & 0b111UL).ShouldBe(0UL); // bits 0,1,2 cleared
     }
 
     [Fact]
@@ -39,7 +39,7 @@ public class SymmetryHelperExtendedTests
         var queenRows = new int[4];
         queenRows[0] = 3;
         var result = SymmetryHelper.ApplyAdvancedSymmetryPruning(4, 1, queenRows, 0xFUL);
-        result.Should().Be(0UL);
+        result.ShouldBe(0UL);
     }
 
     [Fact]
@@ -50,13 +50,12 @@ public class SymmetryHelperExtendedTests
         queenRows[0] = 2;
         ulong fullMask = 0b11111UL;
         var result = SymmetryHelper.ApplyAdvancedSymmetryPruning(5, 1, queenRows, fullMask);
-        result.Should().Be(fullMask);
+        result.ShouldBe(fullMask);
     }
 
     [Fact]
     public void ApplyAdvancedSymmetryPruning_NullQueenRows_Throws() =>
-        FluentActions.Invoking(() => SymmetryHelper.ApplyAdvancedSymmetryPruning(4, 0, null!, 0xFUL))
-            .Should().Throw<ArgumentNullException>();
+        Should.Throw<ArgumentNullException>(() => SymmetryHelper.ApplyAdvancedSymmetryPruning(4, 0, null!, 0xFUL));
 
     // ── AddIfUnique / AddIfUniquePacked ──────────────────────────────────────
 
@@ -65,7 +64,7 @@ public class SymmetryHelperExtendedTests
     {
         var keys = new HashSet<UInt128>();
         int[] scratch = new int[5 * 8];
-        SymmetryHelper.AddIfUnique([0, 2, 4, 1, 3], keys, scratch).Should().BeTrue();
+        SymmetryHelper.AddIfUnique([0, 2, 4, 1, 3], keys, scratch).ShouldBeTrue();
     }
 
     [Fact]
@@ -75,7 +74,7 @@ public class SymmetryHelperExtendedTests
         int[] scratch = new int[5 * 8];
         int[] sol = [0, 2, 4, 1, 3];
         SymmetryHelper.AddIfUnique(sol, keys, scratch);
-        SymmetryHelper.AddIfUnique(sol, keys, scratch).Should().BeFalse();
+        SymmetryHelper.AddIfUnique(sol, keys, scratch).ShouldBeFalse();
     }
 
     [Fact]
@@ -84,9 +83,9 @@ public class SymmetryHelperExtendedTests
         var keys = new HashSet<UInt128>();
         int[] scratch = new int[5 * 8];
         bool added = SymmetryHelper.AddIfUniquePacked([0, 2, 4, 1, 3], keys, scratch, out var key, out var copy);
-        added.Should().BeTrue();
-        key.Should().NotBe(UInt128.Zero);
-        copy.Should().HaveCount(5);
+        added.ShouldBeTrue();
+        key.ShouldNotBe(UInt128.Zero);
+        copy.Count().ShouldBe(5);
     }
 
     [Fact]
@@ -97,16 +96,16 @@ public class SymmetryHelperExtendedTests
         int[] buf = new int[5];
         bool added = SymmetryHelper.AddIfUniquePackedReuseBuffer(
             [0, 2, 4, 1, 3], keys, scratch, buf, out var key, out var copy);
-        added.Should().BeTrue();
-        key.Should().NotBe(UInt128.Zero);
-        copy.Should().HaveCount(5);
+        added.ShouldBeTrue();
+        key.ShouldNotBe(UInt128.Zero);
+        copy.Count().ShouldBe(5);
     }
 
     // ── GetCanonicalForm (single-argument overload) ──────────────────────────
 
     [Fact]
     public void GetCanonicalForm_SingleArg_EmptyArray_ReturnsEmpty() =>
-        SymmetryHelper.GetCanonicalForm([]).Should().BeEmpty();
+        SymmetryHelper.GetCanonicalForm([]).ShouldBeEmpty();
 
     [Fact]
     public void GetCanonicalForm_SingleArg_ReturnsSameAsScratchOverload()
@@ -115,13 +114,12 @@ public class SymmetryHelperExtendedTests
         int[] scratch = new int[4 * 8];
         var via1 = SymmetryHelper.GetCanonicalForm(sol);
         var via2 = SymmetryHelper.GetCanonicalForm(sol, scratch, null);
-        via1.Should().BeEquivalentTo(via2);
+        via1.ShouldBe(via2);
     }
 
     [Fact]
     public void GetCanonicalForm_SingleArg_NullThrows() =>
-        FluentActions.Invoking(() => SymmetryHelper.GetCanonicalForm(null!))
-            .Should().Throw<ArgumentNullException>();
+        Should.Throw<ArgumentNullException>(() => SymmetryHelper.GetCanonicalForm(null!));
 
     // ── PackRows / PackCanonical ─────────────────────────────────────────────
 
@@ -131,7 +129,7 @@ public class SymmetryHelperExtendedTests
         ReadOnlySpan<int> rows = [0, 2, 4, 1, 3];
         var k1 = SymmetryHelper.PackRows(rows);
         var k2 = SymmetryHelper.PackRows(rows);
-        k1.Should().Be(k2);
+        k1.ShouldBe(k2);
     }
 
     [Fact]
@@ -139,7 +137,7 @@ public class SymmetryHelperExtendedTests
     {
         var k1 = SymmetryHelper.PackRows([0, 2, 4, 1, 3]);
         var k2 = SymmetryHelper.PackRows([3, 1, 4, 2, 0]);
-        k1.Should().NotBe(k2);
+        k1.ShouldNotBe(k2);
     }
 
     [Fact]
@@ -148,7 +146,7 @@ public class SymmetryHelperExtendedTests
         int[] rows = [0, 2, 4, 1, 3];
         var viaPackRows = SymmetryHelper.PackRows(rows);
         var viaPackCanonical = SymmetryHelper.PackCanonical(rows, rows.Length);
-        viaPackCanonical.Should().Be(viaPackRows);
+        viaPackCanonical.ShouldBe(viaPackRows);
     }
 
     // ── MaxRowExclusiveForColumn / GetScratchBufferSize ──────────────────────
@@ -158,14 +156,14 @@ public class SymmetryHelperExtendedTests
     [InlineData(8, 1, 8)]
     [InlineData(5, 0, 3)]
     public void MaxRowExclusiveForColumn_ReturnsExpected(int boardSize, int col, int expected) =>
-        SymmetryHelper.MaxRowExclusiveForColumn(boardSize, col, new int[boardSize]).Should().Be(expected);
+        SymmetryHelper.MaxRowExclusiveForColumn(boardSize, col, new int[boardSize]).ShouldBe(expected);
 
     [Theory]
     [InlineData(4,  32)]
     [InlineData(8,  64)]
     [InlineData(16, 128)]
     public void GetScratchBufferSize_ReturnsEightTimesN(int n, int expected) =>
-        SymmetryHelper.GetScratchBufferSize(n).Should().Be(expected);
+        SymmetryHelper.GetScratchBufferSize(n).ShouldBe(expected);
 
     // ── GetCanonicalKey ──────────────────────────────────────────────────────
 
@@ -176,6 +174,6 @@ public class SymmetryHelperExtendedTests
         int[] scratch = new int[4 * 8];
         var key = SymmetryHelper.GetCanonicalKey(sol, scratch, out var canonical);
         var expectedKey = SymmetryHelper.PackRows(canonical);
-        key.Should().Be(expectedKey);
+        key.ShouldBe(expectedKey);
     }
 }

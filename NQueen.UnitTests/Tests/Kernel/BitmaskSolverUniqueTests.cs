@@ -31,10 +31,10 @@ public class BitmaskSolverUniqueTests
     private static void AssertValidPlacement(int[] rows)
     {
         int n = rows.Length;
-        rows.Distinct().Should().HaveCount(n, "no two queens on the same row");
+        rows.Distinct().Count().ShouldBe(n, "no two queens on the same row");
         for (int i = 0; i < n; i++)
             for (int j = i + 1; j < n; j++)
-                Math.Abs(rows[i] - rows[j]).Should().NotBe(j - i,
+                Math.Abs(rows[i] - rows[j]).ShouldNotBe(j - i,
                     $"queens at columns {i} and {j} must not share a diagonal");
     }
 
@@ -58,9 +58,9 @@ public class BitmaskSolverUniqueTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(expected, $"unique materialize must equal expected for N={n}");
-        result.Solutions.Should().NotBeEmpty();
-        result.Solutions.Count.Should().BeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount,
+        result.SolutionsCount.ShouldBe(expected, $"unique materialize must equal expected for N={n}");
+        result.Solutions.ShouldNotBeEmpty();
+        result.Solutions.Count.ShouldBeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount,
             "materialize path must cap displayed solutions");
         foreach (var s in result.Solutions)
             AssertValidPlacement(s.QueenPositions);
@@ -76,8 +76,8 @@ public class BitmaskSolverUniqueTests
         var ctx = new SimulationContext(n, SolutionMode.Unique, DisplayMode.Hide);
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(0UL, $"N={n} has no valid placements");
-        result.Solutions.Should().BeEmpty();
+        result.SolutionsCount.ShouldBe(0UL, $"N={n} has no valid placements");
+        result.Solutions.ShouldBeEmpty();
     }
 
     // -- Mid-N branch: N == 15 -> SymmetryPrunedUniqueCounter -----------------
@@ -95,13 +95,13 @@ public class BitmaskSolverUniqueTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(285_053UL,
+        result.SolutionsCount.ShouldBe(285_053UL,
             "unique count for N=15 is 285 053 (OEIS A002562)");
-        result.Solutions.Should().NotBeEmpty("mid-N branch must surface samples via onMaterialized");
-        result.Solutions.Count.Should().BeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount);
+        result.Solutions.ShouldNotBeEmpty("mid-N branch must surface samples via onMaterialized");
+        result.Solutions.Count.ShouldBeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount);
         foreach (var s in result.Solutions)
         {
-            s.QueenPositions.Should().HaveCount(15);
+            s.QueenPositions.Count().ShouldBe(15);
             AssertValidPlacement(s.QueenPositions);
         }
     }
@@ -124,13 +124,13 @@ public class BitmaskSolverUniqueTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(1_846_955UL,
+        result.SolutionsCount.ShouldBe(1_846_955UL,
             "unique count for N=16 is 1 846 955 (OEIS A002562)");
-        result.Solutions.Should().NotBeEmpty("Phase 1 DFS must surface canonical samples");
-        result.Solutions.Count.Should().BeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount);
+        result.Solutions.ShouldNotBeEmpty("Phase 1 DFS must surface canonical samples");
+        result.Solutions.Count.ShouldBeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount);
         foreach (var s in result.Solutions)
         {
-            s.QueenPositions.Should().HaveCount(16);
+            s.QueenPositions.Count().ShouldBe(16);
             AssertValidPlacement(s.QueenPositions);
         }
     }
@@ -149,7 +149,7 @@ public class BitmaskSolverUniqueTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.Solutions.Count.Should().Be(SimulationSettings.MaxDisplayedCount,
+        result.Solutions.Count.ShouldBe(SimulationSettings.MaxDisplayedCount,
             "Phase 1 DFS must stop after exactly cap canonical samples for N=16");
         foreach (var s in result.Solutions)
             AssertValidPlacement(s.QueenPositions);
@@ -177,11 +177,11 @@ public class BitmaskSolverUniqueTests
             OnSolutionFound: solutionSink, OnQueenPlaced: queenWriter);
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(12UL, "unique count for N=8 is 12 (OEIS A002562)");
-        queenPlaced.Should().BeGreaterThan(0,
+        result.SolutionsCount.ShouldBe(12UL, "unique count for N=8 is 12 (OEIS A002562)");
+        queenPlaced.ShouldBeGreaterThan(0,
             "visualize path must push QueenPlaced for each placement");
-        solutionFound.Should().BeGreaterThan(0, "visualize path must push SolutionFound");
-        solutionFound.Should().BeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount,
+        solutionFound.ShouldBeGreaterThan(0, "visualize path must push SolutionFound");
+        solutionFound.ShouldBeLessThanOrEqualTo(SimulationSettings.MaxDisplayedCount,
             "SolutionFound must be capped at MaxDisplayedCount");
     }
 
@@ -208,8 +208,8 @@ public class BitmaskSolverUniqueTests
             Cancellation: cts.Token, OnQueenPlaced: queenWriter);
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.Should().NotBeNull();
-        placedSeen.Should().BeGreaterThan(0,
+        result.ShouldNotBeNull();
+        placedSeen.ShouldBeGreaterThan(0,
             "cancellation toggles after the first QueenPlaced notification");
     }
 
@@ -225,8 +225,8 @@ public class BitmaskSolverUniqueTests
         var second = await solver.GetSimResultsAsync(
             new SimulationContext(8, SolutionMode.Unique, DisplayMode.Hide));
 
-        first.SolutionsCount.Should().Be(1UL, "unique count for N=6 is 1 (OEIS A002562)");
-        second.SolutionsCount.Should().Be(12UL,
+        first.SolutionsCount.ShouldBe(1UL, "unique count for N=6 is 1 (OEIS A002562)");
+        second.SolutionsCount.ShouldBe(12UL,
             "second run must not accumulate the previous run's state");
     }
 
@@ -246,8 +246,8 @@ public class BitmaskSolverUniqueTests
 
         var result = await solver.GetSimResultsAsync(ctx);
 
-        result.SolutionsCount.Should().Be(12UL);
-        result.Solutions.Should().HaveCount(12,
+        result.SolutionsCount.ShouldBe(12UL);
+        result.Solutions.Count().ShouldBe(12,
             "enableCap=false must surface every canonical solution for N=8");
         foreach (var s in result.Solutions)
             AssertValidPlacement(s.QueenPositions);

@@ -20,8 +20,8 @@ public class HalfBoardFlagAllModeTests(SolverBackEndFixture fixture)
             if (_solver is BitmaskSolver bs) bs.EnableHalfBoardRestriction = true;
             var ctx = new SimulationContext(n, SolutionMode.All, DisplayMode.Hide);
             var res = await _solver.GetSimResultsAsync(ctx);
-            res.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetAll(n));
-            res.Solutions.Should().BeEmpty();
+            res.SolutionsCount.ShouldBe(ExpectedSolutionCounts.GetAll(n));
+            res.Solutions.ShouldBeEmpty();
         }
         finally
         {
@@ -42,8 +42,8 @@ public class HalfBoardFlagAllModeTests(SolverBackEndFixture fixture)
             if (_solver is BitmaskSolver bs) bs.EnableHalfBoardRestriction = false;
             var ctx = new SimulationContext(n, SolutionMode.All, DisplayMode.Hide);
             var res = await _solver.GetSimResultsAsync(ctx);
-            res.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetAll(n));
-            res.Solutions.Should().BeEmpty();
+            res.SolutionsCount.ShouldBe(ExpectedSolutionCounts.GetAll(n));
+            res.Solutions.ShouldBeEmpty();
         }
         finally
         {
@@ -64,9 +64,9 @@ public class HalfBoardFlagAllModeTests(SolverBackEndFixture fixture)
             if (_solver is BitmaskSolver bs) bs.EnableHalfBoardRestriction = true;
             var ctx = new SimulationContext(n, SolutionMode.All, DisplayMode.Hide);
             var res = await _solver.GetSimResultsAsync(ctx);
-            res.SolutionsCount.Should().Be(ExpectedSolutionCounts.GetAll(n));
-            res.Solutions.Count.Should().BeGreaterThan(0);
-            (res.Solutions.Count <= SimulationSettings.MaxDisplayedCount).Should().BeTrue();
+            res.SolutionsCount.ShouldBe(ExpectedSolutionCounts.GetAll(n));
+            res.Solutions.Count.ShouldBeGreaterThan(0);
+            (res.Solutions.Count <= SimulationSettings.MaxDisplayedCount).ShouldBeTrue();
         }
         finally
         {

@@ -1,4 +1,4 @@
-ï»¿namespace NQueen.ViewModelTests.Tests.Main;
+namespace NQueen.ViewModelTests.Tests.Main;
 
 public class MainViewModelPositiveTests
 {
@@ -78,19 +78,19 @@ public class MainViewModelPositiveTests
         mainVm.SimulateCommand.Execute(null);
 
         // Assert initial state of IsSingleRunning
-        mainVm.IsSingleRunning.Should().Be(expectedIndeterminate);
+        mainVm.IsSingleRunning.ShouldBe(expectedIndeterminate);
 
         // Wait for simulation to complete
         await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
 
         // Assert final state of IsSingleRunning
-        mainVm.IsSingleRunning.Should().BeFalse();
+        mainVm.IsSingleRunning.ShouldBeFalse();
     }
 
     [Fact]
     public async Task ProgressBar_ShouldUpdate_ForSingleMode()
     {
-        // Arrange: real solver â€” Single mode does not use the mock progress-event path
+        // Arrange: real solver — Single mode does not use the mock progress-event path
         var mainVm = TestHelpers.CreateMainViewModel(4, SolutionMode.Single, DisplayMode.Visualize);
 
         // Act
@@ -98,7 +98,7 @@ public class MainViewModelPositiveTests
         await TestHelpers.WaitForSimulationCompletionAsync(mainVm);
 
         // Assert
-        mainVm.ProgressValue.Should().BeInRange(0, 1);
+        mainVm.ProgressValue.ShouldBeInRange(0, 1);
     }
 
     [Theory]
@@ -155,14 +155,14 @@ public class MainViewModelPositiveTests
             TimeSpan.FromSeconds(10));
 
         // Assert
-        progressDuringSimulation.Should().NotBeNull("ProgressValue should update during simulation.");
-        progressDuringSimulation.Should().BeGreaterThan(0, "Progress should advance above 0.");
-        mainVm.ProgressValue.Should().BeInRange(0, 1);
+        progressDuringSimulation.ShouldNotBeNull("ProgressValue should update during simulation.");
+        progressDuringSimulation.Value.ShouldBeGreaterThan(0, "Progress should advance above 0.");
+        mainVm.ProgressValue.ShouldBeInRange(0, 1);
         // After a completed simulation the progress bar is Collapsed (not Hidden): Collapsed frees
         // the layout row so the Simulation panel shrinks to its content and no longer reserves
         // space that would clip the Solver Settings card below it.
-        mainVm.ProgressVisibility.Should().Be(Visibility.Collapsed);
-        mainVm.ObservableSolutions.Count.Should().Be(expectedSolutionCount);
+        mainVm.ProgressVisibility.ShouldBe(Visibility.Collapsed);
+        mainVm.ObservableSolutions.Count.ShouldBe(expectedSolutionCount);
     }
 
 
@@ -187,7 +187,7 @@ public class MainViewModelPositiveTests
             IsIdle = true,
         };
 
-        // Populate ObservableSolutions and mark output as ready â€” same state
+        // Populate ObservableSolutions and mark output as ready — same state
         // the VM is in after a completed simulation before the user clicks Save.
         mainVm.ObservableSolutions.Add(solution);
         mainVm.IsOutputReady = true;
@@ -196,10 +196,10 @@ public class MainViewModelPositiveTests
         mainVm.SaveCommand.Execute(null);
 
         // Assert
-        mockSaveService.WasCalled.Should().BeTrue("the save service should be invoked");
-        mockSaveService.SavedContent.Should().NotBeNullOrEmpty("saved content must not be empty");
-        mockSaveService.SavedContent.Should().Contain("4", "content should include the board size");
-        mockSaveService.SavedContent.Should().Contain("Single", "content should include the solution mode");
+        mockSaveService.WasCalled.ShouldBeTrue("the save service should be invoked");
+        mockSaveService.SavedContent.ShouldNotBeNullOrEmpty();
+        mockSaveService.SavedContent.ShouldContain("4");
+        mockSaveService.SavedContent.ShouldContain("Single");
     }
 }
 
