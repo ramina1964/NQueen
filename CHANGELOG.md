@@ -7,6 +7,14 @@ All notable changes to this project are documented here.
 ## [Unreleased]
 
 ### Testing
+- **Added dedicated unit tests for untested Domain model types** — introduced
+  `PositionTests`, `LazyPositionListTests`, `SolutionTests`, and
+  `SimulationResultsTests` under `NQueen.UnitTests/Tests/Domain/`, plus a
+  supplemental `ExpectedSolutionCountsGetTests` covering the non-`Fast`
+  `GetAll`/`GetUnique` lookups. Exercises both `Solution` constructors (array +
+  packed `UInt128` round-trip), validation guards, lazy unpacking, and
+  `SimulationResults` inferred/explicit counts and `IsTruncated`. 37 new tests,
+  all passing.
 - **Migrated the test suite from FluentAssertions to Shouldly** — replaced the
   commercially-licensed `FluentAssertions` 8.10.0 with the free, open-source
   `Shouldly` 4.3.0 across `NQueen.UnitTests`, `NQueen.ViewModelTests`, and
