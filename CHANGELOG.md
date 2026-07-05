@@ -7,6 +7,17 @@ All notable changes to this project are documented here.
 ## [Unreleased]
 
 ### Testing
+- **Added validation and GUI-converter edge-case tests** — introduced
+  `BoardSizeValidatorTests` and `ConverterTests` under
+  `NQueen.ViewModelTests/Tests/`. `BoardSizeValidatorTests` covers the
+  FluentValidation board-size rules: the empty/whitespace guard, the non-integer
+  guard, the below-minimum guard, the per-mode upper bounds (Single = 37,
+  Unique = 25, All = 25) with their distinct messages, the unsupported-mode
+  `ArgumentOutOfRangeException`, and the framework null-model `InvalidOperationException`
+  contract. `ConverterTests` covers all three `IValueConverter`s
+  (`DisplayModeToEnabledConverter`, `NullImageConverter`,
+  `StringNotEmptyToVisibilityConverter`) including their `ConvertBack` behavior.
+  36 new tests, all passing.
 - **Added dedicated unit tests for untested Domain model types** — introduced
   `PositionTests`, `LazyPositionListTests`, `SolutionTests`, and
   `SimulationResultsTests` under `NQueen.UnitTests/Tests/Domain/`, plus a
