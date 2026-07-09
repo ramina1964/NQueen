@@ -1,5 +1,6 @@
 ﻿namespace NQueen.ViewModelTests.Tests.Solver;
 
+[Trait("Category", "Solver")]
 public class SolverTests
 {
     [Fact]

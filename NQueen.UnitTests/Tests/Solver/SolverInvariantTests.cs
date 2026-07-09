@@ -1,7 +1,8 @@
-namespace NQueen.UnitTests.Tests.NQueenSolver;
+namespace NQueen.UnitTests.Tests.Solver;
 
 [Collection("SolverBackend")]
-[Trait("Category", "Enumeration")]
+[Trait("Category", "Solver")]
+[Trait("Behavior", "Invariants")]
 public class SolverInvariantTests(SolverBackEndFixture fixture)
 {
     [Theory]

@@ -1,5 +1,7 @@
-namespace NQueen.UnitTests.Tests.Kernel;
+namespace NQueen.UnitTests.Tests.Solver;
 
+[Trait("Category", "Solver")]
+[Trait("Behavior", "ParallelHeuristic")]
 public class ParallelSplitDepthHeuristicTests
 {
     // ── GetOptimalSplitDepth ─────────────────────────────────────────────────

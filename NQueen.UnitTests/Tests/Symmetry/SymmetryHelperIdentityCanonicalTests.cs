@@ -1,7 +1,8 @@
-namespace NQueen.UnitTests.Tests.SymmetryPruning;
+namespace NQueen.UnitTests.Tests.Symmetry;
 
 [Collection("SolverBackend")]
-[Trait("Category", "Canonical")]
+[Trait("Category", "Symmetry")]
+[Trait("Behavior", "Canonical")]
 public class SymmetryHelperIdentityCanonicalTests(SolverBackEndFixture fixture) :
     TestBase(fixture.Sut)
 {

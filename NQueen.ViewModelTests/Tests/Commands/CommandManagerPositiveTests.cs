@@ -1,5 +1,6 @@
 namespace NQueen.ViewModelTests.Tests.Commands;
 
+[Trait("Category", "Commands")]
 public class CommandManagerPositiveTests
 {
     [Theory]

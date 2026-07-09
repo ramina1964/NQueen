@@ -1,7 +1,8 @@
-namespace NQueen.UnitTests.Tests.NQueenSolver;
+namespace NQueen.UnitTests.Tests.Solver;
 
 [Collection("SolverBackend")]
-[Trait("Category", "Enumeration")]
+[Trait("Category", "Solver")]
+[Trait("Behavior", "ParallelConsistency")]
 public class SolverParallelConsistencyTests(SolverBackEndFixture fixture)
 {
     private readonly ISolverBackEnd _solver = fixture.Sut;

@@ -1,4 +1,4 @@
-namespace NQueen.UnitTests.Tests.NQueenSolver;
+namespace NQueen.UnitTests.Tests.Counts;
 
 [Collection("SolverBackend")]
 [Trait("Category", "Counts")]
@@ -38,6 +38,10 @@ public class SolverSolutionCountTests(SolverBackEndFixture fixture)
         {12, SolutionMode.Unique}, {12, SolutionMode.All}
     };
 
+    // Fundamental unique counts verified via the enumeration path (count-only flag off).
+    // Absorbs the former UniqueCountingAccuracyTests suite.
+    public static TheoryData<int> UniqueEnumerationBoards => [4, 5, 6, 7, 8, 9, 10, 11];
+
     [Theory]
     [MemberData(nameof(SmallBoardsCountModes))]
     public async Task GetSimResults_SmallBoards_CountMatchesExpected(int n, SolutionMode mode)
@@ -53,8 +57,8 @@ public class SolverSolutionCountTests(SolverBackEndFixture fixture)
             var results = await _solver.GetSimResultsAsync(ctx);
             ulong expected = mode switch
             {
-                SolutionMode.Unique => ExpectedSolutions.GetUniqueCount(n),
-                SolutionMode.All => ExpectedSolutions.GetAllCount(n),
+                SolutionMode.Unique => ExpectedSolutionCounts.GetUnique(n),
+                SolutionMode.All => ExpectedSolutionCounts.GetAll(n),
                 _ => throw new ArgumentOutOfRangeException(nameof(mode))
             };
             results.SolutionsCount.ShouldBe(expected, $"{mode} solutions count for N={n} should match expected source.");
@@ -67,6 +71,26 @@ public class SolverSolutionCountTests(SolverBackEndFixture fixture)
         finally
         {
             _solver.UseCountOnlyAllMode = origAll;
+            _solver.UseCountOnlyUniqueMode = origUnique;
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(UniqueEnumerationBoards))]
+    public async Task UniqueMode_Enumeration_CountMatchesExpected(int n)
+    {
+        // Force the enumeration path (count-only off) to verify fundamental unique counts.
+        bool origUnique = _solver.UseCountOnlyUniqueMode;
+        try
+        {
+            _solver.UseCountOnlyUniqueMode = false;
+            var ctx = new SimulationContext(n, SolutionMode.Unique, DisplayMode.Hide);
+            var results = await _solver.GetSimResultsAsync(ctx);
+            ulong expected = ExpectedSolutionCounts.GetUnique(n);
+            results.SolutionsCount.ShouldBe(expected, $"Fundamental unique count should match curated data for N={n}.");
+        }
+        finally
+        {
             _solver.UseCountOnlyUniqueMode = origUnique;
         }
     }
@@ -86,8 +110,8 @@ public class SolverSolutionCountTests(SolverBackEndFixture fixture)
             var results = await _solver.GetSimResultsAsync(ctx);
             ulong expected = mode switch
             {
-                SolutionMode.Unique => ExpectedSolutions.GetUniqueCount(n),
-                SolutionMode.All => ExpectedSolutions.GetAllCount(n),
+                SolutionMode.Unique => ExpectedSolutionCounts.GetUnique(n),
+                SolutionMode.All => ExpectedSolutionCounts.GetAll(n),
                 _ => throw new ArgumentOutOfRangeException(nameof(mode))
             };
             results.Solutions.ShouldBeEmpty($"Count-only mode should not materialize solutions for {mode} N={n}.");
@@ -116,8 +140,8 @@ public class SolverSolutionCountTests(SolverBackEndFixture fixture)
         var results = await Task.Run(() => solver.Solve());
         ulong expected = mode switch
         {
-            SolutionMode.Unique => ExpectedSolutions.GetUniqueCount(n),
-            SolutionMode.All => ExpectedSolutions.GetAllCount(n),
+            SolutionMode.Unique => ExpectedSolutionCounts.GetUnique(n),
+            SolutionMode.All => ExpectedSolutionCounts.GetAll(n),
             _ => throw new ArgumentOutOfRangeException(nameof(mode))
         };
 
@@ -145,8 +169,8 @@ public class SolverSolutionCountTests(SolverBackEndFixture fixture)
         var results = await Task.Run(() => solver.Solve());
         ulong expected = mode switch
         {
-            SolutionMode.Unique => ExpectedSolutions.GetUniqueCount(n),
-            SolutionMode.All => ExpectedSolutions.GetAllCount(n),
+            SolutionMode.Unique => ExpectedSolutionCounts.GetUnique(n),
+            SolutionMode.All => ExpectedSolutionCounts.GetAll(n),
             _ => throw new ArgumentOutOfRangeException(nameof(mode))
         };
         int expectedMaterialized = (int)Math.Min((ulong)cap, expected);

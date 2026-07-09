@@ -1,5 +1,6 @@
 namespace NQueen.ViewModelTests.Tests.Main;
 
+[Trait("Category", "ViewModel")]
 public class VisualizationAllModeTests
 {
     [Theory]

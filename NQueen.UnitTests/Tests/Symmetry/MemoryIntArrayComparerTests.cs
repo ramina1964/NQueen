@@ -1,5 +1,7 @@
-namespace NQueen.UnitTests.Tests.SymmetryPruning;
+namespace NQueen.UnitTests.Tests.Symmetry;
 
+[Trait("Category", "Symmetry")]
+[Trait("Behavior", "Comparer")]
 public class MemoryIntArrayComparerTests
 {
     private static readonly MemoryIntArrayComparer _comparer = MemoryIntArrayComparer.Instance;

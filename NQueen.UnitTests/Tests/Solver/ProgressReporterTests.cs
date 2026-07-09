@@ -1,11 +1,12 @@
-namespace NQueen.UnitTests.Tests.Kernel;
+namespace NQueen.UnitTests.Tests.Solver;
 
 /// <summary>
 /// Edge-case coverage for the internal ProgressReporter bucket logic. The heartbeat
 /// branch is time-based (default 1500 ms); these tests pass a large heartbeatMs so the
 /// deterministic bucket-crossing behavior can be asserted in isolation.
 /// </summary>
-[Trait("Category", "SolverConfig")]
+[Trait("Category", "Solver")]
+[Trait("Behavior", "Progress")]
 public class ProgressReporterTests
 {
     private const int NoHeartbeat = int.MaxValue;

@@ -1,4 +1,4 @@
-namespace NQueen.UnitTests.Tests.Kernel;
+namespace NQueen.UnitTests.Tests.Solver;
 
 /// <summary>
 /// Integration-style tests that exercise BitmaskSolver across all three solution modes
@@ -6,7 +6,8 @@ namespace NQueen.UnitTests.Tests.Kernel;
 /// Uses small board sizes (N ≤ 8) to keep the suite fast.
 /// </summary>
 [Collection("SolverBackend")]
-[Trait("Category", "SolverMode")]
+[Trait("Category", "Solver")]
+[Trait("Mode", "AllModes")]
 [Trait("Speed", "Slow")]
 public class BitmaskSolverModeTests(SolverBackEndFixture fixture)
 {

@@ -1,5 +1,7 @@
-namespace NQueen.UnitTests.Tests.NQueenSolver;
+namespace NQueen.UnitTests.Tests.Solver;
 
+[Trait("Category", "Solver")]
+[Trait("Behavior", "Symmetry")]
 public class SolverSymmetryTests
 {
     [Fact]

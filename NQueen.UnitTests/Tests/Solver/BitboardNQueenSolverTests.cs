@@ -1,5 +1,7 @@
-namespace NQueen.UnitTests.Tests.Kernel;
+namespace NQueen.UnitTests.Tests.Solver;
 
+[Trait("Category", "Solver")]
+[Trait("Mode", "Bitboard")]
 public class BitboardNQueenSolverTests
 {
     // ── Known solution counts (N ≤ 8 to stay fast) ──────────────────────────

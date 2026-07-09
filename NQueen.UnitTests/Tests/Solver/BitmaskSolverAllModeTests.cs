@@ -1,4 +1,4 @@
-namespace NQueen.UnitTests.Tests.Kernel;
+namespace NQueen.UnitTests.Tests.Solver;
 
 /// <summary>
 /// Coverage-focused tests for <c>BitmaskSolver.All.cs</c>.
@@ -22,7 +22,8 @@ namespace NQueen.UnitTests.Tests.Kernel;
 /// so the suite stays fast.
 /// </summary>
 [Collection("SolverBackend")]
-[Trait("Category", "AllMode")]
+[Trait("Category", "Solver")]
+[Trait("Mode", "All")]
 public class BitmaskSolverAllModeTests
 {
     private static BitmaskSolver MakeSolver() =>

@@ -1,5 +1,7 @@
-namespace NQueen.UnitTests.Tests.Domain;
+namespace NQueen.UnitTests.Tests.Symmetry;
 
+[Trait("Category", "Symmetry")]
+[Trait("Behavior", "Pruning")]
 public class SymmetryHelperExtendedTests
 {
     // ── ApplyAdvancedSymmetryPruning ─────────────────────────────────────────

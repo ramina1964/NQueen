@@ -1,4 +1,4 @@
-namespace NQueen.UnitTests.Tests.Kernel;
+namespace NQueen.UnitTests.Tests.Solver;
 
 /// <summary>
 /// Coverage-focused tests for <c>BitmaskSolver.CountUnique.cs</c>.
@@ -9,7 +9,8 @@ namespace NQueen.UnitTests.Tests.Kernel;
 /// branch and a single N = 16 case for the half-board branch — both fast.
 /// </summary>
 [Collection("SolverBackend")]
-[Trait("Category", "CountUnique")]
+[Trait("Category", "Solver")]
+[Trait("Mode", "CountUnique")]
 public class BitmaskSolverCountUniqueTests
 {
     // Helper: standalone uncapped solver with events off.

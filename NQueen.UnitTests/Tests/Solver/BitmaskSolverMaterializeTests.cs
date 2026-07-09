@@ -1,4 +1,4 @@
-namespace NQueen.UnitTests.Tests.Kernel;
+namespace NQueen.UnitTests.Tests.Solver;
 
 /// <summary>
 /// Coverage-focused tests for <c>BitmaskSolver.Materialize.cs</c>.
@@ -19,7 +19,8 @@ namespace NQueen.UnitTests.Tests.Kernel;
 /// suite stays fast.
 /// </summary>
 [Collection("SolverBackend")]
-[Trait("Category", "Materialize")]
+[Trait("Category", "Solver")]
+[Trait("Mode", "Materialize")]
 public class BitmaskSolverMaterializeTests
 {
     private static BitmaskSolver MakeSolver(int? maxDisplayedCount = null) =>

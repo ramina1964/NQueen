@@ -1,5 +1,7 @@
-namespace NQueen.UnitTests.Tests.Kernel;
+namespace NQueen.UnitTests.Tests.Symmetry;
 
+[Trait("Category", "Symmetry")]
+[Trait("Behavior", "UniqueCounter")]
 public class SymmetryPrunedUniqueCounterTests
 {
     // ── Basic counts (N ≤ 8, fast) ───────────────────────────────────────────

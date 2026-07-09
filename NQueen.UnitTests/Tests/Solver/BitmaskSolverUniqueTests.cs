@@ -1,4 +1,4 @@
-namespace NQueen.UnitTests.Tests.Kernel;
+namespace NQueen.UnitTests.Tests.Solver;
 
 /// <summary>
 /// Coverage-focused tests for <c>BitmaskSolver.Unique.cs</c>.
@@ -20,7 +20,8 @@ namespace NQueen.UnitTests.Tests.Kernel;
 /// <see cref="BitmaskSolverCountUniqueTests"/>.
 /// </summary>
 [Collection("SolverBackend")]
-[Trait("Category", "UniqueMode")]
+[Trait("Category", "Solver")]
+[Trait("Mode", "Unique")]
 public class BitmaskSolverUniqueTests
 {
     private static BitmaskSolver MakeSolver() =>

@@ -1,8 +1,9 @@
 using NQueen.ConsoleApp;
 using NQueen.ConsoleApp.Services;
 
-namespace NQueen.UnitTests.Tests.Console;
+namespace NQueen.UnitTests.Tests.Registration;
 
+[Trait("Category", "Registration")]
 public class ConsoleServiceRegistrationTests
 {
     private static ServiceProvider BuildProvider(bool enableCap = true)

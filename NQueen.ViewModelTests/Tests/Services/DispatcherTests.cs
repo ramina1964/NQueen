@@ -1,5 +1,6 @@
 namespace NQueen.ViewModelTests.Tests.Services;
 
+[Trait("Category", "Services")]
 public class DispatcherTests
 {
     [Fact]

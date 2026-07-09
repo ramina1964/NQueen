@@ -1,4 +1,4 @@
-namespace NQueen.UnitTests.Tests.Kernel;
+namespace NQueen.UnitTests.Tests.Solver;
 
 /// <summary>
 /// Edge-case coverage for BitmaskSolver construction, configuration, and lifecycle:
@@ -6,7 +6,8 @@ namespace NQueen.UnitTests.Tests.Kernel;
 /// board-size guards, and Dispose() idempotency. These are pure/deterministic and do
 /// not exercise the search itself (that is covered by the mode-specific suites).
 /// </summary>
-[Trait("Category", "SolverConfig")]
+[Trait("Category", "Solver")]
+[Trait("Mode", "Config")]
 public class BitmaskSolverConfigTests
 {
     private static BitmaskSolver MakeSolver() =>

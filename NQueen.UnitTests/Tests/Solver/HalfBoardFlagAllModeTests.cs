@@ -1,7 +1,8 @@
-namespace NQueen.UnitTests.Tests.NQueenSolver;
+namespace NQueen.UnitTests.Tests.Solver;
 
 [Collection("SolverBackend")]
-[Trait("Category", "HalfBoardFlag")]
+[Trait("Category", "Solver")]
+[Trait("Behavior", "HalfBoardFlag")]
 [Trait("Speed", "Slow")]
 public class HalfBoardFlagAllModeTests(SolverBackEndFixture fixture)
 {

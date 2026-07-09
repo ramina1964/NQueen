@@ -1,7 +1,8 @@
-namespace NQueen.UnitTests.Tests.NQueenSolver;
+namespace NQueen.UnitTests.Tests.Counts;
 
 [Collection("SolverBackend")]
-[Trait("Category", "Slow")]
+[Trait("Category", "Counts")]
+[Trait("Speed", "Slow")]
 public class HighBoardCountsTests(SolverBackEndFixture fixture)
 {
     private readonly ISolverBackEnd _solver = fixture.Sut;
@@ -32,7 +33,7 @@ public class HighBoardCountsTests(SolverBackEndFixture fixture)
     // Unified test: count-only (All & Unique) plus Single-mode verification
     [Theory]
     [MemberData(nameof(HighBoards))]
-    [Trait("Category", "HighBoard")]
+    [Trait("Behavior", "HighBoard")]
     [Trait("SkipInCI", "true")]
     public async Task CountOnly_AllUnique_AndSingle(int n)
     {
@@ -69,7 +70,7 @@ public class HighBoardCountsTests(SolverBackEndFixture fixture)
 
     // Combined materialization sampling for both All and Unique (only sample board)
     [Fact]
-    [Trait("Category", "HighBoard")]
+    [Trait("Behavior", "HighBoard")]
     public async Task MaterializeSamples_AllAndUnique_SampleBoard()
     {
         int sb = SampleBoard;
@@ -102,8 +103,8 @@ public class HighBoardCountsTests(SolverBackEndFixture fixture)
 
     // Performance N=19 test only when explicitly requested (lookup shortcut, no enumeration)
     [Fact]
-    [Trait("Category", "HighBoard")]
-    [Trait("Category", "Perf")]
+    [Trait("Behavior", "HighBoard")]
+    [Trait("Speed", "Slow")]
     public async Task UniqueMode_OptimizedEnumeration_N19()
     {
         if (Environment.GetEnvironmentVariable("PERF_N19") != "1")
@@ -144,8 +145,8 @@ public class HighBoardCountsTests(SolverBackEndFixture fixture)
 
     // Heavy full enumeration test (disabled unless explicitly enabled)
     [Fact]
-    [Trait("Category", "HighBoard")]
-    [Trait("Category", "Heavy")]
+    [Trait("Behavior", "HighBoard")]
+    [Trait("Speed", "Heavy")]
     public void UniqueMode_FullEnumeration_N19()
     {
         if (Environment.GetEnvironmentVariable("RUN_UNIQUE19_ENUM") != "1") return; // heavy gating
